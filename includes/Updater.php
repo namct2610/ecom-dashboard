@@ -60,8 +60,12 @@ class Updater
         $response = $this->httpGet($manifestUrl, 15);
         $data     = json_decode($response, true);
 
-        if (!is_array($data) || empty($data['version']) || empty($data['download_url'])) {
-            throw new \RuntimeException('Manifest không hợp lệ (thiếu version hoặc download_url).');
+        if (!is_array($data)) {
+            $preview = substr(trim($response), 0, 120);
+            throw new \RuntimeException("Manifest không phải JSON hợp lệ. Kiểm tra URL có phải raw URL không. Nhận được: " . $preview);
+        }
+        if (empty($data['version']) || empty($data['download_url'])) {
+            throw new \RuntimeException('Manifest thiếu trường "version" hoặc "download_url".');
         }
 
         return $data;
