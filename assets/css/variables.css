@@ -1,0 +1,65 @@
+:root {
+  /* Brand */
+  --primary: #1e3a8a;
+  --primary-hover: #1e40af;
+  --primary-light: #3b82f6;
+  --primary-subtle: #eff6ff;
+
+  /* Platforms */
+  --shopee: #ee4d2d;
+  --shopee-bg: #fff5f3;
+  --lazada: #0f146d;
+  --lazada-bg: #f0f1ff;
+  --tiktok: #161823;
+  --tiktok-bg: #f3f3f3;
+
+  /* Status */
+  --completed: #16a34a;
+  --completed-bg: #dcfce7;
+  --delivered: #0284c7;
+  --delivered-bg: #e0f2fe;
+  --cancelled: #dc2626;
+  --cancelled-bg: #fee2e2;
+  --pending: #d97706;
+  --pending-bg: #fef3c7;
+
+  /* Neutrals */
+  --surface: #f0f4f8;
+  --surface-card: #ffffff;
+  --surface-hover: #f8fafc;
+  --border: #e2e8f0;
+  --border-focus: #3b82f6;
+
+  /* Text */
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+  --text-inverse: #ffffff;
+
+  /* Sidebar */
+  --sidebar-bg: #0f172a;
+  --sidebar-text: #94a3b8;
+  --sidebar-hover: rgba(255,255,255,0.06);
+  --sidebar-active-bg: #1e3a8a;
+  --sidebar-active-text: #ffffff;
+  --sidebar-width: 220px;
+
+  /* Header */
+  --header-height: 56px;
+
+  /* Spacing */
+  --radius-sm: 6px;
+  --radius: 10px;
+  --radius-lg: 14px;
+  --radius-full: 999px;
+  --shadow-card: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-hover: 0 4px 12px rgba(0,0,0,0.08);
+
+  /* Chart colors (indexed) */
+  --chart-1: #3b82f6;
+  --chart-2: #10b981;
+  --chart-3: #f59e0b;
+  --chart-4: #8b5cf6;
+  --chart-5: #ef4444;
+  --chart-6: #06b6d4;
+}

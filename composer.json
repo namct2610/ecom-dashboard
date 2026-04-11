@@ -1,0 +1,20 @@
+{
+  "name": "dashboard/v3",
+  "description": "Business Dashboard v3 — Shared Hosting PHP/MySQL",
+  "type": "project",
+  "require": {
+    "php": ">=7.4",
+    "ext-pdo": "*",
+    "ext-json": "*",
+    "phpoffice/phpspreadsheet": "^1.29 || ^2.1"
+  },
+  "autoload": {
+    "psr-4": {
+      "Dashboard\\": "includes/"
+    }
+  },
+  "config": {
+    "optimize-autoloader": true,
+    "preferred-install": "dist"
+  }
+}

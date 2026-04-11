@@ -1,0 +1,52 @@
+Options -Indexes
+Options -MultiViews
+
+# Security headers
+<IfModule mod_headers.c>
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-XSS-Protection "1; mode=block"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
+
+# Block direct access to vendor, includes, uploads
+RedirectMatch 403 ^/vendor/.*$
+RedirectMatch 403 ^/includes/.*$
+RedirectMatch 403 ^/uploads/.*$
+
+# Block config files
+<FilesMatch "^(config\.php|composer\.(json|lock)|\.user\.ini|\.env)$">
+    Order deny,allow
+    Deny from all
+</FilesMatch>
+
+# PHP settings for shared hosting (fallback to .user.ini)
+<IfModule mod_php7.c>
+    php_value upload_max_filesize 50M
+    php_value post_max_size 55M
+    php_value memory_limit 256M
+    php_value max_execution_time 300
+</IfModule>
+<IfModule mod_php8.c>
+    php_value upload_max_filesize 50M
+    php_value post_max_size 55M
+    php_value memory_limit 256M
+    php_value max_execution_time 300
+</IfModule>
+
+# Rewrite API requests
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+
+    # Allow direct access to api/ files
+    RewriteRule ^api/ - [L]
+
+    # Allow direct access to assets/
+    RewriteRule ^assets/ - [L]
+
+    # Route everything else to index.php
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^(.*)$ index.php [L,QSA]
+</IfModule>

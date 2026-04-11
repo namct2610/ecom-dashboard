@@ -1,0 +1,7 @@
+{
+  "version": "1.0.0",
+  "download_url": "https://github.com/GITHUB_USER/GITHUB_REPO/releases/download/v1.0.0/dashboard-v3-1.0.0.zip",
+  "changelog": "- Phiên bản đầu tiên\n- Kết nối Lazada & TikTok Shop API\n- Import đơn hàng tự động\n- Hệ thống cập nhật tự động",
+  "min_php": "8.1",
+  "released_at": "2026-04-11"
+}

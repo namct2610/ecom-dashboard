@@ -1,0 +1,38 @@
+# ── Sensitive / Environment ────────────────────────────────────────────────
+config.php
+config.local.php
+.env
+.env.*
+.installed
+
+# ── Uploads & user data ────────────────────────────────────────────────────
+uploads/*
+!uploads/.htaccess
+
+# ── Build artifacts ────────────────────────────────────────────────────────
+*.zip
+*.log
+
+# ── Dependencies (exclude — run composer install on host or use build.sh) ──
+vendor/
+
+# ── Dev / planning files ───────────────────────────────────────────────────
+browser.py
+stitch/
+tiktok-api/
+plan.md
+plan-dashboard.md
+dashboard.html
+dashboard_data.json
+3. Data Order (sample)/
+4. Data Traffic (sample)/
+
+# ── OS ─────────────────────────────────────────────────────────────────────
+.DS_Store
+__MACOSX/
+Thumbs.db
+
+# ── IDE ────────────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp

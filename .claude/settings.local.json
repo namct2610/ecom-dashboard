@@ -1,0 +1,43 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3:*)",
+      "Bash(open:*)",
+      "Bash(chmod +x:*)",
+      "Bash(docker restart:*)",
+      "Bash(curl -s -o /dev/null -w \"HTTP %{http_code}\\\\n\" http://localhost:8080/api/auth.php)",
+      "Bash(curl -s -o /dev/null -w \"HTTP %{http_code}\\\\n\" http://localhost:8080/)",
+      "Bash(curl -s http://localhost:8080/api/auth.php)",
+      "Bash(docker exec:*)",
+      "WebFetch(domain:open.lazada.com)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:partner.tiktokshop.com)",
+      "WebFetch(domain:developers.tiktok.com)",
+      "Bash(php -l includes/TiktokShopClient.php)",
+      "Bash(php -l api/tiktok-connect.php)",
+      "Bash(php -l tiktok-oauth.php)",
+      "Bash(php -l includes/db.php)",
+      "Bash(php -l index.php)",
+      "Bash(node --input-type=module)",
+      "Bash(node -e ':*)",
+      "Bash(node:*)",
+      "WebFetch(domain:api.github.com)",
+      "Read(//tmp/**)",
+      "Bash(php -l /Users/etecman/Documents/dashboard-v3/includes/LazadaClient.php)",
+      "Bash(php -l /Users/etecman/Documents/dashboard-v3/lazada-oauth.php)",
+      "Bash(php -l /Users/etecman/Documents/dashboard-v3/api/lazada-connect.php)",
+      "Bash(php -l /Users/etecman/Documents/dashboard-v3/includes/db.php)",
+      "Bash(php -l /Users/etecman/Documents/dashboard-v3/setup.php)",
+      "Bash(php -l /Users/etecman/Documents/dashboard-v3/api/admin.php)",
+      "Bash(php -l /Users/etecman/Documents/dashboard-v3/index.php)",
+      "Bash(grep -n '\\\\${' /Users/etecman/Documents/dashboard-v3/setup.php)",
+      "Bash(grep -v '\\\\\\\\\\\\\\\\${')",
+      "Bash(grep -v \"^$\")",
+      "Bash(bash:*)",
+      "Bash(git init:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m ':*)"
+    ]
+  }
+}
