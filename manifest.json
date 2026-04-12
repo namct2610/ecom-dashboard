@@ -1,7 +1,7 @@
 {
-  "version": "1.1.5",
-  "download_url": "https://github.com/namct2610/ecom-dashboard/releases/download/v1.1.5/dashboard-v3-1.1.5.zip",
-  "changelog": "- Sửa heatmap 2 cột vừa layout, không phá vỡ giao diện",
+  "version": "1.1.6",
+  "download_url": "https://github.com/namct2610/ecom-dashboard/releases/download/v1.1.6/dashboard-v3-1.1.6.zip",
+  "changelog": "- Thu gọn/mở rộng sidebar (click nút ở footer)\n- Tooltip tên trang khi sidebar collapsed\n- Lưu trạng thái collapse vào localStorage",
   "min_php": "8.1",
   "released_at": "2026-04-12"
 }
