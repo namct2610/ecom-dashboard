@@ -16,8 +16,8 @@ uploads/*
 # ── Dependencies (exclude — run composer install on host or use build.sh) ──
 vendor/
 
-# ── Dev / planning files (now in others/) ─────────────────────────────────
-# others/ is tracked in git but excluded from build zip via build.sh
+# ── Dev / planning files ───────────────────────────────────────────────────
+others/
 
 # ── OS ─────────────────────────────────────────────────────────────────────
 .DS_Store
