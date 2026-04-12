@@ -391,9 +391,24 @@ $initials = strtoupper(substr($user, 0, 2));
         </div>
 
         <div class="grid-4 mb-4">
-          <div class="kpi-card border-purple" style="grid-column:span 1">
+          <div class="kpi-card border-purple">
             <div class="kpi-label">Tổng SKU</div>
             <div class="kpi-value" id="total-skus">—</div>
+          </div>
+          <div class="kpi-card border-blue">
+            <div class="kpi-label">Tổng SL đã bán</div>
+            <div class="kpi-value" id="prod-qty-all">—</div>
+            <div class="kpi-sub">Kể cả đơn huỷ</div>
+          </div>
+          <div class="kpi-card border-green">
+            <div class="kpi-label">Tổng SL đã giao</div>
+            <div class="kpi-value" id="prod-qty-delivered">—</div>
+            <div class="kpi-sub">Đơn hoàn thành</div>
+          </div>
+          <div class="kpi-card border-orange">
+            <div class="kpi-label">SL TB/đơn hàng</div>
+            <div class="kpi-value" id="prod-avg-qty">—</div>
+            <div class="kpi-sub">Sản phẩm/đơn</div>
           </div>
         </div>
 

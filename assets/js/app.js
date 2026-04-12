@@ -499,7 +499,10 @@ async function loadProducts() {
   try {
     const data = await api('products.php');
 
-    qs('#total-skus').textContent = fmtNum(data.total_skus);
+    qs('#total-skus').textContent      = fmtNum(data.total_skus);
+    qs('#prod-qty-all').textContent    = fmtNum(data.total_qty_all);
+    qs('#prod-qty-delivered').textContent = fmtNum(data.total_qty_delivered);
+    qs('#prod-avg-qty').textContent    = data.avg_qty_per_order.toFixed(2);
 
     Charts.renderTopQtyBar('chartTopQty', data.top_qty);
     Charts.renderTopRevBar('chartTopRev', data.top_revenue);
@@ -571,6 +574,7 @@ async function loadComparison() {
 async function loadHeatmaps() {
   try {
     const data = await api('heatmap.php');
+    _ensureHeatmapTooltip();
     renderHeatmap7x24('heatmap7x24',        data.heatmap, data.max_orders,  'orders');
     renderHeatmap7x24('heatmapRevenue7x24', data.heatmap, data.max_revenue, 'revenue');
     Charts.renderRevByCity('chartRevenueCity', data.revenue_by_city);
@@ -874,12 +878,34 @@ function renderHeatmap7x24(id, heatmap, maxVal, metric = 'orders') {
       const v     = map[`${wd}-${h}`] || 0;
       const level = v === 0 ? 0 : Math.min(10, Math.ceil((v / max) * 10));
       const label = metric === 'revenue' ? fmtVND(v) : `${v} đơn`;
-      html += `<div class="heatmap-cell" style="background:${pal[level]}" title="${days[wd]} ${h}:00 — ${label}"></div>`;
+      html += `<div class="heatmap-cell" style="background:${pal[level]}" data-label="${days[wd]} ${h}:00 — ${label}"></div>`;
     }
     html += '</div>';
   }
   html += '</div>';
   el.innerHTML = html;
+}
+
+// Single shared tooltip for all heatmaps — zero per-cell DOM overhead
+let _heatmapTooltipEl = null;
+function _ensureHeatmapTooltip() {
+  if (_heatmapTooltipEl) return _heatmapTooltipEl;
+  _heatmapTooltipEl = document.createElement('div');
+  _heatmapTooltipEl.className = 'heatmap-tooltip';
+  document.body.appendChild(_heatmapTooltipEl);
+
+  document.addEventListener('mouseover', e => {
+    const cell = e.target.closest('.heatmap-cell[data-label]');
+    if (!cell) { _heatmapTooltipEl.style.display = 'none'; return; }
+    _heatmapTooltipEl.textContent = cell.dataset.label;
+    _heatmapTooltipEl.style.display = 'block';
+  });
+  document.addEventListener('mousemove', e => {
+    if (_heatmapTooltipEl.style.display === 'none') return;
+    _heatmapTooltipEl.style.left = (e.clientX + 14) + 'px';
+    _heatmapTooltipEl.style.top  = (e.clientY - 32) + 'px';
+  });
+  return _heatmapTooltipEl;
 }
 
 function renderUploadHistory(id, history) {

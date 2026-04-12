@@ -204,26 +204,28 @@ tbody tr:hover td { background: var(--surface-hover); }
 
 /* ── Heatmap ───────────────────────────────────────────────────────────── */
 .heatmap-container { overflow-x: auto; padding-bottom: 4px; }
-.heatmap-grid { font-size: 10px; display: inline-block; }
-.heatmap-row { display: flex; align-items: center; margin-bottom: 2px; }
-.heatmap-label-day { width: 32px; font-size: 10px; color: var(--text-muted); font-weight: 500; flex-shrink: 0; }
-.heatmap-label-hour { width: 16px; text-align: center; font-size: 9px; color: var(--text-muted); }
+.heatmap-grid { font-size: 10px; display: block; width: 100%; }
+.heatmap-row { display: flex; align-items: center; margin-bottom: 2px; width: 100%; }
+.heatmap-label-day { flex-shrink: 0; width: 32px; font-size: 10px; color: var(--text-muted); font-weight: 500; }
+.heatmap-label-hour { flex: 1; min-width: 0; text-align: center; font-size: 9px; color: var(--text-muted); }
 .heatmap-cell {
-  width: 16px; height: 16px;
+  flex: 1; min-width: 0; height: 16px;
   border-radius: 2px;
   cursor: default;
-  transition: transform 0.1s;
-  position: relative;
+  transition: transform 0.08s;
 }
-.heatmap-cell:hover { transform: scale(1.2); z-index: 1; }
-.heatmap-cell .cell-tooltip {
+.heatmap-cell:hover { transform: scale(1.25); z-index: 1; }
+/* shared floating tooltip — positioned by JS */
+.heatmap-tooltip {
   display: none;
-  position: absolute; bottom: calc(100% + 4px); left: 50%; transform: translateX(-50%);
-  background: var(--text-primary); color: white;
-  font-size: 10px; padding: 4px 8px; border-radius: var(--radius-sm);
-  white-space: nowrap; z-index: 10; pointer-events: none;
+  position: fixed;
+  background: #1e293b; color: #f1f5f9;
+  font-size: 11px; font-weight: 500;
+  padding: 4px 9px;
+  border-radius: var(--radius-sm);
+  white-space: nowrap; pointer-events: none;
+  z-index: 9999;
 }
-.heatmap-cell:hover .cell-tooltip { display: block; }
 
 /* ── Empty state ───────────────────────────────────────────────────────── */
 .empty-state {

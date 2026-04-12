@@ -8,12 +8,12 @@ require_auth();
 require_method('GET');
 
 try {
-    $pdo    = db($config);
-    $params = [];
-    $where  = sql_filters($params);
+    $pdo       = db($config);
+    $paramsAll = [];
+    $whereAll  = sql_filters($paramsAll);   // no status filter — for "all incl. cancelled"
 
-    // Append completed/delivered filter
-    $where .= " AND normalized_status IN ('completed','delivered')";
+    $params = $paramsAll;
+    $where  = $whereAll . " AND normalized_status IN ('completed','delivered')";
 
     $limit = min(20, max(5, (int)($_GET['limit'] ?? 10)));
 
@@ -43,10 +43,32 @@ try {
     ");
     $revStmt->execute($params);
 
-    // Total unique SKUs
+    // Total unique SKUs (completed/delivered only)
     $skuCountStmt = $pdo->prepare("SELECT COUNT(DISTINCT sku) AS cnt FROM orders {$where}");
     $skuCountStmt->execute($params);
     $totalSkus = (int)$skuCountStmt->fetchColumn();
+
+    // Total qty sold — all orders incl. cancelled
+    $qtyAllStmt = $pdo->prepare("SELECT COALESCE(SUM(quantity),0) FROM orders {$whereAll}");
+    $qtyAllStmt->execute($paramsAll);
+    $totalQtyAll = (int)$qtyAllStmt->fetchColumn();
+
+    // Total qty delivered — completed/delivered only
+    $qtyDelStmt = $pdo->prepare("SELECT COALESCE(SUM(quantity),0) FROM orders {$where}");
+    $qtyDelStmt->execute($params);
+    $totalQtyDelivered = (int)$qtyDelStmt->fetchColumn();
+
+    // Avg qty per order — total_qty_delivered / distinct orders (completed/delivered)
+    $avgStmt = $pdo->prepare("
+        SELECT COALESCE(SUM(quantity),0) AS qty,
+               COUNT(DISTINCT CONCAT(platform,':',order_id)) AS orders
+        FROM orders {$where}
+    ");
+    $avgStmt->execute($params);
+    $avgRow = $avgStmt->fetch();
+    $avgQtyPerOrder = $avgRow['orders'] > 0
+        ? round((float)$avgRow['qty'] / (int)$avgRow['orders'], 2)
+        : 0.0;
 
     // All products for table
     $allStmt = $pdo->prepare("
@@ -71,11 +93,14 @@ try {
     ], $rows);
 
     json_response([
-        'success'     => true,
-        'total_skus'  => $totalSkus,
-        'top_qty'     => $fmt($qtyStmt->fetchAll()),
-        'top_revenue' => $fmt($revStmt->fetchAll()),
-        'all'         => $fmt($allStmt->fetchAll()),
+        'success'            => true,
+        'total_skus'         => $totalSkus,
+        'total_qty_all'      => $totalQtyAll,
+        'total_qty_delivered'=> $totalQtyDelivered,
+        'avg_qty_per_order'  => $avgQtyPerOrder,
+        'top_qty'            => $fmt($qtyStmt->fetchAll()),
+        'top_revenue'        => $fmt($revStmt->fetchAll()),
+        'all'                => $fmt($allStmt->fetchAll()),
     ]);
 } catch (\Throwable $e) {
     json_exception($e, 'Không thể tải dữ liệu sản phẩm.');
