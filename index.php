@@ -950,7 +950,7 @@ $initials = strtoupper(substr($user, 0, 2));
       <!-- ── Cài đặt ────────────────────────────────────────────────────── -->
       <div class="page" id="page-settings">
         <div class="page-header">
-          <h1>Cài đặt hệ thống</h1>
+          <h1>Cài đặt hệ thống <span id="currentVersionBadge" style="font-size:13px;font-weight:500;color:var(--text-muted);vertical-align:middle"></span></h1>
           <p>Thông tin server, database và các thao tác quản trị nâng cao</p>
         </div>
 

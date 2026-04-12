@@ -1207,6 +1207,9 @@ async function loadUpdateCard() {
 
     if (urlInput) urlInput.value = data.manifest_url || '';
 
+    const vBadge = qs('#currentVersionBadge');
+    if (vBadge) vBadge.textContent = 'v' + data.current;
+
     const badge = qs('#updateNavBadge');
     if (badge) badge.style.display = data.has_update ? '' : 'none';
 
