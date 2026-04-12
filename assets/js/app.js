@@ -1550,7 +1550,9 @@ function renderLazadaAccountsTable(accounts) {
     const expiry   = a.access_token_expire_at ? a.access_token_expire_at.substring(0, 16) : '—';
     const synced   = a.last_synced_at ? a.last_synced_at.substring(0, 16) : 'Chưa đồng bộ';
     const fromDate = a.sync_from_date || '';
+    const todayStr = new Date().toISOString().substring(0, 10);
     const actStyle = a.is_active ? 'color:var(--green,#22c55e)' : 'color:var(--text-muted)';
+    const inputStyle = 'border:1px solid var(--border);border-radius:4px;padding:2px 4px;background:var(--bg-card);color:var(--text-primary);font-size:12px;width:100px';
 
     return `<tr>
       <td><strong>${escHtml(a.account_name || a.account_id)}</strong><br><span style="font-size:11px;color:var(--text-muted)">${escHtml(a.account_id)}</span></td>
@@ -1558,8 +1560,13 @@ function renderLazadaAccountsTable(accounts) {
       <td style="${actStyle};font-size:12px">${active}</td>
       <td style="font-size:12px">${expiry}</td>
       <td style="font-size:12px">${synced}</td>
-      <td><input type="date" class="lazada-sync-from-date" data-account="${escHtml(a.account_id)}" value="${escHtml(fromDate)}"
-          style="border:1px solid var(--border);border-radius:4px;padding:2px 6px;background:var(--bg-card);color:var(--text-primary);font-size:12px;width:100%"></td>
+      <td style="white-space:nowrap">
+        <input type="date" class="lazada-sync-from-date" data-account="${escHtml(a.account_id)}" value="${escHtml(fromDate)}"
+            style="${inputStyle}" title="Từ ngày">
+        <span style="font-size:11px;color:var(--text-muted);margin:0 2px">→</span>
+        <input type="date" class="lazada-sync-to-date" data-account="${escHtml(a.account_id)}" value="${escHtml(todayStr)}"
+            style="${inputStyle}" title="Đến ngày">
+      </td>
       <td style="display:flex;gap:6px;flex-wrap:wrap">
         <button class="btn btn-primary btn-sm btn-lazada-sync" data-account="${escHtml(a.account_id)}" title="Đồng bộ">Sync</button>
         <button class="btn btn-secondary btn-sm btn-lazada-disconnect" data-account="${escHtml(a.account_id)}" title="Ngắt kết nối" style="color:var(--red,#ef4444)">✕</button>
@@ -1601,8 +1608,17 @@ async function syncLazadaAccount(accountId) {
   const resultsEl = qs('#lazadaSyncResults');
   if (resultsEl) resultsEl.innerHTML = '<div style="color:var(--text-muted);font-size:13px">Đang đồng bộ...</div>';
 
+  // Read date range inputs for this account
+  const fromInput = accountId ? qs(`.lazada-sync-from-date[data-account="${CSS.escape(accountId)}"]`) : null;
+  const toInput   = accountId ? qs(`.lazada-sync-to-date[data-account="${CSS.escape(accountId)}"]`)   : null;
+  const dateFrom  = fromInput?.value || '';
+  const dateTo    = toInput?.value   || '';
+
   try {
-    const body = accountId ? { action: 'sync', account_id: accountId } : { action: 'sync' };
+    const body = { action: 'sync' };
+    if (accountId) body.account_id = accountId;
+    if (dateFrom)  body.date_from  = dateFrom;
+    if (dateTo)    body.date_to    = dateTo;
     const res  = await apiFetch('api/lazada-connect.php', { method: 'POST', body: JSON.stringify(body) });
 
     if (!res.success) {
