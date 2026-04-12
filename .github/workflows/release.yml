@@ -1,0 +1,58 @@
+name: Build & Release
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: pdo, pdo_mysql, json, mbstring, curl, zip, gd, openssl
+          coverage: none
+
+      - name: Install Composer dependencies
+        run: composer install --no-dev --optimize-autoloader --quiet
+
+      - name: Read version
+        id: ver
+        run: |
+          VERSION=$(cat version.txt | tr -d '[:space:]')
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "tag=v${VERSION}" >> $GITHUB_OUTPUT
+
+      - name: Build ZIP
+        run: |
+          chmod +x build.sh
+          ./build.sh
+          # build.sh outputs to parent dir — move here with versioned name
+          ZIPFILE=$(ls ${{ github.workspace }}/../dashboard-v3-*.zip 2>/dev/null | head -1)
+          VERSION="${{ steps.ver.outputs.version }}"
+          cp "$ZIPFILE" "${{ github.workspace }}/dashboard-v3-${VERSION}.zip"
+          echo "ZIP=dashboard-v3-${VERSION}.zip" >> $GITHUB_ENV
+
+      - name: Read changelog from manifest
+        id: changelog
+        run: |
+          CHANGELOG=$(php -r "echo json_decode(file_get_contents('manifest.json'),true)['changelog'] ?? '';")
+          echo "text=${CHANGELOG}" >> $GITHUB_OUTPUT
+
+      - name: Create or update GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.ver.outputs.tag }}
+          name: "Dashboard v3 — ${{ steps.ver.outputs.tag }}"
+          body: ${{ steps.changelog.outputs.text }}
+          files: ${{ env.ZIP }}
+          token: ${{ secrets.GITHUB_TOKEN }}
