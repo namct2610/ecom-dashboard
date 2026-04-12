@@ -114,14 +114,17 @@
 /* Mode toggle (Tháng / Năm) */
 .pp-modes {
   display: flex;
+  align-items: stretch;
+  height: 30px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 6px;
   padding: 2px;
   gap: 1px;
+  box-sizing: border-box;
 }
 .pp-mode {
-  padding: 4px 11px;
+  padding: 0 11px;
   border: none;
   border-radius: 4px;
   background: transparent;
@@ -132,7 +135,8 @@
   cursor: pointer;
   transition: all 0.15s;
   white-space: nowrap;
-  line-height: 1.4;
+  display: flex;
+  align-items: center;
 }
 .pp-mode.active {
   background: var(--surface-card);
@@ -217,10 +221,11 @@
   display: flex;
   flex-wrap: wrap;
   gap: 5px;
-  padding-bottom: 11px;
-  margin-bottom: 11px;
+  padding-bottom: 10px;
+  margin-bottom: 10px;
   border-bottom: 1px solid var(--border);
 }
+.pp-presets-period { border-bottom: none; padding-bottom: 0; margin-bottom: 0; }
 .pp-preset {
   padding: 5px 10px;
   border: 1px solid var(--border);
@@ -237,6 +242,17 @@
   background: var(--primary-subtle);
   color: var(--primary);
   border-color: var(--primary-light);
+}
+/* Range presets (Hôm nay, 7 ngày…) có màu khác biệt */
+.pp-preset-range {
+  background: #f0f9ff;
+  border-color: #bae6fd;
+  color: #0369a1;
+}
+.pp-preset-range:hover {
+  background: #e0f2fe;
+  color: #0284c7;
+  border-color: #7dd3fc;
 }
 
 /* Grid header (year navigator) */

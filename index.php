@@ -169,6 +169,12 @@ $initials = strtoupper(substr($user, 0, 2));
         </div>
         <div class="pp-panel" id="periodPanel">
           <div class="pp-presets">
+            <button class="pp-preset pp-preset-range" data-preset="today">Hôm nay</button>
+            <button class="pp-preset pp-preset-range" data-preset="yesterday">Hôm qua</button>
+            <button class="pp-preset pp-preset-range" data-preset="7days">7 ngày</button>
+            <button class="pp-preset pp-preset-range" data-preset="30days">30 ngày</button>
+          </div>
+          <div class="pp-presets pp-presets-period">
             <button class="pp-preset" data-preset="this-month">Tháng này</button>
             <button class="pp-preset" data-preset="last-month">Tháng trước</button>
             <button class="pp-preset" data-preset="this-year">Năm nay</button>
