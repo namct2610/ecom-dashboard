@@ -153,11 +153,42 @@ $initials = strtoupper(substr($user, 0, 2));
 
       <div class="header-spacer"></div>
 
-      <!-- Time filter -->
-      <div class="time-filter">
-        <button class="time-mode-btn active" data-mode="month">Tháng</button>
-        <button class="time-mode-btn" data-mode="year">Năm</button>
-        <select id="periodSelect"></select>
+      <!-- Time filter / Period picker -->
+      <div class="period-picker" id="periodPicker">
+        <div class="period-modes">
+          <button class="period-mode-btn active" data-mode="month">Tháng</button>
+          <button class="period-mode-btn" data-mode="year">Năm</button>
+        </div>
+        <div class="period-nav-group">
+          <button class="period-arrow" id="periodPrev" title="Kỳ trước">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+          </button>
+          <button class="period-label-btn" id="periodLabelBtn">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            <span id="periodLabel">--</span>
+          </button>
+          <button class="period-arrow" id="periodNext" title="Kỳ sau">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+        </div>
+        <!-- Dropdown panel -->
+        <div class="period-panel" id="periodPanel" style="display:none">
+          <div class="period-presets">
+            <button class="period-preset-btn" data-preset="this-month">Tháng này</button>
+            <button class="period-preset-btn" data-preset="last-month">Tháng trước</button>
+            <button class="period-preset-btn" data-preset="this-year">Năm nay</button>
+          </div>
+          <div class="period-grid-header">
+            <button class="period-grid-arrow" id="periodGridPrev">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+            </button>
+            <span class="period-grid-year" id="periodGridYear">2026</span>
+            <button class="period-grid-arrow" id="periodGridNext">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+          </div>
+          <div class="period-grid" id="periodGrid"></div>
+        </div>
       </div>
 
       <div class="header-avatar"><?= htmlspecialchars($initials) ?></div>
