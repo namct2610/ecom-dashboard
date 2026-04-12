@@ -634,7 +634,7 @@ $initials = strtoupper(substr($user, 0, 2));
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
 
           <!-- Heatmap đơn hàng -->
-          <div class="card">
+          <div class="card" style="min-width:0">
             <div class="card-title">Đơn hàng theo ngày &amp; giờ</div>
             <div style="display:flex;align-items:center;gap:4px;margin-bottom:10px;flex-wrap:wrap">
               <span style="font-size:11px;color:var(--text-muted)">Ít</span>
@@ -649,7 +649,7 @@ $initials = strtoupper(substr($user, 0, 2));
           </div>
 
           <!-- Heatmap doanh thu -->
-          <div class="card">
+          <div class="card" style="min-width:0">
             <div class="card-title">Doanh thu theo ngày &amp; giờ</div>
             <div style="display:flex;align-items:center;gap:4px;margin-bottom:10px;flex-wrap:wrap">
               <span style="font-size:11px;color:var(--text-muted)">Ít</span>

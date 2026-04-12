@@ -206,11 +206,11 @@ tbody tr:hover td { background: var(--surface-hover); }
 .heatmap-container { overflow-x: auto; padding-bottom: 4px; }
 .heatmap-grid { font-size: 10px; display: inline-block; }
 .heatmap-row { display: flex; align-items: center; margin-bottom: 2px; }
-.heatmap-label-day { width: 44px; font-size: 10px; color: var(--text-muted); font-weight: 500; flex-shrink: 0; }
-.heatmap-label-hour { width: 22px; text-align: center; font-size: 9px; color: var(--text-muted); }
+.heatmap-label-day { width: 32px; font-size: 10px; color: var(--text-muted); font-weight: 500; flex-shrink: 0; }
+.heatmap-label-hour { width: 16px; text-align: center; font-size: 9px; color: var(--text-muted); }
 .heatmap-cell {
-  width: 22px; height: 22px;
-  border-radius: 3px;
+  width: 16px; height: 16px;
+  border-radius: 2px;
   cursor: default;
   transition: transform 0.1s;
   position: relative;
