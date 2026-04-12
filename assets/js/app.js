@@ -1830,4 +1830,47 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Logout
   qs('#btnLogout')?.addEventListener('click', logout);
+
+  // Sidebar collapse
+  setupSidebarCollapse();
 });
+
+function setupSidebarCollapse() {
+  const sidebar  = qs('#sidebar');
+  const btn      = qs('#btnCollapseSidebar');
+  if (!sidebar || !btn) return;
+
+  // restore saved state
+  if (localStorage.getItem('sidebarCollapsed') === '1') {
+    sidebar.classList.add('collapsed');
+  }
+
+  btn.addEventListener('click', () => {
+    const collapsed = sidebar.classList.toggle('collapsed');
+    localStorage.setItem('sidebarCollapsed', collapsed ? '1' : '0');
+  });
+
+  // tooltip for collapsed nav items
+  const tooltip = document.createElement('div');
+  tooltip.className = 'sidebar-tooltip';
+  document.body.appendChild(tooltip);
+
+  let tooltipTimer;
+  qsa('.nav-item[data-label]').forEach(item => {
+    item.addEventListener('mouseenter', e => {
+      if (!sidebar.classList.contains('collapsed')) return;
+      const label = item.dataset.label;
+      tooltip.textContent = label;
+      const r = item.getBoundingClientRect();
+      tooltip.style.top  = (r.top + r.height / 2) + 'px';
+      tooltip.style.left = (r.right + 8) + 'px';
+      tooltip.style.transform = 'translateY(-50%)';
+      clearTimeout(tooltipTimer);
+      tooltip.classList.add('visible');
+    });
+    item.addEventListener('mouseleave', () => {
+      clearTimeout(tooltipTimer);
+      tooltipTimer = setTimeout(() => tooltip.classList.remove('visible'), 80);
+    });
+  });
+}
