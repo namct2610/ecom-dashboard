@@ -1,7 +1,7 @@
 {
-  "version": "1.1.3",
-  "download_url": "https://github.com/namct2610/ecom-dashboard/releases/download/v1.1.3/dashboard-v3-1.1.3.zip",
-  "changelog": "- Bộ lọc thời gian: thêm preset Hôm nay, Hôm qua, 7 ngày, 30 ngày\n- Bộ lọc: fix chiều cao Tháng/Năm bằng thanh nav\n- Backend: hỗ trợ lọc theo date_from/date_to\n- Rebuild period picker UI (bỏ inline SVG)\n- Auto-update: tự migrate DB schema sau khi cập nhật",
+  "version": "1.1.4",
+  "download_url": "https://github.com/namct2610/ecom-dashboard/releases/download/v1.1.4/dashboard-v3-1.1.4.zip",
+  "changelog": "- Thêm heatmap doanh thu theo ngày & giờ (màu xanh lá) cạnh heatmap đơn hàng\n- Heatmap tooltip hiển thị số tiền định dạng VNĐ\n- Heatmap.php hỗ trợ lọc theo date_from/date_to",
   "min_php": "8.1",
   "released_at": "2026-04-12"
 }
