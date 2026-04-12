@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Orders Management | Architect Intelligence</title>
+<script type="text/javascript" nonce="e2d118733bdd4b7fa13a97c7580" src="//local.adguard.org?ts=1775792680710&amp;type=content-script&amp;dmn=contribution.usercontent.google.com&amp;url=https%3A%2F%2Fcontribution.usercontent.google.com%2Fdownload%3Fc%3DCgthaWRhX2NvZGVmeBJ8Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpbCiVodG1sXzFiMTcyNmI0YjNmZDQyNjBiMzYyMDYxNjE4OTZhMDU3EgsSBxD-luSgjQ4YAZIBJAoKcHJvamVjdF9pZBIWQhQxNTI3ODk5ODgyOTQxNzMwNjg1MQ%26filename%3D%26opi%3D89354086&amp;app=com.vivaldi.Vivaldi&amp;css=3&amp;js=1&amp;rel=1&amp;rji=1&amp;sbe=1&amp;stealth=1&amp;st-push&amp;st-loc&amp;st-java&amp;st-dnt"></script><script type="text/javascript" nonce="e2d118733bdd4b7fa13a97c7580" src="//local.adguard.org?ts=1775792680710&amp;name=AdGuard%20Assistant&amp;name=AdGuard%20Extra&amp;type=user-script"></script><script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary-fixed": "#dde1ff",
+                        "primary-container": "#1e40af",
+                        "on-error-container": "#93000a",
+                        "secondary-container": "#d5e3fc",
+                        "tertiary-fixed": "#6ffbbe",
+                        "error": "#ba1a1a",
+                        "surface-bright": "#f7f9fb",
+                        "inverse-primary": "#b8c4ff",
+                        "on-surface-variant": "#444653",
+                        "tertiary": "#003d27",
+                        "surface-variant": "#e0e3e5",
+                        "on-secondary-fixed-variant": "#3a485b",
+                        "surface-container-lowest": "#ffffff",
+                        "on-primary-fixed-variant": "#173bab",
+                        "secondary": "#515f74",
+                        "on-primary-container": "#a8b8ff",
+                        "on-surface": "#191c1e",
+                        "on-primary-fixed": "#001453",
+                        "tertiary-fixed-dim": "#4edea3",
+                        "surface-container-highest": "#e0e3e5",
+                        "surface-tint": "#3755c3",
+                        "surface-dim": "#d8dadc",
+                        "error-container": "#ffdad6",
+                        "on-primary": "#ffffff",
+                        "primary": "#00288e",
+                        "on-error": "#ffffff",
+                        "outline": "#757684",
+                        "on-secondary": "#ffffff",
+                        "on-secondary-container": "#57657a",
+                        "on-secondary-fixed": "#0d1c2e",
+                        "tertiary-container": "#00563a",
+                        "primary-fixed-dim": "#b8c4ff",
+                        "on-tertiary-fixed-variant": "#005236",
+                        "secondary-fixed": "#d5e3fc",
+                        "secondary-fixed-dim": "#b9c7df",
+                        "outline-variant": "#c4c5d5",
+                        "on-tertiary": "#ffffff",
+                        "background": "#f7f9fb",
+                        "surface-container-high": "#e6e8ea",
+                        "inverse-surface": "#2d3133",
+                        "on-tertiary-fixed": "#002113",
+                        "on-tertiary-container": "#3fd298",
+                        "surface-container-low": "#f2f4f6",
+                        "inverse-on-surface": "#eff1f3",
+                        "surface-container": "#eceef0",
+                        "surface": "#f7f9fb",
+                        "on-background": "#191c1e"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Inter"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; background-color: #f7f9fb; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .glass-tooltip { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(196, 197, 213, 0.2); }
+        .shadow-ambient { box-shadow: 0 4px 6px -1px rgba(0, 40, 175, 0.04), 0 10px 15px -3px rgba(0, 40, 175, 0.08); }
+    </style>
+</head>
+<body class="bg-surface text-on-surface">
+<!-- SideNavBar -->
+<aside class="h-screen w-64 fixed left-0 top-0 z-40 bg-slate-100 dark:bg-slate-900 flex flex-col py-6 px-4 font-sans antialiased text-sm font-medium Inter">
+<div class="mb-10 px-2 flex items-center gap-3">
+<div class="w-10 h-10 bg-primary rounded-lg flex items-center justify-center text-white shadow-lg">
+<span class="material-symbols-outlined">architecture</span>
+</div>
+<div>
+<h1 class="text-xl font-bold tracking-tight text-blue-900 dark:text-blue-100">Architect Intelligence</h1>
+<p class="text-xs text-slate-500">E-commerce Suite</p>
+</div>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors duration-200 text-slate-500 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span>Overview</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-blue-700 dark:text-blue-400 font-bold border-r-4 border-blue-700 dark:border-blue-400 bg-blue-50 dark:bg-blue-900/20 scale-95 active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined" data-icon="shopping_cart">shopping_cart</span>
+<span>Orders</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors duration-200 text-slate-500 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50" href="#">
+<span class="material-symbols-outlined" data-icon="inventory_2">inventory_2</span>
+<span>Products</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors duration-200 text-slate-500 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50" href="#">
+<span class="material-symbols-outlined" data-icon="group">group</span>
+<span>Customers</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors duration-200 text-slate-500 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50" href="#">
+<span class="material-symbols-outlined" data-icon="trending_up">trending_up</span>
+<span>Traffic</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors duration-200 text-slate-500 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50" href="#">
+<span class="material-symbols-outlined" data-icon="compare_arrows">compare_arrows</span>
+<span>Comparison</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors duration-200 text-slate-500 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50" href="#">
+<span class="material-symbols-outlined" data-icon="layers">layers</span>
+<span>Heatmaps</span>
+</a>
+</nav>
+<div class="mt-auto">
+<button class="w-full py-3 px-4 bg-gradient-to-r from-primary to-primary-container text-white rounded-xl font-bold shadow-ambient flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-sm">add</span>
+                Add New Store
+            </button>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="ml-64 min-h-screen flex flex-col">
+<!-- TopNavBar -->
+<header class="fixed top-0 right-0 w-[calc(100%-16rem)] h-16 z-30 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md flex justify-between items-center px-8 border-b border-slate-100 dark:border-slate-800">
+<div class="flex items-center gap-8">
+<span class="text-lg font-black text-blue-800 dark:text-blue-200 tracking-wide">Marketplace Insights</span>
+<div class="relative hidden lg:block">
+<span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 material-symbols-outlined text-xl">search</span>
+<input class="pl-10 pr-4 py-1.5 bg-surface-container-low border-none rounded-full text-sm w-64 focus:ring-2 focus:ring-primary/20 transition-all" placeholder="Search insights..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<nav class="flex gap-6 text-sm tracking-wide font-medium Inter">
+<a class="text-blue-700 dark:text-blue-400 border-b-2 border-blue-700 dark:border-blue-400 pb-1" href="#">All</a>
+<a class="text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-300" href="#">Shopee</a>
+<a class="text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-300" href="#">Lazada</a>
+<a class="text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-300" href="#">TikTok</a>
+</nav>
+<div class="h-6 w-px bg-slate-200"></div>
+<div class="flex items-center gap-4">
+<button class="flex items-center gap-2 px-3 py-1.5 bg-surface-container-high rounded-lg text-xs font-bold text-on-surface-variant">
+<span class="material-symbols-outlined text-sm">calendar_today</span>
+                        Jan 1 - Jan 30, 2024
+                    </button>
+<button class="text-slate-500 hover:text-primary transition-colors opacity-80 hover:opacity-100">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<img alt="User Profile" class="w-8 h-8 rounded-full ring-2 ring-primary/10" data-alt="Professional headshot of a businessman in a navy suit with confident expression, clean corporate office background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDqOZxWB_DtVSAAQCEZtTF9LS39gZqqdGMvVwnzlZ-7eDRklG78Ta2vS1nWcP_eLw28DLZwB7Qt1MvgCEpW6pbjazPTkiEDZ67npiLyrezimTPCCG_uSWsMNh8ymInZKDH4Cs-9ze5C_rZHVrXAooaUzLu1XmZ7fvRLNby_T0qgefdcqvH2NVMmkCq5CrE4sPAYkxk0BnfDbK1ghVII1qgEBBRQw6YUcAqhfGkJJ9nkJ-HgIEPCI6ThIEVVdp5H0Q6fw-JyNeSyS7FW"/>
+</div>
+</div>
+</header>
+<!-- Content Canvas -->
+<div class="mt-16 p-8 space-y-8 flex-1 bg-surface-container-low overflow-y-auto">
+<!-- Bento Header Metrics -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+<!-- Total Orders -->
+<div class="bg-surface-container-lowest p-6 rounded-xl shadow-ambient">
+<div class="flex justify-between items-start mb-4">
+<span class="p-2 bg-primary-fixed rounded-lg text-primary">
+<span class="material-symbols-outlined">shopping_bag</span>
+</span>
+<span class="text-xs font-bold text-tertiary flex items-center gap-1">
+<span class="material-symbols-outlined text-xs">trending_up</span>
+                            +12%
+                        </span>
+</div>
+<p class="text-on-surface-variant label-md uppercase tracking-widest text-[10px] font-bold">Total Orders</p>
+<h2 class="text-3xl font-black text-on-surface mt-1">12,842</h2>
+<p class="text-[10px] text-slate-400 mt-2">vs. last month 11,460</p>
+</div>
+<!-- Completed -->
+<div class="bg-surface-container-lowest p-6 rounded-xl shadow-ambient">
+<div class="flex justify-between items-start mb-4">
+<span class="p-2 bg-tertiary-fixed rounded-lg text-tertiary">
+<span class="material-symbols-outlined">check_circle</span>
+</span>
+<span class="text-xs font-bold text-tertiary flex items-center gap-1">
+<span class="material-symbols-outlined text-xs">trending_up</span>
+                            +8%
+                        </span>
+</div>
+<p class="text-on-surface-variant label-md uppercase tracking-widest text-[10px] font-bold">Completed</p>
+<h2 class="text-3xl font-black text-on-surface mt-1">11,204</h2>
+<p class="text-[10px] text-slate-400 mt-2">Completion rate 87.2%</p>
+</div>
+<!-- Cancelled -->
+<div class="bg-surface-container-lowest p-6 rounded-xl shadow-ambient">
+<div class="flex justify-between items-start mb-4">
+<span class="p-2 bg-error-container rounded-lg text-error">
+<span class="material-symbols-outlined">cancel</span>
+</span>
+<span class="text-xs font-bold text-error flex items-center gap-1">
+<span class="material-symbols-outlined text-xs">trending_down</span>
+                            -2%
+                        </span>
+</div>
+<p class="text-on-surface-variant label-md uppercase tracking-widest text-[10px] font-bold">Cancelled</p>
+<h2 class="text-3xl font-black text-on-surface mt-1">428</h2>
+<p class="text-[10px] text-slate-400 mt-2">Manual cancellations: 112</p>
+</div>
+<!-- Cancel Rate -->
+<div class="bg-surface-container-lowest p-6 rounded-xl shadow-ambient">
+<div class="flex justify-between items-start mb-4">
+<span class="p-2 bg-secondary-container rounded-lg text-secondary">
+<span class="material-symbols-outlined">analytics</span>
+</span>
+<div class="h-2 w-16 bg-slate-100 rounded-full overflow-hidden mt-3">
+<div class="h-full bg-error w-[3.3%]"></div>
+</div>
+</div>
+<p class="text-on-surface-variant label-md uppercase tracking-widest text-[10px] font-bold">Cancel Rate (%)</p>
+<h2 class="text-3xl font-black text-on-surface mt-1">3.3%</h2>
+<p class="text-[10px] text-slate-400 mt-2">Target benchmark &lt; 5.0%</p>
+</div>
+</div>
+<!-- Middle Charts Section -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+<!-- Order Volume Line Chart -->
+<div class="lg:col-span-8 bg-surface-container-lowest p-8 rounded-xl shadow-ambient">
+<div class="flex justify-between items-end mb-8">
+<div>
+<h3 class="text-on-surface title-md font-bold">Order Volume Velocity</h3>
+<p class="text-xs text-on-surface-variant">Real-time daily transaction tracking</p>
+</div>
+<div class="flex gap-2">
+<div class="flex items-center gap-2 text-[10px] font-bold text-on-surface-variant">
+<span class="w-3 h-1 bg-primary rounded-full"></span> This Period
+                            </div>
+<div class="flex items-center gap-2 text-[10px] font-bold text-on-surface-variant">
+<span class="w-3 h-1 bg-slate-200 rounded-full"></span> Prev Period
+                            </div>
+</div>
+</div>
+<div class="relative h-64 w-full flex items-end gap-1">
+<svg class="absolute inset-0 w-full h-full" preserveaspectratio="none">
+<defs>
+<lineargradient id="lineGrad" x1="0" x2="0" y1="0" y2="1">
+<stop offset="0%" stop-color="#00288e" stop-opacity="0.1"></stop>
+<stop offset="100%" stop-color="#00288e" stop-opacity="0"></stop>
+</lineargradient>
+</defs>
+<path d="M0,150 Q100,120 200,160 T400,100 T600,140 T800,80 T1000,120" fill="none" stroke="#00288e" stroke-width="3"></path>
+<path d="M0,150 Q100,120 200,160 T400,100 T600,140 T800,80 T1000,120 V256 H0 Z" fill="url(#lineGrad)"></path>
+<path d="M0,170 Q100,150 200,180 T400,140 T600,180 T800,130 T1000,160" fill="none" stroke="#e0e3e5" stroke-dasharray="4" stroke-width="2"></path>
+</svg>
+<div class="absolute bottom-0 left-0 w-full flex justify-between text-[10px] text-slate-400 pt-4">
+<span>01 Jan</span><span>07 Jan</span><span>14 Jan</span><span>21 Jan</span><span>28 Jan</span>
+</div>
+<div class="glass-tooltip absolute top-12 left-1/2 -translate-x-1/2 p-3 rounded-lg shadow-xl border border-white/40">
+<p class="text-[10px] font-bold text-slate-500">Jan 21, 2024</p>
+<p class="text-sm font-black text-primary">842 Orders</p>
+</div>
+</div>
+</div>
+<!-- Status Donut Chart -->
+<div class="lg:col-span-4 bg-surface-container-lowest p-8 rounded-xl shadow-ambient flex flex-col justify-between">
+<div>
+<h3 class="text-on-surface title-md font-bold">Orders by Status</h3>
+<p class="text-xs text-on-surface-variant">Lifecycle distribution</p>
+</div>
+<div class="relative py-8 flex justify-center">
+<svg class="w-48 h-48 -rotate-90">
+<circle cx="96" cy="96" fill="none" r="80" stroke="#eceef0" stroke-width="12"></circle>
+<circle cx="96" cy="96" fill="none" r="80" stroke="#00288e" stroke-dasharray="502" stroke-dashoffset="150" stroke-width="12"></circle>
+<circle cx="96" cy="96" fill="none" r="80" stroke="#005236" stroke-dasharray="502" stroke-dashoffset="400" stroke-width="12"></circle>
+<circle cx="96" cy="96" fill="none" r="80" stroke="#ba1a1a" stroke-dasharray="502" stroke-dashoffset="480" stroke-width="12"></circle>
+</svg>
+<div class="absolute inset-0 flex flex-col items-center justify-center">
+<span class="text-2xl font-black text-on-surface">12k</span>
+<span class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Total</span>
+</div>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between items-center text-xs">
+<div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-primary"></span> Completed</div>
+<span class="font-bold">72%</span>
+</div>
+<div class="flex justify-between items-center text-xs">
+<div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-tertiary"></span> Shipping</div>
+<span class="font-bold">18%</span>
+</div>
+<div class="flex justify-between items-center text-xs">
+<div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-slate-200"></span> Pending</div>
+<span class="font-bold">7%</span>
+</div>
+<div class="flex justify-between items-center text-xs">
+<div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-error"></span> Cancelled</div>
+<span class="font-bold">3%</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Marketplace Split & Heatmap -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+<!-- Orders by Platform Bar Chart -->
+<div class="lg:col-span-4 bg-surface-container-lowest p-8 rounded-xl shadow-ambient">
+<h3 class="text-on-surface title-md font-bold mb-6">Marketplace Split</h3>
+<div class="space-y-6">
+<div>
+<div class="flex justify-between text-xs mb-2">
+<span class="font-bold text-on-surface">Shopee</span>
+<span class="text-primary font-black">$45,280</span>
+</div>
+<div class="h-2 w-full bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-gradient-to-r from-primary to-primary-container w-[65%]"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between text-xs mb-2">
+<span class="font-bold text-on-surface">TikTok Shop</span>
+<span class="text-primary font-black">$28,140</span>
+</div>
+<div class="h-2 w-full bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-gradient-to-r from-primary to-primary-container w-[42%]"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between text-xs mb-2">
+<span class="font-bold text-on-surface">Lazada</span>
+<span class="text-primary font-black">$12,900</span>
+</div>
+<div class="h-2 w-full bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-gradient-to-r from-primary to-primary-container w-[21%]"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Hourly Heatmap - Restructured -->
+<div class="lg:col-span-8 bg-surface-container-lowest p-8 rounded-xl shadow-ambient">
+<h3 class="text-on-surface title-md font-bold mb-1">Peak Sales Heatmap</h3>
+<p class="text-xs text-on-surface-variant mb-4">Orders concentrated by hour and day</p>
+<div class="flex flex-col">
+<div class="flex">
+<!-- Y-Axis Labels: Days of Week -->
+<div class="flex flex-col justify-between pr-4 py-0.5 text-[10px] font-bold text-slate-400 w-12 h-36">
+<span>Mon</span>
+<span>Tue</span>
+<span>Wed</span>
+<span>Thu</span>
+<span>Fri</span>
+<span>Sat</span>
+<span>Sun</span>
+</div>
+<!-- Heatmap Grid: 7 rows x 24 cols -->
+<div class="flex-1 grid grid-cols-24 gap-1 h-36">
+<!-- Row 1 (Mon) -->
+<div class="bg-primary/5 rounded-sm"></div><div class="bg-primary/5 rounded-sm"></div><div class="bg-primary/5 rounded-sm"></div><div class="bg-primary/10 rounded-sm"></div><div class="bg-primary/10 rounded-sm"></div><div class="bg-primary/20 rounded-sm"></div><div class="bg-primary/40 rounded-sm"></div><div class="bg-primary/60 rounded-sm"></div><div class="bg-primary/80 rounded-sm"></div><div class="bg-primary rounded-sm"></div><div class="bg-primary/90 rounded-sm"></div><div class="bg-primary/80 rounded-sm"></div><div class="bg-primary/60 rounded-sm"></div><div class="bg-primary/40 rounded-sm"></div><div class="bg-primary/30 rounded-sm"></div><div class="bg-primary/40 rounded-sm"></div><div class="bg-primary/50 rounded-sm"></div><div class="bg-primary/70 rounded-sm"></div><div class="bg-primary/90 rounded-sm"></div><div class="bg-primary rounded-sm"></div><div class="bg-primary/70 rounded-sm"></div><div class="bg-primary/40 rounded-sm"></div><div class="bg-primary/20 rounded-sm"></div><div class="bg-primary/10 rounded-sm"></div>
+<!-- Row 2 (Tue) -->
+<div class="bg-primary/5 rounded-sm"></div><div class="bg-primary/5 rounded-sm"></div><div class="bg-primary/10 rounded-sm"></div><div class="bg-primary/20 rounded-sm"></div><div class="bg-primary/30 rounded-sm"></div><div class="bg-primary/50 rounded-sm"></div><div class="bg-primary/70 rounded-sm"></div><div class="bg-primary/90 rounded-sm"></div><div class="bg-primary rounded-sm"></div><div class="bg-primary rounded-sm"></div><div class="bg-primary/90 rounded-sm"></div><div class="bg-primary/80 rounded-sm"></div><div class="bg-primary/70 rounded-sm"></div><div class="bg-primary/60 rounded-sm"></div><div class="bg-primary/50 rounded-sm"></div><div class="bg-primary/60 rounded-sm"></div><div class="bg-primary/80 rounded-sm"></div><div class="bg-primary/95 rounded-sm"></div><div class="bg-primary rounded-sm"></div><div class="bg-primary/90 rounded-sm"></div><div class="bg-primary/70 rounded-sm"></div><div class="bg-primary/40 rounded-sm"></div><div class="bg-primary/20 rounded-sm"></div><div class="bg-primary/10 rounded-sm"></div>
+<!-- Row 3 (Wed) -->
+<div class="bg-primary/10 rounded-sm"></div><div class="bg-primary/5 rounded-sm"></div><div class="bg-primary/5 rounded-sm"></div><div class="bg-primary/10 rounded-sm"></div><div class="bg-primary/20 rounded-sm"></div><div class="bg-primary/40 rounded-sm"></div><div class="bg-primary/60 rounded-sm"></div><div class="bg-primary/80 rounded-sm"></div><div class="bg-primary rounded-sm"></div><div class="bg-primary/90 rounded-sm"></div><div class="bg-primary/80 rounded-sm"></div><div class="bg-primary/70 rounded-sm"></div><div class="bg-primary/60 rounded-sm"></div><div class="bg-primary/50 rounded-sm"></div><div class="bg-primary/60 rounded-sm"></div><div class="bg-primary/80 rounded-sm"></div><div class="bg-primary/90 rounded-sm"></div><div class="bg-primary rounded-sm"></div><div class="bg-primary/95 rounded-sm"></div><div class="bg-primary/80 rounded-sm"></div><div class="bg-primary/60 rounded-sm"></div><div class="bg-primary/30 rounded-sm"></div><div class="bg-primary/15 rounded-sm"></div><div class="bg-primary/5 rounded-sm"></div>
+<!-- Row 4 (Thu) -->
+<div class="bg-primary/5 rounded-sm"></div><div class="bg-primary/5 rounded-sm"></div><div class="bg-primary/10 rounded-sm"></div><div class="bg-primary/20 rounded-sm"></div><div class="bg-primary/40 rounded-sm"></div><div class="bg-primary/60 rounded-sm"></div><div class="bg-primary/80 rounded-sm"></div><div class="bg-primary/90 rounded-sm"></div><div class="bg-primary rounded-sm"></div><div class="bg-primary rounded-sm"></div><div class="bg-primary/90 rounded-sm"></div><div class="bg-primary/80 rounded-sm"></div><div class="bg-primary/70 rounded-sm"></div><div class="bg-primary/60 rounded-sm"></div><div class="bg-primary/50 rounded-sm"></div><div class="bg-primary/70 rounded-sm"></div><div class="bg-primary/85 rounded-sm"></div><div class="bg-primary/95 rounded-sm"></div><div class="bg-primary rounded-sm"></div><div class="bg-primary/90 rounded-sm"></div><div class="bg-primary/70 rounded-sm"></div><div class="bg-primary/40 rounded-sm"></div><div class="bg-primary/20 rounded-sm"></div><div class="bg-primary/5 rounded-sm"></div>
+<!-- Row 5 (Fri) -->
+<div class="bg-primary/10 rounded-sm"></div><div class="bg-primary/10 rounded-sm"></div><div class="bg-primary/20 rounded-sm"></div><div class="bg-primary/30 rounded-sm"></div><div class="bg-primary/50 rounded-sm"></div><div class="bg-primary/70 rounded-sm"></div><div class="bg-primary/90 rounded-sm"></div><div class="bg-primary/95 rounded-sm"></div><div class="bg-primary rounded-sm"></div><div class="bg-primary rounded-sm"></div><div class="bg-primary/95 rounded-sm"></div><div class="bg-primary/90 rounded-sm"></div><div class="bg-primary/80 rounded-sm"></div><div class="bg-primary/70 rounded-sm"></div><div class="bg-primary/75 rounded-sm"></div><div class="bg-primary/85 rounded-sm"></div><div class="bg-primary/95 rounded-sm"></div><div class="bg-primary rounded-sm"></div><div class="bg-primary rounded-sm"></div><div class="bg-primary/90 rounded-sm"></div><div class="bg-primary/70 rounded-sm"></div><div class="bg-primary/40 rounded-sm"></div><div class="bg-primary/20 rounded-sm"></div><div class="bg-primary/5 rounded-sm"></div>
+<!-- Row 6 (Sat) -->
+<div class="bg-primary/20 rounded-sm"></div><div class="bg-primary/20 rounded-sm"></div><div class="bg-primary/30 rounded-sm"></div><div class="bg-primary/40 rounded-sm"></div><div class="bg-primary/50 rounded-sm"></div><div class="bg-primary/40 rounded-sm"></div><div class="bg-primary/30 rounded-sm"></div><div class="bg-primary/20 rounded-sm"></div><div class="bg-primary/10 rounded-sm"></div><div class="bg-primary/15 rounded-sm"></div><div class="bg-primary/25 rounded-sm"></div><div class="bg-primary/40 rounded-sm"></div><div class="bg-primary/50 rounded-sm"></div><div class="bg-primary/60 rounded-sm"></div><div class="bg-primary/80 rounded-sm"></div><div class="bg-primary/90 rounded-sm"></div><div class="bg-primary/80 rounded-sm"></div><div class="bg-primary/70 rounded-sm"></div><div class="bg-primary/60 rounded-sm"></div><div class="bg-primary/40 rounded-sm"></div><div class="bg-primary/30 rounded-sm"></div><div class="bg-primary/20 rounded-sm"></div><div class="bg-primary/10 rounded-sm"></div><div class="bg-primary/5 rounded-sm"></div>
+<!-- Row 7 (Sun) -->
+<div class="bg-primary/30 rounded-sm"></div><div class="bg-primary/40 rounded-sm"></div><div class="bg-primary/50 rounded-sm"></div><div class="bg-primary/40 rounded-sm"></div><div class="bg-primary/30 rounded-sm"></div><div class="bg-primary/20 rounded-sm"></div><div class="bg-primary/15 rounded-sm"></div><div class="bg-primary/10 rounded-sm"></div><div class="bg-primary/10 rounded-sm"></div><div class="bg-primary/20 rounded-sm"></div><div class="bg-primary/40 rounded-sm"></div><div class="bg-primary/60 rounded-sm"></div><div class="bg-primary/80 rounded-sm"></div><div class="bg-primary/95 rounded-sm"></div><div class="bg-primary/90 rounded-sm"></div><div class="bg-primary/80 rounded-sm"></div><div class="bg-primary/60 rounded-sm"></div><div class="bg-primary/50 rounded-sm"></div><div class="bg-primary/60 rounded-sm"></div><div class="bg-primary/80 rounded-sm"></div><div class="bg-primary/70 rounded-sm"></div><div class="bg-primary/50 rounded-sm"></div><div class="bg-primary/20 rounded-sm"></div><div class="bg-primary/5 rounded-sm"></div>
+</div>
+</div>
+<!-- X-Axis Labels: Hours -->
+<div class="flex justify-between mt-3 text-[10px] font-bold text-slate-400 pl-12">
+<span>12 AM</span>
+<span>6 AM</span>
+<span>12 PM</span>
+<span>6 PM</span>
+<span>11 PM</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Data Table Section -->
+<div class="bg-surface-container-lowest rounded-xl shadow-ambient overflow-hidden">
+<div class="p-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+<div>
+<h3 class="text-on-surface title-md font-bold">Recent Orders</h3>
+<p class="text-xs text-on-surface-variant">Manage and track your latest transactions</p>
+</div>
+<div class="flex gap-4 w-full md:w-auto">
+<div class="relative flex-1 md:w-80">
+<span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 material-symbols-outlined text-lg">search</span>
+<input class="w-full pl-10 pr-4 py-2 bg-surface-container-low border-none rounded-lg text-sm focus:ring-2 focus:ring-primary/20" placeholder="Search by ID or Customer..." type="text"/>
+</div>
+<button class="px-4 py-2 bg-surface-container-high rounded-lg text-sm font-bold text-on-surface-variant flex items-center gap-2">
+<span class="material-symbols-outlined text-lg">filter_list</span>
+                            Filter
+                        </button>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low">
+<th class="px-8 py-4 label-md uppercase tracking-widest text-[10px] font-bold text-on-surface-variant">Order ID</th>
+<th class="px-8 py-4 label-md uppercase tracking-widest text-[10px] font-bold text-on-surface-variant">Customer</th>
+<th class="px-8 py-4 label-md uppercase tracking-widest text-[10px] font-bold text-on-surface-variant">Platform</th>
+<th class="px-8 py-4 label-md uppercase tracking-widest text-[10px] font-bold text-on-surface-variant">Date</th>
+<th class="px-8 py-4 label-md uppercase tracking-widest text-[10px] font-bold text-on-surface-variant text-right">Amount</th>
+<th class="px-8 py-4 label-md uppercase tracking-widest text-[10px] font-bold text-on-surface-variant">Status</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-50">
+<tr class="hover:bg-slate-50 transition-colors">
+<td class="px-8 py-4 text-sm font-bold text-primary">#ORD-9021-X</td>
+<td class="px-8 py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-primary-fixed flex items-center justify-center text-[10px] font-black text-primary">JD</div>
+<div>
+<p class="text-sm font-bold">Jane Doe</p>
+<p class="text-[10px] text-slate-500">jane.doe@email.com</p>
+</div>
+</div>
+</td>
+<td class="px-8 py-4">
+<span class="px-2 py-1 bg-orange-50 text-orange-600 rounded text-[10px] font-black uppercase">Shopee</span>
+</td>
+<td class="px-8 py-4 text-sm text-slate-600">Jan 28, 2024</td>
+<td class="px-8 py-4 text-sm font-black text-on-surface text-right">$124.50</td>
+<td class="px-8 py-4">
+<span class="px-3 py-1 bg-tertiary/10 text-tertiary rounded-full text-[10px] font-bold">Completed</span>
+</td>
+</tr>
+<tr class="hover:bg-slate-50 transition-colors">
+<td class="px-8 py-4 text-sm font-bold text-primary">#ORD-9022-K</td>
+<td class="px-8 py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-secondary-container flex items-center justify-center text-[10px] font-black text-secondary">AM</div>
+<div>
+<p class="text-sm font-bold">Alex Miller</p>
+<p class="text-[10px] text-slate-500">alex.m@web.org</p>
+</div>
+</div>
+</td>
+<td class="px-8 py-4">
+<span class="px-2 py-1 bg-black text-white rounded text-[10px] font-black uppercase">TikTok</span>
+</td>
+<td class="px-8 py-4 text-sm text-slate-600">Jan 28, 2024</td>
+<td class="px-8 py-4 text-sm font-black text-on-surface text-right">$89.00</td>
+<td class="px-8 py-4">
+<span class="px-3 py-1 bg-primary/10 text-primary rounded-full text-[10px] font-bold">Shipping</span>
+</td>
+</tr>
+<tr class="hover:bg-slate-50 transition-colors">
+<td class="px-8 py-4 text-sm font-bold text-primary">#ORD-9023-B</td>
+<td class="px-8 py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-tertiary-fixed-dim flex items-center justify-center text-[10px] font-black text-tertiary">SR</div>
+<div>
+<p class="text-sm font-bold">Sarah Reed</p>
+<p class="text-[10px] text-slate-500">s.reed@domain.com</p>
+</div>
+</div>
+</td>
+<td class="px-8 py-4">
+<span class="px-2 py-1 bg-blue-50 text-blue-600 rounded text-[10px] font-black uppercase">Lazada</span>
+</td>
+<td class="px-8 py-4 text-sm text-slate-600">Jan 27, 2024</td>
+<td class="px-8 py-4 text-sm font-black text-on-surface text-right">$442.15</td>
+<td class="px-8 py-4">
+<span class="px-3 py-1 bg-slate-100 text-slate-500 rounded-full text-[10px] font-bold">Pending</span>
+</td>
+</tr>
+<tr class="hover:bg-slate-50 transition-colors">
+<td class="px-8 py-4 text-sm font-bold text-primary">#ORD-9024-Z</td>
+<td class="px-8 py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-error-container flex items-center justify-center text-[10px] font-black text-error">MT</div>
+<div>
+<p class="text-sm font-bold">Mike Tyson</p>
+<p class="text-[10px] text-slate-500">iron.mike@legend.com</p>
+</div>
+</div>
+</td>
+<td class="px-8 py-4">
+<span class="px-2 py-1 bg-orange-50 text-orange-600 rounded text-[10px] font-black uppercase">Shopee</span>
+</td>
+<td class="px-8 py-4 text-sm text-slate-600">Jan 27, 2024</td>
+<td class="px-8 py-4 text-sm font-black text-on-surface text-right">$12.99</td>
+<td class="px-8 py-4">
+<span class="px-3 py-1 bg-error/10 text-error rounded-full text-[10px] font-bold">Cancelled</span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="p-8 flex justify-between items-center bg-slate-50/50">
+<p class="text-xs font-medium text-slate-500">Showing 4 of 12,842 orders</p>
+<div class="flex gap-2">
+<button class="px-3 py-1 border border-outline-variant/30 rounded text-xs hover:bg-white transition-colors">Previous</button>
+<button class="px-3 py-1 bg-primary text-white rounded text-xs font-bold">1</button>
+<button class="px-3 py-1 border border-outline-variant/30 rounded text-xs hover:bg-white transition-colors">2</button>
+<button class="px-3 py-1 border border-outline-variant/30 rounded text-xs hover:bg-white transition-colors">Next</button>
+</div>
+</div>
+</div>
+</div>
+</main>
+</body></html>

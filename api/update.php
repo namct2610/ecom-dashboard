@@ -128,6 +128,13 @@ try {
             json_error('Cập nhật thất bại: ' . $e->getMessage());
         }
 
+        // Run DB migrations for any new tables/columns in this version
+        try {
+            ensure_schema($pdo);
+        } catch (\Throwable $e) {
+            log_activity('warning', 'system', 'ensure_schema sau cập nhật: ' . $e->getMessage());
+        }
+
         // Invalidate cache so next check reads new version
         set_setting($pdo, 'update_last_check',  '');
         set_setting($pdo, 'update_cached_data', '');

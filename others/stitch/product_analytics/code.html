@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Product Analytics | Architect Intelligence</title>
+<script type="text/javascript" nonce="e2d118733bdd4b7fa13a97c7580" src="//local.adguard.org?ts=1775792680710&amp;type=content-script&amp;dmn=contribution.usercontent.google.com&amp;url=https%3A%2F%2Fcontribution.usercontent.google.com%2Fdownload%3Fc%3DCgthaWRhX2NvZGVmeBJ8Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpbCiVodG1sXzg0YWNlYWU4NWJlMTQ4ZTk4MTc5YTUzMTNmNDQ4ODFiEgsSBxD-luSgjQ4YAZIBJAoKcHJvamVjdF9pZBIWQhQxNTI3ODk5ODgyOTQxNzMwNjg1MQ%26filename%3D%26opi%3D89354086&amp;app=com.vivaldi.Vivaldi&amp;css=3&amp;js=1&amp;rel=1&amp;rji=1&amp;sbe=1&amp;stealth=1&amp;st-push&amp;st-loc&amp;st-java&amp;st-dnt"></script><script type="text/javascript" nonce="e2d118733bdd4b7fa13a97c7580" src="//local.adguard.org?ts=1775792680710&amp;name=AdGuard%20Assistant&amp;name=AdGuard%20Extra&amp;type=user-script"></script><script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary-fixed": "#dde1ff",
+                        "primary-container": "#1e40af",
+                        "on-error-container": "#93000a",
+                        "secondary-container": "#d5e3fc",
+                        "tertiary-fixed": "#6ffbbe",
+                        "error": "#ba1a1a",
+                        "surface-bright": "#f7f9fb",
+                        "inverse-primary": "#b8c4ff",
+                        "on-surface-variant": "#444653",
+                        "tertiary": "#003d27",
+                        "surface-variant": "#e0e3e5",
+                        "on-secondary-fixed-variant": "#3a485b",
+                        "surface-container-lowest": "#ffffff",
+                        "on-primary-fixed-variant": "#173bab",
+                        "secondary": "#515f74",
+                        "on-primary-container": "#a8b8ff",
+                        "on-surface": "#191c1e",
+                        "on-primary-fixed": "#001453",
+                        "tertiary-fixed-dim": "#4edea3",
+                        "surface-container-highest": "#e0e3e5",
+                        "surface-tint": "#3755c3",
+                        "surface-dim": "#d8dadc",
+                        "error-container": "#ffdad6",
+                        "on-primary": "#ffffff",
+                        "primary": "#00288e",
+                        "on-error": "#ffffff",
+                        "outline": "#757684",
+                        "on-secondary": "#ffffff",
+                        "on-secondary-container": "#57657a",
+                        "on-secondary-fixed": "#0d1c2e",
+                        "tertiary-container": "#00563a",
+                        "primary-fixed-dim": "#b8c4ff",
+                        "on-tertiary-fixed-variant": "#005236",
+                        "secondary-fixed": "#d5e3fc",
+                        "secondary-fixed-dim": "#b9c7df",
+                        "outline-variant": "#c4c5d5",
+                        "on-tertiary": "#ffffff",
+                        "background": "#f7f9fb",
+                        "surface-container-high": "#e6e8ea",
+                        "inverse-surface": "#2d3133",
+                        "on-tertiary-fixed": "#002113",
+                        "on-tertiary-container": "#3fd298",
+                        "surface-container-low": "#f2f4f6",
+                        "inverse-on-surface": "#eff1f3",
+                        "surface-container": "#eceef0",
+                        "surface": "#f7f9fb",
+                        "on-background": "#191c1e"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Inter"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(20px);
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface antialiased">
+<!-- SideNavBar Shell -->
+<aside class="h-screen w-64 fixed left-0 top-0 z-40 bg-slate-50 dark:bg-slate-900 flex flex-col py-6 px-4 no-border shadow-none font-sans antialiased text-sm font-medium Inter">
+<div class="mb-10 px-2 flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-primary flex items-center justify-center text-white">
+<span class="material-symbols-outlined">architecture</span>
+</div>
+<div>
+<h1 class="text-xl font-bold tracking-tight text-blue-900 dark:text-blue-100">Architect Intelligence</h1>
+<p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">E-commerce Suite</p>
+</div>
+</div>
+<nav class="flex-1 space-y-1">
+<!-- Navigation Items Mapping from JSON -->
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors duration-200 text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-300 hover:bg-slate-200/50 dark:hover:bg-slate-800/50" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span>Overview</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors duration-200 text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-300 hover:bg-slate-200/50 dark:hover:bg-slate-800/50" href="#">
+<span class="material-symbols-outlined" data-icon="shopping_cart">shopping_cart</span>
+<span>Orders</span>
+</a>
+<!-- Active State: Products -->
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-blue-700 dark:text-blue-400 font-bold border-r-4 border-blue-700 dark:border-blue-400 bg-blue-50 dark:bg-blue-900/20 scale-95 active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined" data-icon="inventory_2">inventory_2</span>
+<span>Products</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors duration-200 text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-300 hover:bg-slate-200/50 dark:hover:bg-slate-800/50" href="#">
+<span class="material-symbols-outlined" data-icon="group">group</span>
+<span>Customers</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors duration-200 text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-300 hover:bg-slate-200/50 dark:hover:bg-slate-800/50" href="#">
+<span class="material-symbols-outlined" data-icon="trending_up">trending_up</span>
+<span>Traffic</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors duration-200 text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-300 hover:bg-slate-200/50 dark:hover:bg-slate-800/50" href="#">
+<span class="material-symbols-outlined" data-icon="compare_arrows">compare_arrows</span>
+<span>Comparison</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors duration-200 text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-300 hover:bg-slate-200/50 dark:hover:bg-slate-800/50" href="#">
+<span class="material-symbols-outlined" data-icon="layers">layers</span>
+<span>Heatmaps</span>
+</a>
+</nav>
+<div class="mt-auto pt-6 border-t border-slate-200 dark:border-slate-800">
+<button class="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-primary to-primary-container text-white font-bold flex items-center justify-center gap-2 shadow-lg shadow-blue-900/10">
+<span class="material-symbols-outlined text-sm">add</span>
+                Add New Store
+            </button>
+</div>
+</aside>
+<!-- TopNavBar Shell -->
+<header class="fixed top-0 right-0 w-[calc(100%-16rem)] h-16 z-30 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md flex justify-between items-center px-8 no-border text-sm tracking-wide font-medium Inter shadow-sm">
+<div class="flex items-center gap-8">
+<span class="text-lg font-black text-blue-800 dark:text-blue-200">Marketplace Insights</span>
+<div class="flex items-center gap-6">
+<a class="text-blue-700 dark:text-blue-400 border-b-2 border-blue-700 dark:border-blue-400 pb-1 opacity-80 hover:opacity-100 transition-opacity" href="#">All</a>
+<a class="text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-300 opacity-80 hover:opacity-100 transition-opacity" href="#">Shopee</a>
+<a class="text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-300 opacity-80 hover:opacity-100 transition-opacity" href="#">Lazada</a>
+<a class="text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-300 opacity-80 hover:opacity-100 transition-opacity" href="#">TikTok</a>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="flex items-center gap-2 px-4 py-2 rounded-full bg-surface-container-low text-on-surface-variant font-semibold">
+<span class="material-symbols-outlined text-base">calendar_today</span>
+                Jan 1 - Jan 30, 2024
+            </button>
+<div class="flex items-center gap-2 border-l border-slate-200 dark:border-slate-800 pl-4">
+<span class="material-symbols-outlined p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full cursor-pointer text-slate-600" data-icon="notifications">notifications</span>
+<span class="material-symbols-outlined p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full cursor-pointer text-slate-600" data-icon="help_outline">help_outline</span>
+<div class="w-8 h-8 rounded-full bg-slate-200 overflow-hidden ml-2">
+<img alt="User Profile" class="w-full h-full object-cover" data-alt="professional portrait of a high-end business executive in a modern workspace, soft natural lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDqKpP3ghGSHQizlxhuu4x9w0QM-MIJxKEcZ-IxATOQGgi9AG9yJZTHgajrKW5MJDqS5IFAsiJWxusKG22IhPc86giKVDm1jQY72cUjwGJlwjQi8JmBHcMPrB0tHo1YZxPJlc3nRKk1KXHABo37ZVPUHkh3s17rv2OH967PMiFrDSpWBxeYENEYYuDJDK_VObE9X0K_BKSdYx2yjyGS5q_SvJwnt9N6suFyQTYp0GmZYcjJ4Nw39u95ruW2kxVMSu74Q9K1c4CIB9B5"/>
+</div>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="ml-64 pt-20 p-8 min-h-screen">
+<!-- Top Section: Asymmetric KPI & Headline -->
+<div class="grid grid-cols-12 gap-6 mb-8 items-end">
+<div class="col-span-8">
+<h2 class="text-3xl font-black tracking-tight text-on-surface mb-2">Product Performance</h2>
+<p class="text-on-surface-variant max-w-2xl">Analyze deep-layer SKU metrics across integrated marketplaces. Focus on high-velocity inventory and revenue-driving categories.</p>
+</div>
+<div class="col-span-4">
+<!-- KPI Card: Total Active SKUs -->
+<div class="bg-surface-container-lowest p-6 rounded-xl shadow-sm border border-transparent flex justify-between items-center relative overflow-hidden group">
+<div class="z-10">
+<p class="text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-1">Total Active SKUs</p>
+<p class="text-4xl font-extrabold text-primary">12,842</p>
+<div class="flex items-center gap-1 mt-2">
+<span class="material-symbols-outlined text-tertiary text-sm" style="font-variation-settings: 'FILL' 1;">trending_up</span>
+<span class="text-xs font-bold text-tertiary">+8.4% this month</span>
+</div>
+</div>
+<div class="absolute -right-4 -bottom-4 opacity-5 group-hover:opacity-10 transition-opacity">
+<span class="material-symbols-outlined text-9xl">inventory_2</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Middle Section: Bento Grid Visuals -->
+<div class="grid grid-cols-12 gap-6 mb-8">
+<!-- Bar Chart: Top 10 Best Selling (Quantity) -->
+<div class="col-span-12 lg:col-span-4 bg-surface-container-lowest p-6 rounded-xl shadow-sm">
+<div class="flex justify-between items-center mb-6">
+<h3 class="text-sm font-bold text-on-surface">Top 10 Best Sellers (Qty)</h3>
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer">more_horiz</span>
+</div>
+<div class="space-y-4">
+<!-- Stylized Bar Mockup -->
+<div class="space-y-1">
+<div class="flex justify-between text-[10px] font-bold text-on-surface-variant"><span>Velvet Sofa Cover</span><span>2.4k</span></div>
+<div class="h-2 w-full bg-surface-container-low rounded-full overflow-hidden">
+<div class="h-full bg-gradient-to-r from-primary to-primary-container" style="width: 95%;"></div>
+</div>
+</div>
+<div class="space-y-1">
+<div class="flex justify-between text-[10px] font-bold text-on-surface-variant"><span>Ergonomic Desk Chair</span><span>1.8k</span></div>
+<div class="h-2 w-full bg-surface-container-low rounded-full overflow-hidden">
+<div class="h-full bg-gradient-to-r from-primary to-primary-container" style="width: 78%;"></div>
+</div>
+</div>
+<div class="space-y-1">
+<div class="flex justify-between text-[10px] font-bold text-on-surface-variant"><span>LED Monitor Lamp</span><span>1.2k</span></div>
+<div class="h-2 w-full bg-surface-container-low rounded-full overflow-hidden">
+<div class="h-full bg-gradient-to-r from-primary to-primary-container" style="width: 60%;"></div>
+</div>
+</div>
+<div class="space-y-1">
+<div class="flex justify-between text-[10px] font-bold text-on-surface-variant"><span>Smart Kettle Gen 2</span><span>980</span></div>
+<div class="h-2 w-full bg-surface-container-low rounded-full overflow-hidden">
+<div class="h-full bg-gradient-to-r from-primary to-primary-container" style="width: 52%;"></div>
+</div>
+</div>
+<div class="space-y-1">
+<div class="flex justify-between text-[10px] font-bold text-on-surface-variant"><span>Bamboo Organizer</span><span>840</span></div>
+<div class="h-2 w-full bg-surface-container-low rounded-full overflow-hidden">
+<div class="h-full bg-gradient-to-r from-primary to-primary-container" style="width: 45%;"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Treemap Styled Grid: Revenue Contribution -->
+<div class="col-span-12 lg:col-span-5 bg-surface-container-lowest p-6 rounded-xl shadow-sm">
+<div class="flex justify-between items-center mb-6">
+<h3 class="text-sm font-bold text-on-surface">Revenue Contribution</h3>
+<div class="flex gap-2">
+<span class="text-[10px] font-bold px-2 py-0.5 rounded bg-surface-container-low text-on-surface-variant">By Category</span>
+</div>
+</div>
+<div class="grid grid-cols-6 grid-rows-2 gap-3 h-[240px]">
+<div class="col-span-3 row-span-2 bg-primary rounded-lg p-4 text-white flex flex-col justify-between hover:scale-[1.02] transition-transform">
+<p class="text-xs font-medium opacity-80">Home &amp; Living</p>
+<p class="text-2xl font-black">42%</p>
+</div>
+<div class="col-span-3 row-span-1 bg-primary-container rounded-lg p-4 text-white flex flex-col justify-between hover:scale-[1.02] transition-transform">
+<p class="text-xs font-medium opacity-80">Electronics</p>
+<p class="text-xl font-black">28%</p>
+</div>
+<div class="col-span-2 row-span-1 bg-secondary rounded-lg p-3 text-white flex flex-col justify-between hover:scale-[1.02] transition-transform">
+<p class="text-[10px] font-medium opacity-80">Kitchen</p>
+<p class="text-lg font-black">15%</p>
+</div>
+<div class="col-span-1 row-span-1 bg-surface-container-highest rounded-lg p-3 text-on-surface flex flex-col justify-between hover:scale-[1.02] transition-transform">
+<p class="text-[10px] font-medium opacity-80">Other</p>
+<p class="text-lg font-black">5%</p>
+</div>
+</div>
+</div>
+<!-- Bar Chart: Top 10 High Revenue -->
+<div class="col-span-12 lg:col-span-3 bg-surface-container-lowest p-6 rounded-xl shadow-sm">
+<div class="flex justify-between items-center mb-6">
+<h3 class="text-sm font-bold text-on-surface">Revenue Top SKUs</h3>
+</div>
+<div class="flex flex-col h-[240px] justify-between">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-surface-container-low flex-shrink-0 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary">payments</span>
+</div>
+<div class="flex-1 min-w-0">
+<p class="text-xs font-bold truncate">Ultra HD Monitor 32"</p>
+<p class="text-[10px] text-tertiary font-bold">$142,500</p>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-surface-container-low flex-shrink-0 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary">payments</span>
+</div>
+<div class="flex-1 min-w-0">
+<p class="text-xs font-bold truncate">Premium Coffee Machine</p>
+<p class="text-[10px] text-tertiary font-bold">$98,200</p>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-surface-container-low flex-shrink-0 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary">payments</span>
+</div>
+<div class="flex-1 min-w-0">
+<p class="text-xs font-bold truncate">Smart Robot Vacuum</p>
+<p class="text-[10px] text-tertiary font-bold">$74,000</p>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-surface-container-low flex-shrink-0 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary">payments</span>
+</div>
+<div class="flex-1 min-w-0">
+<p class="text-xs font-bold truncate">Noise Canceling Headph...</p>
+<p class="text-[10px] text-tertiary font-bold">$62,100</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Bottom Section: Product Performance Table -->
+<div class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden">
+<div class="p-6 flex justify-between items-center">
+<div>
+<h3 class="text-lg font-black text-on-surface">Inventory Intelligence</h3>
+<p class="text-xs text-on-surface-variant">Real-time SKU tracking and profitability matrix</p>
+</div>
+<div class="flex gap-4">
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">search</span>
+<input class="pl-10 pr-4 py-2 bg-surface-container-low border-none rounded-full text-xs w-64 focus:ring-2 focus:ring-primary/20" placeholder="Search SKU..." type="text"/>
+</div>
+<button class="flex items-center gap-2 px-4 py-2 rounded-full border border-outline-variant/30 text-xs font-bold hover:bg-surface-container-low transition-colors">
+<span class="material-symbols-outlined text-sm">filter_list</span>
+                        Filters
+                    </button>
+</div>
+</div>
+<table class="w-full text-left">
+<thead>
+<tr class="bg-surface-container-low">
+<th class="px-6 py-4 text-[10px] font-extrabold uppercase tracking-widest text-on-surface-variant">SKU</th>
+<th class="px-6 py-4 text-[10px] font-extrabold uppercase tracking-widest text-on-surface-variant">Product Name</th>
+<th class="px-6 py-4 text-[10px] font-extrabold uppercase tracking-widest text-on-surface-variant">Category</th>
+<th class="px-6 py-4 text-[10px] font-extrabold uppercase tracking-widest text-on-surface-variant text-right">Sold Qty</th>
+<th class="px-6 py-4 text-[10px] font-extrabold uppercase tracking-widest text-on-surface-variant text-right">Revenue</th>
+<th class="px-6 py-4 text-[10px] font-extrabold uppercase tracking-widest text-on-surface-variant text-right">Growth %</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-50">
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-6 py-4 text-xs font-mono text-on-surface-variant">AI-VSC-001</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-slate-100 flex-shrink-0">
+<img alt="Sofa" class="w-full h-full object-cover rounded" data-alt="modern velvet green sofa with gold legs in a minimalist living room setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBRrb45K5HIQjIP1z8-AU56aaIFoNUklofr_yCoH_Df2Tv1mjWjMihU9FOm9o_NrtuHd5V-KPsCVQ8Ra60Zd_21LcQcGqfLfuh1YGNaCGS5sZTM4MOEWV0A5yhKqK96fv7tIDEbcu65NqWG17urS15CEXrItxQ8eFk39G34KLUj6dFDdBdjKzjtkkwS51kG8M27naN37Kv19oThMscXjTsOrc4WNgA7Ml3zpZ-IzaepMOQE8q7j1gNiKGyrS9ZiIORyLv2lcKxH3ujT"/>
+</div>
+<span class="text-xs font-bold text-on-surface group-hover:text-primary transition-colors">Velvet Sofa Cover</span>
+</div>
+</td>
+<td class="px-6 py-4"><span class="text-[10px] px-2 py-0.5 rounded bg-blue-50 text-blue-700 font-bold">Home &amp; Living</span></td>
+<td class="px-6 py-4 text-xs text-right font-medium text-on-surface">2,410</td>
+<td class="px-6 py-4 text-xs text-right font-bold text-on-surface">$12,050.00</td>
+<td class="px-6 py-4 text-xs text-right font-bold text-tertiary">
+<div class="flex items-center justify-end gap-1">
+<span class="material-symbols-outlined text-[12px]" style="font-variation-settings: 'FILL' 1;">trending_up</span>
+                                12.4%
+                            </div>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-6 py-4 text-xs font-mono text-on-surface-variant">AI-EDC-042</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-slate-100 flex-shrink-0">
+<img alt="Chair" class="w-full h-full object-cover rounded" data-alt="ergonomic black office chair with mesh back on a light wood floor in a bright home office" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBTvrTQksGMH_4t4FnCTeEUyvO0fc-cBku7fw1jAauNLFtWSeGsnGKMydTOE0yBUnkiOFlrFqhRYAlKUx8ADpndzT6vf4P1DPN62PzayO-ZN7yXhsLU97xdlVcNDKkNAlBgnMLUFJe2tIfQxOgCs_lwpOM1nB6bd3wgwZxMUYgN4FoQCAJMyskKR1VwCInFUTC0qKSojeftIqtpsJin8iHo_x0OjBWc6GVoA82oa73BOHQehgMvM5CH9cBaAvO34quvz7mZyTCNFW9V"/>
+</div>
+<span class="text-xs font-bold text-on-surface group-hover:text-primary transition-colors">Ergonomic Desk Chair</span>
+</div>
+</td>
+<td class="px-6 py-4"><span class="text-[10px] px-2 py-0.5 rounded bg-blue-50 text-blue-700 font-bold">Electronics</span></td>
+<td class="px-6 py-4 text-xs text-right font-medium text-on-surface">1,824</td>
+<td class="px-6 py-4 text-xs text-right font-bold text-on-surface">$54,720.00</td>
+<td class="px-6 py-4 text-xs text-right font-bold text-tertiary">
+<div class="flex items-center justify-end gap-1">
+<span class="material-symbols-outlined text-[12px]" style="font-variation-settings: 'FILL' 1;">trending_up</span>
+                                8.1%
+                            </div>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-6 py-4 text-xs font-mono text-on-surface-variant">AI-LML-099</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-slate-100 flex-shrink-0">
+<img alt="Lamp" class="w-full h-full object-cover rounded" data-alt="minimalist black monitor light bar mounted on a flat screen display, soft glowing desk ambiance" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAJc88yOMpTdD40Xz6Yw5eNCwAPMbovUPfcUIVTIpQl_pJyDR_Ibhp3a6GRsm8uK9q2F8mfQdWsUK5GDSz2X1WDeqNJKvxM2rr_Z0rKYGaMuDfa3pjf5QgtF7u7vwhkhM69Z6FMDm-hVOeBgVU5DhqbGmH8RTsxLoReWDAJV00JjKn4nDYjuy0ddaYKObclcNGDxtH2ywyeyV5rCz-K7L3NojEMNzlxXeRrKO3-HVFoXcSCR9DdndzqOK2HgiFASmZH3RolQdOJDVGU"/>
+</div>
+<span class="text-xs font-bold text-on-surface group-hover:text-primary transition-colors">LED Monitor Lamp</span>
+</div>
+</td>
+<td class="px-6 py-4"><span class="text-[10px] px-2 py-0.5 rounded bg-blue-50 text-blue-700 font-bold">Electronics</span></td>
+<td class="px-6 py-4 text-xs text-right font-medium text-on-surface">1,202</td>
+<td class="px-6 py-4 text-xs text-right font-bold text-on-surface">$3,606.00</td>
+<td class="px-6 py-4 text-xs text-right font-bold text-error">
+<div class="flex items-center justify-end gap-1">
+<span class="material-symbols-outlined text-[12px]" style="font-variation-settings: 'FILL' 1;">trending_down</span>
+                                2.3%
+                            </div>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-6 py-4 text-xs font-mono text-on-surface-variant">AI-SKG-200</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-slate-100 flex-shrink-0">
+<img alt="Kettle" class="w-full h-full object-cover rounded" data-alt="sleek white smart electric kettle on a modern kitchen counter with soft morning light" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC11EfnmYHSduHtZ8NHxADu3jhRZDaDtLP7kAUNWVeGI1YmeZy5wLlEkPn59WIOSl-x3hKgp1A7R_jclR5MUZ4ioFSnYFfjRFXQ3Cc4a9bAvsVRsYEGOLDFuHK4GpmZrmG5-CPLK2kzv12rTS5P5aQBImn5MquGXrmCnDQtsxFwh87uUttMaZ4dFUsj-T9t07sL0a-zwPOVISilwPXLDiML0K-r_uuJXWQpwXMzjMJoEY9LgRVf_l4YM2YXRpmF3FiSJbfGzcG0jX1s"/>
+</div>
+<span class="text-xs font-bold text-on-surface group-hover:text-primary transition-colors">Smart Kettle Gen 2</span>
+</div>
+</td>
+<td class="px-6 py-4"><span class="text-[10px] px-2 py-0.5 rounded bg-blue-50 text-blue-700 font-bold">Kitchen</span></td>
+<td class="px-6 py-4 text-xs text-right font-medium text-on-surface">980</td>
+<td class="px-6 py-4 text-xs text-right font-bold text-on-surface">$14,700.00</td>
+<td class="px-6 py-4 text-xs text-right font-bold text-tertiary">
+<div class="flex items-center justify-end gap-1">
+<span class="material-symbols-outlined text-[12px]" style="font-variation-settings: 'FILL' 1;">trending_up</span>
+                                15.2%
+                            </div>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="p-6 bg-surface-container-low/50 flex justify-between items-center">
+<span class="text-[10px] font-bold text-on-surface-variant">Showing 1-10 of 12,842 products</span>
+<div class="flex gap-1">
+<button class="w-8 h-8 flex items-center justify-center rounded bg-white shadow-sm border border-slate-100"><span class="material-symbols-outlined text-xs">chevron_left</span></button>
+<button class="w-8 h-8 flex items-center justify-center rounded bg-primary text-white font-bold text-xs">1</button>
+<button class="w-8 h-8 flex items-center justify-center rounded bg-white shadow-sm border border-slate-100 font-bold text-xs">2</button>
+<button class="w-8 h-8 flex items-center justify-center rounded bg-white shadow-sm border border-slate-100 font-bold text-xs">3</button>
+<button class="w-8 h-8 flex items-center justify-center rounded bg-white shadow-sm border border-slate-100"><span class="material-symbols-outlined text-xs">chevron_right</span></button>
+</div>
+</div>
+</div>
+</main>
+</body></html>
