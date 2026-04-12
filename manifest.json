@@ -1,7 +1,7 @@
 {
-  "version": "1.1.0",
-  "download_url": "https://github.com/namct2610/dashboard-v3/releases/download/v1.1.0/dashboard-v3-1.1.0.zip",
-  "changelog": "- Thêm kết nối Shopee Open Platform API\n- OAuth2 Shopee + đồng bộ đơn hàng tự động\n- Giao diện tab Shopee/TikTok/Lazada trong trang Kết nối API\n- ShopeeClient với signing HMAC-SHA256",
+  "version": "1.1.1",
+  "download_url": "https://github.com/namct2610/dashboard-v3/releases/download/v1.1.1/dashboard-v3-1.1.1.zip",
+  "changelog": "- Thêm release.sh: tự động build ZIP + tạo GitHub Release bằng 1 lệnh\n- Không cần GitHub Actions, chỉ cần GITHUB_TOKEN với quyền contents:write",
   "min_php": "8.1",
   "released_at": "2026-04-12"
 }
