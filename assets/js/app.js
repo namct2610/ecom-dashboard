@@ -902,6 +902,9 @@ function setupLogsPage() {
 // ── TikTok Connect page ────────────────────────────────────────────────────
 
 async function loadConnectPage() {
+  // Default tab = Shopee
+  loadShopeeConnectPage();
+
   // Show redirect URI hint
   const redirectUri = location.origin + location.pathname.replace(/[^/]*$/, '') + 'tiktok-oauth.php';
   const uriEl = qs('#oauthRedirectUri');
@@ -1337,28 +1340,23 @@ async function applySystemUpdate(downloadUrl, version) {
 // ── Connect tab switcher ───────────────────────────────────────────────────
 
 function switchConnectTab(tab) {
-  const tiktokTab  = qs('#connectTabTiktok');
-  const lazadaTab  = qs('#connectTabLazada');
-  const btnTiktok  = qs('#btnConnectTabTiktok');
-  const btnLazada  = qs('#btnConnectTabLazada');
-  if (!tiktokTab || !lazadaTab) return;
-
-  const isTiktok = tab === 'tiktok';
-  tiktokTab.style.display = isTiktok ? '' : 'none';
-  lazadaTab.style.display = isTiktok ? 'none' : '';
-
+  const tabs = ['shopee', 'tiktok', 'lazada'];
   const activeColor   = 'var(--primary,#4f46e5)';
   const inactiveColor = 'var(--text-muted)';
-  if (btnTiktok) {
-    btnTiktok.style.borderBottomColor = isTiktok ? activeColor : 'transparent';
-    btnTiktok.style.color = isTiktok ? activeColor : inactiveColor;
-  }
-  if (btnLazada) {
-    btnLazada.style.borderBottomColor = isTiktok ? 'transparent' : activeColor;
-    btnLazada.style.color = isTiktok ? inactiveColor : activeColor;
-  }
 
-  if (!isTiktok) loadLazadaConnectPage();
+  tabs.forEach(t => {
+    const el  = qs('#connectTab'    + t.charAt(0).toUpperCase() + t.slice(1));
+    const btn = qs('#btnConnectTab' + t.charAt(0).toUpperCase() + t.slice(1));
+    const active = t === tab;
+    if (el)  el.style.display = active ? '' : 'none';
+    if (btn) {
+      btn.style.borderBottomColor = active ? activeColor : 'transparent';
+      btn.style.color             = active ? activeColor : inactiveColor;
+    }
+  });
+
+  if (tab === 'lazada')  loadLazadaConnectPage();
+  if (tab === 'shopee')  loadShopeeConnectPage();
 }
 
 // ── Lazada Connect page ────────────────────────────────────────────────────
@@ -1506,6 +1504,151 @@ function setupLazadaConnectPage() {
   qs('#btnLazadaRefresh')?.addEventListener('click', loadLazadaConnectPage);
 }
 
+// ── Shopee Connect page ────────────────────────────────────────────────────
+
+async function loadShopeeConnectPage() {
+  const redirectUri = location.origin + location.pathname.replace(/[^/]*$/, '') + 'shopee-oauth.php';
+  const uriEl = qs('#shopeeOauthRedirectUri');
+  if (uriEl) uriEl.textContent = redirectUri;
+
+  try {
+    const data = await apiFetch('api/shopee-connect.php?action=status');
+    if (!data.success) return;
+
+    if (qs('#shopeePartnerId') && data.partner_id) {
+      qs('#shopeePartnerId').value = data.partner_id;
+    }
+
+    renderShopeeShopsTable(data.shops || []);
+  } catch (e) {
+    const tbody = qs('#shopeeShopsTableBody');
+    if (tbody) tbody.innerHTML = `<tr><td colspan="7" style="color:var(--red,#ef4444);padding:20px;text-align:center">Lỗi: ${escHtml(e.message)}</td></tr>`;
+  }
+}
+
+function renderShopeeShopsTable(shops) {
+  const tbody = qs('#shopeeShopsTableBody');
+  if (!tbody) return;
+
+  if (!shops.length) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:32px;color:var(--text-muted)">Chưa kết nối shop nào. Nhấn "Kết nối Shopee" để bắt đầu.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = shops.map(s => {
+    const expiry    = s.access_token_expire_at ? s.access_token_expire_at.substring(0, 16) : '—';
+    const lastSync  = s.last_synced_at         ? s.last_synced_at.substring(0, 16)         : 'Chưa sync';
+    const fromDate  = s.sync_from_date         || '';
+    const isActive  = parseInt(s.is_active, 10) === 1;
+    const statusBadge = isActive
+      ? '<span style="color:#16a34a;font-size:12px;font-weight:600">Hoạt động</span>'
+      : '<span style="color:#9ca3af;font-size:12px">Tạm dừng</span>';
+
+    return `<tr>
+      <td style="font-weight:500">${escHtml(s.shop_name || '—')}</td>
+      <td style="font-size:12px;color:var(--text-muted)">${escHtml(String(s.shop_id))}</td>
+      <td>${statusBadge}</td>
+      <td style="font-size:12px">${escHtml(expiry)}</td>
+      <td style="font-size:12px">${escHtml(lastSync)}</td>
+      <td>
+        <input type="date" value="${escHtml(fromDate)}" style="font-size:11px;width:105px;border:1px solid var(--border);border-radius:6px;padding:2px 4px"
+               onchange="setShopeeFromDate(${s.shop_id}, this.value)">
+      </td>
+      <td style="display:flex;gap:4px;flex-wrap:wrap">
+        <button class="btn btn-primary btn-sm" style="font-size:11px" onclick="syncShopeeShop(${s.shop_id})">Sync</button>
+        <button class="btn btn-secondary btn-sm" style="font-size:11px" onclick="toggleShopeeActive(${s.shop_id}, ${isActive ? 0 : 1})">${isActive ? 'Tắt' : 'Bật'}</button>
+        <button class="btn btn-sm" style="background:#ef4444;color:#fff;border:none;font-size:11px" onclick="disconnectShopee(${s.shop_id})">Xóa</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+async function syncShopeeShop(shopId) {
+  const resultsEl = qs('#shopeeSyncResults');
+  if (resultsEl) resultsEl.innerHTML = '<div style="font-size:13px;color:var(--text-muted)">Đang đồng bộ...</div>';
+
+  try {
+    const res = await apiFetch('api/shopee-connect.php', {
+      method: 'POST',
+      body: JSON.stringify({ action: 'sync', shop_id: shopId }),
+    });
+    if (res.success && resultsEl) {
+      resultsEl.innerHTML = res.results.map(r =>
+        `<div style="font-size:13px;padding:6px 0;border-bottom:1px solid var(--border)">
+          ${r.success ? '✓' : '✗'} <strong>${escHtml(r.shop)}</strong>:
+          ${r.success ? `+${r.imported} mục` : escHtml(r.error)}
+        </div>`
+      ).join('');
+      toast('Đồng bộ Shopee hoàn tất', 'success');
+      loadShopeeConnectPage();
+    } else if (resultsEl) {
+      resultsEl.innerHTML = `<div style="color:var(--red,#ef4444);font-size:13px">Lỗi: ${escHtml(res.error || '')}</div>`;
+    }
+  } catch (e) {
+    if (resultsEl) resultsEl.innerHTML = `<div style="color:var(--red,#ef4444);font-size:13px">Lỗi: ${escHtml(e.message)}</div>`;
+  }
+}
+
+async function toggleShopeeActive(shopId, active) {
+  await apiFetch('api/shopee-connect.php', {
+    method: 'POST',
+    body: JSON.stringify({ action: 'toggle_active', shop_id: shopId, is_active: active }),
+  });
+  loadShopeeConnectPage();
+}
+
+async function setShopeeFromDate(shopId, date) {
+  await apiFetch('api/shopee-connect.php', {
+    method: 'POST',
+    body: JSON.stringify({ action: 'set_sync_from', shop_id: shopId, sync_from_date: date }),
+  });
+}
+
+async function disconnectShopee(shopId) {
+  if (!confirm('Xóa kết nối shop này?')) return;
+  await apiFetch('api/shopee-connect.php', {
+    method: 'POST',
+    body: JSON.stringify({ action: 'disconnect', shop_id: shopId }),
+  });
+  loadShopeeConnectPage();
+}
+
+function setupShopeeConnectPage() {
+  qs('#btnShopeeSaveCredentials')?.addEventListener('click', async () => {
+    const partnerId  = parseInt(qs('#shopeePartnerId')?.value  || '0', 10);
+    const partnerKey = qs('#shopeePartnerKey')?.value?.trim() || '';
+    const res = await apiFetch('api/shopee-connect.php', {
+      method: 'POST',
+      body: JSON.stringify({ action: 'save_credentials', partner_id: partnerId, partner_key: partnerKey }),
+    });
+    toast(res.success ? 'Đã lưu thông tin Shopee!' : (res.error || 'Lỗi'), res.success ? 'success' : 'error');
+  });
+
+  qs('#btnConnectShopee')?.addEventListener('click', async () => {
+    const statusEl = qs('#shopeeConnectStatus');
+    if (statusEl) statusEl.textContent = 'Đang lấy URL xác thực...';
+    try {
+      const res = await apiFetch('api/shopee-connect.php', {
+        method: 'POST',
+        body: JSON.stringify({ action: 'get_auth_url' }),
+      });
+      if (res.success && res.auth_url) {
+        if (statusEl) statusEl.textContent = 'Đang chuyển hướng...';
+        location.href = res.auth_url;
+      } else {
+        if (statusEl) statusEl.textContent = '';
+        toast(res.error || 'Không lấy được URL xác thực.', 'error');
+      }
+    } catch (e) {
+      if (statusEl) statusEl.textContent = '';
+      toast('Lỗi kết nối.', 'error');
+    }
+  });
+
+  qs('#btnShopeeSyncAll')?.addEventListener('click', () => syncShopeeShop(0));
+  qs('#btnShopeeRefresh')?.addEventListener('click', loadShopeeConnectPage);
+}
+
 // ── Init ──────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
   setupLogin();
@@ -1519,6 +1662,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   setupLogsPage();
   setupConnectPage();
   setupLazadaConnectPage();
+  setupShopeeConnectPage();
   checkForUpdates(); // background — no await, shows badge if update available
   await loadPeriods();
   const initPage = location.hash.replace('#', '') || 'overview';

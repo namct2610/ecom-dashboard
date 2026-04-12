@@ -783,17 +783,93 @@ $initials = strtoupper(substr($user, 0, 2));
       <div class="page" id="page-connect">
         <div class="page-header">
           <h1>Kết nối API</h1>
-          <p>Tự động đồng bộ đơn hàng từ TikTok Shop và Lazada qua Open Platform API</p>
+          <p>Tự động đồng bộ đơn hàng từ Shopee, TikTok Shop và Lazada qua Open Platform API</p>
         </div>
 
         <!-- Platform tabs -->
         <div style="display:flex;gap:8px;margin-bottom:20px;border-bottom:2px solid var(--border);padding-bottom:0">
-          <button id="btnConnectTabTiktok" class="connect-tab connect-tab-active" onclick="switchConnectTab('tiktok')" style="padding:8px 20px;font-size:14px;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:2px solid var(--primary,#4f46e5);margin-bottom:-2px;color:var(--primary,#4f46e5)">TikTok Shop</button>
+          <button id="btnConnectTabShopee" class="connect-tab connect-tab-active" onclick="switchConnectTab('shopee')" style="padding:8px 20px;font-size:14px;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:2px solid var(--primary,#4f46e5);margin-bottom:-2px;color:var(--primary,#4f46e5)">Shopee</button>
+          <button id="btnConnectTabTiktok" class="connect-tab" onclick="switchConnectTab('tiktok')" style="padding:8px 20px;font-size:14px;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;color:var(--text-muted)">TikTok Shop</button>
           <button id="btnConnectTabLazada" class="connect-tab" onclick="switchConnectTab('lazada')" style="padding:8px 20px;font-size:14px;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;color:var(--text-muted)">Lazada</button>
         </div>
 
+        <!-- ── Shopee Tab ─────────────────────────────────────────────────── -->
+        <div id="connectTabShopee">
+          <!-- Credentials card -->
+          <div class="card mb-4">
+            <div class="card-title">Thông tin xác thực Shopee Open Platform App</div>
+            <p style="color:var(--text-muted);font-size:13px;margin-bottom:16px">
+              Đăng nhập <strong>open.shopee.com</strong> → My Apps → Create App để lấy Partner ID và Partner Key.
+            </p>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;max-width:600px">
+              <div>
+                <label style="font-size:12px;font-weight:600;color:var(--text-secondary);display:block" for="shopeePartnerId">Partner ID</label>
+                <input id="shopeePartnerId" type="number" class="login-input" placeholder="Nhập Partner ID..." style="width:100%;margin-top:4px">
+              </div>
+              <div>
+                <label style="font-size:12px;font-weight:600;color:var(--text-secondary);display:block" for="shopeePartnerKey">Partner Key</label>
+                <input id="shopeePartnerKey" type="password" class="login-input" placeholder="Nhập Partner Key..." style="width:100%;margin-top:4px">
+              </div>
+            </div>
+            <div style="margin-top:12px;display:flex;gap:10px;align-items:center">
+              <button id="btnShopeeSaveCredentials" class="btn btn-primary">Lưu thông tin</button>
+              <button id="btnConnectShopee" class="btn btn-secondary" style="display:flex;align-items:center;gap:6px">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+                Kết nối Shopee
+              </button>
+              <span id="shopeeConnectStatus" style="font-size:13px;color:var(--text-muted)"></span>
+            </div>
+          </div>
+
+          <!-- Connected shops -->
+          <div class="card">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+              <div class="card-title" style="margin-bottom:0">Shop Shopee đã kết nối</div>
+              <div style="display:flex;gap:8px">
+                <button id="btnShopeeSyncAll" class="btn btn-primary btn-sm" style="display:flex;align-items:center;gap:6px">
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+                  Đồng bộ tất cả
+                </button>
+                <button id="btnShopeeRefresh" class="btn btn-secondary btn-sm">Làm mới</button>
+              </div>
+            </div>
+            <div class="table-wrapper">
+              <table id="shopeeShopsTable">
+                <thead>
+                  <tr>
+                    <th>Shop</th>
+                    <th style="width:90px">Shop ID</th>
+                    <th style="width:100px">Trạng thái</th>
+                    <th style="width:140px">Token hết hạn</th>
+                    <th style="width:140px">Đồng bộ lần cuối</th>
+                    <th style="width:110px">Từ ngày</th>
+                    <th style="width:120px">Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody id="shopeeShopsTableBody">
+                  <tr><td colspan="7" style="text-align:center;padding:32px;color:var(--text-muted)">Đang tải...</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div id="shopeeSyncResults" style="margin-top:16px"></div>
+          </div>
+
+          <!-- How to guide -->
+          <div class="card mt-4" style="background:var(--bg-base)">
+            <div class="card-title">Hướng dẫn kết nối Shopee</div>
+            <ol style="color:var(--text-secondary);font-size:13px;line-height:2;padding-left:20px">
+              <li>Đăng nhập <strong>open.shopee.com</strong> → <strong>My Apps → Create App</strong></li>
+              <li>Trong App Settings, thêm Redirect URL: <code id="shopeeOauthRedirectUri">—</code></li>
+              <li>Sao chép <strong>Partner ID</strong> và <strong>Partner Key</strong> rồi điền vào form trên</li>
+              <li>Nhấn <strong>Lưu thông tin</strong> rồi nhấn <strong>Kết nối Shopee</strong></li>
+              <li>Đăng nhập tài khoản Shopee Seller và cấp quyền cho app</li>
+              <li>Sau khi kết nối thành công, nhấn <strong>Đồng bộ</strong> để tải đơn hàng về</li>
+            </ol>
+          </div>
+        </div><!-- /#connectTabShopee -->
+
         <!-- ── TikTok Tab ─────────────────────────────────────────────────── -->
-        <div id="connectTabTiktok">
+        <div id="connectTabTiktok" style="display:none">
           <!-- Credentials card -->
           <div class="card mb-4">
             <div class="card-title">Thông tin xác thực TikTok Shop App</div>
@@ -1092,10 +1168,16 @@ $initials = strtoupper(substr($user, 0, 2));
     } else if (usp.has('tiktok_error')) {
       toast('Kết nối TikTok thất bại: ' + usp.get('tiktok_error'), 'error');
       history.replaceState({}, '', location.pathname);
+    } else if (usp.has('shopee_connected')) {
+      toast('Đã kết nối shop Shopee thành công!', 'success');
+      history.replaceState({}, '', location.pathname + '#connect');
+      setTimeout(() => switchConnectTab('shopee'), 300);
+    } else if (usp.has('shopee_error')) {
+      toast('Kết nối Shopee thất bại: ' + usp.get('shopee_error'), 'error');
+      history.replaceState({}, '', location.pathname);
     } else if (usp.has('lazada_connected')) {
       toast('Đã kết nối tài khoản Lazada thành công!', 'success');
       history.replaceState({}, '', location.pathname + '#connect');
-      // Switch to Lazada tab after connect
       setTimeout(() => switchConnectTab('lazada'), 300);
     } else if (usp.has('lazada_error')) {
       toast('Kết nối Lazada thất bại: ' + usp.get('lazada_error'), 'error');

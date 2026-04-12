@@ -31,7 +31,7 @@ function db(array $config): PDO
 function ensure_schema(PDO $pdo): void
 {
     $tables  = $pdo->query('SHOW TABLES')->fetchAll(PDO::FETCH_COLUMN);
-    $needed  = ['upload_history', 'orders', 'traffic_daily', 'import_errors', 'app_settings', 'app_logs', 'tiktok_connections', 'lazada_connections'];
+    $needed  = ['upload_history', 'orders', 'traffic_daily', 'import_errors', 'app_settings', 'app_logs', 'tiktok_connections', 'lazada_connections', 'shopee_connections'];
     $missing = array_diff($needed, $tables);
 
     // Add data_type column if missing (migration)
@@ -100,7 +100,26 @@ function ensure_schema(PDO $pdo): void
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     }
 
-    $missing = array_diff($missing, ['app_logs', 'tiktok_connections', 'lazada_connections']); // already handled above
+    // Create shopee_connections if missing
+    if (!in_array('shopee_connections', $tables, true)) {
+        $pdo->exec("CREATE TABLE IF NOT EXISTS shopee_connections (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            shop_id BIGINT NOT NULL,
+            shop_name VARCHAR(255) NULL,
+            access_token TEXT NULL,
+            refresh_token TEXT NULL,
+            access_token_expire_at DATETIME NULL,
+            refresh_token_expire_at DATETIME NULL,
+            is_active TINYINT(1) NOT NULL DEFAULT 1,
+            authorized_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            last_synced_at DATETIME NULL,
+            sync_from_date DATE NULL,
+            UNIQUE KEY uk_shop_id (shop_id),
+            INDEX idx_is_active (is_active)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    }
+
+    $missing = array_diff($missing, ['app_logs', 'tiktok_connections', 'lazada_connections', 'shopee_connections']); // already handled above
     if (empty($missing)) {
         return;
     }
