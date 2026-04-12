@@ -43,6 +43,7 @@
   --sidebar-active-bg: #1e3a8a;
   --sidebar-active-text: #ffffff;
   --sidebar-width: 220px;
+  --sidebar-collapsed-width: 52px;
 
   /* Header */
   --header-height: 56px;

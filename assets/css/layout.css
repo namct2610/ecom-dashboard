@@ -8,10 +8,68 @@
   background: var(--sidebar-bg);
   display: flex;
   flex-direction: column;
-  overflow-y: auto;
+  overflow: hidden;
   z-index: 40;
-  transition: transform 0.25s ease;
+  transition: width 0.22s ease, transform 0.25s ease;
 }
+
+/* ── Sidebar collapsed ─────────────────────────────────────────────────── */
+#sidebar.collapsed { width: var(--sidebar-collapsed-width); }
+
+/* text labels fade out fast */
+.nav-label, .sidebar-brand-text, .btn-logout-label {
+  transition: opacity 0.12s ease;
+  white-space: nowrap;
+  overflow: hidden;
+}
+#sidebar.collapsed .nav-label,
+#sidebar.collapsed .sidebar-brand-text,
+#sidebar.collapsed .btn-logout-label { opacity: 0; width: 0; }
+
+/* brand: center icon */
+#sidebar.collapsed .sidebar-brand { justify-content: center; padding: 20px 0 16px; gap: 0; }
+
+/* nav items: center icon */
+#sidebar.collapsed .sidebar-nav { padding: 4px 6px; }
+#sidebar.collapsed .nav-item { padding: 10px 0; justify-content: center; gap: 0; }
+
+/* footer */
+#sidebar.collapsed .sidebar-footer { padding: 12px 6px; }
+#sidebar.collapsed .btn-logout { padding: 8px 0; justify-content: center; gap: 0; }
+#sidebar.collapsed .btn-collapse-sidebar { padding: 8px 0; justify-content: center; }
+
+/* flip collapse icon when collapsed */
+.btn-collapse-sidebar svg { transition: transform 0.22s ease; }
+#sidebar.collapsed .btn-collapse-sidebar svg { transform: rotate(180deg); }
+
+/* collapse toggle button */
+.btn-collapse-sidebar {
+  display: flex; align-items: center; gap: 8px;
+  width: 100%; padding: 7px 12px;
+  border-radius: var(--radius-sm);
+  color: var(--sidebar-text);
+  font-size: 12px; background: none; border: none; cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  margin-bottom: 4px;
+}
+.btn-collapse-sidebar:hover { background: var(--sidebar-hover); color: #cbd5e1; }
+.btn-collapse-sidebar svg { width: 14px; height: 14px; flex-shrink: 0; }
+
+/* tooltip for collapsed nav items — appended to body by JS */
+.sidebar-tooltip {
+  position: fixed;
+  background: #1e293b;
+  color: #f1f5f9;
+  font-size: 12px; font-weight: 500;
+  padding: 5px 10px;
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0;
+  transition: opacity 0.1s ease;
+}
+.sidebar-tooltip.visible { opacity: 1; }
 
 .sidebar-brand {
   padding: 20px 16px 16px;
