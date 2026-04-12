@@ -1,7 +1,7 @@
 {
-  "version": "1.1.7",
-  "download_url": "https://github.com/namct2610/ecom-dashboard/releases/download/v1.1.7/dashboard-v3-1.1.7.zip",
-  "changelog": "- Lazada sync: thêm chọn khoảng ngày (Từ → Đến)\n- Lazada sync: không reset về last_synced_at khi đã chọn ngày\n- Lazada sync: tự động chia nhỏ range thành windows 30 ngày",
+  "version": "1.1.8",
+  "download_url": "https://github.com/namct2610/ecom-dashboard/releases/download/v1.1.8/dashboard-v3-1.1.8.zip",
+  "changelog": "- Sản phẩm: thêm KPI Tổng SL bán, SL đã giao, TB/đơn\n- Heatmap: responsive tự fit theo chiều ngang\n- Heatmap: tooltip hiện ngay không delay",
   "min_php": "8.1",
   "released_at": "2026-04-12"
 }
