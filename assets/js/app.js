@@ -167,13 +167,11 @@ async function logout() {
 
 // ── Period picker ─────────────────────────────────────────────────────────
 let _pickerGridYear = new Date().getFullYear();
-let _pickerOpen = false;
 
 async function loadPeriods() {
   try {
     const data = await api('date-periods.php', { params: {} });
     App.periods = data;
-    // Auto-select most recent period if none chosen yet
     if (!App.period) {
       const list = App.mode === 'month' ? data.months : data.years;
       if (list?.length) App.period = list[0].value;
@@ -190,26 +188,25 @@ function renderPeriodLabel() {
   if (!App.period) { el.textContent = 'Chọn kỳ'; return; }
   if (App.mode === 'month') {
     const [y, m] = App.period.split('-');
-    el.textContent = `Tháng ${parseInt(m, 10)} · ${y}`;
+    el.textContent = `Tháng ${parseInt(m, 10)}  ·  ${y}`;
   } else {
     el.textContent = `Năm ${App.period}`;
   }
-  // Update arrow disabled states
   const list = App.mode === 'month'
     ? (App.periods.months || []).map(x => x.value)
     : (App.periods.years  || []).map(x => x.value);
   const idx = list.indexOf(App.period);
   const prev = qs('#periodPrev');
   const next = qs('#periodNext');
-  if (prev) prev.disabled = idx >= list.length - 1;
-  if (next) next.disabled = idx <= 0;
+  if (prev) prev.disabled = (idx >= list.length - 1);
+  if (next) next.disabled = (idx <= 0);
 }
 
 function renderPeriodGrid() {
-  const grid      = qs('#periodGrid');
-  const yearLabel = qs('#periodGridYear');
+  const grid = qs('#periodGrid');
   if (!grid) return;
-  if (yearLabel) yearLabel.textContent = _pickerGridYear;
+  const yearEl = qs('#periodGridYear');
+  if (yearEl) yearEl.textContent = _pickerGridYear;
 
   const { months = [], years = [] } = App.periods;
   grid.innerHTML = '';
@@ -219,10 +216,10 @@ function renderPeriodGrid() {
     for (let m = 1; m <= 12; m++) {
       const val = `${_pickerGridYear}-${String(m).padStart(2, '0')}`;
       const btn = document.createElement('button');
-      const isActive   = val === App.period;
-      const hasData    = available.has(val);
-      btn.className = ['period-grid-cell', isActive ? 'active' : '', hasData ? 'has-data' : 'disabled'].filter(Boolean).join(' ');
       btn.textContent = `T${m}`;
+      const isActive = val === App.period;
+      const hasData  = available.has(val);
+      btn.className  = 'pp-cell' + (isActive ? ' active' : '') + (hasData ? ' has-data' : '');
       if (hasData) {
         btn.addEventListener('click', () => {
           App.period = val;
@@ -235,16 +232,15 @@ function renderPeriodGrid() {
       grid.appendChild(btn);
     }
   } else {
-    // Year mode: show 6 years centred on _pickerGridYear
     const available = new Set(years.map(y => y.value));
     const start = _pickerGridYear - 2;
     for (let y = start; y < start + 6; y++) {
       const val = String(y);
       const btn = document.createElement('button');
+      btn.textContent = val;
       const isActive = val === App.period;
       const hasData  = available.has(val);
-      btn.className = ['period-grid-cell wide', isActive ? 'active' : '', hasData ? 'has-data' : 'disabled'].filter(Boolean).join(' ');
-      btn.textContent = val;
+      btn.className  = 'pp-cell wide' + (isActive ? ' active' : '') + (hasData ? ' has-data' : '');
       if (hasData) {
         btn.addEventListener('click', () => {
           App.period = val;
@@ -261,23 +257,20 @@ function renderPeriodGrid() {
 
 function openPeriodPanel() {
   _pickerGridYear = App.period ? parseInt(App.period.slice(0, 4), 10) : new Date().getFullYear();
-  const panel = qs('#periodPanel');
-  if (panel) panel.style.display = '';
-  _pickerOpen = true;
   renderPeriodGrid();
+  qs('#periodPanel')?.classList.add('open');
+  qs('#periodLabelBtn')?.closest('.period-picker')?.classList.add('pp-panel-open');
 }
 
 function closePeriodPanel() {
-  const panel = qs('#periodPanel');
-  if (panel) panel.style.display = 'none';
-  _pickerOpen = false;
+  qs('#periodPanel')?.classList.remove('open');
+  qs('#periodPicker')?.classList.remove('pp-panel-open');
 }
 
-function navigatePeriod(dir) { // dir: -1 = earlier, +1 = later
+function navigatePeriod(dir) {
   const list = App.mode === 'month'
     ? (App.periods.months || []).map(x => x.value)
     : (App.periods.years  || []).map(x => x.value);
-  // list is DESC: list[0]=newest. Earlier=-1 → idx+1; Later=+1 → idx-1
   const idx = list.indexOf(App.period);
   if (idx === -1) return;
   const newIdx = idx + (dir === -1 ? 1 : -1);
@@ -293,8 +286,8 @@ function _applyPreset(preset) {
     App.mode   = 'month';
     App.period = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   } else if (preset === 'last-month') {
-    App.mode = 'month';
-    const d   = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    App.mode   = 'month';
+    const d    = new Date(now.getFullYear(), now.getMonth() - 1, 1);
     App.period = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
   } else if (preset === 'this-year') {
     App.mode   = 'year';
@@ -307,58 +300,47 @@ function _applyPreset(preset) {
 }
 
 function _syncModeButtons() {
-  qsa('.period-mode-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === App.mode));
+  qsa('.pp-mode').forEach(b => b.classList.toggle('active', b.dataset.mode === App.mode));
 }
 
 function setupPeriodPicker() {
-  // Mode buttons
-  qsa('.period-mode-btn').forEach(btn => {
+  qsa('.pp-mode').forEach(btn => {
     btn.addEventListener('click', () => {
       if (btn.dataset.mode === App.mode) return;
       App.mode = btn.dataset.mode;
-      // Pick most recent period of the new mode
-      const list = App.mode === 'month'
-        ? (App.periods.months || [])
-        : (App.periods.years  || []);
+      const list = App.mode === 'month' ? (App.periods.months || []) : (App.periods.years || []);
       App.period = list.length ? list[0].value : '';
       _syncModeButtons();
       renderPeriodLabel();
-      if (_pickerOpen) renderPeriodGrid();
+      renderPeriodGrid();
       loadPage(App.currentPage);
     });
   });
 
-  // Open/close panel
   qs('#periodLabelBtn')?.addEventListener('click', e => {
     e.stopPropagation();
-    _pickerOpen ? closePeriodPanel() : openPeriodPanel();
+    qs('#periodPanel')?.classList.contains('open') ? closePeriodPanel() : openPeriodPanel();
   });
 
-  // Close on outside click
   document.addEventListener('click', e => {
-    if (_pickerOpen && !qs('#periodPicker')?.contains(e.target)) closePeriodPanel();
+    if (!qs('#periodPicker')?.contains(e.target)) closePeriodPanel();
   });
 
-  // Prev / Next arrows
   qs('#periodPrev')?.addEventListener('click', () => navigatePeriod(-1));
   qs('#periodNext')?.addEventListener('click', () => navigatePeriod(1));
 
-  // Grid year navigation
   qs('#periodGridPrev')?.addEventListener('click', e => {
     e.stopPropagation();
     _pickerGridYear--;
-    qs('#periodGridYear').textContent = _pickerGridYear;
     renderPeriodGrid();
   });
   qs('#periodGridNext')?.addEventListener('click', e => {
     e.stopPropagation();
     _pickerGridYear++;
-    qs('#periodGridYear').textContent = _pickerGridYear;
     renderPeriodGrid();
   });
 
-  // Preset buttons
-  qsa('.period-preset-btn').forEach(btn => {
+  qsa('.pp-preset').forEach(btn => {
     btn.addEventListener('click', () => _applyPreset(btn.dataset.preset));
   });
 }
