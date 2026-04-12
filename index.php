@@ -631,18 +631,38 @@ $initials = strtoupper(substr($user, 0, 2));
           <p>Heatmap thời gian đặt hàng và doanh thu theo địa lý</p>
         </div>
 
-        <div class="card mb-4">
-          <div class="card-title">Heatmap: Đơn hàng theo ngày &amp; giờ</div>
-          <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;flex-wrap:wrap">
-            <span style="font-size:11px;color:var(--text-muted)">Ít</span>
-            <?php foreach (['#f1f5f9','#dbeafe','#bfdbfe','#93c5fd','#60a5fa','#3b82f6','#2563eb','#1d4ed8','#1e3a8a','172554','#0f1629'] as $c): ?>
-            <span style="width:16px;height:16px;border-radius:3px;background:<?= htmlspecialchars($c[0]==='#'?$c:'#'.$c) ?>;border:1px solid #e2e8f0;display:inline-block"></span>
-            <?php endforeach; ?>
-            <span style="font-size:11px;color:var(--text-muted)">Nhiều</span>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+
+          <!-- Heatmap đơn hàng -->
+          <div class="card">
+            <div class="card-title">Đơn hàng theo ngày &amp; giờ</div>
+            <div style="display:flex;align-items:center;gap:4px;margin-bottom:10px;flex-wrap:wrap">
+              <span style="font-size:11px;color:var(--text-muted)">Ít</span>
+              <?php foreach (['#f1f5f9','#dbeafe','#bfdbfe','#93c5fd','#60a5fa','#3b82f6','#2563eb','#1d4ed8','#1e3a8a','#172554','#0f1629'] as $c): ?>
+              <span style="width:14px;height:14px;border-radius:2px;background:<?= htmlspecialchars($c) ?>;display:inline-block"></span>
+              <?php endforeach; ?>
+              <span style="font-size:11px;color:var(--text-muted)">Nhiều</span>
+            </div>
+            <div class="heatmap-container">
+              <div id="heatmap7x24"></div>
+            </div>
           </div>
-          <div class="heatmap-container">
-            <div id="heatmap7x24"></div>
+
+          <!-- Heatmap doanh thu -->
+          <div class="card">
+            <div class="card-title">Doanh thu theo ngày &amp; giờ</div>
+            <div style="display:flex;align-items:center;gap:4px;margin-bottom:10px;flex-wrap:wrap">
+              <span style="font-size:11px;color:var(--text-muted)">Ít</span>
+              <?php foreach (['#f0fdf4','#dcfce7','#bbf7d0','#86efac','#4ade80','#22c55e','#16a34a','#15803d','#166534','#14532d','#052e16'] as $c): ?>
+              <span style="width:14px;height:14px;border-radius:2px;background:<?= htmlspecialchars($c) ?>;display:inline-block"></span>
+              <?php endforeach; ?>
+              <span style="font-size:11px;color:var(--text-muted)">Nhiều</span>
+            </div>
+            <div class="heatmap-container">
+              <div id="heatmapRevenue7x24"></div>
+            </div>
           </div>
+
         </div>
 
         <div class="chart-card">

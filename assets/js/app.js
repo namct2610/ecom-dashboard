@@ -571,7 +571,8 @@ async function loadComparison() {
 async function loadHeatmaps() {
   try {
     const data = await api('heatmap.php');
-    renderHeatmap7x24('heatmap7x24', data.heatmap, data.max_orders);
+    renderHeatmap7x24('heatmap7x24',        data.heatmap, data.max_orders,  'orders');
+    renderHeatmap7x24('heatmapRevenue7x24', data.heatmap, data.max_revenue, 'revenue');
     Charts.renderRevByCity('chartRevenueCity', data.revenue_by_city);
   } catch (e) {
     console.error('loadHeatmaps', e);
@@ -843,46 +844,37 @@ function renderTopProductsTable(id, topProducts) {
   el.innerHTML = rows.join('');
 }
 
-// 10-level heatmap palette: level 0 = empty, 1–10 = low→high
-const HEAT_PALETTE = [
-  '#f1f5f9', // 0 — none
-  '#dbeafe', // 1
-  '#bfdbfe', // 2
-  '#93c5fd', // 3
-  '#60a5fa', // 4
-  '#3b82f6', // 5
-  '#2563eb', // 6
-  '#1d4ed8', // 7
-  '#1e3a8a', // 8
-  '#172554', // 9
-  '#0f1629', // 10
+// Heatmap palettes (11 levels: 0=empty, 1–10=low→high)
+const HEAT_PALETTE_ORDERS = [
+  '#f1f5f9','#dbeafe','#bfdbfe','#93c5fd','#60a5fa',
+  '#3b82f6','#2563eb','#1d4ed8','#1e3a8a','#172554','#0f1629',
+];
+const HEAT_PALETTE_REVENUE = [
+  '#f0fdf4','#dcfce7','#bbf7d0','#86efac','#4ade80',
+  '#22c55e','#16a34a','#15803d','#166534','#14532d','#052e16',
 ];
 
-function renderHeatmap7x24(id, heatmap, maxOrders) {
+function renderHeatmap7x24(id, heatmap, maxVal, metric = 'orders') {
   const el = qs(`#${id}`); if (!el) return;
-  const days = ['Thứ 2','Thứ 3','Thứ 4','Thứ 5','Thứ 6','Thứ 7','CN'];
+  const days   = ['Thứ 2','Thứ 3','Thứ 4','Thứ 5','Thứ 6','Thứ 7','CN'];
+  const pal    = metric === 'revenue' ? HEAT_PALETTE_REVENUE : HEAT_PALETTE_ORDERS;
+  const max    = maxVal || 1;
 
-  // Build map
   const map = {};
-  heatmap.forEach(h => { map[`${h.weekday}-${h.hour}`] = h.orders; });
-  const max = maxOrders || 1;
+  heatmap.forEach(h => { map[`${h.weekday}-${h.hour}`] = h[metric]; });
 
   let html = '<div class="heatmap-grid">';
-
-  // Hour labels row
   html += '<div class="heatmap-row"><div class="heatmap-label-day"></div>';
-  for (let h = 0; h < 24; h++) {
-    html += `<div class="heatmap-label-hour">${h}</div>`;
-  }
+  for (let h = 0; h < 24; h++) html += `<div class="heatmap-label-hour">${h}</div>`;
   html += '</div>';
 
   for (let wd = 0; wd < 7; wd++) {
     html += `<div class="heatmap-row"><div class="heatmap-label-day">${days[wd]}</div>`;
     for (let h = 0; h < 24; h++) {
-      const v = map[`${wd}-${h}`] || 0;
+      const v     = map[`${wd}-${h}`] || 0;
       const level = v === 0 ? 0 : Math.min(10, Math.ceil((v / max) * 10));
-      const bg = HEAT_PALETTE[level];
-      html += `<div class="heatmap-cell" style="background:${bg}" title="${days[wd]} ${h}:00 — ${v} đơn"></div>`;
+      const label = metric === 'revenue' ? fmtVND(v) : `${v} đơn`;
+      html += `<div class="heatmap-cell" style="background:${pal[level]}" title="${days[wd]} ${h}:00 — ${label}"></div>`;
     }
     html += '</div>';
   }
