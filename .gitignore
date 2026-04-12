@@ -16,16 +16,8 @@ uploads/*
 # ── Dependencies (exclude — run composer install on host or use build.sh) ──
 vendor/
 
-# ── Dev / planning files ───────────────────────────────────────────────────
-browser.py
-stitch/
-tiktok-api/
-plan.md
-plan-dashboard.md
-dashboard.html
-dashboard_data.json
-3. Data Order (sample)/
-4. Data Traffic (sample)/
+# ── Dev / planning files (now in others/) ─────────────────────────────────
+# others/ is tracked in git but excluded from build zip via build.sh
 
 # ── OS ─────────────────────────────────────────────────────────────────────
 .DS_Store

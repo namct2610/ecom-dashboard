@@ -134,7 +134,7 @@ class Updater
     /** Paths at app root that are NEVER replaced during an update. */
     private function preservedPaths(): array
     {
-        return ['config.php', 'uploads', '.installed', 'config.local.php', 'version.txt'];
+        return ['config.php', 'uploads', '.installed', 'config.local.php'];
     }
 
     /**
