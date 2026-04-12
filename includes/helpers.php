@@ -85,20 +85,29 @@ function json_exception(\Throwable $e, string $fallback = 'Server error.'): void
 
 /**
  * Build WHERE clause and params array from $_GET filter params.
- * Supports: mode=(month|year), period=YYYY-MM or YYYY, platform=shopee|lazada|tiktokshop|all
- * For orders table: column = order_created_at
- * For traffic table: column = traffic_date
+ * Supports:
+ *   date_from + date_to  → YYYY-MM-DD range (highest priority)
+ *   mode=(month|year) + period=YYYY-MM or YYYY
+ *   platform=shopee|lazada|tiktokshop|all
  */
 function sql_filters(array &$params, string $dateCol = 'order_created_at'): string
 {
     $conditions = ['normalized_status IN (\'completed\',\'delivered\',\'cancelled\',\'pending\')'];
 
-    $mode     = $_GET['mode']     ?? 'month';
-    $period   = $_GET['period']   ?? '';
-    $platform = $_GET['platform'] ?? 'all';
+    $dateFrom = $_GET['date_from'] ?? '';
+    $dateTo   = $_GET['date_to']   ?? '';
+    $mode     = $_GET['mode']      ?? 'month';
+    $period   = $_GET['period']    ?? '';
+    $platform = $_GET['platform']  ?? 'all';
 
-    // Date filter
-    if ($period !== '') {
+    // Date range takes priority over mode/period
+    if ($dateFrom !== '' && $dateTo !== ''
+        && preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateFrom)
+        && preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateTo)) {
+        $conditions[] = "DATE($dateCol) BETWEEN :date_from AND :date_to";
+        $params[':date_from'] = $dateFrom;
+        $params[':date_to']   = $dateTo;
+    } elseif ($period !== '') {
         if ($mode === 'year' && preg_match('/^\d{4}$/', $period)) {
             $conditions[] = "YEAR($dateCol) = :year";
             $params[':year'] = (int) $period;
@@ -108,7 +117,6 @@ function sql_filters(array &$params, string $dateCol = 'order_created_at'): stri
         }
     }
 
-    // Platform filter
     if ($platform !== 'all' && in_array($platform, ['shopee', 'lazada', 'tiktokshop'], true)) {
         $conditions[] = "platform = :platform";
         $params[':platform'] = $platform;
@@ -121,11 +129,19 @@ function sql_filters_traffic(array &$params): string
 {
     $conditions = ['1=1'];
 
-    $mode     = $_GET['mode']     ?? 'month';
-    $period   = $_GET['period']   ?? '';
-    $platform = $_GET['platform'] ?? 'all';
+    $dateFrom = $_GET['date_from'] ?? '';
+    $dateTo   = $_GET['date_to']   ?? '';
+    $mode     = $_GET['mode']      ?? 'month';
+    $period   = $_GET['period']    ?? '';
+    $platform = $_GET['platform']  ?? 'all';
 
-    if ($period !== '') {
+    if ($dateFrom !== '' && $dateTo !== ''
+        && preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateFrom)
+        && preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateTo)) {
+        $conditions[] = "traffic_date BETWEEN :date_from AND :date_to";
+        $params[':date_from'] = $dateFrom;
+        $params[':date_to']   = $dateTo;
+    } elseif ($period !== '') {
         if ($mode === 'year' && preg_match('/^\d{4}$/', $period)) {
             $conditions[] = 'YEAR(traffic_date) = :year';
             $params[':year'] = (int) $period;
@@ -146,41 +162,46 @@ function sql_filters_traffic(array &$params): string
 }
 
 /**
- * Resolve SQL granularity based on mode param.
- * month → daily buckets  (label = '01'..'31')
- * year  → monthly buckets (label = '2026-01'..'2026-12')
+ * Resolve SQL granularity.
+ * date_from/date_to → always daily buckets
+ * mode=year         → monthly buckets
+ * mode=month        → daily buckets
  */
 function resolve_granularity(string $dateCol = 'order_created_at'): array
 {
-    $mode = $_GET['mode'] ?? 'month';
-    if ($mode === 'year') {
+    $dateFrom = $_GET['date_from'] ?? '';
+    $mode     = $_GET['mode']      ?? 'month';
+
+    if ($dateFrom !== '' || $mode !== 'year') {
         return [
-            'name'   => 'month',
-            'label'  => "DATE_FORMAT($dateCol, '%Y-%m')",
-            'bucket' => "DATE_FORMAT($dateCol, '%Y-%m')",
+            'name'   => 'day',
+            'label'  => "DATE_FORMAT($dateCol, '%Y-%m-%d')",
+            'bucket' => "DATE($dateCol)",
         ];
     }
     return [
-        'name'   => 'day',
-        'label'  => "DATE_FORMAT($dateCol, '%Y-%m-%d')",
-        'bucket' => "DATE($dateCol)",
+        'name'   => 'month',
+        'label'  => "DATE_FORMAT($dateCol, '%Y-%m')",
+        'bucket' => "DATE_FORMAT($dateCol, '%Y-%m')",
     ];
 }
 
 function resolve_granularity_traffic(): array
 {
-    $mode = $_GET['mode'] ?? 'month';
-    if ($mode === 'year') {
+    $dateFrom = $_GET['date_from'] ?? '';
+    $mode     = $_GET['mode']      ?? 'month';
+
+    if ($dateFrom !== '' || $mode !== 'year') {
         return [
-            'name'   => 'month',
-            'label'  => "DATE_FORMAT(traffic_date, '%Y-%m')",
-            'bucket' => "DATE_FORMAT(traffic_date, '%Y-%m')",
+            'name'   => 'day',
+            'label'  => "DATE_FORMAT(traffic_date, '%Y-%m-%d')",
+            'bucket' => 'traffic_date',
         ];
     }
     return [
-        'name'   => 'day',
-        'label'  => "DATE_FORMAT(traffic_date, '%Y-%m-%d')",
-        'bucket' => 'traffic_date',
+        'name'   => 'month',
+        'label'  => "DATE_FORMAT(traffic_date, '%Y-%m')",
+        'bucket' => "DATE_FORMAT(traffic_date, '%Y-%m')",
     ];
 }
 

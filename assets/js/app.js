@@ -10,6 +10,9 @@ const App = {
   platform: 'all',
   mode: 'month',        // 'month' | 'year'
   period: '',           // '2026-03' | '2026'
+  dateFrom: '',         // 'YYYY-MM-DD' — khi dùng preset ngày (Hôm nay, 7 ngày…)
+  dateTo:   '',         // 'YYYY-MM-DD'
+  rangeLabel: '',       // nhãn hiển thị khi dùng date range
   currentPage: 'overview',
   periods: { months: [], years: [] },
 };
@@ -67,10 +70,11 @@ function toast(msg, type = 'info', duration = 3500) {
 
 // ── API client ───────────────────────────────────────────────────────────
 async function api(path, opts = {}) {
+  const filterParams = App.dateFrom
+    ? { date_from: App.dateFrom, date_to: App.dateTo, platform: App.platform }
+    : { mode: App.mode, period: App.period, platform: App.platform };
   const params = new URLSearchParams({
-    mode:     App.mode,
-    period:   App.period,
-    platform: App.platform,
+    ...filterParams,
     ...(opts.params || {}),
   });
   const url = `api/${path}?${params}`;
@@ -183,8 +187,18 @@ async function loadPeriods() {
 }
 
 function renderPeriodLabel() {
-  const el = qs('#periodLabel');
+  const el   = qs('#periodLabel');
+  const prev = qs('#periodPrev');
+  const next = qs('#periodNext');
   if (!el) return;
+
+  if (App.rangeLabel) {
+    el.textContent = App.rangeLabel;
+    if (prev) prev.disabled = true;
+    if (next) next.disabled = true;
+    return;
+  }
+
   if (!App.period) { el.textContent = 'Chọn kỳ'; return; }
   if (App.mode === 'month') {
     const [y, m] = App.period.split('-');
@@ -196,8 +210,6 @@ function renderPeriodLabel() {
     ? (App.periods.months || []).map(x => x.value)
     : (App.periods.years  || []).map(x => x.value);
   const idx = list.indexOf(App.period);
-  const prev = qs('#periodPrev');
-  const next = qs('#periodNext');
   if (prev) prev.disabled = (idx >= list.length - 1);
   if (next) next.disabled = (idx <= 0);
 }
@@ -268,6 +280,7 @@ function closePeriodPanel() {
 }
 
 function navigatePeriod(dir) {
+  App.dateFrom = ''; App.dateTo = ''; App.rangeLabel = '';
   const list = App.mode === 'month'
     ? (App.periods.months || []).map(x => x.value)
     : (App.periods.years  || []).map(x => x.value);
@@ -280,9 +293,39 @@ function navigatePeriod(dir) {
   loadPage(App.currentPage);
 }
 
+function _isoDate(d) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
 function _applyPreset(preset) {
-  const now = new Date();
-  if (preset === 'this-month') {
+  const now   = new Date();
+  const today = _isoDate(now);
+
+  // Reset range state
+  App.dateFrom   = '';
+  App.dateTo     = '';
+  App.rangeLabel = '';
+
+  if (preset === 'today') {
+    App.dateFrom   = today;
+    App.dateTo     = today;
+    App.rangeLabel = 'Hôm nay';
+  } else if (preset === 'yesterday') {
+    const d = new Date(now); d.setDate(d.getDate() - 1);
+    App.dateFrom   = _isoDate(d);
+    App.dateTo     = _isoDate(d);
+    App.rangeLabel = 'Hôm qua';
+  } else if (preset === '7days') {
+    const d = new Date(now); d.setDate(d.getDate() - 6);
+    App.dateFrom   = _isoDate(d);
+    App.dateTo     = today;
+    App.rangeLabel = '7 ngày qua';
+  } else if (preset === '30days') {
+    const d = new Date(now); d.setDate(d.getDate() - 29);
+    App.dateFrom   = _isoDate(d);
+    App.dateTo     = today;
+    App.rangeLabel = '30 ngày qua';
+  } else if (preset === 'this-month') {
     App.mode   = 'month';
     App.period = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   } else if (preset === 'last-month') {
@@ -293,6 +336,7 @@ function _applyPreset(preset) {
     App.mode   = 'year';
     App.period = String(now.getFullYear());
   }
+
   _syncModeButtons();
   renderPeriodLabel();
   closePeriodPanel();
