@@ -1,7 +1,7 @@
 {
-  "version": "1.1.4",
-  "download_url": "https://github.com/namct2610/ecom-dashboard/releases/download/v1.1.4/dashboard-v3-1.1.4.zip",
-  "changelog": "- Thêm heatmap doanh thu theo ngày & giờ (màu xanh lá) cạnh heatmap đơn hàng\n- Heatmap tooltip hiển thị số tiền định dạng VNĐ\n- Heatmap.php hỗ trợ lọc theo date_from/date_to",
+  "version": "1.1.5",
+  "download_url": "https://github.com/namct2610/ecom-dashboard/releases/download/v1.1.5/dashboard-v3-1.1.5.zip",
+  "changelog": "- Sửa heatmap 2 cột vừa layout, không phá vỡ giao diện",
   "min_php": "8.1",
   "released_at": "2026-04-12"
 }
