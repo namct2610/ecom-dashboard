@@ -131,6 +131,8 @@ try {
     // ── Sync orders ───────────────────────────────────────────────────────────
     if ($action === 'sync') {
         $accountId = trim($body['account_id'] ?? '');
+        $reqDateFrom = trim($body['date_from'] ?? '');
+        $reqDateTo   = trim($body['date_to']   ?? '');
 
         $where  = $accountId ? 'WHERE account_id = ? AND is_active = 1' : 'WHERE is_active = 1';
         $params = $accountId ? [$accountId] : [];
@@ -153,7 +155,7 @@ try {
         $results = [];
 
         foreach ($accounts as $account) {
-            $results[] = syncLazadaAccount($pdo, $client, $account);
+            $results[] = syncLazadaAccount($pdo, $client, $account, $reqDateFrom, $reqDateTo);
         }
 
         json_response(['success' => true, 'results' => $results]);
@@ -167,7 +169,7 @@ try {
 
 // ── Sync helper ───────────────────────────────────────────────────────────────
 
-function syncLazadaAccount(PDO $pdo, LazadaClient $client, array $account): array
+function syncLazadaAccount(PDO $pdo, LazadaClient $client, array $account, string $reqDateFrom = '', string $reqDateTo = ''): array
 {
     $accountId   = $account['account_id'];
     $accountName = $account['account_name'] ?? $accountId;
@@ -207,101 +209,119 @@ function syncLazadaAccount(PDO $pdo, LazadaClient $client, array $account): arra
     }
 
     // Determine sync time range
+    // Priority: explicit date_from/date_to from request > last_synced_at (incremental) > sync_from_date (first sync)
+    $tz = new \DateTimeZone('+07:00');
+
     $fromDate = $account['sync_from_date'] ?: date('Y-m-d', strtotime('-30 days'));
     $lastSync = $account['last_synced_at'];
 
-    // Lazada accepts ISO 8601 dates
-    if ($lastSync) {
-        $createdAfter = date('Y-m-d\TH:i:s\+07:00', strtotime($lastSync) - 300);
+    if ($reqDateFrom !== '' && preg_match('/^\d{4}-\d{2}-\d{2}/', $reqDateFrom)) {
+        // Explicit range from UI — ignore last_synced_at
+        $startTs = (new \DateTime($reqDateFrom . ' 00:00:00', $tz))->getTimestamp();
+        $endTs   = ($reqDateTo !== '' && preg_match('/^\d{4}-\d{2}-\d{2}/', $reqDateTo))
+                 ? (new \DateTime($reqDateTo . ' 23:59:59', $tz))->getTimestamp()
+                 : time();
+    } elseif ($lastSync) {
+        // Incremental: only new orders since last sync (with 5-min overlap)
+        $startTs = strtotime($lastSync) - 300;
+        $endTs   = time();
     } else {
-        $createdAfter = date('Y-m-d\T00:00:00\+07:00', strtotime($fromDate));
+        // First sync — use sync_from_date
+        $startTs = (new \DateTime($fromDate . ' 00:00:00', $tz))->getTimestamp();
+        $endTs   = time();
     }
-    $createdBefore = date('Y-m-d\TH:i:s\+07:00');
 
     $imported = 0;
     $errors   = 0;
-    $offset   = 0;
     $limit    = 100;
 
-    do {
-        try {
-            $res = $client->getOrders($accessToken, [
-                'created_after'  => $createdAfter,
-                'created_before' => $createdBefore,
-                'offset'         => $offset,
-                'limit'          => $limit,
-                'sort_by'        => 'created_at',
-                'sort_direction' => 'ASC',
-            ]);
-        } catch (\Throwable $e) {
-            return ['account' => $accountName, 'success' => false, 'error' => $e->getMessage()];
-        }
+    // Lazada API max range is ~30 days — chunk into windows
+    $windowSecs  = 30 * 86400;
+    $windowStart = $startTs;
+    $firstWindow = true;
 
-        if (isset($res['code']) && $res['code'] !== '0' && $res['code'] !== 0) {
-            $msg = $res['message'] ?? ('API error ' . ($res['code'] ?? ''));
-            return ['account' => $accountName, 'success' => false, 'error' => $msg];
-        }
+    while ($windowStart < $endTs) {
+        $windowEnd    = min($windowStart + $windowSecs, $endTs);
+        $createdAfter  = (new \DateTime('@' . $windowStart))->setTimezone($tz)->format('Y-m-d\TH:i:sP');
+        $createdBefore = (new \DateTime('@' . $windowEnd))->setTimezone($tz)->format('Y-m-d\TH:i:sP');
 
-        // Log raw response structure on first page to debug empty results
-        if ($offset === 0) {
-            log_activity('debug', 'lazada', "GetOrders raw response [{$accountName}]", [
-                'code'          => $res['code'] ?? null,
-                'data_keys'     => isset($res['data']) ? array_keys((array)$res['data']) : null,
-                'orders_count'  => count($res['data']['orders'] ?? $res['data'] ?? []),
-                'created_after' => $createdAfter,
-                'created_before'=> $createdBefore,
-            ]);
-        }
-
-        $orders = $res['data']['orders'] ?? [];
-        if (empty($orders)) break;
-
-        // Collect order IDs (max 50 per items request)
-        $orderIds = array_column($orders, 'order_id');
-        $chunks   = array_chunk($orderIds, 50);
-
-        // Build a lookup map of order header data
-        $orderMap = [];
-        foreach ($orders as $o) {
-            $orderMap[(string)$o['order_id']] = $o;
-        }
-
-        foreach ($chunks as $chunk) {
+        $offset = 0;
+        do {
             try {
-                $itemsRes = $client->getMultipleOrderItems($accessToken, $chunk);
+                $res = $client->getOrders($accessToken, [
+                    'created_after'  => $createdAfter,
+                    'created_before' => $createdBefore,
+                    'offset'         => $offset,
+                    'limit'          => $limit,
+                    'sort_by'        => 'created_at',
+                    'sort_direction' => 'ASC',
+                ]);
             } catch (\Throwable $e) {
-                $errors += count($chunk);
-                continue;
+                return ['account' => $accountName, 'success' => false, 'error' => $e->getMessage()];
             }
 
-            if (isset($itemsRes['code']) && $itemsRes['code'] !== '0' && $itemsRes['code'] !== 0) {
-                $errors += count($chunk);
-                continue;
+            if (isset($res['code']) && $res['code'] !== '0' && $res['code'] !== 0) {
+                $msg = $res['message'] ?? ('API error ' . ($res['code'] ?? ''));
+                return ['account' => $accountName, 'success' => false, 'error' => $msg];
             }
 
-            $allItems = $itemsRes['data'] ?? [];
+            // Log first page of first window for debugging
+            if ($firstWindow && $offset === 0) {
+                log_activity('debug', 'lazada', "GetOrders [{$accountName}]", [
+                    'code'           => $res['code'] ?? null,
+                    'data_keys'      => isset($res['data']) ? array_keys((array)$res['data']) : null,
+                    'orders_count'   => count($res['data']['orders'] ?? $res['data'] ?? []),
+                    'created_after'  => $createdAfter,
+                    'created_before' => $createdBefore,
+                ]);
+                $firstWindow = false;
+            }
 
-            // data is an array of { order_id: X, order_items: [...] }
-            foreach ($allItems as $orderItemGroup) {
-                $oid        = (string) ($orderItemGroup['order_id'] ?? '');
-                $orderItems = $orderItemGroup['order_items'] ?? [];
-                $header     = $orderMap[$oid] ?? [];
+            $orders = $res['data']['orders'] ?? [];
+            if (empty($orders)) break;
 
-                foreach ($orderItems as $item) {
-                    try {
-                        insertLazadaOrder($pdo, $header, $item);
-                        $imported++;
-                    } catch (\Throwable $e) {
-                        $errors++;
+            // Collect order IDs (max 50 per items request)
+            $orderIds = array_column($orders, 'order_id');
+            $chunks   = array_chunk($orderIds, 50);
+
+            $orderMap = [];
+            foreach ($orders as $o) {
+                $orderMap[(string)$o['order_id']] = $o;
+            }
+
+            foreach ($chunks as $chunk) {
+                try {
+                    $itemsRes = $client->getMultipleOrderItems($accessToken, $chunk);
+                } catch (\Throwable $e) {
+                    $errors += count($chunk);
+                    continue;
+                }
+
+                if (isset($itemsRes['code']) && $itemsRes['code'] !== '0' && $itemsRes['code'] !== 0) {
+                    $errors += count($chunk);
+                    continue;
+                }
+
+                foreach ($itemsRes['data'] ?? [] as $orderItemGroup) {
+                    $oid        = (string) ($orderItemGroup['order_id'] ?? '');
+                    $orderItems = $orderItemGroup['order_items'] ?? [];
+                    $header     = $orderMap[$oid] ?? [];
+                    foreach ($orderItems as $item) {
+                        try {
+                            insertLazadaOrder($pdo, $header, $item);
+                            $imported++;
+                        } catch (\Throwable $e) {
+                            $errors++;
+                        }
                     }
                 }
             }
-        }
 
-        $offset += $limit;
+            $offset += $limit;
+        } while (count($orders) === $limit);
 
-        // Check if we got a full page (more pages may exist)
-    } while (count($orders) === $limit);
+        $windowStart = $windowEnd;
+    }
 
     // Update last_synced_at
     $pdo->prepare("UPDATE lazada_connections SET last_synced_at = NOW() WHERE account_id = ?")
