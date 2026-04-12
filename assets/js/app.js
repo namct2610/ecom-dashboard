@@ -146,6 +146,7 @@ function setupLogin() {
       if (data.success) {
         App.csrf = data.csrf;
         hideAuth();
+        setupAppShell();
         await loadPeriods();
         loadPage(App.currentPage);
       } else {
@@ -1852,11 +1853,11 @@ function setupShopeeConnectPage() {
 }
 
 // ── Init ──────────────────────────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', async () => {
-  setupLogin();
+let _appShellReady = false;
 
-  const ok = await initAuth();
-  if (!ok) return;
+function setupAppShell() {
+  if (_appShellReady) return; // guard: only bind event listeners once
+  _appShellReady = true;
 
   setupNav();
   setupPlatformFilter();
@@ -1865,16 +1866,21 @@ document.addEventListener('DOMContentLoaded', async () => {
   setupConnectPage();
   setupLazadaConnectPage();
   setupShopeeConnectPage();
-  checkForUpdates(); // background — no await, shows badge if update available
+  setupSidebarCollapse();
+  qs('#btnLogout')?.addEventListener('click', logout);
+  checkForUpdates();
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+  setupLogin();
+
+  const ok = await initAuth();
+  if (!ok) return; // not logged in — wait for login form submit
+
+  setupAppShell();
   await loadPeriods();
   const initPage = location.hash.replace('#', '') || 'overview';
   loadPage(['overview','orders','products','customers','traffic','comparison','heatmaps','upload','logs','connect','settings'].includes(initPage) ? initPage : 'overview');
-
-  // Logout
-  qs('#btnLogout')?.addEventListener('click', logout);
-
-  // Sidebar collapse
-  setupSidebarCollapse();
 });
 
 function setupSidebarCollapse() {
