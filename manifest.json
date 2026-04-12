@@ -1,6 +1,6 @@
 {
   "version": "1.1.2",
-  "download_url": "https://github.com/namct2610/dashboard-v3/releases/download/v1.1.2/dashboard-v3-1.1.2.zip",
+  "download_url": "https://github.com/namct2610/ecom-dashboard/releases/download/v1.1.2/dashboard-v3-1.1.2.zip",
   "changelog": "- Dọn dẹp build: tách toàn bộ file dev/tool vào thư mục others/\n- Cập nhật tự động giờ tự chạy migrate DB schema sau khi áp dụng\n- Sửa: version.txt được cập nhật đúng khi cập nhật tự động",
   "min_php": "8.1",
   "released_at": "2026-04-11"
