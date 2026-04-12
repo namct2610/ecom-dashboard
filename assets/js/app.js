@@ -165,59 +165,201 @@ async function logout() {
   showAuth();
 }
 
-// ── Time filter ──────────────────────────────────────────────────────────
+// ── Period picker ─────────────────────────────────────────────────────────
+let _pickerGridYear = new Date().getFullYear();
+let _pickerOpen = false;
+
 async function loadPeriods() {
   try {
     const data = await api('date-periods.php', { params: {} });
     App.periods = data;
-    renderPeriodSelect();
+    // Auto-select most recent period if none chosen yet
+    if (!App.period) {
+      const list = App.mode === 'month' ? data.months : data.years;
+      if (list?.length) App.period = list[0].value;
+    }
+    renderPeriodLabel();
   } catch (e) {
     console.warn('loadPeriods error', e);
   }
 }
 
-function renderPeriodSelect() {
-  const select = qs('#periodSelect');
-  const { months, years } = App.periods;
-  select.innerHTML = '';
-
+function renderPeriodLabel() {
+  const el = qs('#periodLabel');
+  if (!el) return;
+  if (!App.period) { el.textContent = 'Chọn kỳ'; return; }
   if (App.mode === 'month') {
-    months.forEach(m => {
-      const o = document.createElement('option');
-      o.value = m.value;
-      o.textContent = m.label;
-      select.appendChild(o);
-    });
-    if (!App.period && months.length) App.period = months[0].value;
+    const [y, m] = App.period.split('-');
+    el.textContent = `Tháng ${parseInt(m, 10)} · ${y}`;
   } else {
-    years.forEach(y => {
-      const o = document.createElement('option');
-      o.value = y.value;
-      o.textContent = y.label;
-      select.appendChild(o);
-    });
-    if (!App.period && years.length) App.period = years[0].value;
+    el.textContent = `Năm ${App.period}`;
   }
-  select.value = App.period;
+  // Update arrow disabled states
+  const list = App.mode === 'month'
+    ? (App.periods.months || []).map(x => x.value)
+    : (App.periods.years  || []).map(x => x.value);
+  const idx = list.indexOf(App.period);
+  const prev = qs('#periodPrev');
+  const next = qs('#periodNext');
+  if (prev) prev.disabled = idx >= list.length - 1;
+  if (next) next.disabled = idx <= 0;
 }
 
-function setupTimeFilter() {
-  // Mode buttons (Tháng / Năm)
-  qsa('.time-mode-btn').forEach(btn => {
+function renderPeriodGrid() {
+  const grid      = qs('#periodGrid');
+  const yearLabel = qs('#periodGridYear');
+  if (!grid) return;
+  if (yearLabel) yearLabel.textContent = _pickerGridYear;
+
+  const { months = [], years = [] } = App.periods;
+  grid.innerHTML = '';
+
+  if (App.mode === 'month') {
+    const available = new Set(months.map(m => m.value));
+    for (let m = 1; m <= 12; m++) {
+      const val = `${_pickerGridYear}-${String(m).padStart(2, '0')}`;
+      const btn = document.createElement('button');
+      const isActive   = val === App.period;
+      const hasData    = available.has(val);
+      btn.className = ['period-grid-cell', isActive ? 'active' : '', hasData ? 'has-data' : 'disabled'].filter(Boolean).join(' ');
+      btn.textContent = `T${m}`;
+      if (hasData) {
+        btn.addEventListener('click', () => {
+          App.period = val;
+          renderPeriodLabel();
+          renderPeriodGrid();
+          closePeriodPanel();
+          loadPage(App.currentPage);
+        });
+      }
+      grid.appendChild(btn);
+    }
+  } else {
+    // Year mode: show 6 years centred on _pickerGridYear
+    const available = new Set(years.map(y => y.value));
+    const start = _pickerGridYear - 2;
+    for (let y = start; y < start + 6; y++) {
+      const val = String(y);
+      const btn = document.createElement('button');
+      const isActive = val === App.period;
+      const hasData  = available.has(val);
+      btn.className = ['period-grid-cell wide', isActive ? 'active' : '', hasData ? 'has-data' : 'disabled'].filter(Boolean).join(' ');
+      btn.textContent = val;
+      if (hasData) {
+        btn.addEventListener('click', () => {
+          App.period = val;
+          renderPeriodLabel();
+          renderPeriodGrid();
+          closePeriodPanel();
+          loadPage(App.currentPage);
+        });
+      }
+      grid.appendChild(btn);
+    }
+  }
+}
+
+function openPeriodPanel() {
+  _pickerGridYear = App.period ? parseInt(App.period.slice(0, 4), 10) : new Date().getFullYear();
+  const panel = qs('#periodPanel');
+  if (panel) panel.style.display = '';
+  _pickerOpen = true;
+  renderPeriodGrid();
+}
+
+function closePeriodPanel() {
+  const panel = qs('#periodPanel');
+  if (panel) panel.style.display = 'none';
+  _pickerOpen = false;
+}
+
+function navigatePeriod(dir) { // dir: -1 = earlier, +1 = later
+  const list = App.mode === 'month'
+    ? (App.periods.months || []).map(x => x.value)
+    : (App.periods.years  || []).map(x => x.value);
+  // list is DESC: list[0]=newest. Earlier=-1 → idx+1; Later=+1 → idx-1
+  const idx = list.indexOf(App.period);
+  if (idx === -1) return;
+  const newIdx = idx + (dir === -1 ? 1 : -1);
+  if (newIdx < 0 || newIdx >= list.length) return;
+  App.period = list[newIdx];
+  renderPeriodLabel();
+  loadPage(App.currentPage);
+}
+
+function _applyPreset(preset) {
+  const now = new Date();
+  if (preset === 'this-month') {
+    App.mode   = 'month';
+    App.period = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  } else if (preset === 'last-month') {
+    App.mode = 'month';
+    const d   = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    App.period = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+  } else if (preset === 'this-year') {
+    App.mode   = 'year';
+    App.period = String(now.getFullYear());
+  }
+  _syncModeButtons();
+  renderPeriodLabel();
+  closePeriodPanel();
+  loadPage(App.currentPage);
+}
+
+function _syncModeButtons() {
+  qsa('.period-mode-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === App.mode));
+}
+
+function setupPeriodPicker() {
+  // Mode buttons
+  qsa('.period-mode-btn').forEach(btn => {
     btn.addEventListener('click', () => {
+      if (btn.dataset.mode === App.mode) return;
       App.mode = btn.dataset.mode;
-      App.period = '';
-      qsa('.time-mode-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      renderPeriodSelect();
+      // Pick most recent period of the new mode
+      const list = App.mode === 'month'
+        ? (App.periods.months || [])
+        : (App.periods.years  || []);
+      App.period = list.length ? list[0].value : '';
+      _syncModeButtons();
+      renderPeriodLabel();
+      if (_pickerOpen) renderPeriodGrid();
       loadPage(App.currentPage);
     });
   });
 
-  // Period select
-  qs('#periodSelect').addEventListener('change', (e) => {
-    App.period = e.target.value;
-    loadPage(App.currentPage);
+  // Open/close panel
+  qs('#periodLabelBtn')?.addEventListener('click', e => {
+    e.stopPropagation();
+    _pickerOpen ? closePeriodPanel() : openPeriodPanel();
+  });
+
+  // Close on outside click
+  document.addEventListener('click', e => {
+    if (_pickerOpen && !qs('#periodPicker')?.contains(e.target)) closePeriodPanel();
+  });
+
+  // Prev / Next arrows
+  qs('#periodPrev')?.addEventListener('click', () => navigatePeriod(-1));
+  qs('#periodNext')?.addEventListener('click', () => navigatePeriod(1));
+
+  // Grid year navigation
+  qs('#periodGridPrev')?.addEventListener('click', e => {
+    e.stopPropagation();
+    _pickerGridYear--;
+    qs('#periodGridYear').textContent = _pickerGridYear;
+    renderPeriodGrid();
+  });
+  qs('#periodGridNext')?.addEventListener('click', e => {
+    e.stopPropagation();
+    _pickerGridYear++;
+    qs('#periodGridYear').textContent = _pickerGridYear;
+    renderPeriodGrid();
+  });
+
+  // Preset buttons
+  qsa('.period-preset-btn').forEach(btn => {
+    btn.addEventListener('click', () => _applyPreset(btn.dataset.preset));
   });
 }
 
@@ -1658,7 +1800,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   setupNav();
   setupPlatformFilter();
-  setupTimeFilter();
+  setupPeriodPicker();
   setupLogsPage();
   setupConnectPage();
   setupLazadaConnectPage();
