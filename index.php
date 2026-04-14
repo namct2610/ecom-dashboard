@@ -32,6 +32,8 @@ $initials = strtoupper(substr($user, 0, 2));
 
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <!-- i18n (load before app.js so t() is available) -->
+  <script src="assets/js/i18n.js"></script>
 </head>
 <body>
 
@@ -44,17 +46,17 @@ $initials = strtoupper(substr($user, 0, 2));
       </svg>
     </div>
     <div class="login-title">Dashboard v3</div>
-    <div class="login-sub">Đăng nhập để tiếp tục</div>
+    <div class="login-sub" data-i18n="login.sub">Đăng nhập để tiếp tục</div>
     <form id="loginForm" autocomplete="off">
       <div class="login-field">
-        <label class="login-label" for="loginUsername">Tên đăng nhập</label>
+        <label class="login-label" data-i18n="login.user" for="loginUsername">Tên đăng nhập</label>
         <input id="loginUsername" class="login-input" type="text" placeholder="admin" autocomplete="username" required>
       </div>
       <div class="login-field">
-        <label class="login-label" for="loginPassword">Mật khẩu</label>
+        <label class="login-label" data-i18n="login.pass" for="loginPassword">Mật khẩu</label>
         <input id="loginPassword" class="login-input" type="password" placeholder="••••••••" autocomplete="current-password" required>
       </div>
-      <button id="loginBtn" type="submit" class="login-btn">Đăng nhập</button>
+      <button id="loginBtn" data-i18n="login.btn" type="submit" class="login-btn">Đăng nhập</button>
       <div id="loginError" class="login-error"></div>
     </form>
   </div>
@@ -83,47 +85,47 @@ $initials = strtoupper(substr($user, 0, 2));
     <div class="sidebar-nav">
       <div class="nav-item active" data-page="overview" data-label="Tổng quan">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
-        <span class="nav-label">Tổng quan</span>
+        <span class="nav-label" data-i18n="nav.overview">Tổng quan</span>
       </div>
       <div class="nav-item" data-page="orders" data-label="Đơn hàng">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
-        <span class="nav-label">Đơn hàng</span>
+        <span class="nav-label" data-i18n="nav.orders">Đơn hàng</span>
       </div>
       <div class="nav-item" data-page="products" data-label="Sản phẩm">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
-        <span class="nav-label">Sản phẩm</span>
+        <span class="nav-label" data-i18n="nav.products">Sản phẩm</span>
       </div>
       <div class="nav-item" data-page="customers" data-label="Khách hàng">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
-        <span class="nav-label">Khách hàng</span>
+        <span class="nav-label" data-i18n="nav.customers">Khách hàng</span>
       </div>
       <div class="nav-item" data-page="traffic" data-label="Traffic">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
-        <span class="nav-label">Traffic</span>
+        <span class="nav-label" data-i18n="nav.traffic">Traffic</span>
       </div>
       <div class="nav-item" data-page="comparison" data-label="So sánh">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
-        <span class="nav-label">So sánh</span>
+        <span class="nav-label" data-i18n="nav.comparison">So sánh</span>
       </div>
       <div class="nav-item" data-page="heatmaps" data-label="Phân tích">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="4" height="4" rx="1"/><rect x="10" y="3" width="4" height="4" rx="1"/><rect x="17" y="3" width="4" height="4" rx="1"/><rect x="3" y="10" width="4" height="4" rx="1"/><rect x="10" y="10" width="4" height="4" rx="1"/><rect x="17" y="10" width="4" height="4" rx="1"/><rect x="3" y="17" width="4" height="4" rx="1"/><rect x="10" y="17" width="4" height="4" rx="1"/><rect x="17" y="17" width="4" height="4" rx="1"/></svg>
-        <span class="nav-label">Phân tích</span>
+        <span class="nav-label" data-i18n="nav.analytics">Phân tích</span>
       </div>
       <div class="nav-item" data-page="upload" data-label="Upload">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
-        <span class="nav-label">Upload</span>
+        <span class="nav-label" data-i18n="nav.upload">Upload</span>
       </div>
       <div class="nav-item" data-page="connect" data-label="Kết nối API">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
-        <span class="nav-label">Kết nối API</span>
+        <span class="nav-label" data-i18n="nav.connect">Kết nối API</span>
       </div>
       <div class="nav-item" data-page="logs" data-label="Nhật ký">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-        <span class="nav-label">Nhật ký</span>
+        <span class="nav-label" data-i18n="nav.logs">Nhật ký</span>
       </div>
       <div class="nav-item" data-page="settings" data-label="Cài đặt" style="position:relative">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
-        <span class="nav-label">Cài đặt</span>
+        <span class="nav-label" data-i18n="nav.settings">Cài đặt</span>
         <span id="updateNavBadge" style="display:none;position:absolute;top:6px;right:8px;width:8px;height:8px;border-radius:50%;background:#ef4444;box-shadow:0 0 0 2px var(--sidebar-bg,#1e293b)"></span>
       </div>
     </div>
@@ -131,11 +133,11 @@ $initials = strtoupper(substr($user, 0, 2));
     <div class="sidebar-footer">
       <button id="btnCollapseSidebar" class="btn-collapse-sidebar">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
-        <span class="nav-label">Thu gọn</span>
+        <span class="nav-label" data-i18n="nav.collapse">Thu gọn</span>
       </button>
       <button id="btnLogout" class="btn-logout">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>
-        <span class="btn-logout-label">Đăng xuất</span>
+        <span class="btn-logout-label" data-i18n="nav.logout">Đăng xuất</span>
       </button>
     </div>
   </nav>
@@ -143,13 +145,19 @@ $initials = strtoupper(substr($user, 0, 2));
   <!-- Main -->
   <div id="main">
 
+    <!-- Sidebar overlay (mobile) -->
+    <div id="sidebarOverlay"></div>
+
     <!-- Header -->
     <div id="header">
+      <button id="btnMenuToggle" aria-label="Menu">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
       <span class="header-title">Dashboard v3</span>
 
       <!-- Platform filter -->
       <div class="platform-filter">
-        <button class="platform-btn active" data-platform="all">Tất cả</button>
+        <button class="platform-btn active" data-platform="all" data-i18n="filter.all">Tất cả</button>
         <button class="platform-btn" data-platform="shopee">Shopee</button>
         <button class="platform-btn" data-platform="lazada">Lazada</button>
         <button class="platform-btn" data-platform="tiktokshop">TikTok</button>
@@ -160,8 +168,8 @@ $initials = strtoupper(substr($user, 0, 2));
       <!-- Period picker -->
       <div class="period-picker" id="periodPicker">
         <div class="pp-modes">
-          <button class="pp-mode active" data-mode="month">Tháng</button>
-          <button class="pp-mode" data-mode="year">Năm</button>
+          <button class="pp-mode active" data-mode="month" data-i18n="period.month">Tháng</button>
+          <button class="pp-mode" data-mode="year" data-i18n="period.year">Năm</button>
         </div>
         <div class="pp-nav">
           <button class="pp-arrow" id="periodPrev">&#8249;</button>
@@ -173,15 +181,15 @@ $initials = strtoupper(substr($user, 0, 2));
         </div>
         <div class="pp-panel" id="periodPanel">
           <div class="pp-presets">
-            <button class="pp-preset pp-preset-range" data-preset="today">Hôm nay</button>
-            <button class="pp-preset pp-preset-range" data-preset="yesterday">Hôm qua</button>
-            <button class="pp-preset pp-preset-range" data-preset="7days">7 ngày</button>
-            <button class="pp-preset pp-preset-range" data-preset="30days">30 ngày</button>
+            <button class="pp-preset pp-preset-range" data-preset="today" data-i18n="preset.today">Hôm nay</button>
+            <button class="pp-preset pp-preset-range" data-preset="yesterday" data-i18n="preset.yesterday">Hôm qua</button>
+            <button class="pp-preset pp-preset-range" data-preset="7days" data-i18n="preset.7days">7 ngày</button>
+            <button class="pp-preset pp-preset-range" data-preset="30days" data-i18n="preset.30days">30 ngày</button>
           </div>
           <div class="pp-presets pp-presets-period">
-            <button class="pp-preset" data-preset="this-month">Tháng này</button>
-            <button class="pp-preset" data-preset="last-month">Tháng trước</button>
-            <button class="pp-preset" data-preset="this-year">Năm nay</button>
+            <button class="pp-preset" data-preset="this-month" data-i18n="preset.this_month">Tháng này</button>
+            <button class="pp-preset" data-preset="last-month" data-i18n="preset.last_month">Tháng trước</button>
+            <button class="pp-preset" data-preset="this-year" data-i18n="preset.this_year">Năm nay</button>
           </div>
           <div class="pp-grid-head">
             <button class="pp-gyear-arrow" id="periodGridPrev">&#8249;</button>
@@ -192,6 +200,7 @@ $initials = strtoupper(substr($user, 0, 2));
         </div>
       </div>
 
+      <button id="btnLang" title="Switch language">EN</button>
       <div class="header-avatar"><?= htmlspecialchars($initials) ?></div>
     </div>
 
@@ -201,41 +210,41 @@ $initials = strtoupper(substr($user, 0, 2));
       <!-- ── Overview ──────────────────────────────────────────────────── -->
       <div class="page active" id="page-overview">
         <div class="page-header">
-          <h1>Tổng quan</h1>
-          <p>Doanh thu, đơn hàng và traffic tổng hợp</p>
+          <h1 data-i18n="page.overview.title">Tổng quan</h1>
+          <p data-i18n="page.overview.sub">Doanh thu, đơn hàng và traffic tổng hợp</p>
         </div>
 
         <!-- KPI Row -->
         <div class="grid-4 mb-4">
           <div class="kpi-card border-blue">
-            <div class="kpi-label">Doanh thu
+            <div class="kpi-label"><span data-i18n="kpi.revenue">Doanh thu</span>
               <span class="kpi-icon blue">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
               </span>
             </div>
             <div class="kpi-value" id="kpi-revenue">—</div>
-            <div class="kpi-sub">Đã hoàn thành</div>
+            <div class="kpi-sub" data-i18n="kpi.revenue.sub">Đã hoàn thành</div>
           </div>
           <div class="kpi-card border-green">
-            <div class="kpi-label">Tổng đơn
+            <div class="kpi-label"><span data-i18n="kpi.orders">Tổng đơn</span>
               <span class="kpi-icon green">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/></svg>
               </span>
             </div>
             <div class="kpi-value" id="kpi-orders">—</div>
-            <div class="kpi-sub">Tất cả trạng thái</div>
+            <div class="kpi-sub" data-i18n="kpi.orders.sub">Tất cả trạng thái</div>
           </div>
           <div class="kpi-card border-purple">
-            <div class="kpi-label">Hoàn thành
+            <div class="kpi-label"><span data-i18n="kpi.completed">Hoàn thành</span>
               <span class="kpi-icon purple">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
               </span>
             </div>
             <div class="kpi-value" id="kpi-completed">—</div>
-            <div class="kpi-sub">Đã giao / hoàn thành</div>
+            <div class="kpi-sub" data-i18n="kpi.completed.sub">Đã giao / hoàn thành</div>
           </div>
           <div class="kpi-card border-orange">
-            <div class="kpi-label">Lượt xem
+            <div class="kpi-label"><span data-i18n="kpi.views">Lượt xem</span>
               <span class="kpi-icon orange">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
               </span>
@@ -250,8 +259,8 @@ $initials = strtoupper(substr($user, 0, 2));
           <div class="chart-card">
             <div class="chart-header">
               <div class="chart-header-left">
-                <h3>Doanh thu theo thời gian</h3>
-                <p>Phân theo sàn</p>
+                <h3 data-i18n="chart.revenue_trend">Doanh thu theo thời gian</h3>
+                <p data-i18n="chart.by_platform">Phân theo sàn</p>
               </div>
             </div>
             <div class="chart-wrap" style="height:200px">
@@ -261,7 +270,7 @@ $initials = strtoupper(substr($user, 0, 2));
           <div class="chart-card">
             <div class="chart-header">
               <div class="chart-header-left">
-                <h3>Thị phần doanh thu</h3>
+                <h3 data-i18n="chart.market_share">Thị phần doanh thu</h3>
               </div>
             </div>
             <div class="donut-wrap" style="height:160px">
@@ -274,11 +283,11 @@ $initials = strtoupper(substr($user, 0, 2));
         <!-- Recent orders + top products -->
         <div class="grid-2">
           <div class="card">
-            <div class="card-title">Đơn hàng gần đây</div>
+            <div class="card-title" data-i18n="card.recent_orders">Đơn hàng gần đây</div>
             <div id="recentOrdersMini"></div>
           </div>
           <div class="card">
-            <div class="card-title">Top sản phẩm</div>
+            <div class="card-title" data-i18n="card.top_products">Top sản phẩm</div>
             <div id="topProductsOverview"></div>
           </div>
         </div>
@@ -287,26 +296,26 @@ $initials = strtoupper(substr($user, 0, 2));
       <!-- ── Orders ────────────────────────────────────────────────────── -->
       <div class="page" id="page-orders">
         <div class="page-header">
-          <h1>Đơn hàng</h1>
-          <p>Chi tiết đơn hàng theo thời gian và trạng thái</p>
+          <h1 data-i18n="page.orders.title">Đơn hàng</h1>
+          <p data-i18n="page.orders.sub">Chi tiết đơn hàng theo thời gian và trạng thái</p>
         </div>
 
         <!-- KPIs -->
         <div class="grid-4 mb-4">
           <div class="kpi-card border-blue">
-            <div class="kpi-label">Tổng đơn</div>
+            <div class="kpi-label" data-i18n="kpi.total_orders">Tổng đơn</div>
             <div class="kpi-value" id="ord-total">—</div>
           </div>
           <div class="kpi-card border-green">
-            <div class="kpi-label">Hoàn thành</div>
+            <div class="kpi-label" data-i18n="kpi.completed">Hoàn thành</div>
             <div class="kpi-value" id="ord-completed">—</div>
           </div>
           <div class="kpi-card border-red">
-            <div class="kpi-label">Đã huỷ</div>
+            <div class="kpi-label" data-i18n="kpi.cancelled">Đã huỷ</div>
             <div class="kpi-value" id="ord-cancelled">—</div>
           </div>
           <div class="kpi-card border-orange">
-            <div class="kpi-label">Tỷ lệ huỷ</div>
+            <div class="kpi-label" data-i18n="kpi.cancel_rate">Tỷ lệ huỷ</div>
             <div class="kpi-value" id="ord-cancel-rate">—</div>
           </div>
         </div>
@@ -316,8 +325,8 @@ $initials = strtoupper(substr($user, 0, 2));
           <div class="chart-card">
             <div class="chart-header">
               <div class="chart-header-left">
-                <h3>Xu hướng đơn hàng</h3>
-                <p>Hoàn thành vs Huỷ</p>
+                <h3 data-i18n="chart.order_trend">Xu hướng đơn hàng</h3>
+                <p data-i18n="chart.completed_vs_cancelled">Hoàn thành vs Huỷ</p>
               </div>
             </div>
             <div class="chart-wrap" style="height:200px">
@@ -327,7 +336,7 @@ $initials = strtoupper(substr($user, 0, 2));
           <div class="chart-card">
             <div class="chart-header">
               <div class="chart-header-left">
-                <h3>Trạng thái đơn</h3>
+                <h3 data-i18n="chart.order_status">Trạng thái đơn</h3>
               </div>
             </div>
             <div class="donut-wrap" style="height:160px">
@@ -342,7 +351,7 @@ $initials = strtoupper(substr($user, 0, 2));
           <div class="chart-card">
             <div class="chart-header">
               <div class="chart-header-left">
-                <h3>Đơn theo sàn</h3>
+                <h3 data-i18n="chart.orders_platform">Đơn theo sàn</h3>
               </div>
             </div>
             <div class="chart-wrap" style="height:180px">
@@ -352,7 +361,7 @@ $initials = strtoupper(substr($user, 0, 2));
           <div class="chart-card">
             <div class="chart-header">
               <div class="chart-header-left">
-                <h3>Đơn theo giờ trong ngày</h3>
+                <h3 data-i18n="chart.orders_hour">Đơn theo giờ trong ngày</h3>
               </div>
             </div>
             <div class="chart-wrap" style="height:180px">
@@ -363,17 +372,17 @@ $initials = strtoupper(substr($user, 0, 2));
 
         <!-- Orders table -->
         <div class="card">
-          <div class="card-title">Danh sách đơn hàng</div>
+          <div class="card-title" data-i18n="card.order_list">Danh sách đơn hàng</div>
           <div class="table-wrapper" style="margin-top:10px">
             <table>
               <thead>
                 <tr>
-                  <th>Mã đơn</th>
-                  <th>Sản phẩm</th>
-                  <th>Sàn</th>
-                  <th>Ngày đặt</th>
-                  <th class="text-right">Giá trị</th>
-                  <th>Trạng thái</th>
+                  <th data-i18n="th.order_id">Mã đơn</th>
+                  <th data-i18n="th.product">Sản phẩm</th>
+                  <th data-i18n="th.platform">Sàn</th>
+                  <th data-i18n="th.date">Ngày đặt</th>
+                  <th class="text-right" data-i18n="th.value">Giá trị</th>
+                  <th data-i18n="th.status">Trạng thái</th>
                 </tr>
               </thead>
               <tbody id="ordersTable"></tbody>
@@ -386,29 +395,29 @@ $initials = strtoupper(substr($user, 0, 2));
       <!-- ── Products ──────────────────────────────────────────────────── -->
       <div class="page" id="page-products">
         <div class="page-header">
-          <h1>Sản phẩm</h1>
-          <p>Top sản phẩm theo số lượng và doanh thu</p>
+          <h1 data-i18n="page.products.title">Sản phẩm</h1>
+          <p data-i18n="page.products.sub">Top sản phẩm theo số lượng và doanh thu</p>
         </div>
 
         <div class="grid-4 mb-4">
           <div class="kpi-card border-purple">
-            <div class="kpi-label">Tổng SKU</div>
+            <div class="kpi-label" data-i18n="kpi.total_skus">Tổng SKU</div>
             <div class="kpi-value" id="total-skus">—</div>
           </div>
           <div class="kpi-card border-blue">
-            <div class="kpi-label">Tổng SL đã bán</div>
+            <div class="kpi-label" data-i18n="kpi.qty_sold">Tổng SL đã bán</div>
             <div class="kpi-value" id="prod-qty-all">—</div>
-            <div class="kpi-sub">Kể cả đơn huỷ</div>
+            <div class="kpi-sub" data-i18n="kpi.qty_sold.sub">Kể cả đơn huỷ</div>
           </div>
           <div class="kpi-card border-green">
-            <div class="kpi-label">Tổng SL đã giao</div>
+            <div class="kpi-label" data-i18n="kpi.qty_delivered">Tổng SL đã giao</div>
             <div class="kpi-value" id="prod-qty-delivered">—</div>
-            <div class="kpi-sub">Đơn hoàn thành</div>
+            <div class="kpi-sub" data-i18n="kpi.qty_del.sub">Đơn hoàn thành</div>
           </div>
           <div class="kpi-card border-orange">
-            <div class="kpi-label">SL TB/đơn hàng</div>
+            <div class="kpi-label" data-i18n="kpi.avg_qty">SL TB/đơn hàng</div>
             <div class="kpi-value" id="prod-avg-qty">—</div>
-            <div class="kpi-sub">Sản phẩm/đơn</div>
+            <div class="kpi-sub" data-i18n="kpi.avg_qty.sub">Sản phẩm/đơn</div>
           </div>
         </div>
 
@@ -417,8 +426,8 @@ $initials = strtoupper(substr($user, 0, 2));
           <div class="chart-card">
             <div class="chart-header">
               <div class="chart-header-left">
-                <h3>Top sản phẩm bán chạy</h3>
-                <p>Theo số lượng</p>
+                <h3 data-i18n="chart.top_qty">Top sản phẩm bán chạy</h3>
+                <p data-i18n="chart.by_qty">Theo số lượng</p>
               </div>
             </div>
             <div class="chart-wrap" style="height:260px">
@@ -428,8 +437,8 @@ $initials = strtoupper(substr($user, 0, 2));
           <div class="chart-card">
             <div class="chart-header">
               <div class="chart-header-left">
-                <h3>Top sản phẩm doanh thu cao</h3>
-                <p>Theo doanh thu</p>
+                <h3 data-i18n="chart.top_revenue">Top sản phẩm doanh thu cao</h3>
+                <p data-i18n="chart.by_revenue">Theo doanh thu</p>
               </div>
             </div>
             <div class="chart-wrap" style="height:260px">
@@ -441,16 +450,16 @@ $initials = strtoupper(substr($user, 0, 2));
         <!-- Mini bars + products table -->
         <div class="grid-3-1">
           <div class="card">
-            <div class="card-title" style="margin-bottom:12px">Danh sách sản phẩm</div>
+            <div class="card-title" data-i18n="card.product_list" style="margin-bottom:12px">Danh sách sản phẩm</div>
             <div class="table-wrapper">
               <table>
                 <thead>
                   <tr>
-                    <th>SKU</th>
-                    <th>Tên sản phẩm</th>
-                    <th>Sàn</th>
-                    <th class="text-right">SL</th>
-                    <th class="text-right">Doanh thu</th>
+                    <th data-i18n="th.sku">SKU</th>
+                    <th data-i18n="th.product_name">Tên sản phẩm</th>
+                    <th data-i18n="th.platform">Sàn</th>
+                    <th class="text-right" data-i18n="th.qty">SL</th>
+                    <th class="text-right" data-i18n="th.revenue">Doanh thu</th>
                   </tr>
                 </thead>
                 <tbody id="productsTable"></tbody>
@@ -459,7 +468,7 @@ $initials = strtoupper(substr($user, 0, 2));
             <div id="productsPager"></div>
           </div>
           <div class="card">
-            <div class="card-title" style="margin-bottom:12px">Top 5 doanh thu</div>
+            <div class="card-title" data-i18n="card.top5_revenue" style="margin-bottom:12px">Top 5 doanh thu</div>
             <div id="topRevMini"></div>
           </div>
         </div>
@@ -468,24 +477,24 @@ $initials = strtoupper(substr($user, 0, 2));
       <!-- ── Customers ─────────────────────────────────────────────────── -->
       <div class="page" id="page-customers">
         <div class="page-header">
-          <h1>Khách hàng</h1>
-          <p>Phân tích khách hàng theo địa lý và phương thức thanh toán</p>
+          <h1 data-i18n="page.customers.title">Khách hàng</h1>
+          <p data-i18n="page.customers.sub">Phân tích khách hàng theo địa lý và phương thức thanh toán</p>
         </div>
 
         <div class="grid-4 mb-4">
           <div class="kpi-card border-blue">
-            <div class="kpi-label">Tổng đơn</div>
+            <div class="kpi-label" data-i18n="kpi.total_orders">Tổng đơn</div>
             <div class="kpi-value" id="cust-total">—</div>
           </div>
           <div class="kpi-card border-green">
-            <div class="kpi-label">AOV</div>
+            <div class="kpi-label" data-i18n="kpi.aov">AOV</div>
             <div class="kpi-value" id="cust-aov">—</div>
-            <div class="kpi-sub">Giá trị trung bình/đơn</div>
+            <div class="kpi-sub" data-i18n="kpi.aov.sub">Giá trị trung bình/đơn</div>
           </div>
           <div class="kpi-card border-purple">
-            <div class="kpi-label">Người mua</div>
+            <div class="kpi-label" data-i18n="kpi.buyers">Người mua</div>
             <div class="kpi-value" id="cust-buyers">—</div>
-            <div class="kpi-sub">Người mua khác nhau</div>
+            <div class="kpi-sub" data-i18n="kpi.buyers.sub">Người mua khác nhau</div>
           </div>
         </div>
 
@@ -493,7 +502,7 @@ $initials = strtoupper(substr($user, 0, 2));
           <div class="chart-card">
             <div class="chart-header">
               <div class="chart-header-left">
-                <h3>Phân bổ theo tỉnh / thành</h3>
+                <h3 data-i18n="chart.by_city">Phân bổ theo tỉnh / thành</h3>
                 <p style="color:var(--pending);font-size:11px;margin-top:2px">* Dữ liệu Lazada đã được loại bỏ — Lazada ẩn thông tin địa chỉ</p>
               </div>
             </div>
@@ -502,7 +511,7 @@ $initials = strtoupper(substr($user, 0, 2));
             </div>
           </div>
           <div class="card">
-            <div class="card-title" style="margin-bottom:12px">Top địa phương</div>
+            <div class="card-title" data-i18n="card.top_locations" style="margin-bottom:12px">Top địa phương</div>
             <div id="cityList"></div>
             <div id="cityListPager"></div>
           </div>
@@ -538,21 +547,21 @@ $initials = strtoupper(substr($user, 0, 2));
       <!-- ── Traffic ───────────────────────────────────────────────────── -->
       <div class="page" id="page-traffic">
         <div class="page-header">
-          <h1>Traffic</h1>
-          <p>Lượt xem, lượt truy cập và tỷ lệ chuyển đổi</p>
+          <h1 data-i18n="page.traffic.title">Traffic</h1>
+          <p data-i18n="page.traffic.sub">Lượt xem, lượt truy cập và tỷ lệ chuyển đổi</p>
         </div>
 
         <div class="grid-4 mb-4">
           <div class="kpi-card border-blue">
-            <div class="kpi-label">Lượt xem</div>
+            <div class="kpi-label" data-i18n="kpi.traffic_views">Lượt xem</div>
             <div class="kpi-value" id="tr-views">—</div>
           </div>
           <div class="kpi-card border-green">
-            <div class="kpi-label">Lượt truy cập</div>
+            <div class="kpi-label" data-i18n="kpi.visits">Lượt truy cập</div>
             <div class="kpi-value" id="tr-visits">—</div>
           </div>
           <div class="kpi-card border-orange">
-            <div class="kpi-label">Tỷ lệ thoát TB</div>
+            <div class="kpi-label" data-i18n="kpi.bounce_rate">Tỷ lệ thoát TB</div>
             <div class="kpi-value" id="tr-bounce">—</div>
           </div>
         </div>
@@ -561,7 +570,7 @@ $initials = strtoupper(substr($user, 0, 2));
           <div class="chart-card">
             <div class="chart-header">
               <div class="chart-header-left">
-                <h3>Traffic theo thời gian</h3>
+                <h3 data-i18n="chart.traffic_trend">Traffic theo thời gian</h3>
                 <p>Lượt xem + đơn hàng tương quan</p>
               </div>
             </div>
@@ -575,7 +584,7 @@ $initials = strtoupper(substr($user, 0, 2));
           <div class="chart-card">
             <div class="chart-header">
               <div class="chart-header-left">
-                <h3>Traffic theo sàn</h3>
+                <h3 data-i18n="chart.traffic_platform">Traffic theo sàn</h3>
               </div>
             </div>
             <div class="chart-wrap" style="height:180px">
@@ -588,8 +597,8 @@ $initials = strtoupper(substr($user, 0, 2));
       <!-- ── Comparison ────────────────────────────────────────────────── -->
       <div class="page" id="page-comparison">
         <div class="page-header">
-          <h1>So sánh sàn</h1>
-          <p>Hiệu suất Shopee, Lazada và TikTok Shop</p>
+          <h1 data-i18n="page.comparison.title">So sánh sàn</h1>
+          <p data-i18n="page.comparison.sub">Hiệu suất Shopee, Lazada và TikTok Shop</p>
         </div>
 
         <!-- Platform stat cards -->
@@ -612,15 +621,15 @@ $initials = strtoupper(substr($user, 0, 2));
         <!-- Compare charts -->
         <div class="grid-3">
           <div class="chart-card">
-            <div class="chart-header"><div class="chart-header-left"><h3>Doanh thu</h3></div></div>
+            <div class="chart-header"><div class="chart-header-left"><h3 data-i18n="kpi.revenue">Doanh thu</h3></div></div>
             <div class="chart-wrap" style="height:180px"><canvas id="chartCompareRevenue"></canvas></div>
           </div>
           <div class="chart-card">
-            <div class="chart-header"><div class="chart-header-left"><h3>Đơn hàng</h3></div></div>
+            <div class="chart-header"><div class="chart-header-left"><h3 data-i18n="kpi.orders">Đơn hàng</h3></div></div>
             <div class="chart-wrap" style="height:180px"><canvas id="chartCompareOrders"></canvas></div>
           </div>
           <div class="chart-card">
-            <div class="chart-header"><div class="chart-header-left"><h3>Radar tổng hợp</h3></div></div>
+            <div class="chart-header"><div class="chart-header-left"><h3 data-i18n="chart.radar">Radar tổng hợp</h3></div></div>
             <div class="chart-wrap" style="height:180px"><canvas id="chartRadar"></canvas></div>
           </div>
         </div>
@@ -646,21 +655,21 @@ $initials = strtoupper(substr($user, 0, 2));
       <!-- ── Heatmaps ──────────────────────────────────────────────────── -->
       <div class="page" id="page-heatmaps">
         <div class="page-header">
-          <h1>Phân tích nâng cao</h1>
-          <p>Heatmap thời gian đặt hàng và doanh thu theo địa lý</p>
+          <h1 data-i18n="page.analytics.title">Phân tích nâng cao</h1>
+          <p data-i18n="page.analytics.sub">Heatmap thời gian đặt hàng và doanh thu theo địa lý</p>
         </div>
 
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
 
           <!-- Heatmap đơn hàng -->
           <div class="card" style="min-width:0">
-            <div class="card-title">Đơn hàng theo ngày &amp; giờ</div>
+            <div class="card-title" data-i18n="card.orders_heatmap">Đơn hàng theo ngày &amp; giờ</div>
             <div style="display:flex;align-items:center;gap:4px;margin-bottom:10px;flex-wrap:wrap">
-              <span style="font-size:11px;color:var(--text-muted)">Ít</span>
+              <span data-i18n="common.low" style="font-size:11px;color:var(--text-muted)">Ít</span>
               <?php foreach (['#f1f5f9','#dbeafe','#bfdbfe','#93c5fd','#60a5fa','#3b82f6','#2563eb','#1d4ed8','#1e3a8a','#172554','#0f1629'] as $c): ?>
               <span style="width:14px;height:14px;border-radius:2px;background:<?= htmlspecialchars($c) ?>;display:inline-block"></span>
               <?php endforeach; ?>
-              <span style="font-size:11px;color:var(--text-muted)">Nhiều</span>
+              <span data-i18n="common.high" style="font-size:11px;color:var(--text-muted)">Nhiều</span>
             </div>
             <div class="heatmap-container">
               <div id="heatmap7x24"></div>
@@ -669,13 +678,13 @@ $initials = strtoupper(substr($user, 0, 2));
 
           <!-- Heatmap doanh thu -->
           <div class="card" style="min-width:0">
-            <div class="card-title">Doanh thu theo ngày &amp; giờ</div>
+            <div class="card-title" data-i18n="card.rev_heatmap">Doanh thu theo ngày &amp; giờ</div>
             <div style="display:flex;align-items:center;gap:4px;margin-bottom:10px;flex-wrap:wrap">
-              <span style="font-size:11px;color:var(--text-muted)">Ít</span>
+              <span data-i18n="common.low" style="font-size:11px;color:var(--text-muted)">Ít</span>
               <?php foreach (['#f0fdf4','#dcfce7','#bbf7d0','#86efac','#4ade80','#22c55e','#16a34a','#15803d','#166534','#14532d','#052e16'] as $c): ?>
               <span style="width:14px;height:14px;border-radius:2px;background:<?= htmlspecialchars($c) ?>;display:inline-block"></span>
               <?php endforeach; ?>
-              <span style="font-size:11px;color:var(--text-muted)">Nhiều</span>
+              <span data-i18n="common.high" style="font-size:11px;color:var(--text-muted)">Nhiều</span>
             </div>
             <div class="heatmap-container">
               <div id="heatmapRevenue7x24"></div>
@@ -687,8 +696,8 @@ $initials = strtoupper(substr($user, 0, 2));
         <div class="chart-card">
           <div class="chart-header">
             <div class="chart-header-left">
-              <h3>Doanh thu theo tỉnh / thành</h3>
-              <p>Top 15 địa phương</p>
+              <h3 data-i18n="chart.revenue_city">Doanh thu theo tỉnh / thành</h3>
+              <p data-i18n="chart.top15">Top 15 địa phương</p>
             </div>
           </div>
           <div class="chart-wrap" style="height:340px">
@@ -700,8 +709,8 @@ $initials = strtoupper(substr($user, 0, 2));
       <!-- ── Upload ────────────────────────────────────────────────────── -->
       <div class="page" id="page-upload">
         <div class="page-header">
-          <h1>Upload dữ liệu</h1>
-          <p>Tải lên file Excel từ Shopee, Lazada, TikTok Shop</p>
+          <h1 data-i18n="page.upload.title">Upload dữ liệu</h1>
+          <p data-i18n="page.upload.sub">Tải lên file Excel từ Shopee, Lazada, TikTok Shop</p>
         </div>
 
         <div class="grid-3-1">
@@ -783,8 +792,8 @@ $initials = strtoupper(substr($user, 0, 2));
       <!-- ── Logs ────────────────────────────────────────────────────── -->
       <div class="page" id="page-logs">
         <div class="page-header">
-          <h1>Nhật ký hoạt động</h1>
-          <p>Tất cả sự kiện và lỗi được ghi lại tự động</p>
+          <h1 data-i18n="page.logs.title">Nhật ký hoạt động</h1>
+          <p data-i18n="page.logs.sub">Tất cả sự kiện và lỗi được ghi lại tự động</p>
         </div>
 
         <!-- Stats row -->
@@ -849,8 +858,8 @@ $initials = strtoupper(substr($user, 0, 2));
       <!-- ── Kết nối API ────────────────────────────────────────────────── -->
       <div class="page" id="page-connect">
         <div class="page-header">
-          <h1>Kết nối API</h1>
-          <p>Tự động đồng bộ đơn hàng từ Shopee, TikTok Shop và Lazada qua Open Platform API</p>
+          <h1 data-i18n="page.connect.title">Kết nối API</h1>
+          <p data-i18n="page.connect.sub">Tự động đồng bộ đơn hàng từ Shopee, TikTok Shop và Lazada qua Open Platform API</p>
         </div>
 
         <!-- Platform tabs -->
@@ -1093,8 +1102,8 @@ $initials = strtoupper(substr($user, 0, 2));
       <!-- ── Cài đặt ────────────────────────────────────────────────────── -->
       <div class="page" id="page-settings">
         <div class="page-header">
-          <h1>Cài đặt hệ thống <span id="currentVersionBadge" style="font-size:13px;font-weight:500;color:var(--text-muted);vertical-align:middle"></span></h1>
-          <p>Thông tin server, database và các thao tác quản trị nâng cao</p>
+          <h1><span data-i18n="page.settings.title">Cài đặt hệ thống</span> <span id="currentVersionBadge" style="font-size:13px;font-weight:500;color:var(--text-muted);vertical-align:middle"></span></h1>
+          <p data-i18n="page.settings.sub">Thông tin server, database và các thao tác quản trị nâng cao</p>
         </div>
 
         <!-- System info -->

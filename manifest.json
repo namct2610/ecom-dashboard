@@ -1,7 +1,7 @@
 {
-  "version": "1.1.9",
-  "download_url": "https://github.com/namct2610/ecom-dashboard/releases/download/v1.1.9/dashboard-v3-1.1.9.zip",
-  "changelog": "- Fix: sau khi đăng nhập không thao tác được (thiếu event listeners)\n- Fix: biểu đồ bị cache cũ, phải Shift+Refresh",
+  "version": "1.2.0",
+  "download_url": "https://github.com/namct2610/ecom-dashboard/releases/download/v1.2.0/dashboard-v3-1.2.0.zip",
+  "changelog": "- Feature: EN/VI language toggle (i18n)\n- Fix: Mobile sidebar now accessible via hamburger button\n- Fix: Sidebar overflow scroll on mobile",
   "min_php": "8.1",
   "released_at": "2026-04-12"
 }

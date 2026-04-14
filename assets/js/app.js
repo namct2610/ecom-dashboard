@@ -1867,12 +1867,15 @@ function setupAppShell() {
   setupLazadaConnectPage();
   setupShopeeConnectPage();
   setupSidebarCollapse();
+  setupMobileSidebar();
+  setupLangToggle();
   qs('#btnLogout')?.addEventListener('click', logout);
   checkForUpdates();
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
   setupLogin();
+  applyTranslations();
 
   const ok = await initAuth();
   if (!ok) return; // not logged in — wait for login form submit
@@ -1882,6 +1885,42 @@ document.addEventListener('DOMContentLoaded', async () => {
   const initPage = location.hash.replace('#', '') || 'overview';
   loadPage(['overview','orders','products','customers','traffic','comparison','heatmaps','upload','logs','connect','settings'].includes(initPage) ? initPage : 'overview');
 });
+
+function setupMobileSidebar() {
+  const sidebar  = qs('#sidebar');
+  const overlay  = qs('#sidebarOverlay');
+  const hamburger = qs('#btnMenuToggle');
+  if (!sidebar || !hamburger) return;
+
+  function openSidebar() {
+    sidebar.classList.add('open');
+    if (overlay) overlay.classList.add('active');
+  }
+  function closeSidebar() {
+    sidebar.classList.remove('open');
+    if (overlay) overlay.classList.remove('active');
+  }
+
+  hamburger.addEventListener('click', () => {
+    sidebar.classList.contains('open') ? closeSidebar() : openSidebar();
+  });
+  overlay?.addEventListener('click', closeSidebar);
+
+  // Close on nav item click (mobile)
+  qsa('.nav-item', sidebar).forEach(item => {
+    item.addEventListener('click', () => {
+      if (window.innerWidth <= 768) closeSidebar();
+    });
+  });
+}
+
+function setupLangToggle() {
+  const btn = qs('#btnLang');
+  if (!btn) return;
+  btn.addEventListener('click', () => {
+    setLang(getLang() === 'vi' ? 'en' : 'vi');
+  });
+}
 
 function setupSidebarCollapse() {
   const sidebar  = qs('#sidebar');
