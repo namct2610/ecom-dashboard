@@ -1,7 +1,7 @@
 {
-  "version": "1.2.0",
-  "download_url": "https://github.com/namct2610/ecom-dashboard/releases/download/v1.2.0/dashboard-v3-1.2.0.zip",
-  "changelog": "- Feature: EN/VI language toggle (i18n)\n- Fix: Mobile sidebar now accessible via hamburger button\n- Fix: Sidebar overflow scroll on mobile",
+  "version": "1.2.1",
+  "download_url": "https://github.com/namct2610/ecom-dashboard/releases/download/v1.2.1/dashboard-v3-1.2.1.zip",
+  "changelog": "- Refactor: i18n dùng file JSON ngoài (assets/lang/) thay vì hardcode\n- Feature: Upload ngôn ngữ mới qua Settings\n- Feature: Bộ chọn ngôn ngữ đẹp hơn với cờ quốc gia\n- Fix: Dịch toàn bộ chart labels, status badges, heatmap\n- Fix: So sánh sàn đã được dịch",
   "min_php": "8.1",
-  "released_at": "2026-04-12"
+  "released_at": "2026-04-14"
 }
