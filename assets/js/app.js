@@ -49,12 +49,13 @@ function platformBadge(p) {
 
 function statusBadge(s) {
   const map = {
-    completed: ['badge-completed', 'Hoàn thành'],
-    delivered: ['badge-delivered', 'Đã giao'],
-    cancelled: ['badge-cancelled', 'Đã huỷ'],
-    pending:   ['badge-pending',   'Đang xử lý'],
+    completed: 'badge-completed',
+    delivered: 'badge-delivered',
+    cancelled: 'badge-cancelled',
+    pending:   'badge-pending',
   };
-  const [cls, label] = map[s] || ['badge-pending', s];
+  const cls   = map[s] || 'badge-pending';
+  const label = t(`status.${s}`) || s;
   return `<span class="badge ${cls}">${label}</span>`;
 }
 
@@ -762,9 +763,9 @@ function renderOrdersTable(id, orders) {
 function renderStatusLegend(id, summary) {
   const el = qs(`#${id}`); if (!el) return;
   const items = [
-    ['#10b981','Hoàn thành', summary.completed],
-    ['#ef4444','Đã huỷ',     summary.cancelled],
-    ['#0284c7','Đang giao',  summary.pending],
+    ['#10b981', t('status.completed'), summary.completed],
+    ['#ef4444', t('status.cancelled'), summary.cancelled],
+    ['#0284c7', t('status.in_transit'), summary.pending],
   ];
   el.innerHTML = items.map(([c,l,v]) => `
     <div style="display:flex;justify-content:space-between;font-size:12px;padding:2px 0">
@@ -861,7 +862,7 @@ const HEAT_PALETTE_REVENUE = [
 
 function renderHeatmap7x24(id, heatmap, maxVal, metric = 'orders') {
   const el = qs(`#${id}`); if (!el) return;
-  const days   = ['Thứ 2','Thứ 3','Thứ 4','Thứ 5','Thứ 6','Thứ 7','CN'];
+  const days   = [t('day.1'),t('day.2'),t('day.3'),t('day.4'),t('day.5'),t('day.6'),t('day.0')];
   const pal    = metric === 'revenue' ? HEAT_PALETTE_REVENUE : HEAT_PALETTE_ORDERS;
   const max    = maxVal || 1;
 
@@ -878,7 +879,7 @@ function renderHeatmap7x24(id, heatmap, maxVal, metric = 'orders') {
     for (let h = 0; h < 24; h++) {
       const v     = map[`${wd}-${h}`] || 0;
       const level = v === 0 ? 0 : Math.min(10, Math.ceil((v / max) * 10));
-      const label = metric === 'revenue' ? fmtVND(v) : `${v} đơn`;
+      const label = metric === 'revenue' ? fmtVND(v) : `${v} ${t('cl.orders_unit')}`;
       html += `<div class="heatmap-cell" style="background:${pal[level]}" data-label="${days[wd]} ${h}:00 — ${label}"></div>`;
     }
     html += '</div>';
@@ -916,7 +917,12 @@ function renderUploadHistory(id, history) {
     return;
   }
   const statusCls  = { completed: 'completed', failed: 'cancelled', processing: 'delivered', pending: 'pending' };
-  const statusLabel = { completed: 'Hoàn thành', failed: 'Thất bại', processing: 'Đang xử lý', pending: 'Chờ xử lý' };
+  const statusLabel = {
+    completed:  t('status.completed'),
+    failed:     t('status.failed'),
+    processing: t('status.processing'),
+    pending:    t('status.waiting'),
+  };
   tbody.innerHTML = history.map(h => `
     <tr>
       <td style="font-size:11px;color:var(--text-muted)">${(h.uploaded_at||'').slice(0,16)}</td>
@@ -1247,7 +1253,7 @@ function setupConnectPage() {
 // ── Settings page ─────────────────────────────────────────────────────────
 
 async function loadSettingsPage() {
-  await Promise.all([loadSysInfo(), loadUpdateCard()]);
+  await Promise.all([loadSysInfo(), loadUpdateCard(), setupLangSettings()]);
   qs('#btnRefreshSysInfo')?.addEventListener('click', loadSysInfo);
 
   qs('#btnCheckUpdateNow')?.addEventListener('click', async () => {
@@ -1868,14 +1874,14 @@ function setupAppShell() {
   setupShopeeConnectPage();
   setupSidebarCollapse();
   setupMobileSidebar();
-  setupLangToggle();
+  setupLangDropdown();
   qs('#btnLogout')?.addEventListener('click', logout);
   checkForUpdates();
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
   setupLogin();
-  applyTranslations();
+  await I18n.init(); // loads translations (vi inline, others from cache/network)
 
   const ok = await initAuth();
   if (!ok) return; // not logged in — wait for login form submit
@@ -1914,13 +1920,126 @@ function setupMobileSidebar() {
   });
 }
 
-function setupLangToggle() {
-  const btn = qs('#btnLang');
-  if (!btn) return;
-  btn.addEventListener('click', () => {
-    setLang(getLang() === 'vi' ? 'en' : 'vi');
+function setupLangDropdown() {
+  const selector = qs('#langSelector');
+  const btn      = qs('#btnLang');
+  const dropdown = qs('#langDropdown');
+  if (!selector || !btn || !dropdown) return;
+
+  // Load available languages and build dropdown
+  I18n.loadAvailableLangs().then(langs => {
+    _renderLangOptions(langs);
+  });
+
+  btn.addEventListener('click', e => {
+    e.stopPropagation();
+    const isOpen = selector.classList.toggle('open');
+    if (isOpen) _renderLangOptions(I18n.getAvailableLangs());
+  });
+
+  document.addEventListener('click', () => selector.classList.remove('open'));
+  dropdown.addEventListener('click', e => e.stopPropagation());
+}
+
+function _renderLangOptions(langs) {
+  const dropdown = qs('#langDropdown');
+  const selector = qs('#langSelector');
+  if (!dropdown) return;
+  const current = I18n.getLang();
+
+  dropdown.innerHTML = langs.map(lang => `
+    <div class="lang-option${lang.code === current ? ' active' : ''}" data-code="${lang.code}">
+      <span class="lang-option-flag">${lang.flag}</span>
+      <div class="lang-option-info">
+        <span class="lang-option-name">${lang.name}</span>
+        <span class="lang-option-code">${lang.code.toUpperCase()}</span>
+      </div>
+      ${lang.code === current ? '<svg class="lang-option-check" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>' : ''}
+    </div>
+  `).join('') + `
+    <div class="lang-option-divider"></div>
+    <a href="#settings" class="lang-option lang-option-manage" onclick="document.querySelector('[data-page=settings]')?.click()">
+      <span class="lang-option-flag">⚙️</span>
+      <div class="lang-option-info">
+        <span class="lang-option-name">${t('lang.manage')}</span>
+      </div>
+    </a>`;
+
+  dropdown.querySelectorAll('.lang-option[data-code]').forEach(el => {
+    el.addEventListener('click', async () => {
+      const code = el.dataset.code;
+      selector?.classList.remove('open');
+      await I18n.setLang(code);
+      // Re-render current page so JS-generated content updates
+      if (window.App) loadPage(App.currentPage);
+    });
   });
 }
+
+async function setupLangSettings() {
+  const card   = qs('#langSettingsCard');
+  const list   = qs('#langListContent');
+  const input  = qs('#langFileInput');
+  if (!card || !list) return;
+
+  async function refresh() {
+    list.innerHTML = '<div style="text-align:center;padding:16px;color:var(--text-muted);font-size:13px">Đang tải...</div>';
+    const langs = await I18n.loadAvailableLangs();
+    _renderLangOptions(langs); // keep dropdown in sync
+
+    list.innerHTML = `
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px">
+        ${langs.map(l => `
+          <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--bg-base,#f8fafc);border-radius:10px">
+            <span style="font-size:24px;line-height:1">${l.flag}</span>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:13px;font-weight:600">${l.name}</div>
+              <div style="font-size:11px;color:var(--text-muted)">${l.code.toUpperCase()} · ${l.keys} ${t('lang.keys')}</div>
+            </div>
+            ${l.builtin
+              ? `<span style="font-size:10px;color:var(--text-muted);background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:2px 6px">${t('lang.builtin')}</span>`
+              : `<button onclick="deleteLang('${l.code}')" style="background:none;border:none;cursor:pointer;color:var(--red,#ef4444);font-size:12px;padding:4px 8px;border-radius:5px;transition:background .15s" onmouseenter="this.style.background='#fee2e2'" onmouseleave="this.style.background='none'">${t('lang.delete')}</button>`
+            }
+          </div>`).join('')}
+      </div>`;
+  }
+
+  await refresh();
+
+  input?.addEventListener('change', async () => {
+    const file = input.files?.[0];
+    if (!file) return;
+    const fd = new FormData();
+    fd.append('action', 'upload');
+    fd.append('_csrf', App.csrf);
+    fd.append('lang_file', file);
+    try {
+      const data = await fetch('api/lang.php', { method: 'POST', body: fd }).then(r => r.json());
+      if (!data.success) throw new Error(data.error || 'Upload failed');
+      toast(`Đã thêm ngôn ngữ: ${data.flag} ${data.name}`, 'success');
+      input.value = '';
+      await refresh();
+    } catch (e) {
+      toast('Upload thất bại: ' + e.message, 'error');
+    }
+  });
+}
+
+window.deleteLang = async function(code) {
+  if (!confirm(`Xoá ngôn ngữ "${code}"?`)) return;
+  const fd = new FormData();
+  fd.append('action', 'delete');
+  fd.append('_csrf', App.csrf);
+  fd.append('code', code);
+  try {
+    const data = await fetch('api/lang.php', { method: 'POST', body: fd }).then(r => r.json());
+    if (!data.success) throw new Error(data.error || 'Failed');
+    toast(`Đã xoá ngôn ngữ: ${code}`, 'success');
+    document.querySelector('[data-page="settings"]')?.click();
+  } catch (e) {
+    toast('Xoá thất bại: ' + e.message, 'error');
+  }
+};
 
 function setupSidebarCollapse() {
   const sidebar  = qs('#sidebar');

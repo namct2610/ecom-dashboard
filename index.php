@@ -200,7 +200,14 @@ $initials = strtoupper(substr($user, 0, 2));
         </div>
       </div>
 
-      <button id="btnLang" title="Switch language">EN</button>
+      <div class="lang-selector" id="langSelector">
+        <button class="lang-btn" id="btnLang" title="Switch language">
+          <span class="lang-flag" id="langFlag">🇻🇳</span>
+          <span class="lang-code" id="langCode">VI</span>
+          <svg class="lang-caret" viewBox="0 0 10 6" width="8" height="8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 1l4 4 4-4"/></svg>
+        </button>
+        <div class="lang-dropdown" id="langDropdown"></div>
+      </div>
       <div class="header-avatar"><?= htmlspecialchars($initials) ?></div>
     </div>
 
@@ -608,12 +615,12 @@ $initials = strtoupper(substr($user, 0, 2));
             <div class="platform-card-header">
               <span class="badge badge-<?= $p ?>"><?= $p === 'tiktokshop' ? 'TikTok Shop' : ucfirst($p) ?></span>
             </div>
-            <div class="platform-stat-row"><span class="platform-stat-label">Tổng đơn</span><span class="platform-stat-value pc-orders">—</span></div>
-            <div class="platform-stat-row"><span class="platform-stat-label">Hoàn thành</span><span class="platform-stat-value pc-completed">—</span></div>
-            <div class="platform-stat-row"><span class="platform-stat-label">Doanh thu</span><span class="platform-stat-value pc-revenue">—</span></div>
-            <div class="platform-stat-row"><span class="platform-stat-label">Thị phần</span><span class="platform-stat-value pc-share">—</span></div>
-            <div class="platform-stat-row"><span class="platform-stat-label">AOV</span><span class="platform-stat-value pc-aov">—</span></div>
-            <div class="platform-stat-row"><span class="platform-stat-label">Tỷ lệ huỷ</span><span class="platform-stat-value pc-cancel">—</span></div>
+            <div class="platform-stat-row"><span class="platform-stat-label" data-i18n="compare.orders">Tổng đơn</span><span class="platform-stat-value pc-orders">—</span></div>
+            <div class="platform-stat-row"><span class="platform-stat-label" data-i18n="compare.completed">Hoàn thành</span><span class="platform-stat-value pc-completed">—</span></div>
+            <div class="platform-stat-row"><span class="platform-stat-label" data-i18n="compare.revenue">Doanh thu</span><span class="platform-stat-value pc-revenue">—</span></div>
+            <div class="platform-stat-row"><span class="platform-stat-label" data-i18n="compare.share">Thị phần</span><span class="platform-stat-value pc-share">—</span></div>
+            <div class="platform-stat-row"><span class="platform-stat-label" data-i18n="compare.aov">AOV</span><span class="platform-stat-value pc-aov">—</span></div>
+            <div class="platform-stat-row"><span class="platform-stat-label" data-i18n="compare.cancel">Tỷ lệ huỷ</span><span class="platform-stat-value pc-cancel">—</span></div>
           </div>
           <?php endforeach; ?>
         </div>
@@ -1152,6 +1159,25 @@ $initials = strtoupper(substr($user, 0, 2));
             <div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px">Đang tải...</div>
           </div>
         </div><!-- /auto update -->
+
+        <!-- Language management -->
+        <div class="card mb-4" id="langSettingsCard">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+            <div class="card-title" style="margin-bottom:0" data-i18n="lang.manage">Quản lý ngôn ngữ</div>
+            <label class="btn btn-primary btn-sm" style="cursor:pointer;display:flex;align-items:center;gap:6px">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+              <span data-i18n="lang.upload">Upload ngôn ngữ</span>
+              <input type="file" id="langFileInput" accept=".json" style="display:none">
+            </label>
+          </div>
+          <div id="langListContent">
+            <div style="text-align:center;padding:24px;color:var(--text-muted)">Đang tải...</div>
+          </div>
+          <div style="margin-top:14px;font-size:12px;color:var(--text-muted)">
+            📄 <a href="assets/lang/vi.json" download="lang-template.json" style="color:var(--primary);text-decoration:none" data-i18n="lang.template">Tải file mẫu</a>
+            &nbsp;— chỉnh sửa các giá trị (không đổi key), giữ nguyên <code>_meta</code>, rồi upload.
+          </div>
+        </div>
 
         <!-- Danger zone -->
         <div class="card" style="border:2px solid #fecaca">

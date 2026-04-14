@@ -432,25 +432,69 @@
   .grid-4 { grid-template-columns: repeat(2, 1fr); }
   .grid-3 { grid-template-columns: repeat(2, 1fr); }
 }
-/* ── Language toggle button ────────────────────────────────────────────── */
-#btnLang {
-  padding: 4px 11px;
+/* ── Language selector dropdown ────────────────────────────────────────── */
+.lang-selector {
+  position: relative;
+  flex-shrink: 0;
+}
+.lang-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
   border: 1px solid var(--border);
   border-radius: var(--radius-full);
   background: var(--surface);
-  color: var(--text-secondary);
-  font-size: 11px;
-  font-weight: 700;
+  color: var(--text-primary);
   font-family: inherit;
   cursor: pointer;
   transition: all 0.15s;
-  flex-shrink: 0;
 }
-#btnLang:hover {
-  background: var(--primary-subtle);
-  color: var(--primary);
+.lang-btn:hover {
+  background: var(--surface-card);
   border-color: var(--primary-light);
 }
+.lang-flag { font-size: 15px; line-height: 1; }
+.lang-code { font-size: 11px; font-weight: 700; color: var(--text-secondary); letter-spacing: .03em; }
+.lang-caret { color: var(--text-muted); transition: transform 0.15s; flex-shrink: 0; }
+.lang-selector.open .lang-caret { transform: rotate(180deg); }
+
+.lang-dropdown {
+  display: none;
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 180px;
+  background: var(--surface-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+  padding: 6px;
+  z-index: 500;
+}
+.lang-selector.open .lang-dropdown { display: block; }
+
+.lang-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  text-decoration: none;
+  color: var(--text-primary);
+  transition: background 0.12s;
+}
+.lang-option:hover { background: var(--surface); }
+.lang-option.active { background: var(--primary-subtle, #ede9fe); }
+.lang-option-flag { font-size: 20px; line-height: 1; flex-shrink: 0; }
+.lang-option-info { flex: 1; min-width: 0; }
+.lang-option-name { font-size: 13px; font-weight: 600; display: block; }
+.lang-option-code { font-size: 10px; color: var(--text-muted); display: block; }
+.lang-option-check { color: var(--primary); flex-shrink: 0; }
+.lang-option-divider { height: 1px; background: var(--border); margin: 4px 0; }
+.lang-option-manage { color: var(--text-secondary); }
+.lang-option-manage:hover { color: var(--text-primary); }
 
 /* ── Hamburger (mobile only) ───────────────────────────────────────────── */
 #btnMenuToggle {

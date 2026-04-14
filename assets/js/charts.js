@@ -68,7 +68,7 @@ const Charts = (() => {
   function renderRevenueTrend(id, timeseries, granularity) {
     destroy(id);
     const el = canvas(id); if (!el) return;
-    if (!timeseries || !timeseries.length) return renderEmpty(el, 'Không có dữ liệu');
+    if (!timeseries || !timeseries.length) return renderEmpty(el, t('cl.no_data'));
 
     // API returns [{date, shopee, lazada, tiktokshop, total, orders}, ...]
     const labels = timeseries.map(r => r.date);
@@ -107,7 +107,7 @@ const Charts = (() => {
     // API returns object {shopee:{revenue,orders,percentage}, ...} — normalize to array
     const arr = Array.isArray(breakdown) ? breakdown
       : Object.entries(breakdown).map(([k, v]) => ({ platform: k, ...v }));
-    if (!arr || !arr.length || !arr.some(r => r.revenue > 0)) return renderEmpty(el, 'Không có dữ liệu');
+    if (!arr || !arr.length || !arr.some(r => r.revenue > 0)) return renderEmpty(el, t('cl.no_data'));
 
     const labels = arr.map(r => r.platform === 'tiktokshop' ? 'TikTok Shop' : r.platform.charAt(0).toUpperCase() + r.platform.slice(1));
     const data   = arr.map(r => r.revenue);
@@ -136,13 +136,13 @@ const Charts = (() => {
   function renderOrdersTrend(id, timeseries, granularity) {
     destroy(id);
     const el = canvas(id); if (!el) return;
-    if (!timeseries || !timeseries.length) return renderEmpty(el, 'Không có dữ liệu');
+    if (!timeseries || !timeseries.length) return renderEmpty(el, t('cl.no_data'));
 
     // API returns [{date, total, completed, cancelled, ...}, ...]
     const labels = timeseries.map(r => r.date);
     const datasets = [
       {
-        label: 'Hoàn thành',
+        label: t('status.completed'),
         data: timeseries.map(r => (r.completed || 0) + (r.delivered || 0)),
         borderColor: STATUS_COLORS.completed,
         backgroundColor: 'rgba(22,163,74,0.15)',
@@ -152,7 +152,7 @@ const Charts = (() => {
         pointRadius: labels.length > 20 ? 0 : 3,
       },
       {
-        label: 'Huỷ',
+        label: t('cl.cancelled'),
         data: timeseries.map(r => r.cancelled || 0),
         borderColor: STATUS_COLORS.cancelled,
         backgroundColor: 'rgba(220,38,38,0.12)',
@@ -177,13 +177,13 @@ const Charts = (() => {
     const el = canvas(id); if (!el) return;
 
     const statuses = [
-      { key: 'completed',  label: 'Hoàn thành', color: STATUS_COLORS.completed },
-      { key: 'delivered',  label: 'Đã giao',    color: STATUS_COLORS.delivered },
-      { key: 'cancelled',  label: 'Đã huỷ',     color: STATUS_COLORS.cancelled },
-      { key: 'pending',    label: 'Chờ',         color: STATUS_COLORS.pending },
+      { key: 'completed', label: t('status.completed'), color: STATUS_COLORS.completed },
+      { key: 'delivered', label: t('status.delivered'), color: STATUS_COLORS.delivered },
+      { key: 'cancelled', label: t('status.cancelled'), color: STATUS_COLORS.cancelled },
+      { key: 'pending',   label: t('status.pending'),   color: STATUS_COLORS.pending },
     ].filter(s => summary[s.key] > 0);
 
-    if (!statuses.length) return renderEmpty(el, 'Không có dữ liệu');
+    if (!statuses.length) return renderEmpty(el, t('cl.no_data'));
 
     save(id, new Chart(el, {
       type: 'doughnut',
@@ -214,7 +214,7 @@ const Charts = (() => {
     // API returns object {shopee:{total,completed,cancelled,pending}, ...} — normalize to array
     const arr = Array.isArray(byPlatform) ? byPlatform
       : Object.entries(byPlatform).map(([k, v]) => ({ platform: k, ...v }));
-    if (!arr || !arr.length || !arr.some(r => r.total > 0)) return renderEmpty(el, 'Không có dữ liệu');
+    if (!arr || !arr.length || !arr.some(r => r.total > 0)) return renderEmpty(el, t('cl.no_data'));
 
     const labels = arr.map(r => r.platform === 'tiktokshop' ? 'TikTok Shop' : r.platform.charAt(0).toUpperCase() + r.platform.slice(1));
     const completed = arr.map(r => r.completed || 0);
@@ -225,8 +225,8 @@ const Charts = (() => {
       data: {
         labels,
         datasets: [
-          { label: 'Hoàn thành', data: completed, backgroundColor: STATUS_COLORS.completed, borderRadius: 4 },
-          { label: 'Đã huỷ',    data: cancelled, backgroundColor: STATUS_COLORS.cancelled, borderRadius: 4 },
+          { label: t('status.completed'), data: completed, backgroundColor: STATUS_COLORS.completed, borderRadius: 4 },
+          { label: t('status.cancelled'), data: cancelled, backgroundColor: STATUS_COLORS.cancelled, borderRadius: 4 },
         ],
       },
       options: {
@@ -248,7 +248,7 @@ const Charts = (() => {
     destroy(id);
     const el = canvas(id); if (!el) return;
     // API returns plain array [cnt0, cnt1, ..., cnt23]
-    if (!hourly || !hourly.length) return renderEmpty(el, 'Không có dữ liệu');
+    if (!hourly || !hourly.length) return renderEmpty(el, t('cl.no_data'));
 
     const labels = Array.from({length: 24}, (_, h) => `${String(h).padStart(2,'0')}:00`);
     const data   = Array.isArray(hourly[0]) || typeof hourly[0] === 'object'
@@ -260,7 +260,7 @@ const Charts = (() => {
       data: {
         labels,
         datasets: [{
-          label: 'Đơn hàng',
+          label: t('cl.orders'),
           data,
           backgroundColor: 'rgba(59,130,246,0.7)',
           borderRadius: 3,
@@ -282,7 +282,7 @@ const Charts = (() => {
   function renderTopQtyBar(id, products) {
     destroy(id);
     const el = canvas(id); if (!el) return;
-    if (!products || !products.length) return renderEmpty(el, 'Không có dữ liệu');
+    if (!products || !products.length) return renderEmpty(el, t('cl.no_data'));
 
     const labels = products.map(p => truncate(p.product_name, 28));
     save(id, new Chart(el, {
@@ -290,7 +290,7 @@ const Charts = (() => {
       data: {
         labels,
         datasets: [{
-          label: 'Số lượng',
+          label: t('cl.quantity'),
           data: products.map(p => p.total_qty),
           backgroundColor: 'rgba(16,185,129,0.75)',
           borderRadius: 3,
@@ -313,7 +313,7 @@ const Charts = (() => {
   function renderTopRevBar(id, products) {
     destroy(id);
     const el = canvas(id); if (!el) return;
-    if (!products || !products.length) return renderEmpty(el, 'Không có dữ liệu');
+    if (!products || !products.length) return renderEmpty(el, t('cl.no_data'));
 
     const labels = products.map(p => truncate(p.product_name, 28));
     save(id, new Chart(el, {
@@ -321,7 +321,7 @@ const Charts = (() => {
       data: {
         labels,
         datasets: [{
-          label: 'Doanh thu',
+          label: t('cl.revenue'),
           data: products.map(p => p.total_revenue),
           backgroundColor: 'rgba(139,92,246,0.75)',
           borderRadius: 3,
@@ -350,7 +350,7 @@ const Charts = (() => {
   function renderCityBar(id, cities) {
     destroy(id);
     const el = canvas(id); if (!el) return;
-    if (!cities || !cities.length) return renderEmpty(el, 'Không có dữ liệu');
+    if (!cities || !cities.length) return renderEmpty(el, t('cl.no_data'));
 
     const top = cities.slice(0, 12);
     save(id, new Chart(el, {
@@ -358,7 +358,7 @@ const Charts = (() => {
       data: {
         labels: top.map(c => c.city || 'Khác'),
         datasets: [{
-          label: 'Đơn hàng',
+          label: t('cl.orders'),
           data: top.map(c => c.orders),
           backgroundColor: CHART_COLORS.map(c => c + 'cc'),
           borderRadius: 3,
@@ -381,7 +381,7 @@ const Charts = (() => {
   function renderTrafficTrend(id, timeseries, granularity, ordersByDate) {
     destroy(id);
     const el = canvas(id); if (!el) return;
-    if (!timeseries || !timeseries.length) return renderEmpty(el, 'Không có dữ liệu');
+    if (!timeseries || !timeseries.length) return renderEmpty(el, t('cl.no_data'));
 
     // API returns [{date, total_views, total_visits, ...}, ...]
     const labels = timeseries.map(r => r.date);
@@ -397,7 +397,7 @@ const Charts = (() => {
 
     const datasets = [
       {
-        label: 'Lượt xem',
+        label: t('cl.views'),
         data: labels.map(l => viewMap[l] || 0),
         borderColor: '#3b82f6',
         backgroundColor: 'rgba(59,130,246,0.1)',
@@ -408,7 +408,7 @@ const Charts = (() => {
         pointRadius: labels.length > 20 ? 0 : 3,
       },
       {
-        label: 'Đơn hàng',
+        label: t('cl.orders'),
         data: labels.map(l => orderMap[l] || 0),
         borderColor: '#10b981',
         backgroundColor: 'transparent',
@@ -456,7 +456,7 @@ const Charts = (() => {
     // API returns object {shopee:{views,visits,...}, ...} — normalize to array
     const arr = Array.isArray(byPlatform) ? byPlatform
       : Object.entries(byPlatform).map(([k, v]) => ({ platform: k, ...v }));
-    if (!arr || !arr.length || !arr.some(r => r.views > 0)) return renderEmpty(el, 'Không có dữ liệu');
+    if (!arr || !arr.length || !arr.some(r => r.views > 0)) return renderEmpty(el, t('cl.no_data'));
 
     const labels = arr.map(r => r.platform === 'tiktokshop' ? 'TikTok Shop' : r.platform.charAt(0).toUpperCase() + r.platform.slice(1));
     save(id, new Chart(el, {
@@ -465,13 +465,13 @@ const Charts = (() => {
         labels,
         datasets: [
           {
-            label: 'Lượt xem',
+            label: t('cl.views'),
             data: arr.map(r => r.views || 0),
             backgroundColor: arr.map(r => PLATFORM_COLORS[r.platform] || CHART_COLORS[0]),
             borderRadius: 4,
           },
           {
-            label: 'Lượt truy cập',
+            label: t('cl.visits'),
             data: arr.map(r => r.visits || 0),
             backgroundColor: arr.map(r => (PLATFORM_COLORS[r.platform] || CHART_COLORS[0]) + '77'),
             borderRadius: 4,
@@ -502,7 +502,7 @@ const Charts = (() => {
       data: {
         labels: top.map(d => d.district || 'Khác'),
         datasets: [{
-          label: 'Đơn hàng',
+          label: t('cl.orders'),
           data: top.map(d => d.orders),
           backgroundColor: city.includes('Hồ Chí Minh') ? 'rgba(238,77,45,0.75)' : 'rgba(59,130,246,0.75)',
           borderRadius: 3,
@@ -527,7 +527,7 @@ const Charts = (() => {
     const el = canvas(id); if (!el) return;
     // platforms may be keyed object {shopee:{...}} or array
     const arr = Array.isArray(platforms) ? platforms : Object.entries(platforms).map(([k,v]) => ({platform:k,...v}));
-    if (!arr || !arr.length) return renderEmpty(el, 'Không có dữ liệu');
+    if (!arr || !arr.length) return renderEmpty(el, t('cl.no_data'));
     const platforms_ = arr;
 
     const labels = platforms_.map(p => p.platform === 'tiktokshop' ? 'TikTok Shop' : p.platform.charAt(0).toUpperCase() + p.platform.slice(1));
@@ -536,7 +536,7 @@ const Charts = (() => {
       data: {
         labels,
         datasets: [{
-          label: 'Doanh thu',
+          label: t('cl.revenue'),
           data: platforms_.map(p => p.revenue || 0),
           backgroundColor: platforms_.map(p => PLATFORM_COLORS[p.platform] || CHART_COLORS[0]),
           borderRadius: 5,
@@ -565,7 +565,7 @@ const Charts = (() => {
     destroy(id);
     const el = canvas(id); if (!el) return;
     const arr = Array.isArray(platforms) ? platforms : Object.entries(platforms).map(([k,v]) => ({platform:k,...v}));
-    if (!arr || !arr.length) return renderEmpty(el, 'Không có dữ liệu');
+    if (!arr || !arr.length) return renderEmpty(el, t('cl.no_data'));
 
     const labels = arr.map(p => p.platform === 'tiktokshop' ? 'TikTok Shop' : p.platform.charAt(0).toUpperCase() + p.platform.slice(1));
     save(id, new Chart(el, {
@@ -574,13 +574,13 @@ const Charts = (() => {
         labels,
         datasets: [
           {
-            label: 'Hoàn thành',
+            label: t('status.completed'),
             data: arr.map(p => p.completed || 0),
             backgroundColor: STATUS_COLORS.completed,
             borderRadius: 4,
           },
           {
-            label: 'Đã huỷ',
+            label: t('status.cancelled'),
             data: arr.map(p => p.cancelled || 0),
             backgroundColor: STATUS_COLORS.cancelled,
             borderRadius: 4,
@@ -606,11 +606,11 @@ const Charts = (() => {
     destroy(id);
     const el = canvas(id); if (!el) return;
     const arr = Array.isArray(platforms) ? platforms : Object.entries(platforms).map(([k,v]) => ({platform:k,...v}));
-    if (!arr || !arr.length) return renderEmpty(el, 'Không có dữ liệu');
+    if (!arr || !arr.length) return renderEmpty(el, t('cl.no_data'));
 
     // Normalize each metric 0–100 across platforms
     const metrics = ['revenue', 'total_orders', 'market_share', 'completion_rate'];
-    const metricLabels = ['Doanh thu', 'Đơn hàng', 'Thị phần', 'Tỷ lệ HT'];
+    const metricLabels = [t('radar.revenue'), t('radar.orders'), t('radar.market_share'), t('radar.completion_rate')];
     const maxes = metrics.map(m => Math.max(...arr.map(p => parseFloat(p[m]) || 0)) || 1);
 
     const datasets = arr.map((p, i) => ({
@@ -648,7 +648,7 @@ const Charts = (() => {
   function renderRevByCity(id, cities) {
     destroy(id);
     const el = canvas(id); if (!el) return;
-    if (!cities || !cities.length) return renderEmpty(el, 'Không có dữ liệu');
+    if (!cities || !cities.length) return renderEmpty(el, t('cl.no_data'));
 
     const top = cities.slice(0, 15);
     save(id, new Chart(el, {
@@ -656,7 +656,7 @@ const Charts = (() => {
       data: {
         labels: top.map(c => c.city || 'Khác'),
         datasets: [{
-          label: 'Doanh thu',
+          label: t('cl.revenue'),
           data: top.map(c => c.revenue),
           backgroundColor: CHART_COLORS.map(c => c + 'bb'),
           borderRadius: 3,
