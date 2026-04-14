@@ -1,7 +1,7 @@
 {
-  "version": "1.2.1",
-  "download_url": "https://github.com/namct2610/ecom-dashboard/releases/download/v1.2.1/dashboard-v3-1.2.1.zip",
-  "changelog": "- Refactor: i18n dùng file JSON ngoài (assets/lang/) thay vì hardcode\n- Feature: Upload ngôn ngữ mới qua Settings\n- Feature: Bộ chọn ngôn ngữ đẹp hơn với cờ quốc gia\n- Fix: Dịch toàn bộ chart labels, status badges, heatmap\n- Fix: So sánh sàn đã được dịch",
+  "version": "1.2.2",
+  "download_url": "https://github.com/namct2610/ecom-dashboard/releases/download/v1.2.2/dashboard-v3-1.2.2.zip",
+  "changelog": "- Fix: Đồng bộ toàn bộ chuỗi UI sang hệ thống i18n (~110 chuỗi còn sót)\n- Fix: Toast, empty state, status badge, connect page, settings, update card đều được dịch\n- Fix: Label kỳ (Tháng/Năm) và preset ngày tự cập nhật khi đổi ngôn ngữ\n- Fix: charts.js dùng t() cho nhãn 'Khác' và no-data",
   "min_php": "8.1",
   "released_at": "2026-04-14"
 }
