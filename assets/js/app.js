@@ -132,7 +132,7 @@ function setupLogin() {
     e.preventDefault();
     errEl.textContent = '';
     btn.disabled = true;
-    btn.textContent = 'Đang đăng nhập...';
+    btn.textContent = t('login.logging_in');
 
     try {
       const data = await fetch('api/auth.php', {
@@ -151,13 +151,13 @@ function setupLogin() {
         await loadPeriods();
         loadPage(App.currentPage);
       } else {
-        errEl.textContent = data.error || 'Đăng nhập thất bại.';
+        errEl.textContent = data.error || t('login.failed');
       }
     } catch (e) {
-      errEl.textContent = 'Lỗi kết nối server.';
+      errEl.textContent = t('login.server_error');
     } finally {
       btn.disabled = false;
-      btn.textContent = 'Đăng nhập';
+      btn.textContent = t('login.btn');
     }
   });
 }
@@ -195,18 +195,18 @@ function renderPeriodLabel() {
   if (!el) return;
 
   if (App.rangeLabel) {
-    el.textContent = App.rangeLabel;
+    el.textContent = t(App.rangeLabel) || App.rangeLabel;
     if (prev) prev.disabled = true;
     if (next) next.disabled = true;
     return;
   }
 
-  if (!App.period) { el.textContent = 'Chọn kỳ'; return; }
+  if (!App.period) { el.textContent = t('period.select'); return; }
   if (App.mode === 'month') {
     const [y, m] = App.period.split('-');
-    el.textContent = `Tháng ${parseInt(m, 10)}  ·  ${y}`;
+    el.textContent = `${t('period.month')} ${parseInt(m, 10)}  ·  ${y}`;
   } else {
-    el.textContent = `Năm ${App.period}`;
+    el.textContent = `${t('period.year')} ${App.period}`;
   }
   const list = App.mode === 'month'
     ? (App.periods.months || []).map(x => x.value)
@@ -311,22 +311,22 @@ function _applyPreset(preset) {
   if (preset === 'today') {
     App.dateFrom   = today;
     App.dateTo     = today;
-    App.rangeLabel = 'Hôm nay';
+    App.rangeLabel = 'preset.today';
   } else if (preset === 'yesterday') {
     const d = new Date(now); d.setDate(d.getDate() - 1);
     App.dateFrom   = _isoDate(d);
     App.dateTo     = _isoDate(d);
-    App.rangeLabel = 'Hôm qua';
+    App.rangeLabel = 'preset.yesterday';
   } else if (preset === '7days') {
     const d = new Date(now); d.setDate(d.getDate() - 6);
     App.dateFrom   = _isoDate(d);
     App.dateTo     = today;
-    App.rangeLabel = '7 ngày qua';
+    App.rangeLabel = 'preset.7days_ago';
   } else if (preset === '30days') {
     const d = new Date(now); d.setDate(d.getDate() - 29);
     App.dateFrom   = _isoDate(d);
     App.dateTo     = today;
-    App.rangeLabel = '30 ngày qua';
+    App.rangeLabel = 'preset.30days_ago';
   } else if (preset === 'this-month') {
     App.mode   = 'month';
     App.period = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
@@ -469,7 +469,7 @@ async function loadOverview() {
     renderPlatformLegend('platformLegend', rev.platform_breakdown, rev.summary.total_revenue);
   } catch (e) {
     console.error('loadOverview', e);
-    toast('Không thể tải dữ liệu overview.', 'error');
+    toast(t('toast.load_overview'), 'error');
   }
 }
 
@@ -493,7 +493,7 @@ async function loadOrders() {
     renderStatusLegend('statusLegend', data.summary);
   } catch (e) {
     console.error('loadOrders', e);
-    toast('Không thể tải dữ liệu đơn hàng.', 'error');
+    toast(t('toast.load_orders'), 'error');
   }
 }
 
@@ -514,7 +514,7 @@ async function loadProducts() {
     renderProductsTablePage('productsTable', 'productsPager');
   } catch (e) {
     console.error('loadProducts', e);
-    toast('Không thể tải dữ liệu sản phẩm.', 'error');
+    toast(t('toast.load_products'), 'error');
   }
 }
 
@@ -535,7 +535,7 @@ async function loadCustomers() {
     Charts.renderDistrictBar('chartHanoiDistricts', data.hanoi_districts || [], 'Hà Nội');
   } catch (e) {
     console.error('loadCustomers', e);
-    toast('Không thể tải dữ liệu khách hàng.', 'error');
+    toast(t('toast.load_customers'), 'error');
   }
 }
 
@@ -554,7 +554,7 @@ async function loadTraffic() {
     Charts.renderTrafficPlatform('chartTrafficPlatform', data.by_platform);
   } catch (e) {
     console.error('loadTraffic', e);
-    toast('Không thể tải dữ liệu traffic.', 'error');
+    toast(t('toast.load_traffic'), 'error');
   }
 }
 
@@ -569,7 +569,7 @@ async function loadComparison() {
     renderTopProductsTable('comparisonTable', data.top_products);
   } catch (e) {
     console.error('loadComparison', e);
-    toast('Không thể tải dữ liệu so sánh.', 'error');
+    toast(t('toast.load_comparison'), 'error');
   }
 }
 
@@ -582,7 +582,7 @@ async function loadHeatmaps() {
     Charts.renderRevByCity('chartRevenueCity', data.revenue_by_city);
   } catch (e) {
     console.error('loadHeatmaps', e);
-    toast('Không thể tải dữ liệu heatmap.', 'error');
+    toast(t('toast.load_heatmap'), 'error');
   }
 }
 
@@ -605,7 +605,7 @@ let _citiesAll = [], _citiesPage = 1;
 function renderPager(pagerId, page, total, perPage, navFn) {
   const el = qs(`#${pagerId}`); if (!el) return;
   const pages = Math.ceil(total / perPage);
-  if (pages <= 1) { el.innerHTML = `<p class="pager-info">Tổng: ${total}</p>`; return; }
+  if (pages <= 1) { el.innerHTML = `<p class="pager-info">${t('msg.total')}: ${total}</p>`; return; }
 
   let html = `<div class="pager">`;
   html += `<button onclick="${navFn}(${page-1})" ${page<=1?'disabled':''}>&#8249;</button>`;
@@ -633,7 +633,7 @@ function renderOrdersTablePage(tbodyId, pagerId) {
   const slice = _ordersAll.slice((page-1)*PER_PAGE, page*PER_PAGE);
   const tbody = qs(`#${tbodyId}`); if (!tbody) return;
   if (!slice.length) {
-    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text-muted)">Không có dữ liệu</td></tr>';
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text-muted)">${t('msg.no_data')}</td></tr>`;
   } else {
     tbody.innerHTML = slice.map(o => `
     <tr>
@@ -657,7 +657,7 @@ function renderProductsTablePage(tbodyId, pagerId) {
   const slice = _productsAll.slice((page-1)*PER_PAGE, page*PER_PAGE);
   const tbody = qs(`#${tbodyId}`); if (!tbody) return;
   if (!slice.length) {
-    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text-muted)">Không có dữ liệu</td></tr>';
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text-muted)">${t('msg.no_data')}</td></tr>`;
   } else {
     tbody.innerHTML = slice.map(p => `
     <tr>
@@ -697,7 +697,7 @@ function renderCityListPage(listId, pagerId) {
 function renderRecentOrders(containerId, orders) {
   const el = qs(`#${containerId}`);
   if (!el) return;
-  if (!orders || !orders.length) { el.innerHTML = '<div class="empty-state"><p>Không có đơn hàng</p></div>'; return; }
+  if (!orders || !orders.length) { el.innerHTML = `<div class="empty-state"><p>${t('msg.no_orders')}</p></div>`; return; }
   const colors = { shopee: '#ee4d2d', lazada: '#0f146d', tiktokshop: '#161823' };
   el.innerHTML = (orders || []).slice(0, 5).map(o => `
     <div class="recent-order-item">
@@ -728,7 +728,7 @@ function renderPlatformLegend(id, breakdown, total) {
 function renderTopProducts(id, orders, rev) {
   const el = qs(`#${id}`); if (!el) return;
   const recent = (orders.recent || []).slice(0, 6);
-  if (!recent.length) { el.innerHTML = '<div class="empty-state"><p>Chưa có dữ liệu</p></div>'; return; }
+  if (!recent.length) { el.innerHTML = `<div class="empty-state"><p>${t('msg.no_data_yet')}</p></div>`; return; }
   el.innerHTML = recent.map(o => `
     <div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border)">
       ${platformBadge(o.platform)}
@@ -744,7 +744,7 @@ function renderTopProducts(id, orders, rev) {
 
 function renderOrdersTable(id, orders) {
   const tbody = qs(`#${id}`); if (!tbody) return;
-  if (!orders || !orders.length) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text-muted)">Không có dữ liệu</td></tr>'; return; }
+  if (!orders || !orders.length) { tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text-muted)">${t('msg.no_data')}</td></tr>`; return; }
   tbody.innerHTML = orders.map(o => `
     <tr>
       <td class="font-mono" style="font-size:11px;color:var(--text-muted)">${(o.order_id||'').slice(0,16)}…</td>
@@ -791,7 +791,7 @@ function renderTopRevMini(id, products) {
 
 function renderProductsTable(id, products) {
   const tbody = qs(`#${id}`); if (!tbody) return;
-  if (!products || !products.length) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text-muted)">Không có dữ liệu</td></tr>'; return; }
+  if (!products || !products.length) { tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text-muted)">${t('msg.no_data')}</td></tr>`; return; }
   tbody.innerHTML = products.map(p => `
     <tr>
       <td class="font-mono" style="font-size:11px;color:var(--text-muted)">${(p.sku||'').slice(0,16)}</td>
@@ -913,7 +913,7 @@ function _ensureHeatmapTooltip() {
 function renderUploadHistory(id, history) {
   const tbody = qs(`#${id}`); if (!tbody) return;
   if (!history || !history.length) {
-    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--text-muted)">Chưa có lịch sử upload</td></tr>';
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--text-muted)">${t('upload.no_history')}</td></tr>`;
     return;
   }
   const statusCls  = { completed: 'completed', failed: 'cancelled', processing: 'delivered', pending: 'pending' };
@@ -927,7 +927,7 @@ function renderUploadHistory(id, history) {
     <tr>
       <td style="font-size:11px;color:var(--text-muted)">${(h.uploaded_at||'').slice(0,16)}</td>
       <td>${platformBadge(h.platform)}</td>
-      <td><span class="badge ${h.data_type==='traffic' ? 'badge-delivered' : 'badge-pending'}">${h.data_type==='traffic'?'Traffic':'Đơn hàng'}</span></td>
+      <td><span class="badge ${h.data_type==='traffic' ? 'badge-delivered' : 'badge-pending'}">${h.data_type==='traffic'?'Traffic':t('upload.type_orders')}</span></td>
       <td style="font-size:12px;max-width:180px"><div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${h.original_filename}</div></td>
       <td class="text-right" style="font-size:12px;font-weight:600">${fmtNum(h.imported_rows||0)}</td>
       <td class="text-right" style="font-size:12px">${fmtNum(h.skipped_rows||0)}</td>
@@ -969,7 +969,7 @@ async function loadLogs(page = 1) {
     renderLogsPagination();
   } catch (e) {
     const tbody = qs('#logsTableBody');
-    if (tbody) tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:32px;color:var(--red,#ef4444)">Lỗi tải dữ liệu: ${e.message}</td></tr>`;
+    if (tbody) tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:32px;color:var(--red,#ef4444)">${t('log.load_error')} ${e.message}</td></tr>`;
   }
 }
 
@@ -978,7 +978,7 @@ function renderLogsTable(rows) {
   if (!tbody) return;
 
   if (!rows || !rows.length) {
-    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:32px;color:var(--text-muted)">Không có dữ liệu nhật ký</td></tr>';
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:32px;color:var(--text-muted)">${t('log.no_data')}</td></tr>`;
     return;
   }
 
@@ -1006,7 +1006,7 @@ function renderLogsTable(rows) {
       <td>${catBadge(r.category)}</td>
       <td style="font-size:13px;max-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(r.message)}</td>
       <td style="font-size:11px;color:var(--text-muted)">${r.ip_address||''}</td>
-      <td>${hasCtx ? `<button onclick="toggleLogCtx('${ctxId}')" style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:16px;padding:0 4px" title="Chi tiết">&#8943;</button>` : ''}</td>
+      <td>${hasCtx ? `<button onclick="toggleLogCtx('${ctxId}')" style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:16px;padding:0 4px" title="${t('msg.details')}">&#8943;</button>` : ''}</td>
     </tr>${hasCtx ? `<tr id="${ctxId}" style="display:none"><td colspan="6" style="padding:0 16px 12px"><pre style="font-size:11px;background:var(--bg-hover,#f9fafb);padding:12px;border-radius:6px;overflow:auto;max-height:300px;white-space:pre-wrap;word-break:break-all;margin:0;color:var(--text-primary)">${escHtml(ctxJson)}</pre></td></tr>` : ''}`;
   }).join('');
 }
@@ -1070,8 +1070,8 @@ function setupLogsPage() {
   qs('#btnLogClear')?.addEventListener('click', async () => {
     const level    = qs('#logFilterLevel')?.value    || '';
     const category = qs('#logFilterCategory')?.value || '';
-    const scope    = [level && `level=${level}`, category && `category=${category}`].filter(Boolean).join(', ') || 'tất cả';
-    if (!confirm(`Xoá log (${scope})? Hành động này không thể hoàn tác.`)) return;
+    const scope    = [level && `level=${level}`, category && `category=${category}`].filter(Boolean).join(', ') || t('log.all_scope');
+    if (!confirm(`${t('lang.delete')} log (${scope})?`)) return;
 
     try {
       const res = await fetch('api/logs.php', {
@@ -1081,13 +1081,13 @@ function setupLogsPage() {
       }).then(r => r.json());
 
       if (res.success) {
-        toast('Đã xoá log thành công.', 'success');
+        toast(t('toast.log_cleared'), 'success');
         loadLogs(1);
       } else {
-        toast(res.error || 'Xoá thất bại.', 'error');
+        toast(res.error || t('msg.delete_failed'), 'error');
       }
     } catch (e) {
-      toast('Lỗi kết nối.', 'error');
+      toast(t('msg.conn_error'), 'error');
     }
   });
 }
@@ -1119,14 +1119,14 @@ function renderShopsTable(shops) {
   if (!tbody) return;
 
   if (!shops.length) {
-    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:32px;color:var(--text-muted)">Chưa có shop nào được kết nối.</td></tr>';
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:32px;color:var(--text-muted)">${t('connect.no_shops')}</td></tr>`;
     return;
   }
 
   tbody.innerHTML = shops.map(s => {
-    const active  = s.is_active ? '✓ Hoạt động' : '✗ Tắt';
+    const active  = s.is_active ? `✓ ${t('msg.active')}` : `✗ ${t('msg.inactive')}`;
     const expiry  = s.access_token_expire_at ? s.access_token_expire_at.substring(0, 16) : '—';
-    const synced  = s.last_synced_at ? s.last_synced_at.substring(0, 16) : 'Chưa đồng bộ';
+    const synced  = s.last_synced_at ? s.last_synced_at.substring(0, 16) : t('msg.not_synced');
     const fromDate = s.sync_from_date || '';
     const actStyle = s.is_active ? 'color:var(--green,#22c55e)' : 'color:var(--text-muted)';
 
@@ -1139,8 +1139,8 @@ function renderShopsTable(shops) {
       <td><input type="date" class="sync-from-date" data-shop="${escHtml(s.shop_id)}" value="${escHtml(fromDate)}"
           style="border:1px solid var(--border);border-radius:4px;padding:2px 6px;background:var(--bg-card);color:var(--text-primary);font-size:12px;width:100%"></td>
       <td style="display:flex;gap:6px;flex-wrap:wrap">
-        <button class="btn btn-primary btn-sm btn-sync-shop" data-shop="${escHtml(s.shop_id)}" title="Đồng bộ">Sync</button>
-        <button class="btn btn-secondary btn-sm btn-disconnect-shop" data-shop="${escHtml(s.shop_id)}" title="Ngắt kết nối" style="color:var(--red,#ef4444)">✕</button>
+        <button class="btn btn-primary btn-sm btn-sync-shop" data-shop="${escHtml(s.shop_id)}" title="${t('btn.sync')}">Sync</button>
+        <button class="btn btn-secondary btn-sm btn-disconnect-shop" data-shop="${escHtml(s.shop_id)}" title="${t('btn.disconnect')}" style="color:var(--red,#ef4444)">✕</button>
       </td>
     </tr>`;
   }).join('');
@@ -1153,15 +1153,15 @@ function renderShopsTable(shops) {
   // Bind disconnect
   tbody.querySelectorAll('.btn-disconnect-shop').forEach(btn => {
     btn.addEventListener('click', async () => {
-      if (!confirm('Ngắt kết nối shop này?')) return;
+      if (!confirm(t('confirm.disconnect_shop'))) return;
       try {
         const res = await apiFetch('api/tiktok-connect.php', {
           method: 'POST',
           body: JSON.stringify({ action: 'disconnect', shop_id: btn.dataset.shop }),
         });
-        if (res.success) { toast('Đã ngắt kết nối.', 'success'); loadConnectPage(); }
-        else toast(res.error || 'Thất bại.', 'error');
-      } catch (e) { toast('Lỗi kết nối.', 'error'); }
+        if (res.success) { toast(t('msg.disconnected'), 'success'); loadConnectPage(); }
+        else toast(res.error || t('msg.failed'), 'error');
+      } catch (e) { toast(t('msg.conn_error'), 'error'); }
     });
   });
 
@@ -1181,28 +1181,28 @@ function renderShopsTable(shops) {
 
 async function syncShop(shopId) {
   const resultsEl = qs('#syncResults');
-  if (resultsEl) resultsEl.innerHTML = '<div style="color:var(--text-muted);font-size:13px">Đang đồng bộ...</div>';
+  if (resultsEl) resultsEl.innerHTML = `<div style="color:var(--text-muted);font-size:13px">${t('msg.syncing')}</div>`;
 
   try {
     const body = shopId ? { action: 'sync', shop_id: shopId } : { action: 'sync' };
     const res  = await apiFetch('api/tiktok-connect.php', { method: 'POST', body: JSON.stringify(body) });
 
     if (!res.success) {
-      if (resultsEl) resultsEl.innerHTML = `<div style="color:var(--red,#ef4444);font-size:13px">Lỗi: ${escHtml(res.error || 'Không xác định')}</div>`;
+      if (resultsEl) resultsEl.innerHTML = `<div style="color:var(--red,#ef4444);font-size:13px">${t('msg.error')}: ${escHtml(res.error || t('msg.unknown'))}</div>`;
       return;
     }
 
     const rows = (res.results || []).map(r => {
-      if (r.success) return `<div style="color:var(--green,#22c55e);font-size:13px">✓ ${escHtml(r.shop)}: +${r.imported} đơn${r.errors ? `, ${r.errors} lỗi` : ''}</div>`;
+      if (r.success) return `<div style="color:var(--green,#22c55e);font-size:13px">✓ ${escHtml(r.shop)}: +${r.imported} ${t('cl.orders_unit')}${r.errors ? `, ${r.errors} ${t('msg.error')}` : ''}</div>`;
       return `<div style="color:var(--red,#ef4444);font-size:13px">✗ ${escHtml(r.shop)}: ${escHtml(r.error || '')}</div>`;
     }).join('');
 
-    if (resultsEl) resultsEl.innerHTML = rows || '<div style="color:var(--text-muted);font-size:13px">Không có kết quả.</div>';
-    toast('Đồng bộ hoàn tất.', 'success');
+    if (resultsEl) resultsEl.innerHTML = rows || `<div style="color:var(--text-muted);font-size:13px">${t('msg.no_results')}</div>`;
+    toast(t('toast.sync_done'), 'success');
     loadConnectPage(); // refresh last_synced_at
   } catch (e) {
-    if (resultsEl) resultsEl.innerHTML = `<div style="color:var(--red,#ef4444);font-size:13px">Lỗi: ${escHtml(e.message)}</div>`;
-    toast('Lỗi đồng bộ.', 'error');
+    if (resultsEl) resultsEl.innerHTML = `<div style="color:var(--red,#ef4444);font-size:13px">${t('msg.error')}: ${escHtml(e.message)}</div>`;
+    toast(t('toast.sync_error'), 'error');
   }
 }
 
@@ -1211,21 +1211,21 @@ function setupConnectPage() {
     const appKey    = qs('#tiktokAppKey')?.value.trim()    || '';
     const appSecret = qs('#tiktokAppSecret')?.value.trim() || '';
 
-    if (!appKey) { toast('App Key không được để trống.', 'error'); return; }
+    if (!appKey) { toast(t('msg.app_key_required'), 'error'); return; }
 
     try {
       const res = await apiFetch('api/tiktok-connect.php', {
         method: 'POST',
         body: JSON.stringify({ action: 'save_credentials', app_key: appKey, app_secret: appSecret }),
       });
-      if (res.success) toast('Đã lưu thông tin xác thực.', 'success');
-      else toast(res.error || 'Lưu thất bại.', 'error');
-    } catch (e) { toast('Lỗi kết nối.', 'error'); }
+      if (res.success) toast(t('msg.credentials_saved'), 'success');
+      else toast(res.error || t('msg.save_failed'), 'error');
+    } catch (e) { toast(t('msg.conn_error'), 'error'); }
   });
 
   qs('#btnConnectTiktok')?.addEventListener('click', async () => {
     const statusEl = qs('#connectStatus');
-    if (statusEl) statusEl.textContent = 'Đang lấy URL xác thực...';
+    if (statusEl) statusEl.textContent = t('msg.getting_auth_url');
 
     try {
       const res = await apiFetch('api/tiktok-connect.php', {
@@ -1234,15 +1234,15 @@ function setupConnectPage() {
       });
 
       if (res.success && res.auth_url) {
-        if (statusEl) statusEl.textContent = 'Đang chuyển hướng...';
+        if (statusEl) statusEl.textContent = t('msg.redirecting');
         location.href = res.auth_url;
       } else {
         if (statusEl) statusEl.textContent = '';
-        toast(res.error || 'Không lấy được URL xác thực.', 'error');
+        toast(res.error || t('msg.no_auth_url'), 'error');
       }
     } catch (e) {
       if (statusEl) statusEl.textContent = '';
-      toast('Lỗi kết nối.', 'error');
+      toast(t('msg.conn_error'), 'error');
     }
   });
 
@@ -1258,7 +1258,7 @@ async function loadSettingsPage() {
 
   qs('#btnCheckUpdateNow')?.addEventListener('click', async () => {
     const panel = qs('#updateStatusPanel');
-    if (panel) panel.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px">Đang kiểm tra...</div>';
+    if (panel) panel.innerHTML = `<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px">${t('msg.checking')}</div>`;
     await apiFetch('api/update.php', { method: 'POST', body: JSON.stringify({ action: 'check_now' }) });
     await loadUpdateCard();
   });
@@ -1270,10 +1270,10 @@ async function loadSettingsPage() {
       body: JSON.stringify({ action: 'save_manifest_url', url }),
     });
     if (res.success) {
-      toast('Đã lưu URL manifest!', 'success');
+      toast(t('toast.manifest_saved'), 'success');
       await loadUpdateCard();
     } else {
-      toast(res.error || 'Lỗi lưu URL.', 'error');
+      toast(res.error || t('msg.save_failed'), 'error');
     }
   });
 }
@@ -1289,19 +1289,19 @@ async function loadSysInfo() {
       ['PHP', `${i.php_version} (${i.php_sapi})`],
       ['MySQL', i.db_version],
       ['Memory limit', i.memory_limit],
-      ['Memory sử dụng', `${i.memory_used_mb} MB (peak: ${i.memory_peak_mb} MB)`],
+      [t('sys.memory_used'), `${i.memory_used_mb} MB (peak: ${i.memory_peak_mb} MB)`],
       ['Upload max', i.upload_max],
       ['Max exec time', i.max_exec_time + 's'],
       ['Server', i.server_software],
-      ['Múi giờ', i.timezone],
-      ['Giờ server', i.server_time],
-      ['Cài đặt lúc', i.installed_at || '—'],
+      [t('sys.timezone'), i.timezone],
+      [t('sys.server_time'), i.server_time],
+      [t('sys.installed_at'), i.installed_at || '—'],
     ];
     if (i.disk_total_gb) {
       const pct = i.disk_total_gb > 0 ? Math.round((1 - i.disk_free_gb / i.disk_total_gb) * 100) : 0;
-      sysRows.push(['Dung lượng disk', `${i.disk_free_gb} GB trống / ${i.disk_total_gb} GB (${pct}% đã dùng)`]);
+      sysRows.push([t('sys.disk'), `${i.disk_free_gb} ${t('sys.disk_free')} / ${i.disk_total_gb} GB (${pct}% ${t('sys.disk_used')})`]);
     }
-    sysRows.push(['Kích thước DB', `${i.db_size_mb} MB`]);
+    sysRows.push([t('sys.db_size'), `${i.db_size_mb} MB`]);
 
     qs('#sysInfoContent').innerHTML = `
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:8px">
@@ -1324,21 +1324,21 @@ async function loadSysInfo() {
 
     const dateRange = (i.order_date_min && i.order_date_max)
       ? `${i.order_date_min.substring(0,10)} → ${i.order_date_max.substring(0,10)}`
-      : 'Chưa có dữ liệu';
+      : t('sys.no_data');
 
     qs('#dataStatsContent').innerHTML = `
       <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px">
         <div style="text-align:center;padding:14px 20px;background:#eff6ff;border-radius:10px;flex:1;min-width:120px">
           <div style="font-size:22px;font-weight:800">${fmtNum(i.order_count)}</div>
-          <div style="font-size:12px;color:var(--text-muted);margin-top:2px">Tổng đơn hàng</div>
+          <div style="font-size:12px;color:var(--text-muted);margin-top:2px">${t('sys.total_orders')}</div>
         </div>
         <div style="text-align:center;padding:14px 20px;background:#f0fdf4;border-radius:10px;flex:1;min-width:120px">
           <div style="font-size:22px;font-weight:800">${fmtNum(i.traffic_count)}</div>
-          <div style="font-size:12px;color:var(--text-muted);margin-top:2px">Bản ghi traffic</div>
+          <div style="font-size:12px;color:var(--text-muted);margin-top:2px">${t('sys.traffic_records')}</div>
         </div>
         <div style="text-align:center;padding:14px 20px;background:#fefce8;border-radius:10px;flex:1;min-width:120px">
           <div style="font-size:22px;font-weight:800">${fmtNum(i.upload_count)}</div>
-          <div style="font-size:12px;color:var(--text-muted);margin-top:2px">Lần upload</div>
+          <div style="font-size:12px;color:var(--text-muted);margin-top:2px">${t('sys.uploads')}</div>
         </div>
         <div style="text-align:center;padding:14px 20px;background:#fdf4ff;border-radius:10px;flex:1;min-width:120px">
           <div style="font-size:22px;font-weight:800">${fmtNum(i.log_count)}</div>
@@ -1346,9 +1346,9 @@ async function loadSysInfo() {
         </div>
       </div>
       <div style="display:flex;gap:10px;flex-wrap:wrap">${platRows}</div>
-      <div style="margin-top:10px;font-size:12px;color:var(--text-muted)">Khoảng thời gian đơn hàng: <strong>${escHtml(dateRange)}</strong></div>`;
+      <div style="margin-top:10px;font-size:12px;color:var(--text-muted)">${t('sys.date_range')} <strong>${escHtml(dateRange)}</strong></div>`;
   } catch (e) {
-    qs('#sysInfoContent').innerHTML = `<div style="color:var(--red,#ef4444);font-size:13px">Lỗi tải thông tin: ${escHtml(e.message)}</div>`;
+    qs('#sysInfoContent').innerHTML = `<div style="color:var(--red,#ef4444);font-size:13px">${t('sys.load_error')} ${escHtml(e.message)}</div>`;
   }
 }
 
@@ -1359,7 +1359,7 @@ async function confirmReset(action, title, promptText, confirmWord) {
   const answer = window.prompt(`${title}\n\n${promptText}`);
   if (answer === null) return; // cancelled
   if (answer.trim() !== confirmWord) {
-    alert(`❌ Xác nhận sai. Bạn cần nhập chính xác: "${confirmWord}"`);
+    alert(`❌ ${t('msg.error')}: "${confirmWord}"`);
     return;
   }
 
@@ -1374,10 +1374,10 @@ async function confirmReset(action, title, promptText, confirmWord) {
       // Refresh stats
       setTimeout(loadSysInfo, 500);
     } else {
-      if (resultEl) resultEl.innerHTML = `<div style="color:var(--red,#ef4444);font-size:13px;padding:10px 14px;background:#fef2f2;border-radius:8px">❌ ${escHtml(res.error || 'Thất bại')}</div>`;
+      if (resultEl) resultEl.innerHTML = `<div style="color:var(--red,#ef4444);font-size:13px;padding:10px 14px;background:#fef2f2;border-radius:8px">❌ ${escHtml(res.error || t('msg.failed'))}</div>`;
     }
   } catch (e) {
-    if (resultEl) resultEl.innerHTML = `<div style="color:var(--red,#ef4444);font-size:13px">Lỗi: ${escHtml(e.message)}</div>`;
+    if (resultEl) resultEl.innerHTML = `<div style="color:var(--red,#ef4444);font-size:13px">${t('msg.error')}: ${escHtml(e.message)}</div>`;
   }
 }
 
@@ -1412,7 +1412,7 @@ async function loadUpdateCard() {
     if (!data.manifest_url) {
       panel.innerHTML = `
         <div style="padding:14px 16px;background:var(--bg-base,#f8fafc);border-radius:10px;font-size:13px;color:var(--text-muted)">
-          Nhập URL Manifest ở trên để bật tính năng kiểm tra cập nhật tự động.
+          ${t('update.enter_manifest')}
         </div>`;
       return;
     }
@@ -1420,7 +1420,7 @@ async function loadUpdateCard() {
     if (data.fetch_error && !data.latest) {
       panel.innerHTML = `
         <div style="padding:14px 16px;background:#fef9c3;border-radius:10px;font-size:13px;color:#92400e">
-          Không thể tải manifest: ${escHtml(data.fetch_error)}
+          ${t('update.manifest_error')} ${escHtml(data.fetch_error)}
         </div>`;
       return;
     }
@@ -1431,16 +1431,16 @@ async function loadUpdateCard() {
           <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px">
             <div>
               <div style="font-weight:700;color:#1d4ed8;font-size:15px;margin-bottom:4px">
-                Có bản cập nhật mới: v${escHtml(data.latest)}
+                ${t('update.new_version')} v${escHtml(data.latest)}
               </div>
               <div style="font-size:12px;color:var(--text-muted)">
-                Hiện tại: v${escHtml(data.current)}
-                ${data.released_at ? ' · Phát hành: ' + escHtml(data.released_at) : ''}
-                ${data.min_php ? ' · Yêu cầu PHP ' + escHtml(data.min_php) + '+' : ''}
+                ${t('update.current')} v${escHtml(data.current)}
+                ${data.released_at ? ' · ' + t('update.released') + ' ' + escHtml(data.released_at) : ''}
+                ${data.min_php ? ' · ' + t('update.min_php') + ' ' + escHtml(data.min_php) + '+' : ''}
               </div>
             </div>
             <button class="btn btn-primary btn-sm" id="btnApplyUpdate" style="white-space:nowrap">
-              Cập nhật ngay
+              ${t('update.btn')}
             </button>
           </div>
           ${data.changelog ? `
@@ -1458,34 +1458,34 @@ ${escHtml(data.changelog)}
         <div style="padding:14px 16px;background:#f0fdf4;border-radius:10px;display:flex;align-items:center;gap:14px">
           <div style="font-size:20px;flex-shrink:0">✓</div>
           <div>
-            <div style="font-weight:600;color:#166534;font-size:13px">Đang dùng phiên bản mới nhất (v${escHtml(data.current)})</div>
+            <div style="font-weight:600;color:#166534;font-size:13px">${t('update.up_to_date')} (v${escHtml(data.current)})</div>
             <div style="font-size:12px;color:var(--text-muted);margin-top:2px">
-              Kiểm tra lúc: ${escHtml(data.last_checked || '—')}
+              ${t('update.checked_at')} ${escHtml(data.last_checked || '—')}
             </div>
           </div>
         </div>`;
     } else {
       panel.innerHTML = `
         <div style="padding:14px 16px;background:#fef9c3;border-radius:10px;font-size:13px;color:#92400e">
-          Không lấy được thông tin phiên bản. Kiểm tra URL manifest và thử lại.
+          ${t('update.no_info')}
         </div>`;
     }
   } catch (e) {
-    if (panel) panel.innerHTML = `<div style="color:var(--red,#ef4444);font-size:13px;padding:12px">Lỗi: ${escHtml(e.message)}</div>`;
+    if (panel) panel.innerHTML = `<div style="color:var(--red,#ef4444);font-size:13px;padding:12px">${t('msg.error')}: ${escHtml(e.message)}</div>`;
   }
 }
 
 async function applySystemUpdate(downloadUrl, version) {
   const panel = qs('#updateStatusPanel');
 
-  if (!confirm(`Cập nhật lên v${version}?\n\nCác file mới sẽ được cài đặt. config.php và uploads/ sẽ được giữ nguyên.\nVui lòng backup trước nếu cần.`)) return;
+  if (!confirm(`${t('update.new_version')} v${version}${t('update.confirm_body')}`)) return;
 
   if (panel) {
     panel.innerHTML = `
       <div style="padding:24px;text-align:center;color:var(--text-muted)">
         <div style="font-size:32px;margin-bottom:10px">⏳</div>
-        <div style="font-weight:600;font-size:14px">Đang tải và áp dụng v${escHtml(version)}...</div>
-        <div style="font-size:12px;margin-top:6px">Vui lòng không đóng trang (có thể mất 30–60 giây)</div>
+        <div style="font-weight:600;font-size:14px">${t('update.installing')} v${escHtml(version)}</div>
+        <div style="font-size:12px;margin-top:6px">${t('update.wait')}</div>
       </div>`;
   }
 
@@ -1500,21 +1500,21 @@ async function applySystemUpdate(downloadUrl, version) {
         panel.innerHTML = `
           <div style="padding:20px;background:#f0fdf4;border-radius:10px;text-align:center">
             <div style="font-size:32px;margin-bottom:8px">🎉</div>
-            <div style="font-weight:700;color:#166534;font-size:15px">Cập nhật thành công!</div>
+            <div style="font-weight:700;color:#166534;font-size:15px">${t('update.success')}</div>
             <div style="font-size:13px;color:var(--text-muted);margin-top:4px">${escHtml(res.message)}</div>
             <button class="btn btn-primary" style="margin-top:16px" onclick="location.reload()">
-              Tải lại trang
+              ${t('update.reload')}
             </button>
           </div>`;
       }
-      toast('Cập nhật thành công!', 'success');
+      toast(t('update.success'), 'success');
     } else {
       if (panel) {
         panel.innerHTML = `
           <div style="padding:16px;background:#fef2f2;border-radius:10px">
-            <div style="font-weight:600;color:#dc2626;margin-bottom:6px">Cập nhật thất bại</div>
-            <div style="font-size:13px">${escHtml(res.error || 'Lỗi không xác định')}</div>
-            <button class="btn btn-secondary btn-sm" style="margin-top:12px" onclick="loadUpdateCard()">Thử lại</button>
+            <div style="font-weight:600;color:#dc2626;margin-bottom:6px">${t('update.failed')}</div>
+            <div style="font-size:13px">${escHtml(res.error || t('msg.unknown'))}</div>
+            <button class="btn btn-secondary btn-sm" style="margin-top:12px" onclick="loadUpdateCard()">${t('update.retry')}</button>
           </div>`;
       }
     }
@@ -1522,9 +1522,9 @@ async function applySystemUpdate(downloadUrl, version) {
     if (panel) {
       panel.innerHTML = `
         <div style="padding:16px;background:#fef2f2;border-radius:10px">
-          <div style="color:#dc2626;margin-bottom:6px">Lỗi kết nối</div>
+          <div style="color:#dc2626;margin-bottom:6px">${t('update.conn_error')}</div>
           <div style="font-size:13px">${escHtml(e.message)}</div>
-          <button class="btn btn-secondary btn-sm" style="margin-top:12px" onclick="loadUpdateCard()">Thử lại</button>
+          <button class="btn btn-secondary btn-sm" style="margin-top:12px" onclick="loadUpdateCard()">${t('update.retry')}</button>
         </div>`;
     }
   }
@@ -1574,14 +1574,14 @@ function renderLazadaAccountsTable(accounts) {
   if (!tbody) return;
 
   if (!accounts.length) {
-    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:32px;color:var(--text-muted)">Chưa có tài khoản nào được kết nối.</td></tr>';
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:32px;color:var(--text-muted)">${t('connect.no_lazada')}</td></tr>`;
     return;
   }
 
   tbody.innerHTML = accounts.map(a => {
-    const active   = a.is_active ? '✓ Hoạt động' : '✗ Tắt';
+    const active   = a.is_active ? `✓ ${t('msg.active')}` : `✗ ${t('msg.inactive')}`;
     const expiry   = a.access_token_expire_at ? a.access_token_expire_at.substring(0, 16) : '—';
-    const synced   = a.last_synced_at ? a.last_synced_at.substring(0, 16) : 'Chưa đồng bộ';
+    const synced   = a.last_synced_at ? a.last_synced_at.substring(0, 16) : t('msg.not_synced');
     const fromDate = a.sync_from_date || '';
     const todayStr = new Date().toISOString().substring(0, 10);
     const actStyle = a.is_active ? 'color:var(--green,#22c55e)' : 'color:var(--text-muted)';
@@ -1595,14 +1595,14 @@ function renderLazadaAccountsTable(accounts) {
       <td style="font-size:12px">${synced}</td>
       <td style="white-space:nowrap">
         <input type="date" class="lazada-sync-from-date" data-account="${escHtml(a.account_id)}" value="${escHtml(fromDate)}"
-            style="${inputStyle}" title="Từ ngày">
+            style="${inputStyle}" title="${t('btn.date_from')}">
         <span style="font-size:11px;color:var(--text-muted);margin:0 2px">→</span>
         <input type="date" class="lazada-sync-to-date" data-account="${escHtml(a.account_id)}" value="${escHtml(todayStr)}"
-            style="${inputStyle}" title="Đến ngày">
+            style="${inputStyle}" title="${t('btn.date_to')}">
       </td>
       <td style="display:flex;gap:6px;flex-wrap:wrap">
-        <button class="btn btn-primary btn-sm btn-lazada-sync" data-account="${escHtml(a.account_id)}" title="Đồng bộ">Sync</button>
-        <button class="btn btn-secondary btn-sm btn-lazada-disconnect" data-account="${escHtml(a.account_id)}" title="Ngắt kết nối" style="color:var(--red,#ef4444)">✕</button>
+        <button class="btn btn-primary btn-sm btn-lazada-sync" data-account="${escHtml(a.account_id)}" title="${t('btn.sync')}">Sync</button>
+        <button class="btn btn-secondary btn-sm btn-lazada-disconnect" data-account="${escHtml(a.account_id)}" title="${t('btn.disconnect')}" style="color:var(--red,#ef4444)">✕</button>
       </td>
     </tr>`;
   }).join('');
@@ -1613,15 +1613,15 @@ function renderLazadaAccountsTable(accounts) {
 
   tbody.querySelectorAll('.btn-lazada-disconnect').forEach(btn => {
     btn.addEventListener('click', async () => {
-      if (!confirm('Ngắt kết nối tài khoản Lazada này?')) return;
+      if (!confirm(t('confirm.disconnect_lazada'))) return;
       try {
         const res = await apiFetch('api/lazada-connect.php', {
           method: 'POST',
           body: JSON.stringify({ action: 'disconnect', account_id: btn.dataset.account }),
         });
-        if (res.success) { toast('Đã ngắt kết nối.', 'success'); loadLazadaConnectPage(); }
-        else toast(res.error || 'Thất bại.', 'error');
-      } catch (e) { toast('Lỗi kết nối.', 'error'); }
+        if (res.success) { toast(t('msg.disconnected'), 'success'); loadLazadaConnectPage(); }
+        else toast(res.error || t('msg.failed'), 'error');
+      } catch (e) { toast(t('msg.conn_error'), 'error'); }
     });
   });
 
@@ -1639,7 +1639,7 @@ function renderLazadaAccountsTable(accounts) {
 
 async function syncLazadaAccount(accountId) {
   const resultsEl = qs('#lazadaSyncResults');
-  if (resultsEl) resultsEl.innerHTML = '<div style="color:var(--text-muted);font-size:13px">Đang đồng bộ...</div>';
+  if (resultsEl) resultsEl.innerHTML = `<div style="color:var(--text-muted);font-size:13px">${t('msg.syncing')}</div>`;
 
   // Read date range inputs for this account
   const fromInput = accountId ? qs(`.lazada-sync-from-date[data-account="${CSS.escape(accountId)}"]`) : null;
@@ -1655,21 +1655,21 @@ async function syncLazadaAccount(accountId) {
     const res  = await apiFetch('api/lazada-connect.php', { method: 'POST', body: JSON.stringify(body) });
 
     if (!res.success) {
-      if (resultsEl) resultsEl.innerHTML = `<div style="color:var(--red,#ef4444);font-size:13px">Lỗi: ${escHtml(res.error || 'Không xác định')}</div>`;
+      if (resultsEl) resultsEl.innerHTML = `<div style="color:var(--red,#ef4444);font-size:13px">${t('msg.error')}: ${escHtml(res.error || t('msg.unknown'))}</div>`;
       return;
     }
 
     const rows = (res.results || []).map(r => {
-      if (r.success) return `<div style="color:var(--green,#22c55e);font-size:13px">✓ ${escHtml(r.account)}: +${r.imported} mục${r.errors ? `, ${r.errors} lỗi` : ''}</div>`;
+      if (r.success) return `<div style="color:var(--green,#22c55e);font-size:13px">✓ ${escHtml(r.account)}: +${r.imported} ${t('connect.items_unit')}${r.errors ? `, ${r.errors} ${t('msg.error')}` : ''}</div>`;
       return `<div style="color:var(--red,#ef4444);font-size:13px">✗ ${escHtml(r.account)}: ${escHtml(r.error || '')}</div>`;
     }).join('');
 
-    if (resultsEl) resultsEl.innerHTML = rows || '<div style="color:var(--text-muted);font-size:13px">Không có kết quả.</div>';
-    toast('Đồng bộ Lazada hoàn tất.', 'success');
+    if (resultsEl) resultsEl.innerHTML = rows || `<div style="color:var(--text-muted);font-size:13px">${t('msg.no_results')}</div>`;
+    toast(t('toast.lazada_sync_done'), 'success');
     loadLazadaConnectPage();
   } catch (e) {
-    if (resultsEl) resultsEl.innerHTML = `<div style="color:var(--red,#ef4444);font-size:13px">Lỗi: ${escHtml(e.message)}</div>`;
-    toast('Lỗi đồng bộ Lazada.', 'error');
+    if (resultsEl) resultsEl.innerHTML = `<div style="color:var(--red,#ef4444);font-size:13px">${t('msg.error')}: ${escHtml(e.message)}</div>`;
+    toast(t('toast.lazada_sync_error'), 'error');
   }
 }
 
@@ -1677,35 +1677,35 @@ function setupLazadaConnectPage() {
   qs('#btnLazadaSaveCredentials')?.addEventListener('click', async () => {
     const appKey    = qs('#lazadaAppKey')?.value.trim()    || '';
     const appSecret = qs('#lazadaAppSecret')?.value.trim() || '';
-    if (!appKey) { toast('App Key không được để trống.', 'error'); return; }
+    if (!appKey) { toast(t('msg.app_key_required'), 'error'); return; }
     try {
       const res = await apiFetch('api/lazada-connect.php', {
         method: 'POST',
         body: JSON.stringify({ action: 'save_credentials', app_key: appKey, app_secret: appSecret }),
       });
-      if (res.success) toast('Đã lưu thông tin xác thực Lazada.', 'success');
-      else toast(res.error || 'Lưu thất bại.', 'error');
-    } catch (e) { toast('Lỗi kết nối.', 'error'); }
+      if (res.success) toast(t('connect.lazada_saved'), 'success');
+      else toast(res.error || t('msg.save_failed'), 'error');
+    } catch (e) { toast(t('msg.conn_error'), 'error'); }
   });
 
   qs('#btnConnectLazada')?.addEventListener('click', async () => {
     const statusEl = qs('#lazadaConnectStatus');
-    if (statusEl) statusEl.textContent = 'Đang lấy URL xác thực...';
+    if (statusEl) statusEl.textContent = t('msg.getting_auth_url');
     try {
       const res = await apiFetch('api/lazada-connect.php', {
         method: 'POST',
         body: JSON.stringify({ action: 'get_auth_url' }),
       });
       if (res.success && res.auth_url) {
-        if (statusEl) statusEl.textContent = 'Đang chuyển hướng...';
+        if (statusEl) statusEl.textContent = t('msg.redirecting');
         location.href = res.auth_url;
       } else {
         if (statusEl) statusEl.textContent = '';
-        toast(res.error || 'Không lấy được URL xác thực.', 'error');
+        toast(res.error || t('msg.no_auth_url'), 'error');
       }
     } catch (e) {
       if (statusEl) statusEl.textContent = '';
-      toast('Lỗi kết nối.', 'error');
+      toast(t('msg.conn_error'), 'error');
     }
   });
 
@@ -1731,7 +1731,7 @@ async function loadShopeeConnectPage() {
     renderShopeeShopsTable(data.shops || []);
   } catch (e) {
     const tbody = qs('#shopeeShopsTableBody');
-    if (tbody) tbody.innerHTML = `<tr><td colspan="7" style="color:var(--red,#ef4444);padding:20px;text-align:center">Lỗi: ${escHtml(e.message)}</td></tr>`;
+    if (tbody) tbody.innerHTML = `<tr><td colspan="7" style="color:var(--red,#ef4444);padding:20px;text-align:center">${t('msg.error')}: ${escHtml(e.message)}</td></tr>`;
   }
 }
 
@@ -1740,18 +1740,18 @@ function renderShopeeShopsTable(shops) {
   if (!tbody) return;
 
   if (!shops.length) {
-    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:32px;color:var(--text-muted)">Chưa kết nối shop nào. Nhấn "Kết nối Shopee" để bắt đầu.</td></tr>';
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:32px;color:var(--text-muted)">${t('connect.no_shopee')}</td></tr>`;
     return;
   }
 
   tbody.innerHTML = shops.map(s => {
     const expiry    = s.access_token_expire_at ? s.access_token_expire_at.substring(0, 16) : '—';
-    const lastSync  = s.last_synced_at         ? s.last_synced_at.substring(0, 16)         : 'Chưa sync';
+    const lastSync  = s.last_synced_at         ? s.last_synced_at.substring(0, 16)         : t('msg.not_synced_short');
     const fromDate  = s.sync_from_date         || '';
     const isActive  = parseInt(s.is_active, 10) === 1;
     const statusBadge = isActive
-      ? '<span style="color:#16a34a;font-size:12px;font-weight:600">Hoạt động</span>'
-      : '<span style="color:#9ca3af;font-size:12px">Tạm dừng</span>';
+      ? `<span style="color:#16a34a;font-size:12px;font-weight:600">${t('msg.active')}</span>`
+      : `<span style="color:#9ca3af;font-size:12px">${t('msg.paused')}</span>`;
 
     return `<tr>
       <td style="font-weight:500">${escHtml(s.shop_name || '—')}</td>
@@ -1765,8 +1765,8 @@ function renderShopeeShopsTable(shops) {
       </td>
       <td style="display:flex;gap:4px;flex-wrap:wrap">
         <button class="btn btn-primary btn-sm" style="font-size:11px" onclick="syncShopeeShop(${s.shop_id})">Sync</button>
-        <button class="btn btn-secondary btn-sm" style="font-size:11px" onclick="toggleShopeeActive(${s.shop_id}, ${isActive ? 0 : 1})">${isActive ? 'Tắt' : 'Bật'}</button>
-        <button class="btn btn-sm" style="background:#ef4444;color:#fff;border:none;font-size:11px" onclick="disconnectShopee(${s.shop_id})">Xóa</button>
+        <button class="btn btn-secondary btn-sm" style="font-size:11px" onclick="toggleShopeeActive(${s.shop_id}, ${isActive ? 0 : 1})">${isActive ? t('msg.disable') : t('msg.enable')}</button>
+        <button class="btn btn-sm" style="background:#ef4444;color:#fff;border:none;font-size:11px" onclick="disconnectShopee(${s.shop_id})">${t('lang.delete')}</button>
       </td>
     </tr>`;
   }).join('');
@@ -1774,7 +1774,7 @@ function renderShopeeShopsTable(shops) {
 
 async function syncShopeeShop(shopId) {
   const resultsEl = qs('#shopeeSyncResults');
-  if (resultsEl) resultsEl.innerHTML = '<div style="font-size:13px;color:var(--text-muted)">Đang đồng bộ...</div>';
+  if (resultsEl) resultsEl.innerHTML = `<div style="font-size:13px;color:var(--text-muted)">${t('msg.syncing')}</div>`;
 
   try {
     const res = await apiFetch('api/shopee-connect.php', {
@@ -1785,16 +1785,16 @@ async function syncShopeeShop(shopId) {
       resultsEl.innerHTML = res.results.map(r =>
         `<div style="font-size:13px;padding:6px 0;border-bottom:1px solid var(--border)">
           ${r.success ? '✓' : '✗'} <strong>${escHtml(r.shop)}</strong>:
-          ${r.success ? `+${r.imported} mục` : escHtml(r.error)}
+          ${r.success ? `+${r.imported} ${t('connect.items_unit')}` : escHtml(r.error)}
         </div>`
       ).join('');
-      toast('Đồng bộ Shopee hoàn tất', 'success');
+      toast(t('toast.shopee_sync_done'), 'success');
       loadShopeeConnectPage();
     } else if (resultsEl) {
-      resultsEl.innerHTML = `<div style="color:var(--red,#ef4444);font-size:13px">Lỗi: ${escHtml(res.error || '')}</div>`;
+      resultsEl.innerHTML = `<div style="color:var(--red,#ef4444);font-size:13px">${t('msg.error')}: ${escHtml(res.error || '')}</div>`;
     }
   } catch (e) {
-    if (resultsEl) resultsEl.innerHTML = `<div style="color:var(--red,#ef4444);font-size:13px">Lỗi: ${escHtml(e.message)}</div>`;
+    if (resultsEl) resultsEl.innerHTML = `<div style="color:var(--red,#ef4444);font-size:13px">${t('msg.error')}: ${escHtml(e.message)}</div>`;
   }
 }
 
@@ -1814,7 +1814,7 @@ async function setShopeeFromDate(shopId, date) {
 }
 
 async function disconnectShopee(shopId) {
-  if (!confirm('Xóa kết nối shop này?')) return;
+  if (!confirm(t('confirm.delete_shopee'))) return;
   await apiFetch('api/shopee-connect.php', {
     method: 'POST',
     body: JSON.stringify({ action: 'disconnect', shop_id: shopId }),
@@ -1830,27 +1830,27 @@ function setupShopeeConnectPage() {
       method: 'POST',
       body: JSON.stringify({ action: 'save_credentials', partner_id: partnerId, partner_key: partnerKey }),
     });
-    toast(res.success ? 'Đã lưu thông tin Shopee!' : (res.error || 'Lỗi'), res.success ? 'success' : 'error');
+    toast(res.success ? t('connect.shopee_saved') : (res.error || t('msg.failed')), res.success ? 'success' : 'error');
   });
 
   qs('#btnConnectShopee')?.addEventListener('click', async () => {
     const statusEl = qs('#shopeeConnectStatus');
-    if (statusEl) statusEl.textContent = 'Đang lấy URL xác thực...';
+    if (statusEl) statusEl.textContent = t('msg.getting_auth_url');
     try {
       const res = await apiFetch('api/shopee-connect.php', {
         method: 'POST',
         body: JSON.stringify({ action: 'get_auth_url' }),
       });
       if (res.success && res.auth_url) {
-        if (statusEl) statusEl.textContent = 'Đang chuyển hướng...';
+        if (statusEl) statusEl.textContent = t('msg.redirecting');
         location.href = res.auth_url;
       } else {
         if (statusEl) statusEl.textContent = '';
-        toast(res.error || 'Không lấy được URL xác thực.', 'error');
+        toast(res.error || t('msg.no_auth_url'), 'error');
       }
     } catch (e) {
       if (statusEl) statusEl.textContent = '';
-      toast('Lỗi kết nối.', 'error');
+      toast(t('msg.conn_error'), 'error');
     }
   });
 
@@ -1983,7 +1983,7 @@ async function setupLangSettings() {
   if (!card || !list) return;
 
   async function refresh() {
-    list.innerHTML = '<div style="text-align:center;padding:16px;color:var(--text-muted);font-size:13px">Đang tải...</div>';
+    list.innerHTML = `<div style="text-align:center;padding:16px;color:var(--text-muted);font-size:13px">${t('msg.loading')}</div>`;
     const langs = await I18n.loadAvailableLangs();
     _renderLangOptions(langs); // keep dropdown in sync
 
@@ -2016,17 +2016,17 @@ async function setupLangSettings() {
     try {
       const data = await fetch('api/lang.php', { method: 'POST', body: fd }).then(r => r.json());
       if (!data.success) throw new Error(data.error || 'Upload failed');
-      toast(`Đã thêm ngôn ngữ: ${data.flag} ${data.name}`, 'success');
+      toast(`${data.flag} ${data.name}`, 'success');
       input.value = '';
       await refresh();
     } catch (e) {
-      toast('Upload thất bại: ' + e.message, 'error');
+      toast(`${t('msg.error')}: ${e.message}`, 'error');
     }
   });
 }
 
 window.deleteLang = async function(code) {
-  if (!confirm(`Xoá ngôn ngữ "${code}"?`)) return;
+  if (!confirm(`${t("lang.delete")} "${code}"?`)) return;
   const fd = new FormData();
   fd.append('action', 'delete');
   fd.append('_csrf', App.csrf);
@@ -2034,10 +2034,10 @@ window.deleteLang = async function(code) {
   try {
     const data = await fetch('api/lang.php', { method: 'POST', body: fd }).then(r => r.json());
     if (!data.success) throw new Error(data.error || 'Failed');
-    toast(`Đã xoá ngôn ngữ: ${code}`, 'success');
+    toast(`${t('lang.delete')}: ${code}`, 'success');
     document.querySelector('[data-page="settings"]')?.click();
   } catch (e) {
-    toast('Xoá thất bại: ' + e.message, 'error');
+    toast(`${t('msg.delete_failed')} ${e.message}`, 'error');
   }
 };
 

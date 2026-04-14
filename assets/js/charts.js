@@ -356,7 +356,7 @@ const Charts = (() => {
     save(id, new Chart(el, {
       type: 'bar',
       data: {
-        labels: top.map(c => c.city || 'Khác'),
+        labels: top.map(c => c.city || t('cl.other')),
         datasets: [{
           label: t('cl.orders'),
           data: top.map(c => c.orders),
@@ -494,13 +494,13 @@ const Charts = (() => {
   function renderDistrictBar(id, districts, city) {
     destroy(id);
     const el = canvas(id); if (!el) return;
-    if (!districts || !districts.length) return renderEmpty(el, `Không có dữ liệu quận/huyện ${city}`);
+    if (!districts || !districts.length) return renderEmpty(el, `${t('cl.no_data')} — ${city}`);
 
     const top = districts.slice(0, 15);
     save(id, new Chart(el, {
       type: 'bar',
       data: {
-        labels: top.map(d => d.district || 'Khác'),
+        labels: top.map(d => d.district || t('cl.other')),
         datasets: [{
           label: t('cl.orders'),
           data: top.map(d => d.orders),
@@ -654,7 +654,7 @@ const Charts = (() => {
     save(id, new Chart(el, {
       type: 'bar',
       data: {
-        labels: top.map(c => c.city || 'Khác'),
+        labels: top.map(c => c.city || t('cl.other')),
         datasets: [{
           label: t('cl.revenue'),
           data: top.map(c => c.revenue),
