@@ -503,19 +503,29 @@ $initials = strtoupper(substr($user, 0, 2));
             <div class="kpi-value" id="cust-buyers">—</div>
             <div class="kpi-sub" data-i18n="kpi.buyers.sub">Người mua khác nhau</div>
           </div>
+          <div class="kpi-card border-orange">
+            <div class="kpi-label" data-i18n="kpi.conv_rate">Tỉ lệ chuyển đổi</div>
+            <div class="kpi-value" id="cust-conv">—</div>
+            <div class="kpi-sub" data-i18n="kpi.conv_rate.sub">Đơn / lượt truy cập</div>
+          </div>
         </div>
 
-        <div class="grid-2">
+        <div class="grid-2 mb-4">
           <div class="chart-card">
             <div class="chart-header">
               <div class="chart-header-left">
-                <h3 data-i18n="chart.by_city">Phân bổ theo tỉnh / thành</h3>
-                <p style="color:var(--pending);font-size:11px;margin-top:2px">* Dữ liệu Lazada đã được loại bỏ — Lazada ẩn thông tin địa chỉ</p>
+                <h3 data-i18n="chart.customer_segments">Phân loại khách hàng</h3>
+                <p data-i18n="chart.customer_segments.sub">Mới · Cũ · Tiềm năng</p>
               </div>
             </div>
-            <div class="chart-wrap" style="height:300px">
-              <canvas id="chartCities"></canvas>
+            <div class="donut-wrap" style="height:220px">
+              <canvas id="chartCustomerSegments"></canvas>
+              <div class="donut-center">
+                <div class="donut-center-value" id="custSegTotal">—</div>
+                <div class="donut-center-label" data-i18n="seg.total_label">Người mua</div>
+              </div>
             </div>
+            <div class="chart-legend" id="custSegLegend"></div>
           </div>
           <div class="card">
             <div class="card-title" data-i18n="card.top_locations" style="margin-bottom:12px">Top địa phương</div>

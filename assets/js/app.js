@@ -526,7 +526,41 @@ async function loadCustomers() {
     qs('#cust-aov').textContent    = fmtVND(data.summary.avg_order_value);
     qs('#cust-buyers').textContent = fmtNum(data.summary.unique_buyers || 0);
 
-    Charts.renderCityBar('chartCities', data.city_distribution);
+    // Conversion rate KPI
+    const conv = data.summary.conv_rate || 0;
+    qs('#cust-conv').textContent = conv > 0 ? conv.toFixed(2) + '%' : '—';
+    const convEl = qs('#cust-conv');
+    if (convEl) {
+      const sub = convEl.nextElementSibling;
+      if (sub && data.summary.total_visits > 0) {
+        sub.textContent = `${fmtNum(data.summary.total_orders)} đơn / ${fmtNum(data.summary.total_visits)} visit`;
+      }
+    }
+
+    // Customer segments donut
+    const seg = data.customer_segments || {};
+    const segTotal = (seg.new_buyers || 0) + (seg.returning_buyers || 0) + (seg.potential_buyers || 0);
+    const segTotalEl = qs('#custSegTotal');
+    if (segTotalEl) segTotalEl.textContent = fmtNum(segTotal);
+    Charts.renderCustomerSegmentDonut('chartCustomerSegments', seg);
+
+    // Segment legend
+    const legendEl = qs('#custSegLegend');
+    if (legendEl && segTotal > 0) {
+      const items = [
+        { label: t('seg.new'),       value: seg.new_buyers       || 0, color: '#3b82f6' },
+        { label: t('seg.returning'), value: seg.returning_buyers || 0, color: '#10b981' },
+        { label: t('seg.potential'), value: seg.potential_buyers || 0, color: '#f59e0b' },
+      ];
+      legendEl.innerHTML = items.map(it => `
+        <div class="legend-item">
+          <span class="legend-dot" style="background:${it.color}"></span>
+          <span>${it.label}: <strong>${fmtNum(it.value)}</strong>
+            <span style="color:var(--text-muted);font-size:11px">(${segTotal > 0 ? (it.value/segTotal*100).toFixed(1) : 0}%)</span>
+          </span>
+        </div>`).join('');
+    }
+
     _citiesAll  = data.city_distribution || [];
     _citiesPage = 1;
     renderCityListPage('cityList', 'cityListPager');
