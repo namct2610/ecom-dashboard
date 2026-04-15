@@ -1,7 +1,7 @@
 {
-  "version": "1.2.3",
-  "download_url": "https://github.com/namct2610/ecom-dashboard/releases/download/v1.2.3/dashboard-v3-1.2.3.zip",
-  "changelog": "- UI: Tối ưu giao diện chart — font tick lớn hơn, grid line rõ hơn, tooltip đẹp hơn\n- UI: Chart.js global defaults đồng nhất (font, màu, animation)\n- UI: Chart card hover shadow, title 14px, spacing tốt hơn\n- UI: KPI value 26px + letter-spacing, donut center 20px\n- UI: Heatmap cell lớn hơn (18px), tooltip shadow\n- UI: Mini bar track 6px, recent order border rõ hơn",
+  "version": "1.2.4",
+  "download_url": "https://github.com/namct2610/ecom-dashboard/releases/download/v1.2.4/dashboard-v3-1.2.4.zip",
+  "changelog": "- Tính năng: Tỉ lệ chuyển đổi (đơn/lượt truy cập) — KPI mới trang Khách hàng\n- Tính năng: Biểu đồ phân loại khách hàng (Mới / Cũ / Tiềm năng) thay thế chart tỉnh thành\n- Dữ liệu: API customers trả về customer_segments + conv_rate từ traffic_daily\n- i18n: Thêm chuỗi seg.* và kpi.conv_rate (VI + EN)",
   "min_php": "8.1",
   "released_at": "2026-04-15"
 }

@@ -709,6 +709,44 @@ const Charts = (() => {
     }));
   }
 
+  /* ── Customer Segments Donut (new / returning / potential) ── */
+  function renderCustomerSegmentDonut(id, segments) {
+    destroy(id);
+    const el = canvas(id); if (!el) return;
+
+    const { new_buyers = 0, returning_buyers = 0, potential_buyers = 0 } = segments || {};
+    const total = new_buyers + returning_buyers + potential_buyers;
+    if (!total) return renderEmpty(el, t('cl.no_data'));
+
+    const colors = ['#3b82f6', '#10b981', '#f59e0b'];
+    save(id, new Chart(el, {
+      type: 'doughnut',
+      data: {
+        labels: [t('seg.new'), t('seg.returning'), t('seg.potential')],
+        datasets: [{
+          data: [new_buyers, returning_buyers, potential_buyers],
+          backgroundColor: colors,
+          borderWidth: 3,
+          borderColor: '#fff',
+          hoverOffset: 5,
+        }],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '72%',
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: ctx => ` ${ctx.label}: ${ctx.raw.toLocaleString()} (${total > 0 ? (ctx.raw / total * 100).toFixed(1) : 0}%)`,
+            },
+          },
+        },
+      },
+    }));
+  }
+
   /* ── Empty state helper ── */
   function renderEmpty(el, msg) {
     const parent = el.parentElement;
@@ -745,5 +783,6 @@ const Charts = (() => {
     renderRadar,
     renderRevByCity,
     renderDistrictBar,
+    renderCustomerSegmentDonut,
   };
 })();
