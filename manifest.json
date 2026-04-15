@@ -1,7 +1,7 @@
 {
-  "version": "1.2.2",
-  "download_url": "https://github.com/namct2610/ecom-dashboard/releases/download/v1.2.2/dashboard-v3-1.2.2.zip",
-  "changelog": "- Fix: Đồng bộ toàn bộ chuỗi UI sang hệ thống i18n (~110 chuỗi còn sót)\n- Fix: Toast, empty state, status badge, connect page, settings, update card đều được dịch\n- Fix: Label kỳ (Tháng/Năm) và preset ngày tự cập nhật khi đổi ngôn ngữ\n- Fix: charts.js dùng t() cho nhãn 'Khác' và no-data",
+  "version": "1.2.3",
+  "download_url": "https://github.com/namct2610/ecom-dashboard/releases/download/v1.2.3/dashboard-v3-1.2.3.zip",
+  "changelog": "- UI: Tối ưu giao diện chart — font tick lớn hơn, grid line rõ hơn, tooltip đẹp hơn\n- UI: Chart.js global defaults đồng nhất (font, màu, animation)\n- UI: Chart card hover shadow, title 14px, spacing tốt hơn\n- UI: KPI value 26px + letter-spacing, donut center 20px\n- UI: Heatmap cell lớn hơn (18px), tooltip shadow\n- UI: Mini bar track 6px, recent order border rõ hơn",
   "min_php": "8.1",
-  "released_at": "2026-04-14"
+  "released_at": "2026-04-15"
 }

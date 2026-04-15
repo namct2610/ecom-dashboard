@@ -2,28 +2,31 @@
 .chart-card {
   background: var(--surface-card);
   border-radius: var(--radius);
-  padding: 18px 20px;
+  padding: 20px 22px;
   box-shadow: var(--shadow-card);
   border: 1px solid var(--border);
+  transition: box-shadow 0.15s;
 }
+.chart-card:hover { box-shadow: var(--shadow-hover); }
 .chart-header {
   display: flex; align-items: flex-start; justify-content: space-between;
-  margin-bottom: 16px; gap: 10px;
+  margin-bottom: 18px; gap: 10px;
 }
-.chart-header-left h3 { font-size: 13px; font-weight: 600; color: var(--text-primary); }
-.chart-header-left p  { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+.chart-header-left h3 { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+.chart-header-left p  { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
 .chart-header-right   { display: flex; gap: 4px; flex-shrink: 0; }
 
 .chart-tab-btn {
-  padding: 4px 10px;
+  padding: 4px 11px;
   border-radius: var(--radius-sm);
   font-size: 11px; font-weight: 500;
   color: var(--text-muted);
   border: 1px solid transparent;
   transition: all 0.15s;
+  cursor: pointer;
 }
 .chart-tab-btn.active { background: var(--primary-subtle); color: var(--primary); border-color: var(--primary-light); }
-.chart-tab-btn:hover:not(.active) { background: var(--surface); color: var(--text-secondary); }
+.chart-tab-btn:hover:not(.active) { background: var(--surface); color: var(--text-secondary); cursor: pointer; }
 
 /* Canvas wrappers */
 .chart-wrap { position: relative; }
@@ -35,8 +38,8 @@
   position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
   text-align: center; pointer-events: none;
 }
-.donut-center-value { font-size: 18px; font-weight: 800; color: var(--text-primary); line-height: 1; }
-.donut-center-label { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+.donut-center-value { font-size: 20px; font-weight: 800; color: var(--text-primary); line-height: 1; }
+.donut-center-label { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
 
 /* Chart skeleton */
 .chart-skeleton {
@@ -48,26 +51,26 @@
 }
 
 /* Mini bar list (top products) */
-.mini-bar-list { display: flex; flex-direction: column; gap: 10px; }
-.mini-bar-row { display: flex; flex-direction: column; gap: 4px; }
+.mini-bar-list { display: flex; flex-direction: column; gap: 11px; }
+.mini-bar-row { display: flex; flex-direction: column; gap: 5px; }
 .mini-bar-row-header { display: flex; justify-content: space-between; align-items: center; }
 .mini-bar-label { font-size: 12px; color: var(--text-secondary); }
 .mini-bar-value { font-size: 12px; font-weight: 600; color: var(--text-primary); }
-.mini-bar-track { height: 5px; background: #f1f5f9; border-radius: var(--radius-full); overflow: hidden; }
-.mini-bar-fill  { height: 100%; border-radius: var(--radius-full); transition: width 0.5s ease; }
+.mini-bar-track { height: 6px; background: #eef2f7; border-radius: var(--radius-full); overflow: hidden; }
+.mini-bar-fill  { height: 100%; border-radius: var(--radius-full); transition: width 0.55s ease; }
 
 /* Recent orders mini list */
 .recent-order-item {
   display: flex; align-items: center; gap: 10px;
-  padding: 8px 0; border-bottom: 1px solid #f8fafc;
+  padding: 9px 0; border-bottom: 1px solid var(--border);
 }
 .recent-order-item:last-child { border-bottom: none; }
 .recent-order-dot {
-  width: 30px; height: 30px; border-radius: var(--radius-sm);
+  width: 32px; height: 32px; border-radius: var(--radius-sm);
   display: flex; align-items: center; justify-content: center;
   color: white; font-size: 11px; font-weight: 700; flex-shrink: 0;
 }
 .recent-order-info { flex: 1; min-width: 0; }
-.recent-order-name { font-size: 11px; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500; }
-.recent-order-meta { font-size: 10px; color: var(--text-muted); }
+.recent-order-name { font-size: 12px; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500; }
+.recent-order-meta { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
 .recent-order-amount { font-size: 12px; font-weight: 700; color: var(--primary); white-space: nowrap; }
