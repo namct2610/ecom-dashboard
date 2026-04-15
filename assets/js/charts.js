@@ -7,9 +7,9 @@ const PLATFORM_COLORS = {
   tiktokshop: '#010101',
 };
 const PLATFORM_BG = {
-  shopee:     'rgba(238,77,45,0.15)',
-  lazada:     'rgba(15,20,107,0.15)',
-  tiktokshop: 'rgba(1,1,1,0.12)',
+  shopee:     'rgba(238,77,45,0.12)',
+  lazada:     'rgba(15,20,107,0.12)',
+  tiktokshop: 'rgba(1,1,1,0.10)',
 };
 const STATUS_COLORS = {
   completed:  '#16a34a',
@@ -18,6 +18,23 @@ const STATUS_COLORS = {
   pending:    '#d97706',
 };
 const CHART_COLORS = ['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#f97316','#84cc16'];
+
+/* ── Chart.js global defaults ── */
+if (typeof Chart !== 'undefined') {
+  Chart.defaults.font.family = "'Inter', system-ui, sans-serif";
+  Chart.defaults.font.size   = 12;
+  Chart.defaults.color       = '#64748b';
+  Chart.defaults.plugins.tooltip.backgroundColor = '#1e293b';
+  Chart.defaults.plugins.tooltip.titleColor      = '#f1f5f9';
+  Chart.defaults.plugins.tooltip.bodyColor       = '#cbd5e1';
+  Chart.defaults.plugins.tooltip.padding         = 10;
+  Chart.defaults.plugins.tooltip.cornerRadius    = 8;
+  Chart.defaults.plugins.tooltip.displayColors   = true;
+  Chart.defaults.plugins.tooltip.boxPadding      = 4;
+  Chart.defaults.plugins.tooltip.borderColor     = 'rgba(255,255,255,0.08)';
+  Chart.defaults.plugins.tooltip.borderWidth     = 1;
+  Chart.defaults.animation.duration              = 350;
+}
 
 const Charts = (() => {
 
@@ -28,6 +45,9 @@ const Charts = (() => {
   }
   function save(id, chart) { instances[id] = chart; return chart; }
   function canvas(id) { return document.getElementById(id); }
+
+  const TICK_COLOR = '#64748b';
+  const GRID_COLOR = '#e2e8f0';
 
   function baseLineOpts(extra = {}) {
     return {
@@ -42,12 +62,14 @@ const Charts = (() => {
       scales: {
         x: {
           grid: { display: false },
-          ticks: { font: { size: 11 }, color: '#94a3b8', maxTicksLimit: 8 },
+          border: { display: false },
+          ticks: { font: { size: 11 }, color: TICK_COLOR, maxTicksLimit: 8, padding: 4 },
           ...(extra.x || {}),
         },
         y: {
-          grid: { color: '#f1f5f9' },
-          ticks: { font: { size: 11 }, color: '#94a3b8', ...(extra.yTicks || {}) },
+          grid: { color: GRID_COLOR, drawBorder: false },
+          border: { display: false, dash: [3, 3] },
+          ticks: { font: { size: 11 }, color: TICK_COLOR, padding: 6, ...(extra.yTicks || {}) },
           ...(extra.y || {}),
         },
         ...extra.extraScales,
@@ -115,11 +137,11 @@ const Charts = (() => {
 
     save(id, new Chart(el, {
       type: 'doughnut',
-      data: { labels, datasets: [{ data, backgroundColor: colors, borderWidth: 2, borderColor: '#fff' }] },
+      data: { labels, datasets: [{ data, backgroundColor: colors, borderWidth: 3, borderColor: '#fff', hoverBorderWidth: 3, hoverOffset: 4 }] },
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        cutout: '68%',
+        cutout: '70%',
         plugins: {
           legend: { display: false },
           tooltip: {
@@ -198,7 +220,7 @@ const Charts = (() => {
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        cutout: '65%',
+        cutout: '67%',
         plugins: {
           legend: { display: false },
           tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.raw.toLocaleString()}` } },
@@ -236,8 +258,8 @@ const Charts = (() => {
           legend: { display: true, position: 'bottom', labels: { font: { size: 11 }, boxWidth: 10, padding: 10 } },
         },
         scales: {
-          x: { grid: { display: false }, ticks: { font: { size: 11 }, color: '#94a3b8' } },
-          y: { grid: { color: '#f1f5f9' }, ticks: { font: { size: 11 }, color: '#94a3b8' } },
+          x: { grid: { display: false }, border: { display: false }, ticks: { font: { size: 11 }, color: TICK_COLOR } },
+          y: { grid: { color: GRID_COLOR }, border: { display: false }, ticks: { font: { size: 11 }, color: TICK_COLOR } },
         },
       },
     }));
@@ -271,8 +293,8 @@ const Charts = (() => {
         maintainAspectRatio: false,
         plugins: { legend: { display: false } },
         scales: {
-          x: { grid: { display: false }, ticks: { font: { size: 9 }, color: '#94a3b8', maxTicksLimit: 12 } },
-          y: { grid: { color: '#f1f5f9' }, ticks: { font: { size: 10 }, color: '#94a3b8' } },
+          x: { grid: { display: false }, border: { display: false }, ticks: { font: { size: 10 }, color: TICK_COLOR, maxTicksLimit: 12 } },
+          y: { grid: { color: GRID_COLOR }, border: { display: false }, ticks: { font: { size: 11 }, color: TICK_COLOR } },
         },
       },
     }));
@@ -292,8 +314,8 @@ const Charts = (() => {
         datasets: [{
           label: t('cl.quantity'),
           data: products.map(p => p.total_qty),
-          backgroundColor: 'rgba(16,185,129,0.75)',
-          borderRadius: 3,
+          backgroundColor: 'rgba(16,185,129,0.80)',
+          borderRadius: 4,
         }],
       },
       options: {
@@ -302,8 +324,8 @@ const Charts = (() => {
         maintainAspectRatio: false,
         plugins: { legend: { display: false } },
         scales: {
-          x: { grid: { color: '#f1f5f9' }, ticks: { font: { size: 10 }, color: '#94a3b8' } },
-          y: { grid: { display: false }, ticks: { font: { size: 10 }, color: '#64748b' } },
+          x: { grid: { color: GRID_COLOR }, border: { display: false }, ticks: { font: { size: 11 }, color: TICK_COLOR } },
+          y: { grid: { display: false }, border: { display: false }, ticks: { font: { size: 11 }, color: '#374151' } },
         },
       },
     }));
@@ -323,8 +345,8 @@ const Charts = (() => {
         datasets: [{
           label: t('cl.revenue'),
           data: products.map(p => p.total_revenue),
-          backgroundColor: 'rgba(139,92,246,0.75)',
-          borderRadius: 3,
+          backgroundColor: 'rgba(139,92,246,0.80)',
+          borderRadius: 4,
         }],
       },
       options: {
@@ -337,10 +359,11 @@ const Charts = (() => {
         },
         scales: {
           x: {
-            grid: { color: '#f1f5f9' },
-            ticks: { font: { size: 10 }, color: '#94a3b8', callback: vndFormatter },
+            grid: { color: GRID_COLOR },
+            border: { display: false },
+            ticks: { font: { size: 11 }, color: TICK_COLOR, callback: vndFormatter },
           },
-          y: { grid: { display: false }, ticks: { font: { size: 10 }, color: '#64748b' } },
+          y: { grid: { display: false }, border: { display: false }, ticks: { font: { size: 11 }, color: '#374151' } },
         },
       },
     }));
@@ -370,8 +393,8 @@ const Charts = (() => {
         maintainAspectRatio: false,
         plugins: { legend: { display: false } },
         scales: {
-          x: { grid: { color: '#f1f5f9' }, ticks: { font: { size: 10 }, color: '#94a3b8' } },
-          y: { grid: { display: false }, ticks: { font: { size: 10 }, color: '#64748b' } },
+          x: { grid: { color: GRID_COLOR }, border: { display: false }, ticks: { font: { size: 11 }, color: TICK_COLOR } },
+          y: { grid: { display: false }, border: { display: false }, ticks: { font: { size: 11 }, color: '#374151' } },
         },
       },
     }));
@@ -431,18 +454,20 @@ const Charts = (() => {
           legend: { display: true, position: 'bottom', labels: { font: { size: 11 }, boxWidth: 10, padding: 12 } },
         },
         scales: {
-          x: { grid: { display: false }, ticks: { font: { size: 11 }, color: '#94a3b8', maxTicksLimit: 8 } },
+          x: { grid: { display: false }, border: { display: false }, ticks: { font: { size: 11 }, color: TICK_COLOR, maxTicksLimit: 8 } },
           yTraffic: {
             type: 'linear',
             position: 'left',
-            grid: { color: '#f1f5f9' },
-            ticks: { font: { size: 10 }, color: '#94a3b8', callback: v => v >= 1000 ? (v/1000).toFixed(0)+'K' : v },
+            grid: { color: GRID_COLOR },
+            border: { display: false },
+            ticks: { font: { size: 11 }, color: TICK_COLOR, padding: 6, callback: v => v >= 1000 ? (v/1000).toFixed(0)+'K' : v },
           },
           yOrders: {
             type: 'linear',
             position: 'right',
             grid: { display: false },
-            ticks: { font: { size: 10 }, color: '#10b981' },
+            border: { display: false },
+            ticks: { font: { size: 11 }, color: '#10b981', padding: 6 },
           },
         },
       },
@@ -483,8 +508,8 @@ const Charts = (() => {
         maintainAspectRatio: false,
         plugins: { legend: { display: true, position: 'bottom', labels: { font: { size: 11 }, boxWidth: 10, padding: 10 } } },
         scales: {
-          x: { grid: { display: false }, ticks: { font: { size: 11 }, color: '#94a3b8' } },
-          y: { grid: { color: '#f1f5f9' }, ticks: { font: { size: 10 }, color: '#94a3b8' } },
+          x: { grid: { display: false }, border: { display: false }, ticks: { font: { size: 11 }, color: TICK_COLOR } },
+          y: { grid: { color: GRID_COLOR }, border: { display: false }, ticks: { font: { size: 11 }, color: TICK_COLOR } },
         },
       },
     }));
@@ -514,8 +539,8 @@ const Charts = (() => {
         maintainAspectRatio: false,
         plugins: { legend: { display: false } },
         scales: {
-          x: { grid: { color: '#f1f5f9' }, ticks: { font: { size: 10 }, color: '#94a3b8' } },
-          y: { grid: { display: false }, ticks: { font: { size: 10 }, color: '#64748b' } },
+          x: { grid: { color: GRID_COLOR }, border: { display: false }, ticks: { font: { size: 11 }, color: TICK_COLOR } },
+          y: { grid: { display: false }, border: { display: false }, ticks: { font: { size: 11 }, color: '#374151' } },
         },
       },
     }));
@@ -550,10 +575,11 @@ const Charts = (() => {
           tooltip: { callbacks: { label: ctx => ` ${vndFormatter(ctx.raw)}` } },
         },
         scales: {
-          x: { grid: { display: false }, ticks: { font: { size: 12 }, color: '#374151' } },
+          x: { grid: { display: false }, border: { display: false }, ticks: { font: { size: 12 }, color: '#374151' } },
           y: {
-            grid: { color: '#f1f5f9' },
-            ticks: { font: { size: 10 }, color: '#94a3b8', callback: vndFormatter },
+            grid: { color: GRID_COLOR },
+            border: { display: false },
+            ticks: { font: { size: 11 }, color: TICK_COLOR, callback: vndFormatter },
           },
         },
       },
@@ -594,8 +620,8 @@ const Charts = (() => {
           legend: { display: true, position: 'bottom', labels: { font: { size: 11 }, boxWidth: 10, padding: 10 } },
         },
         scales: {
-          x: { grid: { display: false }, ticks: { font: { size: 12 }, color: '#374151' } },
-          y: { grid: { color: '#f1f5f9' }, ticks: { font: { size: 10 }, color: '#94a3b8' } },
+          x: { grid: { display: false }, border: { display: false }, ticks: { font: { size: 12 }, color: '#374151' } },
+          y: { grid: { color: GRID_COLOR }, border: { display: false }, ticks: { font: { size: 11 }, color: TICK_COLOR } },
         },
       },
     }));
@@ -637,7 +663,8 @@ const Charts = (() => {
             max: 100,
             ticks: { display: false },
             grid: { color: '#e2e8f0' },
-            pointLabels: { font: { size: 11 }, color: '#64748b' },
+            angleLines: { color: '#e2e8f0' },
+            pointLabels: { font: { size: 12, weight: '500' }, color: '#374151' },
           },
         },
       },
@@ -672,10 +699,11 @@ const Charts = (() => {
         },
         scales: {
           x: {
-            grid: { color: '#f1f5f9' },
-            ticks: { font: { size: 10 }, color: '#94a3b8', callback: vndFormatter },
+            grid: { color: GRID_COLOR },
+            border: { display: false },
+            ticks: { font: { size: 11 }, color: TICK_COLOR, callback: vndFormatter },
           },
-          y: { grid: { display: false }, ticks: { font: { size: 10 }, color: '#64748b' } },
+          y: { grid: { display: false }, border: { display: false }, ticks: { font: { size: 11 }, color: '#374151' } },
         },
       },
     }));

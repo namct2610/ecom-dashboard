@@ -46,12 +46,13 @@
 .kpi-icon.teal   { background: #f0fdfa; color: #0d9488; }
 
 .kpi-value {
-  font-size: 24px; font-weight: 800;
+  font-size: 26px; font-weight: 800;
   color: var(--text-primary);
   line-height: 1.1;
-  margin-bottom: 4px;
+  margin-bottom: 5px;
+  letter-spacing: -0.02em;
 }
-.kpi-sub { font-size: 11px; color: var(--text-muted); }
+.kpi-sub { font-size: 12px; color: var(--text-muted); }
 .kpi-sub.up   { color: var(--completed); }
 .kpi-sub.down { color: var(--cancelled); }
 
@@ -180,10 +181,10 @@ tbody tr:hover td { background: var(--surface-hover); }
 @keyframes slideIn { from { transform: translateX(20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 
 /* ── Legend ────────────────────────────────────────────────────────────── */
-.chart-legend { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 10px; }
-.legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-secondary); }
+.chart-legend { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 12px; }
+.legend-item { display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--text-secondary); }
 .legend-dot { width: 10px; height: 10px; border-radius: var(--radius-full); flex-shrink: 0; }
-.legend-line { width: 18px; height: 2px; border-radius: 1px; flex-shrink: 0; }
+.legend-line { width: 20px; height: 2.5px; border-radius: 2px; flex-shrink: 0; }
 
 /* ── Platform comparison cards ─────────────────────────────────────────── */
 .platform-card {
@@ -207,24 +208,25 @@ tbody tr:hover td { background: var(--surface-hover); }
 .heatmap-grid { font-size: 10px; display: block; width: 100%; }
 .heatmap-row { display: flex; align-items: center; margin-bottom: 2px; width: 100%; }
 .heatmap-label-day { flex-shrink: 0; width: 32px; font-size: 10px; color: var(--text-muted); font-weight: 500; }
-.heatmap-label-hour { flex: 1; min-width: 0; text-align: center; font-size: 9px; color: var(--text-muted); }
+.heatmap-label-hour { flex: 1; min-width: 0; text-align: center; font-size: 10px; color: var(--text-muted); }
 .heatmap-cell {
-  flex: 1; min-width: 0; height: 16px;
-  border-radius: 2px;
+  flex: 1; min-width: 0; height: 18px;
+  border-radius: 3px;
   cursor: default;
-  transition: transform 0.08s;
+  transition: transform 0.1s;
 }
-.heatmap-cell:hover { transform: scale(1.25); z-index: 1; }
+.heatmap-cell:hover { transform: scale(1.3); z-index: 1; }
 /* shared floating tooltip — positioned by JS */
 .heatmap-tooltip {
   display: none;
   position: fixed;
   background: #1e293b; color: #f1f5f9;
   font-size: 11px; font-weight: 500;
-  padding: 4px 9px;
+  padding: 5px 10px;
   border-radius: var(--radius-sm);
   white-space: nowrap; pointer-events: none;
   z-index: 9999;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
 }
 
 /* ── Empty state ───────────────────────────────────────────────────────── */
