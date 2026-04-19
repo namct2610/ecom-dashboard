@@ -12,6 +12,7 @@ uploads/*
 # ── Build artifacts ────────────────────────────────────────────────────────
 *.zip
 *.log
+!release/*.zip
 
 # ── Dependencies (exclude — run composer install on host or use build.sh) ──
 vendor/
