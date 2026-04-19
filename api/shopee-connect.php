@@ -7,7 +7,7 @@ require dirname(__DIR__) . '/includes/ShopeeClient.php';
 
 use Dashboard\ShopeeClient;
 
-require_auth();
+require_admin();
 
 $method = $_SERVER['REQUEST_METHOD'];
 

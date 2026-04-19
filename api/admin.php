@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 require dirname(__DIR__) . '/includes/bootstrap.php';
 
-require_auth();
+require_admin();
 
 $method = $_SERVER['REQUEST_METHOD'];
 
@@ -44,11 +44,14 @@ try {
         $pdo->beginTransaction();
         $pdo->exec("DELETE FROM tiktok_connections");
         $pdo->exec("DELETE FROM lazada_connections");
+        $pdo->exec("DELETE FROM shopee_connections");
         $pdo->exec("DELETE FROM app_settings WHERE setting_key IN (
-            'tiktok_app_key','tiktok_app_secret','lazada_app_key','lazada_app_secret'
+            'tiktok_app_key','tiktok_app_secret',
+            'lazada_app_key','lazada_app_secret',
+            'shopee_partner_id','shopee_partner_key'
         )");
         $pdo->commit();
-        log_activity('warning', 'admin', 'Reset kết nối API (TikTok + Lazada) bởi admin.');
+        log_activity('warning', 'admin', 'Reset kết nối API (Shopee + TikTok + Lazada) bởi admin.');
         json_response(['success' => true, 'message' => 'Đã xóa toàn bộ kết nối API và thông tin xác thực.']);
     }
 
@@ -66,11 +69,14 @@ try {
         $pdo->exec("DELETE FROM traffic_daily");
         $pdo->exec("DELETE FROM tiktok_connections");
         $pdo->exec("DELETE FROM lazada_connections");
+        $pdo->exec("DELETE FROM shopee_connections");
         $pdo->exec("DELETE FROM app_settings");
         $pdo->exec("DELETE FROM app_logs");
+        $pdo->exec("DELETE FROM users");
+        ensure_default_admin_user($pdo, $config);
         $pdo->commit();
         log_activity('warning', 'admin', 'FULL RESET database bởi admin.');
-        json_response(['success' => true, 'message' => 'Đã reset toàn bộ database về trạng thái trống.']);
+        json_response(['success' => true, 'message' => 'Đã reset toàn bộ database và khôi phục tài khoản admin mặc định.']);
     }
 
     json_error('Unknown action.', 400);
@@ -91,6 +97,8 @@ function buildSystemInfo(PDO $pdo, array $config): array
     $trafficCount = (int) $pdo->query("SELECT COUNT(*) FROM traffic_daily")->fetchColumn();
     $uploadCount  = (int) $pdo->query("SELECT COUNT(*) FROM upload_history")->fetchColumn();
     $logCount     = (int) $pdo->query("SELECT COUNT(*) FROM app_logs")->fetchColumn();
+    $userCount    = (int) $pdo->query("SELECT COUNT(*) FROM users")->fetchColumn();
+    $adminCount   = (int) $pdo->query("SELECT COUNT(*) FROM users WHERE role = 'admin'")->fetchColumn();
     $dbSize       = $pdo->query("
         SELECT ROUND(SUM(data_length + index_length) / 1024 / 1024, 2)
         FROM information_schema.tables
@@ -134,6 +142,8 @@ function buildSystemInfo(PDO $pdo, array $config): array
         'traffic_count'   => $trafficCount,
         'upload_count'    => $uploadCount,
         'log_count'       => $logCount,
+        'user_count'      => $userCount,
+        'admin_count'     => $adminCount,
         'by_platform'     => $byPlatform,
         'order_date_min'  => $dateRange[0] ?? null,
         'order_date_max'  => $dateRange[1] ?? null,

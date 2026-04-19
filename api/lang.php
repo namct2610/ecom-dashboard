@@ -50,7 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 }
 
 // ── POST: upload / delete (requires auth) ─────────────────────────────────────
-require_auth();
+require_admin();
 require_method('POST');
 require_csrf();
 

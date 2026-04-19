@@ -7,7 +7,7 @@ require dirname(__DIR__) . '/includes/Updater.php';
 
 use Dashboard\Updater;
 
-require_auth();
+require_admin();
 
 $pdo     = db($config);
 $updater = new Updater(__DIR__ . '/..');
@@ -130,7 +130,7 @@ try {
 
         // Run DB migrations for any new tables/columns in this version
         try {
-            ensure_schema($pdo);
+            ensure_schema($pdo, $config);
         } catch (\Throwable $e) {
             log_activity('warning', 'system', 'ensure_schema sau cập nhật: ' . $e->getMessage());
         }

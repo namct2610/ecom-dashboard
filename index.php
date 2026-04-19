@@ -28,6 +28,7 @@ $initials = strtoupper(substr($user, 0, 2));
   <link rel="stylesheet" href="assets/css/layout.css">
   <link rel="stylesheet" href="assets/css/components.css">
   <link rel="stylesheet" href="assets/css/charts.css">
+  <link rel="stylesheet" href="assets/css/admin.css">
   <link rel="stylesheet" href="assets/css/upload.css">
 
   <!-- Chart.js -->
@@ -125,18 +126,14 @@ $initials = strtoupper(substr($user, 0, 2));
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
         <span class="nav-label" data-i18n="nav.upload">Upload</span>
       </div>
-      <div class="nav-item" data-page="connect" data-label="Kết nối API">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
-        <span class="nav-label" data-i18n="nav.connect">Kết nối API</span>
-      </div>
       <div class="nav-item" data-page="logs" data-label="Nhật ký">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
         <span class="nav-label" data-i18n="nav.logs">Nhật ký</span>
       </div>
-      <div class="nav-item" data-page="settings" data-label="Cài đặt" style="position:relative">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
-        <span class="nav-label" data-i18n="nav.settings">Cài đặt</span>
-        <span id="updateNavBadge" style="display:none;position:absolute;top:6px;right:8px;width:8px;height:8px;border-radius:50%;background:#ef4444;box-shadow:0 0 0 2px var(--sidebar-bg,#1e293b)"></span>
+      <div class="nav-item admin-only hidden-by-role" data-page="admin" data-label="Quản trị" style="position:relative">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l7 4v5c0 5-3.1 8.7-7 9.9C8.1 20.7 5 17 5 12V7l7-4z"/><path d="M9.5 12.5l1.8 1.8 3.9-4.2"/></svg>
+        <span class="nav-label" data-i18n="nav.admin">Quản trị</span>
+        <span id="adminNavBadge" style="display:none;position:absolute;top:6px;right:8px;width:8px;height:8px;border-radius:50%;background:#ef4444;box-shadow:0 0 0 2px var(--sidebar-bg,#1e293b)"></span>
       </div>
     </div>
 
@@ -218,7 +215,7 @@ $initials = strtoupper(substr($user, 0, 2));
         </button>
         <div class="lang-dropdown" id="langDropdown"></div>
       </div>
-      <div class="header-avatar"><?= htmlspecialchars($initials) ?></div>
+      <div class="header-avatar" id="headerAvatar"><?= htmlspecialchars($initials) ?></div>
     </div>
 
     <!-- Content -->
@@ -905,8 +902,153 @@ $initials = strtoupper(substr($user, 0, 2));
         </div>
       </div>
 
+      <!-- ── Admin ───────────────────────────────────────────────────── -->
+      <div class="page" id="page-admin">
+        <div class="page-header">
+          <h1 data-i18n="page.admin.title">Quản trị hệ thống</h1>
+          <p data-i18n="page.admin.sub">Quản lý tài khoản đăng nhập, cấu hình API và cài đặt vận hành</p>
+        </div>
+
+        <div class="admin-shell">
+          <div class="admin-hero">
+            <div class="admin-hero-title">
+              <h2 data-i18n="admin.hero.title">Trung tâm điều phối quản trị</h2>
+              <div class="admin-status-pill" id="adminHeroRole">Admin</div>
+            </div>
+            <p data-i18n="admin.hero.sub">Tất cả các thay đổi nhạy cảm như tài khoản đăng nhập, kết nối API, cập nhật hệ thống và reset dữ liệu đều được gom về một bảng điều khiển quản trị duy nhất.</p>
+          </div>
+
+          <div class="grid-4">
+            <div class="kpi-card border-blue">
+              <div class="kpi-label" data-i18n="admin.stats.total_users">Tổng tài khoản</div>
+              <div class="kpi-value" id="admin-total-users">—</div>
+              <div class="kpi-sub" data-i18n="admin.stats.total_users.sub">Tất cả tài khoản đăng nhập</div>
+            </div>
+            <div class="kpi-card border-green">
+              <div class="kpi-label" data-i18n="admin.stats.active_users">Đang hoạt động</div>
+              <div class="kpi-value" id="admin-active-users">—</div>
+              <div class="kpi-sub" data-i18n="admin.stats.active_users.sub">Có thể đăng nhập</div>
+            </div>
+            <div class="kpi-card border-purple">
+              <div class="kpi-label" data-i18n="admin.stats.admins">Quản trị viên</div>
+              <div class="kpi-value" id="admin-admin-users">—</div>
+              <div class="kpi-sub" data-i18n="admin.stats.admins.sub">Có quyền cấu hình hệ thống</div>
+            </div>
+            <div class="kpi-card border-orange">
+              <div class="kpi-label" data-i18n="admin.stats.last_login">Đăng nhập gần nhất</div>
+              <div class="kpi-value" id="admin-last-login">—</div>
+              <div class="kpi-sub" data-i18n="admin.stats.last_login.sub">Dấu mốc hoạt động mới nhất</div>
+            </div>
+          </div>
+
+          <div class="admin-tabbar">
+            <button class="admin-tab-btn active" id="btnAdminTabAccounts" data-admin-tab="accounts">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/></svg>
+              <span data-i18n="admin.tab.accounts">Tài khoản</span>
+            </button>
+            <button class="admin-tab-btn" id="btnAdminTabApi" data-admin-tab="api">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+              <span data-i18n="admin.tab.api">API & kết nối</span>
+            </button>
+            <button class="admin-tab-btn" id="btnAdminTabSystem" data-admin-tab="system">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+              <span data-i18n="admin.tab.system">Hệ thống</span>
+            </button>
+          </div>
+
+          <div class="admin-tab-panel active" data-admin-tab-panel="accounts">
+            <div class="admin-grid">
+              <div class="admin-panel-card">
+                <div class="admin-panel-head">
+                  <div>
+                    <h3 data-i18n="admin.users.title">Danh sách tài khoản đăng nhập</h3>
+                    <p data-i18n="admin.users.sub">Tạo mới, phân quyền admin/staff và kiểm soát trạng thái hoạt động của từng tài khoản.</p>
+                  </div>
+                  <div class="admin-panel-actions">
+                    <button class="btn btn-secondary btn-sm" id="btnAdminUserRefresh" data-i18n="admin.users.refresh">Làm mới</button>
+                  </div>
+                </div>
+                <div class="table-wrapper">
+                  <table class="admin-user-table">
+                    <thead>
+                      <tr>
+                        <th data-i18n="admin.users.th.user">Tài khoản</th>
+                        <th data-i18n="admin.users.th.role">Vai trò</th>
+                        <th data-i18n="admin.users.th.status">Trạng thái</th>
+                        <th data-i18n="admin.users.th.last_login">Lần đăng nhập cuối</th>
+                        <th class="text-right" data-i18n="admin.users.th.actions">Thao tác</th>
+                      </tr>
+                    </thead>
+                    <tbody id="adminUsersTableBody"></tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div class="admin-panel-card">
+                <div class="admin-panel-head">
+                  <div>
+                    <h3 id="adminUserFormMode" data-i18n="admin.form.create">Tạo tài khoản mới</h3>
+                    <p data-i18n="admin.form.sub">Mỗi tài khoản staff có thể xem dashboard, chỉ admin mới truy cập được bảng quản trị này.</p>
+                  </div>
+                </div>
+
+                <form class="admin-user-form" id="adminUserForm" autocomplete="off">
+                  <input type="hidden" id="adminUserId">
+                  <div class="admin-field">
+                    <label for="adminUserUsername" data-i18n="admin.form.username">Tên đăng nhập</label>
+                    <input id="adminUserUsername" type="text" placeholder="staff.analytics" required>
+                  </div>
+
+                  <div class="admin-field-grid">
+                    <div class="admin-field">
+                      <label for="adminUserFullName" data-i18n="admin.form.full_name">Tên hiển thị</label>
+                      <input id="adminUserFullName" type="text" placeholder="Nguyễn Văn A">
+                    </div>
+                    <div class="admin-field">
+                      <label for="adminUserRole" data-i18n="admin.form.role">Vai trò</label>
+                      <select id="adminUserRole">
+                        <option value="staff" data-i18n="admin.role.staff">Nhân viên</option>
+                        <option value="admin" data-i18n="admin.role.admin">Quản trị viên</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div class="admin-field">
+                    <label for="adminUserPassword" data-i18n="admin.form.password">Mật khẩu</label>
+                    <input id="adminUserPassword" type="password" placeholder="Tối thiểu 6 ký tự">
+                  </div>
+
+                  <div class="admin-toggle">
+                    <div>
+                      <label for="adminUserActive" data-i18n="admin.form.active">Cho phép đăng nhập</label>
+                      <small data-i18n="admin.form.active.sub">Tắt mục này để khóa tài khoản mà không cần xoá.</small>
+                    </div>
+                    <input id="adminUserActive" type="checkbox" checked>
+                  </div>
+
+                  <div class="admin-form-actions">
+                    <button class="btn btn-primary" id="btnAdminUserSubmit" type="submit" data-i18n="admin.form.submit_create">Tạo tài khoản</button>
+                    <button class="btn btn-secondary" id="btnAdminUserReset" type="button" data-i18n="admin.form.reset">Đặt lại form</button>
+                  </div>
+                </form>
+
+                <div class="admin-form-note" data-i18n="admin.form.note">Khi đang sửa tài khoản, ô mật khẩu có thể để trống để giữ nguyên mật khẩu cũ. Để đổi mật khẩu, chỉ cần nhập mật khẩu mới rồi lưu lại.</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="admin-tab-panel" data-admin-tab-panel="api">
+            <div id="adminApiMount"></div>
+          </div>
+
+          <div class="admin-tab-panel" data-admin-tab-panel="system">
+            <div id="adminSystemMount"></div>
+          </div>
+        </div>
+      </div>
+
       <!-- ── Kết nối API ────────────────────────────────────────────────── -->
-      <div class="page" id="page-connect">
+      <div class="page page-admin-template" id="page-connect" aria-hidden="true">
         <div class="page-header">
           <h1 data-i18n="page.connect.title">Kết nối API</h1>
           <p data-i18n="page.connect.sub">Tự động đồng bộ đơn hàng từ Shopee, TikTok Shop và Lazada qua Open Platform API</p>
@@ -1150,7 +1292,7 @@ $initials = strtoupper(substr($user, 0, 2));
       </div>
 
       <!-- ── Cài đặt ────────────────────────────────────────────────────── -->
-      <div class="page" id="page-settings">
+      <div class="page page-admin-template" id="page-settings" aria-hidden="true">
         <div class="page-header">
           <h1><span data-i18n="page.settings.title">Cài đặt hệ thống</span> <span id="currentVersionBadge" style="font-size:13px;font-weight:500;color:var(--text-muted);vertical-align:middle"></span></h1>
           <p data-i18n="page.settings.sub">Thông tin server, database và các thao tác quản trị nâng cao</p>
@@ -1290,6 +1432,27 @@ $initials = strtoupper(substr($user, 0, 2));
   </div><!-- /#main -->
 </div><!-- /#app -->
 
+<div class="customer-detail-drawer" id="customerDetailDrawer" aria-hidden="true">
+  <div class="customer-detail-backdrop" data-customer-close></div>
+  <aside class="customer-detail-panel">
+    <div class="customer-detail-header">
+      <div class="customer-detail-topline">
+        <div>
+          <div class="customer-detail-eyebrow" data-i18n="customer.detail.eyebrow">Hồ sơ khách hàng</div>
+          <div class="customer-detail-title" id="customerDetailTitle">—</div>
+          <div class="customer-detail-subtitle" id="customerDetailSubtitle">—</div>
+        </div>
+        <button class="customer-close-btn" id="btnCloseCustomerDetail" type="button" aria-label="Close">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="customer-detail-body" id="customerDetailBody">
+      <div class="customer-detail-loading" data-i18n="customer.detail.loading">Đang tải thông tin khách hàng...</div>
+    </div>
+  </aside>
+</div>
+
 <!-- Scripts -->
 <script src="assets/js/charts.js"></script>
 <script src="assets/js/upload.js"></script>
@@ -1309,21 +1472,28 @@ $initials = strtoupper(substr($user, 0, 2));
     if (usp.has('tiktok_connected')) {
       const n = usp.get('tiktok_connected');
       toast(`Đã kết nối thành công ${n} shop TikTok!`, 'success');
-      history.replaceState({}, '', location.pathname + '#connect');
+      history.replaceState({}, '', location.pathname + '#admin');
+      setTimeout(() => window.openAdminTab?.('api'), 300);
     } else if (usp.has('tiktok_error')) {
       toast('Kết nối TikTok thất bại: ' + usp.get('tiktok_error'), 'error');
       history.replaceState({}, '', location.pathname);
     } else if (usp.has('shopee_connected')) {
       toast('Đã kết nối shop Shopee thành công!', 'success');
-      history.replaceState({}, '', location.pathname + '#connect');
-      setTimeout(() => switchConnectTab('shopee'), 300);
+      history.replaceState({}, '', location.pathname + '#admin');
+      setTimeout(() => {
+        window.openAdminTab?.('api');
+        switchConnectTab('shopee');
+      }, 300);
     } else if (usp.has('shopee_error')) {
       toast('Kết nối Shopee thất bại: ' + usp.get('shopee_error'), 'error');
       history.replaceState({}, '', location.pathname);
     } else if (usp.has('lazada_connected')) {
       toast('Đã kết nối tài khoản Lazada thành công!', 'success');
-      history.replaceState({}, '', location.pathname + '#connect');
-      setTimeout(() => switchConnectTab('lazada'), 300);
+      history.replaceState({}, '', location.pathname + '#admin');
+      setTimeout(() => {
+        window.openAdminTab?.('api');
+        switchConnectTab('lazada');
+      }, 300);
     } else if (usp.has('lazada_error')) {
       toast('Kết nối Lazada thất bại: ' + usp.get('lazada_error'), 'error');
       history.replaceState({}, '', location.pathname);

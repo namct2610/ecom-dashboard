@@ -1,7 +1,7 @@
 {
-  "version": "1.2.6",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.2.6/release/dashboard-v3-1.2.6.zip",
-  "changelog": "- Sửa lỗi: Chart render lại đúng khi đổi bộ lọc từ không có dữ liệu sang có dữ liệu\n- Khách hàng: Thêm bảng thống kê theo buyer username gồm số đơn, số lượng sản phẩm và doanh thu trong bộ lọc hiện tại\n- Giao diện: Làm mới logo SVG ở màn đăng nhập và sidebar để sắc nét, nhất quán hơn",
+  "version": "1.2.7",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.2.7/release/dashboard-v3-1.2.7.zip",
+  "changelog": "- Quản trị: Thêm bảng Admin riêng để quản lý tài khoản đăng nhập, phân quyền admin/staff và khóa tài khoản\n- Quản trị: Gom cấu hình API, cập nhật hệ thống và cài đặt vận hành vào khu vực admin duy nhất\n- Khách hàng: Bổ sung drawer chi tiết theo buyer username với lịch sử đơn hàng, địa chỉ mới nhất, lần mua đầu và lần mua gần nhất\n- Hệ thống: Chuyển xác thực từ config cứng sang bảng users có migration tương thích cho bản đang chạy",
   "min_php": "8.1",
   "released_at": "2026-04-19"
 }

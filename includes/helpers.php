@@ -18,11 +18,126 @@ function start_session(): void
     }
 }
 
-function require_auth(): void
+function session_user_payload(): ?array
+{
+    if (empty($_SESSION['logged_in']) || empty($_SESSION['username'])) {
+        return null;
+    }
+
+    return [
+        'id'        => isset($_SESSION['user_id']) ? (int) $_SESSION['user_id'] : null,
+        'username'  => (string) ($_SESSION['username'] ?? ''),
+        'full_name' => (string) ($_SESSION['full_name'] ?? ''),
+        'role'      => (string) ($_SESSION['role'] ?? 'staff'),
+    ];
+}
+
+function store_user_session(array $user, bool $regenerate = true): void
 {
     start_session();
-    if (empty($_SESSION['logged_in'])) {
+
+    if ($regenerate) {
+        session_regenerate_id(true);
+    }
+
+    $_SESSION['logged_in'] = true;
+    $_SESSION['user_id']   = isset($user['id']) ? (int) $user['id'] : null;
+    $_SESSION['username']  = (string) ($user['username'] ?? '');
+    $_SESSION['full_name'] = (string) ($user['full_name'] ?? '');
+    $_SESSION['role']      = (string) ($user['role'] ?? 'staff');
+    $_SESSION['csrf_token'] ??= bin2hex(random_bytes(32));
+}
+
+function clear_auth_session(): void
+{
+    start_session();
+
+    $_SESSION = [];
+
+    if (ini_get('session.use_cookies')) {
+        $params = session_get_cookie_params();
+        setcookie(session_name(), '', time() - 42000, [
+            'path'     => $params['path'] ?? '/',
+            'domain'   => $params['domain'] ?? '',
+            'secure'   => (bool) ($params['secure'] ?? false),
+            'httponly' => (bool) ($params['httponly'] ?? true),
+            'samesite' => $params['samesite'] ?? 'Lax',
+        ]);
+    }
+
+    session_destroy();
+}
+
+function current_user(): ?array
+{
+    start_session();
+
+    $sessionUser = session_user_payload();
+    if ($sessionUser === null) {
+        return null;
+    }
+
+    if (!function_exists('db')) {
+        return $sessionUser;
+    }
+
+    global $config;
+    if (!isset($config) || !is_array($config)) {
+        return $sessionUser;
+    }
+
+    try {
+        $pdo  = db($config);
+        $stmt = $pdo->prepare("
+            SELECT id, username, COALESCE(full_name, '') AS full_name, role, is_active
+            FROM users
+            WHERE username = ?
+            LIMIT 1
+        ");
+        $stmt->execute([$sessionUser['username']]);
+        $user = $stmt->fetch();
+
+        if (is_array($user)) {
+            if ((int) ($user['is_active'] ?? 0) !== 1) {
+                clear_auth_session();
+                return null;
+            }
+
+            store_user_session($user, false);
+            return session_user_payload();
+        }
+
+        clear_auth_session();
+        return null;
+    } catch (\Throwable $e) {
+        // Fall back to session data if user refresh fails temporarily.
+    }
+
+    if (($sessionUser['role'] ?? '') === '') {
+        $legacyUser = (string) ($config['auth']['username'] ?? 'admin');
+        if ($sessionUser['username'] === $legacyUser) {
+            $_SESSION['role'] = 'admin';
+        }
+    }
+
+    return session_user_payload();
+}
+
+function require_auth(): void
+{
+    if (current_user() === null) {
         json_error('Unauthenticated.', 401);
+    }
+}
+
+function require_admin(): void
+{
+    $user = current_user();
+    if ($user === null) {
+        json_error('Unauthenticated.', 401);
+    }
+    if (($user['role'] ?? '') !== 'admin') {
+        json_error('Forbidden.', 403);
     }
 }
 

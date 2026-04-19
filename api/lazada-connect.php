@@ -7,7 +7,7 @@ require dirname(__DIR__) . '/includes/LazadaClient.php';
 
 use Dashboard\LazadaClient;
 
-require_auth();
+require_admin();
 
 $method = $_SERVER['REQUEST_METHOD'];
 
