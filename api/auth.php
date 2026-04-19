@@ -8,9 +8,12 @@ start_session();
 $method = $_SERVER['REQUEST_METHOD'];
 
 if ($method === 'GET') {
+    $user = current_user();
     json_response([
-        'logged_in' => !empty($_SESSION['logged_in']),
-        'username'  => $_SESSION['username'] ?? null,
+        'logged_in' => $user !== null,
+        'user'      => $user,
+        'username'  => $user['username'] ?? null,
+        'role'      => $user['role'] ?? null,
         'csrf'      => generate_csrf(),
     ]);
 }
@@ -21,7 +24,7 @@ if ($method === 'POST') {
 
     if ($action === 'logout') {
         $loggedUser = $_SESSION['username'] ?? 'unknown';
-        session_destroy();
+        clear_auth_session();
         log_activity('info', 'auth', "Đăng xuất: {$loggedUser}");
         json_response(['success' => true]);
     }
@@ -34,26 +37,42 @@ if ($method === 'POST') {
         json_error('Vui lòng nhập tên đăng nhập và mật khẩu.', 422);
     }
 
-    $validUser = $config['auth']['username'] ?? 'admin';
-    $validPass = $config['auth']['password'] ?? 'admin123';
+    $pdo  = db($config);
+    $stmt = $pdo->prepare("
+        SELECT id, username, COALESCE(full_name, '') AS full_name, password_hash, role, is_active
+        FROM users
+        WHERE username = ?
+        LIMIT 1
+    ");
+    $stmt->execute([$username]);
+    $user = $stmt->fetch();
 
-    if ($username !== $validUser || $password !== $validPass) {
+    $valid = is_array($user)
+        && (int) ($user['is_active'] ?? 0) === 1
+        && password_verify($password, (string) ($user['password_hash'] ?? ''));
+
+    if (!$valid) {
         log_activity('warning', 'auth', "Đăng nhập thất bại: {$username}", [
             'ip' => $_SERVER['REMOTE_ADDR'] ?? null,
         ]);
         json_error('Tên đăng nhập hoặc mật khẩu không đúng.', 401);
     }
 
-    session_regenerate_id(true);
-    $_SESSION['logged_in'] = true;
-    $_SESSION['username']  = $username;
-    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+    $pdo->prepare("UPDATE users SET last_login_at = NOW() WHERE id = ?")->execute([(int) $user['id']]);
+    store_user_session($user, true);
 
     log_activity('info', 'auth', "Đăng nhập thành công: {$username}");
 
     json_response([
         'success'  => true,
+        'user'     => [
+            'id'        => (int) $user['id'],
+            'username'  => (string) $user['username'],
+            'full_name' => (string) ($user['full_name'] ?? ''),
+            'role'      => (string) ($user['role'] ?? 'staff'),
+        ],
         'username' => $username,
+        'role'     => (string) ($user['role'] ?? 'staff'),
         'csrf'     => $_SESSION['csrf_token'],
     ]);
 }

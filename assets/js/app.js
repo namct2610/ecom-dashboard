@@ -14,8 +14,12 @@ const App = {
   dateTo:   '',         // 'YYYY-MM-DD'
   rangeLabel: '',       // nhãn hiển thị khi dùng date range
   currentPage: 'overview',
+  user: null,
+  adminTab: 'accounts',
+  adminMounted: false,
   periods: { months: [], years: [] },
 };
+window.App = App;
 
 // ── Helpers ──────────────────────────────────────────────────────────────
 function qs(sel, ctx = document)  { return ctx.querySelector(sel); }
@@ -42,6 +46,26 @@ function fmtNum(n) {
 function fmtDate(d) {
   if (!d) return '';
   return d.slice(0, 10);
+}
+
+function fmtDateTime(d) {
+  if (!d) return '—';
+  return String(d).replace('T', ' ').slice(0, 16);
+}
+
+function getUserDisplayName() {
+  return App.user?.full_name || App.user?.username || 'A';
+}
+
+function getUserInitials(name) {
+  const parts = String(name || 'A').trim().split(/\s+/).filter(Boolean);
+  if (!parts.length) return 'A';
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+function isAdminUser() {
+  return (App.user?.role || '') === 'admin';
 }
 
 function platformLabel(p) {
@@ -107,6 +131,7 @@ async function apiFetch(url, opts = {}) {
 
 // ── Auth ─────────────────────────────────────────────────────────────────
 function showAuth() {
+  closeCustomerDetail();
   qs('#auth-screen').classList.remove('hidden');
   qs('#app').classList.add('hidden');
 }
@@ -116,11 +141,36 @@ function hideAuth() {
   qs('#app').classList.remove('hidden');
 }
 
+function applyAuthUI() {
+  const avatar = qs('#headerAvatar');
+  if (avatar) avatar.textContent = getUserInitials(getUserDisplayName());
+
+  qsa('.admin-only').forEach(el => {
+    el.classList.toggle('hidden-by-role', !isAdminUser());
+  });
+
+  const roleEl = qs('#adminHeroRole');
+  if (roleEl) {
+    roleEl.textContent = isAdminUser() ? 'Admin' : 'Staff';
+  }
+
+  if (!isAdminUser()) {
+    const badge = qs('#adminNavBadge');
+    if (badge) badge.style.display = 'none';
+  }
+
+  if (qs('#langDropdown')) {
+    _renderLangOptions(I18n.getAvailableLangs());
+  }
+}
+
 async function initAuth() {
   try {
     const data = await fetch('api/auth.php').then(r => r.json());
     if (data.logged_in) {
       App.csrf = data.csrf;
+      App.user = data.user || null;
+      applyAuthUI();
       hideAuth();
       return true;
     }
@@ -152,6 +202,8 @@ function setupLogin() {
 
       if (data.success) {
         App.csrf = data.csrf;
+        App.user = data.user || null;
+        applyAuthUI();
         hideAuth();
         setupAppShell();
         await loadPeriods();
@@ -174,6 +226,8 @@ async function logout() {
     headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': App.csrf },
     body: JSON.stringify({ action: 'logout' }),
   });
+  App.user = null;
+  applyAuthUI();
   showAuth();
 }
 
@@ -422,6 +476,19 @@ function setupNav() {
 }
 
 function loadPage(name) {
+  if (name === 'connect') {
+    App.adminTab = 'api';
+    name = 'admin';
+  } else if (name === 'settings') {
+    App.adminTab = 'system';
+    name = 'admin';
+  }
+
+  if (name === 'admin' && !isAdminUser()) {
+    toast('Bạn không có quyền truy cập khu quản trị.', 'error');
+    name = 'overview';
+  }
+
   App.currentPage = name;
 
   // Update sidebar active
@@ -445,8 +512,7 @@ function loadPage(name) {
     heatmaps:   loadHeatmaps,
     upload:     loadUploadHistory,
     logs:       loadLogs,
-    connect:    loadConnectPage,
-    settings:   loadSettingsPage,
+    admin:      loadAdminPage,
   };
   if (loaders[name]) loaders[name]();
 }
@@ -873,7 +939,7 @@ function renderCustomerStatsTable(tbodyId, buyers) {
   tbody.innerHTML = buyers.map((buyer, index) => {
     const revenueWidth = Math.max(10, Math.round(((buyer.revenue || 0) / maxRevenue) * 100));
     return `
-      <tr>
+      <tr class="customer-row-button" data-buyer-username="${escHtml(buyer.buyer_username)}">
         <td><span class="customer-rank-pill">${index + 1}</span></td>
         <td>
           <div class="customer-identity">
@@ -890,6 +956,165 @@ function renderCustomerStatsTable(tbodyId, buyers) {
         </td>
       </tr>`;
   }).join('');
+
+  tbody.querySelectorAll('tr[data-buyer-username]').forEach(row => {
+    row.addEventListener('click', () => openCustomerDetail(row.dataset.buyerUsername));
+  });
+}
+
+function setupCustomerDetailDrawer() {
+  qs('#btnCloseCustomerDetail')?.addEventListener('click', closeCustomerDetail);
+  qsa('[data-customer-close]').forEach(el => el.addEventListener('click', closeCustomerDetail));
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeCustomerDetail();
+  });
+}
+
+function closeCustomerDetail() {
+  const drawer = qs('#customerDetailDrawer');
+  if (!drawer) return;
+  drawer.classList.remove('open');
+  drawer.setAttribute('aria-hidden', 'true');
+}
+
+function openCustomerDrawerShell() {
+  const drawer = qs('#customerDetailDrawer');
+  if (!drawer) return;
+  drawer.classList.add('open');
+  drawer.setAttribute('aria-hidden', 'false');
+}
+
+async function openCustomerDetail(username) {
+  if (!username) return;
+
+  openCustomerDrawerShell();
+  const titleEl = qs('#customerDetailTitle');
+  const subEl   = qs('#customerDetailSubtitle');
+  const bodyEl  = qs('#customerDetailBody');
+
+  if (titleEl) titleEl.textContent = username;
+  if (subEl) subEl.textContent = t('customer.detail.loading');
+  if (bodyEl) bodyEl.innerHTML = `<div class="customer-detail-loading">${t('customer.detail.loading')}</div>`;
+
+  try {
+    const data = await api('customers.php', {
+      params: {
+        action: 'detail',
+        buyer_username: username,
+      },
+    });
+    renderCustomerDetail(data);
+  } catch (e) {
+    if (bodyEl) bodyEl.innerHTML = `<div class="customer-detail-loading" style="color:var(--red,#ef4444)">${t('customer.detail.load_error')}</div>`;
+  }
+}
+
+function renderCustomerDetail(data) {
+  const profile = data.profile || {};
+  const summary = data.summary || {};
+  const orders  = data.orders || [];
+
+  const titleEl = qs('#customerDetailTitle');
+  const subEl   = qs('#customerDetailSubtitle');
+  const bodyEl  = qs('#customerDetailBody');
+  if (!bodyEl) return;
+
+  const latestAddress = [profile.shipping_address, profile.shipping_district, profile.shipping_city].filter(Boolean).join(', ') || '—';
+
+  if (titleEl) titleEl.textContent = profile.buyer_name || profile.buyer_username || '—';
+  if (subEl) {
+    subEl.textContent = `${profile.buyer_username || '—'} · ${t('customer.detail.latest_address')}: ${latestAddress}`;
+  }
+
+  bodyEl.innerHTML = `
+    <div class="customer-metric-grid">
+      <div class="customer-metric-card">
+        <div class="customer-metric-label">${t('customer.detail.filtered_orders')}</div>
+        <div class="customer-metric-value">${fmtNum(summary.filtered_order_count || 0)}</div>
+        <div class="customer-metric-sub">${fmtNum(summary.filtered_item_qty || 0)} ${t('customer.detail.products')}</div>
+      </div>
+      <div class="customer-metric-card">
+        <div class="customer-metric-label">${t('customer.detail.filtered_revenue')}</div>
+        <div class="customer-metric-value">${fmtVND(summary.filtered_revenue || 0)}</div>
+        <div class="customer-metric-sub">${t('customer.detail.current_filter')}</div>
+      </div>
+      <div class="customer-metric-card">
+        <div class="customer-metric-label">${t('customer.detail.lifetime_orders')}</div>
+        <div class="customer-metric-value">${fmtNum(summary.lifetime_order_count || 0)}</div>
+        <div class="customer-metric-sub">${fmtNum(summary.lifetime_item_qty || 0)} ${t('customer.detail.products')}</div>
+      </div>
+      <div class="customer-metric-card">
+        <div class="customer-metric-label">${t('customer.detail.lifetime_revenue')}</div>
+        <div class="customer-metric-value">${fmtVND(summary.lifetime_revenue || 0)}</div>
+        <div class="customer-metric-sub">${t('customer.detail.all_time')}</div>
+      </div>
+    </div>
+
+    <div class="customer-info-card">
+      <div class="customer-info-head">
+        <div>
+          <h4>${t('customer.detail.profile')}</h4>
+          <p>${t('customer.detail.profile_sub')}</p>
+        </div>
+      </div>
+      <div class="customer-info-list">
+        <div class="customer-info-item">
+          <span>${t('customer.detail.first_purchase')}</span>
+          <span>${fmtDateTime(profile.first_purchase_at)}</span>
+        </div>
+        <div class="customer-info-item">
+          <span>${t('customer.detail.last_purchase')}</span>
+          <span>${fmtDateTime(profile.last_purchase_at)}</span>
+        </div>
+        <div class="customer-info-item">
+          <span>${t('customer.detail.latest_address')}</span>
+          <span>${escHtml(latestAddress)}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="customer-info-card">
+      <div class="customer-info-head">
+        <div>
+          <h4>${t('customer.detail.history')}</h4>
+          <p>${t('customer.detail.history_sub')}</p>
+        </div>
+      </div>
+      <div class="table-wrapper">
+        <table class="customer-history-table">
+          <thead>
+            <tr>
+              <th>${t('th.order_id')}</th>
+              <th>${t('th.product')}</th>
+              <th>${t('th.platform')}</th>
+              <th>${t('th.date')}</th>
+              <th class="text-right">${t('cl.quantity')}</th>
+              <th class="text-right">${t('th.revenue')}</th>
+              <th>${t('th.status')}</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${orders.length ? orders.map(order => `
+              <tr>
+                <td class="font-mono" style="font-size:11px;color:var(--text-muted)">${escHtml(order.order_id)}</td>
+                <td style="min-width:220px">
+                  <div class="customer-history-products">
+                    <strong>${escHtml((order.products || '').slice(0, 90) || '—')}</strong>
+                    <span>${escHtml([order.shipping_address, order.shipping_district, order.shipping_city].filter(Boolean).join(', ') || '—')}</span>
+                  </div>
+                </td>
+                <td>${platformBadge(order.platform)}</td>
+                <td style="font-size:12px;color:var(--text-muted)">${fmtDateTime(order.order_created_at)}</td>
+                <td class="text-right">${fmtNum(order.item_qty || 0)}</td>
+                <td class="text-right" style="font-weight:700;color:var(--text-primary)">${fmtVND(order.order_total || 0)}</td>
+                <td>${statusBadge(order.normalized_status)}</td>
+              </tr>
+            `).join('') : `<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--text-muted)">${t('msg.no_orders')}</td></tr>`}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
 }
 
 function renderPlatformCards(platforms) {
@@ -1326,8 +1551,17 @@ function setupConnectPage() {
 
 // ── Settings page ─────────────────────────────────────────────────────────
 
+let _settingsPageBound = false;
+
 async function loadSettingsPage() {
+  bindSettingsPage();
   await Promise.all([loadSysInfo(), loadUpdateCard(), setupLangSettings()]);
+}
+
+function bindSettingsPage() {
+  if (_settingsPageBound) return;
+  _settingsPageBound = true;
+
   qs('#btnRefreshSysInfo')?.addEventListener('click', loadSysInfo);
 
   qs('#btnCheckUpdateNow')?.addEventListener('click', async () => {
@@ -1350,6 +1584,251 @@ async function loadSettingsPage() {
       toast(res.error || t('msg.save_failed'), 'error');
     }
   });
+}
+
+const AdminUserState = {
+  users: [],
+  currentUserId: null,
+  editingId: null,
+};
+
+function mountAdminContent() {
+  if (App.adminMounted) return;
+
+  [
+    ['page-connect', 'adminApiMount'],
+    ['page-settings', 'adminSystemMount'],
+  ].forEach(([sourceId, targetId]) => {
+    const source = qs(`#${sourceId}`);
+    const target = qs(`#${targetId}`);
+    if (!source || !target) return;
+    while (source.firstChild) target.appendChild(source.firstChild);
+  });
+
+  App.adminMounted = true;
+}
+
+function setupAdminPage() {
+  qsa('[data-admin-tab]').forEach(btn => {
+    btn.addEventListener('click', () => openAdminTab(btn.dataset.adminTab));
+  });
+
+  qs('#btnAdminUserRefresh')?.addEventListener('click', loadAdminUsers);
+  qs('#btnAdminUserReset')?.addEventListener('click', resetAdminUserForm);
+  qs('#adminUserForm')?.addEventListener('submit', submitAdminUserForm);
+}
+
+function loadAdminPage() {
+  if (!isAdminUser()) return;
+  mountAdminContent();
+  if ((App.adminTab || 'accounts') !== 'accounts') {
+    loadAdminUsers();
+  }
+  openAdminTab(App.adminTab || 'accounts');
+}
+
+function openAdminTab(tab, options = {}) {
+  const { skipLoad = false } = options;
+  App.adminTab = ['accounts', 'api', 'system'].includes(tab) ? tab : 'accounts';
+
+  qsa('[data-admin-tab]').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.adminTab === App.adminTab);
+  });
+  qsa('[data-admin-tab-panel]').forEach(panel => {
+    panel.classList.toggle('active', panel.dataset.adminTabPanel === App.adminTab);
+  });
+
+  if (skipLoad || App.currentPage !== 'admin') return;
+
+  if (App.adminTab === 'accounts') loadAdminUsers();
+  if (App.adminTab === 'api') loadConnectPage();
+  if (App.adminTab === 'system') loadSettingsPage();
+}
+
+window.openAdminTab = function(tab = 'accounts') {
+  if (!isAdminUser()) return;
+  App.adminTab = tab;
+  if (App.currentPage !== 'admin') {
+    loadPage('admin');
+    return;
+  }
+  openAdminTab(tab);
+};
+
+async function loadAdminUsers() {
+  try {
+    const data = await apiFetch('api/users.php?action=list');
+    if (!data.success) throw new Error(data.error || 'API error');
+
+    AdminUserState.users = data.users || [];
+    AdminUserState.currentUserId = data.current_user_id || null;
+
+    renderAdminUserSummary(data.summary || {});
+    renderAdminUsersTable();
+
+    if (!AdminUserState.editingId) {
+      resetAdminUserForm();
+    }
+  } catch (e) {
+    const tbody = qs('#adminUsersTableBody');
+    if (tbody) {
+      tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--red,#ef4444)">${escHtml(e.message)}</td></tr>`;
+    }
+  }
+}
+
+function renderAdminUserSummary(summary) {
+  qs('#admin-total-users').textContent  = fmtNum(summary.total || 0);
+  qs('#admin-active-users').textContent = fmtNum(summary.active || 0);
+  qs('#admin-admin-users').textContent  = fmtNum(summary.admins || 0);
+  qs('#admin-last-login').textContent   = summary.last_login_at ? fmtDateTime(summary.last_login_at) : '—';
+}
+
+function renderAdminUsersTable() {
+  const tbody = qs('#adminUsersTableBody');
+  if (!tbody) return;
+
+  if (!AdminUserState.users.length) {
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text-muted)">${t('admin.users.empty')}</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = AdminUserState.users.map(user => `
+    <tr data-admin-user-id="${user.id}" class="${AdminUserState.editingId === user.id ? 'is-selected' : ''}">
+      <td>
+        <div class="admin-user-main">
+          <div class="admin-user-name">${escHtml(user.full_name || user.username)}</div>
+          <div class="admin-user-meta font-mono">@${escHtml(user.username)}${AdminUserState.currentUserId === user.id ? ` · ${t('admin.users.you')}` : ''}</div>
+        </div>
+      </td>
+      <td><span class="admin-role-badge role-${escHtml(user.role)}">${t(`admin.role.${user.role}`)}</span></td>
+      <td><span class="admin-state-badge state-${user.is_active ? 'active' : 'inactive'}">${user.is_active ? t('admin.state.active') : t('admin.state.inactive')}</span></td>
+      <td style="font-size:12px;color:var(--text-muted)">${user.last_login_at ? fmtDateTime(user.last_login_at) : '—'}</td>
+      <td class="text-right">
+        <div class="admin-table-actions">
+          <button class="admin-quiet-btn" type="button" data-admin-edit="${user.id}">${t('admin.users.edit')}</button>
+          <button class="admin-quiet-btn danger" type="button" data-admin-delete="${user.id}">${t('lang.delete')}</button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+
+  tbody.querySelectorAll('[data-admin-edit]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const user = AdminUserState.users.find(item => item.id === Number(btn.dataset.adminEdit));
+      if (user) fillAdminUserForm(user);
+    });
+  });
+
+  tbody.querySelectorAll('[data-admin-delete]').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      await deleteAdminUser(Number(btn.dataset.adminDelete));
+    });
+  });
+
+  tbody.querySelectorAll('tr[data-admin-user-id]').forEach(row => {
+    row.addEventListener('click', () => {
+      const user = AdminUserState.users.find(item => item.id === Number(row.dataset.adminUserId));
+      if (user) fillAdminUserForm(user);
+    });
+  });
+}
+
+function resetAdminUserForm() {
+  AdminUserState.editingId = null;
+  qs('#adminUserId').value = '';
+  qs('#adminUserUsername').value = '';
+  qs('#adminUserUsername').readOnly = false;
+  qs('#adminUserFullName').value = '';
+  qs('#adminUserRole').value = 'staff';
+  qs('#adminUserPassword').value = '';
+  qs('#adminUserPassword').placeholder = 'Tối thiểu 6 ký tự';
+  qs('#adminUserActive').checked = true;
+  qs('#adminUserFormMode').textContent = t('admin.form.create');
+  qs('#btnAdminUserSubmit').textContent = t('admin.form.submit_create');
+  renderAdminUsersTable();
+}
+
+function fillAdminUserForm(user) {
+  AdminUserState.editingId = user.id;
+  qs('#adminUserId').value = String(user.id);
+  qs('#adminUserUsername').value = user.username || '';
+  qs('#adminUserUsername').readOnly = true;
+  qs('#adminUserFullName').value = user.full_name || '';
+  qs('#adminUserRole').value = user.role || 'staff';
+  qs('#adminUserPassword').value = '';
+  qs('#adminUserPassword').placeholder = t('admin.form.password_keep');
+  qs('#adminUserActive').checked = Boolean(user.is_active);
+  qs('#adminUserFormMode').textContent = t('admin.form.edit');
+  qs('#btnAdminUserSubmit').textContent = t('admin.form.submit_update');
+  renderAdminUsersTable();
+}
+
+async function submitAdminUserForm(e) {
+  e.preventDefault();
+
+  const isEditing = Boolean(AdminUserState.editingId);
+  const editedUserId = isEditing ? Number(qs('#adminUserId')?.value || 0) : 0;
+  const payload = {
+    action: isEditing ? 'update' : 'create',
+    full_name: qs('#adminUserFullName')?.value.trim() || '',
+    role: qs('#adminUserRole')?.value || 'staff',
+    password: qs('#adminUserPassword')?.value || '',
+    is_active: qs('#adminUserActive')?.checked,
+  };
+
+  if (isEditing) {
+    payload.id = Number(qs('#adminUserId')?.value || 0);
+  } else {
+    payload.username = qs('#adminUserUsername')?.value.trim() || '';
+  }
+
+  try {
+    const res = await apiFetch('api/users.php', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+    if (!res.success) throw new Error(res.error || 'API error');
+
+    toast(isEditing ? t('admin.toast.updated') : t('admin.toast.created'), 'success');
+
+    const authData = await fetch('api/auth.php').then(r => r.json());
+    if (authData.logged_in) {
+      App.user = authData.user || App.user;
+      App.csrf = authData.csrf || App.csrf;
+      applyAuthUI();
+      if (editedUserId && editedUserId === App.user?.id && !isAdminUser()) {
+        loadPage('overview');
+        return;
+      }
+    }
+
+    resetAdminUserForm();
+    await loadAdminUsers();
+  } catch (err) {
+    toast(err.message || t('msg.failed'), 'error');
+  }
+}
+
+async function deleteAdminUser(id) {
+  if (!id) return;
+  if (!confirm(t('admin.users.delete_confirm'))) return;
+
+  try {
+    const res = await apiFetch('api/users.php', {
+      method: 'POST',
+      body: JSON.stringify({ action: 'delete', id }),
+    });
+    if (!res.success) throw new Error(res.error || 'API error');
+
+    toast(t('admin.toast.deleted'), 'success');
+    if (AdminUserState.editingId === id) resetAdminUserForm();
+    await loadAdminUsers();
+  } catch (err) {
+    toast(err.message || t('msg.failed'), 'error');
+  }
 }
 
 async function loadSysInfo() {
@@ -1462,7 +1941,7 @@ async function checkForUpdates() {
   try {
     const data = await apiFetch('api/update.php?action=check');
     if (!data.success) return;
-    const badge = qs('#updateNavBadge');
+    const badge = qs('#adminNavBadge');
     if (badge) badge.style.display = data.has_update ? '' : 'none';
   } catch (_) { /* silent — not critical on init */ }
 }
@@ -1480,7 +1959,7 @@ async function loadUpdateCard() {
     const vBadge = qs('#currentVersionBadge');
     if (vBadge) vBadge.textContent = 'v' + data.current;
 
-    const badge = qs('#updateNavBadge');
+    const badge = qs('#adminNavBadge');
     if (badge) badge.style.display = data.has_update ? '' : 'none';
 
     if (!data.manifest_url) {
@@ -1946,11 +2425,13 @@ function setupAppShell() {
   setupConnectPage();
   setupLazadaConnectPage();
   setupShopeeConnectPage();
+  setupAdminPage();
+  setupCustomerDetailDrawer();
   setupSidebarCollapse();
   setupMobileSidebar();
   setupLangDropdown();
   qs('#btnLogout')?.addEventListener('click', logout);
-  checkForUpdates();
+  if (isAdminUser()) checkForUpdates();
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -1963,7 +2444,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   setupAppShell();
   await loadPeriods();
   const initPage = location.hash.replace('#', '') || 'overview';
-  loadPage(['overview','orders','products','customers','traffic','comparison','heatmaps','upload','logs','connect','settings'].includes(initPage) ? initPage : 'overview');
+  loadPage(['overview','orders','products','customers','traffic','comparison','heatmaps','upload','logs','connect','settings','admin'].includes(initPage) ? initPage : 'overview');
 });
 
 function setupMobileSidebar() {
@@ -2030,14 +2511,14 @@ function _renderLangOptions(langs) {
       </div>
       ${lang.code === current ? '<svg class="lang-option-check" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>' : ''}
     </div>
-  `).join('') + `
+  `).join('') + (isAdminUser() ? `
     <div class="lang-option-divider"></div>
-    <a href="#settings" class="lang-option lang-option-manage" onclick="document.querySelector('[data-page=settings]')?.click()">
+    <a href="#admin" class="lang-option lang-option-manage" onclick="window.openAdminTab?.('system'); return false;">
       <span class="lang-option-flag">⚙️</span>
       <div class="lang-option-info">
         <span class="lang-option-name">${t('lang.manage')}</span>
       </div>
-    </a>`;
+    </a>` : '');
 
   dropdown.querySelectorAll('.lang-option[data-code]').forEach(el => {
     el.addEventListener('click', async () => {
@@ -2049,6 +2530,9 @@ function _renderLangOptions(langs) {
     });
   });
 }
+
+let _langSettingsRefresh = async () => {};
+let _langSettingsBound = false;
 
 async function setupLangSettings() {
   const card   = qs('#langSettingsCard');
@@ -2078,9 +2562,13 @@ async function setupLangSettings() {
       </div>`;
   }
 
+  _langSettingsRefresh = refresh;
   await refresh();
 
-  input?.addEventListener('change', async () => {
+  if (_langSettingsBound || !input) return;
+  _langSettingsBound = true;
+
+  input.addEventListener('change', async () => {
     const file = input.files?.[0];
     if (!file) return;
     const fd = new FormData();
@@ -2092,7 +2580,7 @@ async function setupLangSettings() {
       if (!data.success) throw new Error(data.error || 'Upload failed');
       toast(`${data.flag} ${data.name}`, 'success');
       input.value = '';
-      await refresh();
+      await _langSettingsRefresh();
     } catch (e) {
       toast(`${t('msg.error')}: ${e.message}`, 'error');
     }
@@ -2109,7 +2597,7 @@ window.deleteLang = async function(code) {
     const data = await fetch('api/lang.php', { method: 'POST', body: fd }).then(r => r.json());
     if (!data.success) throw new Error(data.error || 'Failed');
     toast(`${t('lang.delete')}: ${code}`, 'success');
-    document.querySelector('[data-page="settings"]')?.click();
+    window.openAdminTab?.('system');
   } catch (e) {
     toast(`${t('msg.delete_failed')} ${e.message}`, 'error');
   }

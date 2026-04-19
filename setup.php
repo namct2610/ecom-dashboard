@@ -265,6 +265,7 @@ function runInstall(array $post): array
             1002 => "SET time_zone='+07:00', sql_mode=(SELECT REPLACE(@@sql_mode,'ONLY_FULL_GROUP_BY',''))",
         ]);
         initSchema($pdo);
+        seedAdminUser($pdo, $adminUser, $adminPass);
     } catch (\Exception $e) {
         return ['success' => false, 'error' => 'Khởi tạo database thất bại: ' . $e->getMessage()];
     }
@@ -470,6 +471,38 @@ function initSchema(PDO $pdo): void
         UNIQUE KEY uk_account_id (account_id),
         INDEX idx_is_active (is_active)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+    $pdo->exec("CREATE TABLE IF NOT EXISTS users (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        username VARCHAR(100) NOT NULL,
+        full_name VARCHAR(255) NULL,
+        password_hash VARCHAR(255) NOT NULL,
+        role ENUM('admin','staff') NOT NULL DEFAULT 'staff',
+        is_active TINYINT(1) NOT NULL DEFAULT 1,
+        last_login_at DATETIME NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        UNIQUE KEY uk_username (username),
+        INDEX idx_role_active (role, is_active)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+}
+
+function seedAdminUser(PDO $pdo, string $username, string $password): void
+{
+    $count = (int) $pdo->query("SELECT COUNT(*) FROM users")->fetchColumn();
+    if ($count > 0) {
+        return;
+    }
+
+    $stmt = $pdo->prepare("
+        INSERT INTO users (username, full_name, password_hash, role, is_active)
+        VALUES (?, ?, ?, 'admin', 1)
+    ");
+    $stmt->execute([
+        $username,
+        'Administrator',
+        password_hash($password, PASSWORD_BCRYPT),
+    ]);
 }
 
 function parseIniBytes(string $val): int

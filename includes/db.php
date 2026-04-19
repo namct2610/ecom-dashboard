@@ -24,14 +24,14 @@ function db(array $config): PDO
         1002 /* MYSQL_ATTR_INIT_COMMAND */ => "SET wait_timeout=28800, time_zone='+07:00', sql_mode=(SELECT REPLACE(@@sql_mode,'ONLY_FULL_GROUP_BY',''))",
     ];
     $pdo = new PDO($dsn, $db['username'], $db['password'], $opts);
-    ensure_schema($pdo);
+    ensure_schema($pdo, $config);
     return $pdo;
 }
 
-function ensure_schema(PDO $pdo): void
+function ensure_schema(PDO $pdo, array $config = []): void
 {
     $tables  = $pdo->query('SHOW TABLES')->fetchAll(PDO::FETCH_COLUMN);
-    $needed  = ['upload_history', 'orders', 'traffic_daily', 'import_errors', 'app_settings', 'app_logs', 'tiktok_connections', 'lazada_connections', 'shopee_connections'];
+    $needed  = ['upload_history', 'orders', 'traffic_daily', 'import_errors', 'app_settings', 'app_logs', 'tiktok_connections', 'lazada_connections', 'shopee_connections', 'users'];
     $missing = array_diff($needed, $tables);
 
     // Add data_type column if missing (migration)
@@ -119,7 +119,25 @@ function ensure_schema(PDO $pdo): void
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     }
 
-    $missing = array_diff($missing, ['app_logs', 'tiktok_connections', 'lazada_connections', 'shopee_connections']); // already handled above
+    if (!in_array('users', $tables, true)) {
+        $pdo->exec("CREATE TABLE IF NOT EXISTS users (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            username VARCHAR(100) NOT NULL,
+            full_name VARCHAR(255) NULL,
+            password_hash VARCHAR(255) NOT NULL,
+            role ENUM('admin','staff') NOT NULL DEFAULT 'staff',
+            is_active TINYINT(1) NOT NULL DEFAULT 1,
+            last_login_at DATETIME NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            UNIQUE KEY uk_username (username),
+            INDEX idx_role_active (role, is_active)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    }
+
+    ensure_default_admin_user($pdo, $config);
+
+    $missing = array_diff($missing, ['app_logs', 'tiktok_connections', 'lazada_connections', 'shopee_connections', 'users']); // already handled above
     if (empty($missing)) {
         return;
     }
@@ -251,6 +269,34 @@ function ensure_schema(PDO $pdo): void
         UNIQUE KEY uk_shop_id (shop_id),
         INDEX idx_is_active (is_active)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+}
+
+function ensure_default_admin_user(PDO $pdo, array $config = []): void
+{
+    $count = (int) $pdo->query("SELECT COUNT(*) FROM users")->fetchColumn();
+    if ($count > 0) {
+        return;
+    }
+
+    $username = trim((string) ($config['auth']['username'] ?? 'admin'));
+    $password = (string) ($config['auth']['password'] ?? 'admin123');
+
+    if ($username === '') {
+        $username = 'admin';
+    }
+    if ($password === '') {
+        $password = 'admin123';
+    }
+
+    $stmt = $pdo->prepare("
+        INSERT INTO users (username, full_name, password_hash, role, is_active)
+        VALUES (?, ?, ?, 'admin', 1)
+    ");
+    $stmt->execute([
+        $username,
+        'Administrator',
+        password_hash($password, PASSWORD_BCRYPT),
+    ]);
 }
 
 // ── Upsert helpers ──────────────────────────────────────────────────────────

@@ -7,7 +7,7 @@ require dirname(__DIR__) . '/includes/TiktokShopClient.php';
 
 use Dashboard\TiktokShopClient;
 
-require_auth();
+require_admin();
 
 $method = $_SERVER['REQUEST_METHOD'];
 
