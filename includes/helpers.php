@@ -92,20 +92,38 @@ function json_exception(\Throwable $e, string $fallback = 'Server error.'): void
  *   mode=(month|year) + period=YYYY-MM or YYYY
  *   platform=shopee|lazada|tiktokshop|all
  */
-function sql_filters(array &$params, string $dateCol = 'order_created_at'): string
+function request_date_range(): ?array
 {
-    $conditions = ['normalized_status IN (\'completed\',\'delivered\',\'cancelled\',\'pending\')'];
+    $dateFrom = trim((string) ($_GET['date_from'] ?? ''));
+    $dateTo   = trim((string) ($_GET['date_to'] ?? ''));
 
-    $dateFrom = $_GET['date_from'] ?? '';
-    $dateTo   = $_GET['date_to']   ?? '';
+    if ($dateFrom === '' || $dateTo === '') {
+        return null;
+    }
+    if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateFrom) || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateTo)) {
+        return null;
+    }
+    if ($dateFrom > $dateTo) {
+        [$dateFrom, $dateTo] = [$dateTo, $dateFrom];
+    }
+
+    return [$dateFrom, $dateTo];
+}
+
+function sql_filters(array &$params, string $dateCol = 'order_created_at', bool $includeAllStatuses = false): string
+{
+    $conditions = $includeAllStatuses
+        ? ['1=1']
+        : ['normalized_status IN (\'completed\',\'delivered\',\'cancelled\',\'pending\')'];
+
     $mode     = $_GET['mode']      ?? 'month';
     $period   = $_GET['period']    ?? '';
     $platform = $_GET['platform']  ?? 'all';
+    $dateRange = request_date_range();
 
     // Date range takes priority over mode/period
-    if ($dateFrom !== '' && $dateTo !== ''
-        && preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateFrom)
-        && preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateTo)) {
+    if ($dateRange !== null) {
+        [$dateFrom, $dateTo] = $dateRange;
         $conditions[] = "DATE($dateCol) BETWEEN :date_from AND :date_to";
         $params[':date_from'] = $dateFrom;
         $params[':date_to']   = $dateTo;
@@ -131,15 +149,13 @@ function sql_filters_traffic(array &$params): string
 {
     $conditions = ['1=1'];
 
-    $dateFrom = $_GET['date_from'] ?? '';
-    $dateTo   = $_GET['date_to']   ?? '';
     $mode     = $_GET['mode']      ?? 'month';
     $period   = $_GET['period']    ?? '';
     $platform = $_GET['platform']  ?? 'all';
+    $dateRange = request_date_range();
 
-    if ($dateFrom !== '' && $dateTo !== ''
-        && preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateFrom)
-        && preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateTo)) {
+    if ($dateRange !== null) {
+        [$dateFrom, $dateTo] = $dateRange;
         $conditions[] = "traffic_date BETWEEN :date_from AND :date_to";
         $params[':date_from'] = $dateFrom;
         $params[':date_to']   = $dateTo;
@@ -171,10 +187,9 @@ function sql_filters_traffic(array &$params): string
  */
 function resolve_granularity(string $dateCol = 'order_created_at'): array
 {
-    $dateFrom = $_GET['date_from'] ?? '';
     $mode     = $_GET['mode']      ?? 'month';
 
-    if ($dateFrom !== '' || $mode !== 'year') {
+    if (request_date_range() !== null || $mode !== 'year') {
         return [
             'name'   => 'day',
             'label'  => "DATE_FORMAT($dateCol, '%Y-%m-%d')",
@@ -190,10 +205,9 @@ function resolve_granularity(string $dateCol = 'order_created_at'): array
 
 function resolve_granularity_traffic(): array
 {
-    $dateFrom = $_GET['date_from'] ?? '';
     $mode     = $_GET['mode']      ?? 'month';
 
-    if ($dateFrom !== '' || $mode !== 'year') {
+    if (request_date_range() !== null || $mode !== 'year') {
         return [
             'name'   => 'day',
             'label'  => "DATE_FORMAT(traffic_date, '%Y-%m-%d')",

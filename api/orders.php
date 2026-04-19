@@ -10,27 +10,7 @@ require_method('GET');
 try {
     $pdo    = db($config);
     $params = [];
-
-    // Build filter without status restriction for full picture
-    $conditions = ['1=1'];
-    $mode     = $_GET['mode']     ?? 'month';
-    $period   = $_GET['period']   ?? '';
-    $platform = $_GET['platform'] ?? 'all';
-
-    if ($period !== '') {
-        if ($mode === 'year' && preg_match('/^\d{4}$/', $period)) {
-            $conditions[] = 'YEAR(order_created_at) = :year';
-            $params[':year'] = (int)$period;
-        } elseif ($mode === 'month' && preg_match('/^\d{4}-\d{2}$/', $period)) {
-            $conditions[] = "DATE_FORMAT(order_created_at, '%Y-%m') = :month";
-            $params[':month'] = $period;
-        }
-    }
-    if ($platform !== 'all' && in_array($platform, ['shopee','lazada','tiktokshop'], true)) {
-        $conditions[] = 'platform = :platform';
-        $params[':platform'] = $platform;
-    }
-    $where = 'WHERE ' . implode(' AND ', $conditions);
+    $where  = sql_filters($params, 'order_created_at', true);
     $gran  = resolve_granularity();
 
     // Status summary
