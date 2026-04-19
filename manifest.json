@@ -1,7 +1,7 @@
 {
-  "version": "1.2.4",
-  "download_url": "https://github.com/namct2610/ecom-dashboard/releases/download/v1.2.4/dashboard-v3-1.2.4.zip",
-  "changelog": "- Tính năng: Tỉ lệ chuyển đổi (đơn/lượt truy cập) — KPI mới trang Khách hàng\n- Tính năng: Biểu đồ phân loại khách hàng (Mới / Cũ / Tiềm năng) thay thế chart tỉnh thành\n- Dữ liệu: API customers trả về customer_segments + conv_rate từ traffic_daily\n- i18n: Thêm chuỗi seg.* và kpi.conv_rate (VI + EN)",
+  "version": "1.2.5",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.2.5/release/dashboard-v3-1.2.5.zip",
+  "changelog": "- Sửa lỗi: Bộ lọc theo ngày hoạt động đồng nhất ở Orders và Comparison\n- Sửa lỗi: Chuyển giữa preset ngày và chọn tháng/năm không còn bị giữ state cũ\n- Cập nhật phát hành: Gói auto-update 1.2.5 kèm vendor để máy đang chạy có thể tải và cập nhật trực tiếp",
   "min_php": "8.1",
-  "released_at": "2026-04-15"
+  "released_at": "2026-04-19"
 }
