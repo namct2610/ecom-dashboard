@@ -26,6 +26,33 @@ try {
     $sumStmt->execute($params);
     $summary = $sumStmt->fetch();
 
+    // Customer leaderboard — aggregate at order level first to avoid double-counting
+    $buyerStmt = $pdo->prepare("
+        SELECT buyer_username,
+               COUNT(*) AS order_count,
+               COALESCE(SUM(item_qty), 0) AS item_qty,
+               COALESCE(SUM(order_revenue), 0) AS revenue
+        FROM (
+            SELECT buyer_username,
+                   CONCAT(platform, ':', order_id) AS order_key,
+                   COALESCE(SUM(quantity), 0) AS item_qty,
+                   COALESCE(MAX(order_total), 0) AS order_revenue
+            FROM orders {$where}
+            AND buyer_username IS NOT NULL AND buyer_username != ''
+            GROUP BY buyer_username, platform, order_id
+        ) buyer_orders
+        GROUP BY buyer_username
+        ORDER BY revenue DESC, order_count DESC, item_qty DESC, buyer_username ASC
+        LIMIT 20
+    ");
+    $buyerStmt->execute($params);
+    $buyerStats = array_map(static fn($row) => [
+        'buyer_username' => (string) $row['buyer_username'],
+        'order_count'    => (int) $row['order_count'],
+        'item_qty'       => (int) $row['item_qty'],
+        'revenue'        => (float) $row['revenue'],
+    ], $buyerStmt->fetchAll());
+
     // City distribution — Lazada excluded (platform hides address data)
     $cityWhere = $where . " AND shipping_city IS NOT NULL AND shipping_city != '' AND platform != 'lazada'";
     $cityStmt  = $pdo->prepare("
@@ -149,6 +176,7 @@ try {
             'returning_buyers' => (int)($seg['returning_buyers'] ?? 0),
             'potential_buyers' => (int)($pot['potential_buyers'] ?? 0),
         ],
+        'buyer_stats'          => $buyerStats,
         'city_distribution'    => $cityList,
         'hcm_districts'        => $hcmStmt->fetchAll(),
         'hanoi_districts'      => $hanoiStmt->fetchAll(),

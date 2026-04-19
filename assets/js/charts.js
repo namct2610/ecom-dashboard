@@ -44,7 +44,14 @@ const Charts = (() => {
     if (instances[id]) { instances[id].destroy(); delete instances[id]; }
   }
   function save(id, chart) { instances[id] = chart; return chart; }
-  function canvas(id) { return document.getElementById(id); }
+  function canvas(id) {
+    const el = document.getElementById(id);
+    if (!el) return null;
+    el.style.display = '';
+    const parent = el.parentElement;
+    if (parent) parent.querySelectorAll('.chart-empty').forEach(node => node.remove());
+    return el;
+  }
 
   const TICK_COLOR = '#64748b';
   const GRID_COLOR = '#e2e8f0';
@@ -752,13 +759,15 @@ const Charts = (() => {
     const parent = el.parentElement;
     if (!parent) return;
     el.style.display = 'none';
-    if (!parent.querySelector('.chart-empty')) {
-      const div = document.createElement('div');
+    let div = parent.querySelector('.chart-empty');
+    if (!div) {
+      div = document.createElement('div');
       div.className = 'chart-empty empty-state';
       div.style.cssText = 'padding:32px 0;';
-      div.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg><p>${msg}</p>`;
       parent.appendChild(div);
+      div = parent.querySelector('.chart-empty');
     }
+    div.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg><p>${msg}</p>`;
   }
 
   function truncate(str, max) {

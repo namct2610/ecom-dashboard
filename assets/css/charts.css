@@ -74,3 +74,47 @@
 .recent-order-name { font-size: 12px; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500; }
 .recent-order-meta { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
 .recent-order-amount { font-size: 12px; font-weight: 700; color: var(--primary); white-space: nowrap; }
+
+/* Customer leaderboard */
+.customer-leaderboard-card { padding-top: 20px; }
+.customer-leaderboard-header { margin-bottom: 12px; }
+.customer-leaderboard-table tbody td { vertical-align: middle; }
+.customer-rank-pill {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 30px; height: 30px; padding: 0 8px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  color: #1d4ed8;
+  font-size: 12px; font-weight: 700;
+}
+.customer-identity {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+.customer-identity-name {
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.customer-identity-bar {
+  height: 6px;
+  background: linear-gradient(90deg, rgba(37,99,235,0.08) 0%, rgba(15,23,42,0.04) 100%);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.customer-identity-bar-fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #2563eb 0%, #0ea5e9 48%, #0f766e 100%);
+}
+.customer-revenue-value {
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
+}

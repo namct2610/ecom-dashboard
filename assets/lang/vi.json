@@ -107,6 +107,8 @@
   "card.product_list":   "Danh sách sản phẩm",
   "card.top5_revenue":   "Top 5 doanh thu",
   "card.top_locations":  "Top địa phương",
+  "card.customer_leaderboard": "Khách hàng nổi bật",
+  "card.customer_leaderboard.sub": "Thống kê theo username trong bộ lọc hiện tại",
   "card.orders_heatmap": "Đơn hàng theo ngày & giờ",
   "card.rev_heatmap":    "Doanh thu theo ngày & giờ",
 
@@ -120,6 +122,8 @@
   "th.product_name":"Tên sản phẩm",
   "th.qty":         "SL",
   "th.revenue":     "Doanh thu",
+  "th.rank":        "Hạng",
+  "th.username":    "Username",
 
   "status.completed":  "Hoàn thành",
   "status.delivered":  "Đã giao",

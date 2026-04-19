@@ -82,12 +82,13 @@
 }
 .sidebar-brand-icon {
   width: 34px; height: 34px;
-  background: var(--primary);
-  border-radius: var(--radius-sm);
+  background: linear-gradient(145deg, #2563eb 0%, #1d4ed8 58%, #0f172a 150%);
+  border-radius: 12px;
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
+  box-shadow: 0 10px 18px rgba(15,23,42,0.24), inset 0 1px 0 rgba(255,255,255,0.16);
 }
-.sidebar-brand-icon svg { width: 18px; height: 18px; stroke: white; }
+.sidebar-brand-icon svg { width: 18px; height: 18px; color: white; }
 .sidebar-brand-name { font-size: 13px; font-weight: 700; color: white; line-height: 1.2; }
 .sidebar-brand-sub  { font-size: 10px; color: var(--sidebar-text); }
 

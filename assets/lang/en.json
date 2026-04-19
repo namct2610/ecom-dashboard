@@ -107,6 +107,8 @@
   "card.product_list":   "Product List",
   "card.top5_revenue":   "Top 5 Revenue",
   "card.top_locations":  "Top Locations",
+  "card.customer_leaderboard": "Top Customers",
+  "card.customer_leaderboard.sub": "Grouped by buyer username within the current filter",
   "card.orders_heatmap": "Orders by day & hour",
   "card.rev_heatmap":    "Revenue by day & hour",
 
@@ -120,6 +122,8 @@
   "th.product_name":"Product Name",
   "th.qty":         "Qty",
   "th.revenue":     "Revenue",
+  "th.rank":        "Rank",
+  "th.username":    "Username",
 
   "status.completed":  "Completed",
   "status.delivered":  "Delivered",
