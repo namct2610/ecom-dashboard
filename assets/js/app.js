@@ -573,6 +573,7 @@ async function loadCustomers() {
     _citiesAll  = data.city_distribution || [];
     _citiesPage = 1;
     renderCityListPage('cityList', 'cityListPager');
+    renderCustomerStatsTable('customerStatsTable', data.buyer_stats || []);
 
     Charts.renderDistrictBar('chartHcmDistricts', data.hcm_districts || [], 'TP. Hồ Chí Minh');
     Charts.renderDistrictBar('chartHanoiDistricts', data.hanoi_districts || [], 'Hà Nội');
@@ -859,6 +860,36 @@ function renderCityList(id, cities) {
       </div>
       <span style="font-size:12px;font-weight:600;width:36px;text-align:right">${fmtNum(c.orders)}</span>
     </div>`).join('');
+}
+
+function renderCustomerStatsTable(tbodyId, buyers) {
+  const tbody = qs(`#${tbodyId}`); if (!tbody) return;
+  if (!buyers || !buyers.length) {
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text-muted)">${t('msg.no_data')}</td></tr>`;
+    return;
+  }
+
+  const maxRevenue = Math.max(...buyers.map(b => b.revenue || 0), 1);
+  tbody.innerHTML = buyers.map((buyer, index) => {
+    const revenueWidth = Math.max(10, Math.round(((buyer.revenue || 0) / maxRevenue) * 100));
+    return `
+      <tr>
+        <td><span class="customer-rank-pill">${index + 1}</span></td>
+        <td>
+          <div class="customer-identity">
+            <div class="customer-identity-name font-mono">${escHtml(buyer.buyer_username)}</div>
+            <div class="customer-identity-bar">
+              <span class="customer-identity-bar-fill" style="width:${revenueWidth}%"></span>
+            </div>
+          </div>
+        </td>
+        <td class="text-right"><strong>${fmtNum(buyer.order_count || 0)}</strong></td>
+        <td class="text-right">${fmtNum(buyer.item_qty || 0)}</td>
+        <td class="text-right">
+          <div class="customer-revenue-value">${fmtVND(buyer.revenue || 0)}</div>
+        </td>
+      </tr>`;
+  }).join('');
 }
 
 function renderPlatformCards(platforms) {

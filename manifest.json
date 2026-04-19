@@ -1,7 +1,7 @@
 {
-  "version": "1.2.5",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.2.5/release/dashboard-v3-1.2.5.zip",
-  "changelog": "- Sửa lỗi: Bộ lọc theo ngày hoạt động đồng nhất ở Orders và Comparison\n- Sửa lỗi: Chuyển giữa preset ngày và chọn tháng/năm không còn bị giữ state cũ\n- Cập nhật phát hành: Gói auto-update 1.2.5 kèm vendor để máy đang chạy có thể tải và cập nhật trực tiếp",
+  "version": "1.2.6",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.2.6/release/dashboard-v3-1.2.6.zip",
+  "changelog": "- Sửa lỗi: Chart render lại đúng khi đổi bộ lọc từ không có dữ liệu sang có dữ liệu\n- Khách hàng: Thêm bảng thống kê theo buyer username gồm số đơn, số lượng sản phẩm và doanh thu trong bộ lọc hiện tại\n- Giao diện: Làm mới logo SVG ở màn đăng nhập và sidebar để sắc nét, nhất quán hơn",
   "min_php": "8.1",
   "released_at": "2026-04-19"
 }

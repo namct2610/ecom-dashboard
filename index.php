@@ -41,8 +41,13 @@ $initials = strtoupper(substr($user, 0, 2));
 <div id="auth-screen" class="hidden">
   <div class="login-box">
     <div class="login-logo">
-      <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
-        <path stroke="currentColor" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <rect x="3" y="12" width="3.5" height="7" rx="1.2" fill="currentColor" opacity="0.28"/>
+        <rect x="9.25" y="8" width="3.5" height="11" rx="1.2" fill="currentColor" opacity="0.55"/>
+        <rect x="15.5" y="4.5" width="3.5" height="14.5" rx="1.2" fill="currentColor"/>
+        <path d="M4 8.25C5.5 8.25 6.36 8.8 7.72 10.05C8.91 11.15 9.68 11.63 10.61 11.63C11.83 11.63 12.68 10.82 13.91 9.45C15.29 7.91 16.49 7 18.62 7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="4" cy="8.25" r="1.25" fill="currentColor" opacity="0.85"/>
+        <circle cx="18.62" cy="7" r="1.5" fill="currentColor"/>
       </svg>
     </div>
     <div class="login-title">Dashboard v3</div>
@@ -72,8 +77,13 @@ $initials = strtoupper(substr($user, 0, 2));
   <nav id="sidebar">
     <div class="sidebar-brand">
       <div class="sidebar-brand-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
-          <path stroke="currentColor" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <rect x="3" y="12" width="3.5" height="7" rx="1.2" fill="currentColor" opacity="0.28"/>
+          <rect x="9.25" y="8" width="3.5" height="11" rx="1.2" fill="currentColor" opacity="0.55"/>
+          <rect x="15.5" y="4.5" width="3.5" height="14.5" rx="1.2" fill="currentColor"/>
+          <path d="M4 8.25C5.5 8.25 6.36 8.8 7.72 10.05C8.91 11.15 9.68 11.63 10.61 11.63C11.83 11.63 12.68 10.82 13.91 9.45C15.29 7.91 16.49 7 18.62 7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="4" cy="8.25" r="1.25" fill="currentColor" opacity="0.85"/>
+          <circle cx="18.62" cy="7" r="1.5" fill="currentColor"/>
         </svg>
       </div>
       <div class="sidebar-brand-text">
@@ -531,6 +541,29 @@ $initials = strtoupper(substr($user, 0, 2));
             <div class="card-title" data-i18n="card.top_locations" style="margin-bottom:12px">Top địa phương</div>
             <div id="cityList"></div>
             <div id="cityListPager"></div>
+          </div>
+        </div>
+
+        <div class="card customer-leaderboard-card mb-4">
+          <div class="chart-header customer-leaderboard-header">
+            <div class="chart-header-left">
+              <h3 data-i18n="card.customer_leaderboard">Khách hàng nổi bật</h3>
+              <p data-i18n="card.customer_leaderboard.sub">Thống kê theo username trong bộ lọc hiện tại</p>
+            </div>
+          </div>
+          <div class="table-wrapper customer-leaderboard-table">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:64px" data-i18n="th.rank">Hạng</th>
+                  <th data-i18n="th.username">Username</th>
+                  <th class="text-right" data-i18n="cl.orders">Đơn hàng</th>
+                  <th class="text-right" data-i18n="cl.quantity">Số lượng</th>
+                  <th class="text-right" data-i18n="th.revenue">Doanh thu</th>
+                </tr>
+              </thead>
+              <tbody id="customerStatsTable"></tbody>
+            </table>
           </div>
         </div>
 
