@@ -20,6 +20,12 @@ const App = {
 // ── Helpers ──────────────────────────────────────────────────────────────
 function qs(sel, ctx = document)  { return ctx.querySelector(sel); }
 function qsa(sel, ctx = document) { return Array.from(ctx.querySelectorAll(sel)); }
+function hasActiveDateRange()     { return Boolean(App.dateFrom && App.dateTo); }
+function clearDateRange() {
+  App.dateFrom = '';
+  App.dateTo = '';
+  App.rangeLabel = '';
+}
 
 function fmtVND(n) {
   n = parseFloat(n) || 0;
@@ -71,7 +77,7 @@ function toast(msg, type = 'info', duration = 3500) {
 
 // ── API client ───────────────────────────────────────────────────────────
 async function api(path, opts = {}) {
-  const filterParams = App.dateFrom
+  const filterParams = hasActiveDateRange()
     ? { date_from: App.dateFrom, date_to: App.dateTo, platform: App.platform }
     : { mode: App.mode, period: App.period, platform: App.platform };
   const params = new URLSearchParams({
@@ -194,8 +200,10 @@ function renderPeriodLabel() {
   const next = qs('#periodNext');
   if (!el) return;
 
-  if (App.rangeLabel) {
-    el.textContent = t(App.rangeLabel) || App.rangeLabel;
+  if (hasActiveDateRange()) {
+    el.textContent = App.rangeLabel
+      ? (t(App.rangeLabel) || App.rangeLabel)
+      : `${App.dateFrom} → ${App.dateTo}`;
     if (prev) prev.disabled = true;
     if (next) next.disabled = true;
     return;
@@ -236,6 +244,7 @@ function renderPeriodGrid() {
       btn.className  = 'pp-cell' + (isActive ? ' active' : '') + (hasData ? ' has-data' : '');
       if (hasData) {
         btn.addEventListener('click', () => {
+          clearDateRange();
           App.period = val;
           renderPeriodLabel();
           renderPeriodGrid();
@@ -257,6 +266,7 @@ function renderPeriodGrid() {
       btn.className  = 'pp-cell wide' + (isActive ? ' active' : '') + (hasData ? ' has-data' : '');
       if (hasData) {
         btn.addEventListener('click', () => {
+          clearDateRange();
           App.period = val;
           renderPeriodLabel();
           renderPeriodGrid();
@@ -282,7 +292,7 @@ function closePeriodPanel() {
 }
 
 function navigatePeriod(dir) {
-  App.dateFrom = ''; App.dateTo = ''; App.rangeLabel = '';
+  clearDateRange();
   const list = App.mode === 'month'
     ? (App.periods.months || []).map(x => x.value)
     : (App.periods.years  || []).map(x => x.value);
@@ -304,9 +314,7 @@ function _applyPreset(preset) {
   const today = _isoDate(now);
 
   // Reset range state
-  App.dateFrom   = '';
-  App.dateTo     = '';
-  App.rangeLabel = '';
+  clearDateRange();
 
   if (preset === 'today') {
     App.dateFrom   = today;
@@ -353,6 +361,7 @@ function setupPeriodPicker() {
   qsa('.pp-mode').forEach(btn => {
     btn.addEventListener('click', () => {
       if (btn.dataset.mode === App.mode) return;
+      clearDateRange();
       App.mode = btn.dataset.mode;
       const list = App.mode === 'month' ? (App.periods.months || []) : (App.periods.years || []);
       App.period = list.length ? list[0].value : '';
