@@ -383,6 +383,8 @@ function initSchema(PDO $pdo): void
         INDEX idx_sku (sku),
         INDEX idx_shipping_city (shipping_city)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    addIndexIfMissing($pdo, 'orders', 'idx_buyer_status_date', "CREATE INDEX idx_buyer_status_date ON orders (buyer_username, normalized_status, order_created_at)");
+    addIndexIfMissing($pdo, 'orders', 'idx_city_district_status', "CREATE INDEX idx_city_district_status ON orders (shipping_city, shipping_district, normalized_status)");
 
     $pdo->exec("CREATE TABLE IF NOT EXISTS traffic_daily (
         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -503,6 +505,16 @@ function seedAdminUser(PDO $pdo, string $username, string $password): void
         'Administrator',
         password_hash($password, PASSWORD_BCRYPT),
     ]);
+}
+
+function addIndexIfMissing(PDO $pdo, string $table, string $indexName, string $sql): void
+{
+    $stmt = $pdo->query("SHOW INDEX FROM `{$table}` WHERE Key_name = " . $pdo->quote($indexName));
+    if ($stmt->fetch()) {
+        return;
+    }
+
+    $pdo->exec($sql);
 }
 
 function parseIniBytes(string $val): int

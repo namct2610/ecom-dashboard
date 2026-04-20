@@ -14,6 +14,7 @@ try {
 
     $params = $paramsAll;
     $where  = $whereAll . " AND normalized_status IN ('completed','delivered')";
+    $lineRevenueExpr = "COALESCE(subtotal_after_discount, 0)";
 
     $limit = min(20, max(5, (int)($_GET['limit'] ?? 10)));
 
@@ -21,7 +22,7 @@ try {
     $qtyStmt = $pdo->prepare("
         SELECT sku, product_name, platform,
                SUM(quantity) AS total_qty,
-               SUM(order_total) AS total_revenue,
+               SUM({$lineRevenueExpr}) AS total_revenue,
                COUNT(DISTINCT CONCAT(platform,':',order_id)) AS order_count
         FROM orders {$where}
         GROUP BY sku, product_name, platform
@@ -34,7 +35,7 @@ try {
     $revStmt = $pdo->prepare("
         SELECT sku, product_name, platform,
                SUM(quantity) AS total_qty,
-               SUM(order_total) AS total_revenue,
+               SUM({$lineRevenueExpr}) AS total_revenue,
                COUNT(DISTINCT CONCAT(platform,':',order_id)) AS order_count
         FROM orders {$where}
         GROUP BY sku, product_name, platform
@@ -74,7 +75,7 @@ try {
     $allStmt = $pdo->prepare("
         SELECT sku, product_name, platform,
                SUM(quantity) AS total_qty,
-               SUM(order_total) AS total_revenue,
+               SUM({$lineRevenueExpr}) AS total_revenue,
                COUNT(DISTINCT CONCAT(platform,':',order_id)) AS order_count
         FROM orders {$where}
         GROUP BY sku, product_name, platform

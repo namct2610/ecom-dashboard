@@ -11,6 +11,7 @@ try {
     $pdo    = db($config);
     $params = [];
     $where  = sql_filters($params, 'order_created_at', true);
+    $lineRevenueExpr = "COALESCE(subtotal_after_discount, 0)";
 
     // Per-platform stats
     $platStmt = $pdo->prepare("
@@ -57,7 +58,7 @@ try {
     $topProducts = [];
     foreach (['shopee','lazada','tiktokshop'] as $p) {
         $stmt = $pdo->prepare("
-            SELECT sku, product_name, SUM(quantity) AS qty, SUM(order_total) AS revenue
+            SELECT sku, product_name, SUM(quantity) AS qty, SUM({$lineRevenueExpr}) AS revenue
             FROM orders {$where} AND platform = '{$p}'
             AND normalized_status IN ('completed','delivered')
             GROUP BY sku, product_name

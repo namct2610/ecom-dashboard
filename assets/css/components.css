@@ -112,6 +112,16 @@
 .btn-secondary:hover { background: var(--border); }
 .btn-sm { padding: 4px 10px; font-size: 12px; }
 .btn svg { width: 14px; height: 14px; }
+.icon-only-btn {
+  width: 34px;
+  padding-left: 0;
+  padding-right: 0;
+  justify-content: center;
+}
+.icon-only-btn svg {
+  width: 15px;
+  height: 15px;
+}
 
 /* ── Table ─────────────────────────────────────────────────────────────── */
 .table-wrapper { overflow-x: auto; }

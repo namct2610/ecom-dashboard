@@ -144,6 +144,10 @@
 
 /* Platform filter pills */
 .platform-filter { display: flex; gap: 4px; }
+.page-admin-active .platform-filter,
+.page-admin-active #periodPicker {
+  display: none !important;
+}
 .platform-btn {
   padding: 5px 12px;
   border-radius: var(--radius-full);
