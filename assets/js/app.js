@@ -68,6 +68,10 @@ function isAdminUser() {
   return (App.user?.role || '') === 'admin';
 }
 
+function getRoleLabel(role = App.user?.role || 'staff') {
+  return t(`admin.role.${role}`) || role;
+}
+
 function platformLabel(p) {
   return { shopee: 'Shopee', lazada: 'Lazada', tiktokshop: 'TikTok' }[p] || p;
 }
@@ -132,6 +136,8 @@ async function apiFetch(url, opts = {}) {
 // ── Auth ─────────────────────────────────────────────────────────────────
 function showAuth() {
   closeCustomerDetail();
+  closeUserMenu();
+  closePasswordModal();
   qs('#auth-screen').classList.remove('hidden');
   qs('#app').classList.add('hidden');
 }
@@ -142,8 +148,29 @@ function hideAuth() {
 }
 
 function applyAuthUI() {
+  const displayName = getUserDisplayName();
+  const initials = getUserInitials(displayName);
+
   const avatar = qs('#headerAvatar');
-  if (avatar) avatar.textContent = getUserInitials(getUserDisplayName());
+  if (avatar) avatar.textContent = initials;
+
+  const menuAvatar = qs('#userMenuAvatar');
+  if (menuAvatar) menuAvatar.textContent = initials;
+
+  const headerUserName = qs('#headerUserName');
+  if (headerUserName) headerUserName.textContent = displayName;
+
+  const headerUserRole = qs('#headerUserRole');
+  if (headerUserRole) headerUserRole.textContent = getRoleLabel();
+
+  const userMenuName = qs('#userMenuName');
+  if (userMenuName) userMenuName.textContent = displayName;
+
+  const userMenuUsername = qs('#userMenuUsername');
+  if (userMenuUsername) userMenuUsername.textContent = `@${App.user?.username || 'guest'}`;
+
+  const userMenuRole = qs('#userMenuRole');
+  if (userMenuRole) userMenuRole.textContent = getRoleLabel();
 
   qsa('.admin-only').forEach(el => {
     el.classList.toggle('hidden-by-role', !isAdminUser());
@@ -221,6 +248,8 @@ function setupLogin() {
 }
 
 async function logout() {
+  closeUserMenu();
+  closePasswordModal();
   await fetch('api/auth.php', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': App.csrf },
@@ -2439,6 +2468,8 @@ function setupAppShell() {
   setupSidebarCollapse();
   setupMobileSidebar();
   setupLangDropdown();
+  setupUserMenu();
+  setupPasswordModal();
   qs('#btnLogout')?.addEventListener('click', logout);
   if (isAdminUser()) checkForUpdates();
 }
@@ -2497,6 +2528,7 @@ function setupLangDropdown() {
 
   btn.addEventListener('click', e => {
     e.stopPropagation();
+    closeUserMenu();
     const isOpen = selector.classList.toggle('open');
     if (isOpen) _renderLangOptions(I18n.getAvailableLangs());
   });
@@ -2507,7 +2539,6 @@ function setupLangDropdown() {
 
 function _renderLangOptions(langs) {
   const dropdown = qs('#langDropdown');
-  const selector = qs('#langSelector');
   if (!dropdown) return;
   const current = I18n.getLang();
 
@@ -2520,23 +2551,125 @@ function _renderLangOptions(langs) {
       </div>
       ${lang.code === current ? '<svg class="lang-option-check" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>' : ''}
     </div>
-  `).join('') + (isAdminUser() ? `
-    <div class="lang-option-divider"></div>
-    <a href="#admin" class="lang-option lang-option-manage" onclick="window.openAdminTab?.('system'); return false;">
-      <span class="lang-option-flag">⚙️</span>
-      <div class="lang-option-info">
-        <span class="lang-option-name">${t('lang.manage')}</span>
-      </div>
-    </a>` : '');
+  `).join('');
 
   dropdown.querySelectorAll('.lang-option[data-code]').forEach(el => {
     el.addEventListener('click', async () => {
       const code = el.dataset.code;
-      selector?.classList.remove('open');
+      qs('#langSelector')?.classList.remove('open');
       await I18n.setLang(code);
+      applyAuthUI();
       // Re-render current page so JS-generated content updates
       if (window.App) loadPage(App.currentPage);
     });
+  });
+}
+
+function closeUserMenu() {
+  const menu = qs('#userMenu');
+  const btn = qs('#btnUserMenu');
+  if (!menu || !btn) return;
+  menu.classList.remove('open');
+  btn.setAttribute('aria-expanded', 'false');
+}
+
+function setupUserMenu() {
+  const menu = qs('#userMenu');
+  const btn = qs('#btnUserMenu');
+  const dropdown = qs('#userMenuDropdown');
+  if (!menu || !btn || !dropdown) return;
+
+  btn.addEventListener('click', e => {
+    e.stopPropagation();
+    qs('#langSelector')?.classList.remove('open');
+    const isOpen = menu.classList.toggle('open');
+    btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+  });
+
+  dropdown.addEventListener('click', e => e.stopPropagation());
+  document.addEventListener('click', closeUserMenu);
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeUserMenu();
+  });
+
+  qs('#btnUserMenuPassword')?.addEventListener('click', () => {
+    closeUserMenu();
+    openPasswordModal();
+  });
+
+  qs('#btnUserMenuAdmin')?.addEventListener('click', () => {
+    closeUserMenu();
+    window.openAdminTab?.('accounts');
+  });
+
+  qs('#btnUserMenuLogout')?.addEventListener('click', () => {
+    closeUserMenu();
+    logout();
+  });
+}
+
+function openPasswordModal() {
+  const modal = qs('#passwordModal');
+  const errorEl = qs('#changePasswordError');
+  const form = qs('#changePasswordForm');
+  if (!modal) return;
+
+  form?.reset();
+  if (errorEl) errorEl.textContent = '';
+  modal.classList.add('open');
+  modal.setAttribute('aria-hidden', 'false');
+  qs('#currentPassword')?.focus();
+}
+
+function closePasswordModal() {
+  const modal = qs('#passwordModal');
+  const errorEl = qs('#changePasswordError');
+  if (!modal) return;
+  modal.classList.remove('open');
+  modal.setAttribute('aria-hidden', 'true');
+  if (errorEl) errorEl.textContent = '';
+}
+
+function setupPasswordModal() {
+  const form = qs('#changePasswordForm');
+  if (!form) return;
+
+  qsa('[data-password-close]').forEach(el => {
+    el.addEventListener('click', closePasswordModal);
+  });
+  qs('#btnClosePasswordModal')?.addEventListener('click', closePasswordModal);
+  qs('#btnCancelPasswordModal')?.addEventListener('click', closePasswordModal);
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closePasswordModal();
+  });
+
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    const errorEl = qs('#changePasswordError');
+    const submitBtn = qs('#btnSubmitPasswordModal');
+    if (errorEl) errorEl.textContent = '';
+
+    const payload = {
+      action: 'change_password',
+      current_password: qs('#currentPassword')?.value || '',
+      new_password: qs('#newPassword')?.value || '',
+      confirm_password: qs('#confirmPassword')?.value || '',
+    };
+
+    submitBtn?.setAttribute('disabled', 'disabled');
+    try {
+      const res = await apiFetch('api/account.php', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+      if (!res.success) throw new Error(res.error || t('msg.failed'));
+      toast(t('account.password.success'), 'success');
+      closePasswordModal();
+    } catch (e) {
+      if (errorEl) errorEl.textContent = e.message;
+    } finally {
+      submitBtn?.removeAttribute('disabled');
+    }
   });
 }
 

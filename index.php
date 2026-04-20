@@ -130,11 +130,6 @@ $initials = strtoupper(substr($user, 0, 2));
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
         <span class="nav-label" data-i18n="nav.logs">Nhật ký</span>
       </div>
-      <div class="nav-item admin-only hidden-by-role" data-page="admin" data-label="Quản trị" style="position:relative">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l7 4v5c0 5-3.1 8.7-7 9.9C8.1 20.7 5 17 5 12V7l7-4z"/><path d="M9.5 12.5l1.8 1.8 3.9-4.2"/></svg>
-        <span class="nav-label" data-i18n="nav.admin">Quản trị</span>
-        <span id="adminNavBadge" style="display:none;position:absolute;top:6px;right:8px;width:8px;height:8px;border-radius:50%;background:#ef4444;box-shadow:0 0 0 2px var(--sidebar-bg,#1e293b)"></span>
-      </div>
     </div>
 
     <div class="sidebar-footer">
@@ -215,7 +210,46 @@ $initials = strtoupper(substr($user, 0, 2));
         </button>
         <div class="lang-dropdown" id="langDropdown"></div>
       </div>
-      <div class="header-avatar" id="headerAvatar"><?= htmlspecialchars($initials) ?></div>
+
+      <div class="user-menu" id="userMenu">
+        <button class="user-menu-btn" id="btnUserMenu" type="button" aria-haspopup="true" aria-expanded="false">
+          <span id="adminNavBadge" class="user-menu-badge" style="display:none"></span>
+          <div class="user-menu-meta">
+            <span class="user-menu-name" id="headerUserName"><?= htmlspecialchars($_SESSION['full_name'] ?? $_SESSION['username'] ?? 'Tài khoản') ?></span>
+            <span class="user-menu-role" id="headerUserRole"><?= htmlspecialchars($_SESSION['role'] ?? 'staff') ?></span>
+          </div>
+          <div class="header-avatar" id="headerAvatar"><?= htmlspecialchars($initials) ?></div>
+          <svg class="user-menu-caret" viewBox="0 0 10 6" width="8" height="8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 1l4 4 4-4"/></svg>
+        </button>
+
+        <div class="user-menu-dropdown" id="userMenuDropdown">
+          <div class="user-menu-card">
+            <div class="user-menu-card-avatar" id="userMenuAvatar"><?= htmlspecialchars($initials) ?></div>
+            <div class="user-menu-card-info">
+              <div class="user-menu-card-name" id="userMenuName"><?= htmlspecialchars($_SESSION['full_name'] ?? $_SESSION['username'] ?? 'Tài khoản') ?></div>
+              <div class="user-menu-card-username" id="userMenuUsername">@<?= htmlspecialchars($_SESSION['username'] ?? 'guest') ?></div>
+              <div class="user-menu-card-role" id="userMenuRole"><?= htmlspecialchars($_SESSION['role'] ?? 'staff') ?></div>
+            </div>
+          </div>
+
+          <div class="user-menu-divider"></div>
+
+          <button class="user-menu-item" id="btnUserMenuPassword" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V8a5 5 0 0110 0v3"/><circle cx="12" cy="16" r="1"/></svg>
+            <span data-i18n="user.menu.password">Đổi mật khẩu</span>
+          </button>
+
+          <button class="user-menu-item admin-only hidden-by-role" id="btnUserMenuAdmin" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l7 4v5c0 5-3.1 8.7-7 9.9C8.1 20.7 5 17 5 12V7l7-4z"/><path d="M9.5 12.5l1.8 1.8 3.9-4.2"/></svg>
+            <span data-i18n="user.menu.admin">Quản trị hệ thống</span>
+          </button>
+
+          <button class="user-menu-item" id="btnUserMenuLogout" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
+            <span data-i18n="nav.logout">Đăng xuất</span>
+          </button>
+        </div>
+      </div>
     </div>
 
     <!-- Content -->
@@ -1453,6 +1487,47 @@ $initials = strtoupper(substr($user, 0, 2));
       <div class="customer-detail-loading" data-i18n="customer.detail.loading">Đang tải thông tin khách hàng...</div>
     </div>
   </aside>
+</div>
+
+<div class="password-modal" id="passwordModal" aria-hidden="true">
+  <div class="password-modal-backdrop" data-password-close></div>
+  <div class="password-modal-panel" role="dialog" aria-modal="true" aria-labelledby="passwordModalTitle">
+    <div class="password-modal-head">
+      <div>
+        <div class="password-modal-eyebrow" data-i18n="user.menu.account">Tài khoản</div>
+        <h3 class="password-modal-title" id="passwordModalTitle" data-i18n="account.password.title">Đổi mật khẩu</h3>
+        <p class="password-modal-sub" data-i18n="account.password.sub">Mật khẩu mới sẽ được áp dụng ngay cho lần đăng nhập tiếp theo.</p>
+      </div>
+      <button class="password-close-btn" id="btnClosePasswordModal" type="button" aria-label="Close">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+
+    <form class="password-form" id="changePasswordForm" autocomplete="off">
+      <div class="password-field">
+        <label for="currentPassword" data-i18n="account.password.current">Mật khẩu hiện tại</label>
+        <input id="currentPassword" type="password" autocomplete="current-password" required>
+      </div>
+
+      <div class="password-field">
+        <label for="newPassword" data-i18n="account.password.new">Mật khẩu mới</label>
+        <input id="newPassword" type="password" autocomplete="new-password" required>
+      </div>
+
+      <div class="password-field">
+        <label for="confirmPassword" data-i18n="account.password.confirm">Xác nhận mật khẩu mới</label>
+        <input id="confirmPassword" type="password" autocomplete="new-password" required>
+      </div>
+
+      <div class="password-note" data-i18n="account.password.hint">Tối thiểu 6 ký tự. Nên dùng mật khẩu đủ mạnh và khác mật khẩu cũ.</div>
+      <div class="password-form-error" id="changePasswordError"></div>
+
+      <div class="password-actions">
+        <button class="btn btn-secondary" id="btnCancelPasswordModal" type="button" data-i18n="account.password.cancel">Đóng</button>
+        <button class="btn btn-primary" id="btnSubmitPasswordModal" type="submit" data-i18n="account.password.submit">Cập nhật mật khẩu</button>
+      </div>
+    </form>
+  </div>
 </div>
 
 <!-- Scripts -->
