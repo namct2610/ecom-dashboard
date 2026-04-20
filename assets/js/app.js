@@ -637,6 +637,7 @@ function setupNav() {
 
 function syncHeaderControls(page) {
   document.body.classList.toggle('page-admin-active', page === 'admin');
+  document.body.classList.toggle('page-reconcile-active', page === 'reconcile');
 }
 
 function loadPage(name) {
@@ -674,6 +675,7 @@ function loadPage(name) {
     customers:  loadCustomers,
     traffic:    loadTraffic,
     comparison: loadComparison,
+    reconcile:  loadReconcile,
     heatmaps:   loadHeatmaps,
     upload:     loadUploadHistory,
     logs:       loadLogs,
@@ -850,6 +852,297 @@ async function loadComparison() {
     console.error('loadComparison', e);
     toast(t('toast.load_comparison'), 'error');
   }
+}
+
+async function loadReconcile() {
+  try {
+    const data = await api('gbs-reconciliation.php', { params: {} });
+    renderReconcileStats(data.summary || {});
+    renderReconcileRunMeta(data.generated_at, data.insights || []);
+    renderReconcileFileCards(data.files || {});
+    renderReconcileMappings(data.mappings || {});
+    renderReconcileSummary(data.platforms || {});
+    renderReconcilePlatformSections(data.platforms || {});
+  } catch (e) {
+    console.error('loadReconcile', e);
+    renderReconcileStats({});
+    renderReconcileRunMeta('', [`${t('msg.error')}: ${e.message}`]);
+    renderReconcileFileCards({});
+    renderReconcileMappings({});
+    renderReconcileSummary({});
+    renderReconcilePlatformSections({});
+    toast(t('toast.load_reconcile'), 'error');
+  }
+}
+
+function renderReconcileStats(summary) {
+  const matched = (summary.matched_orders || 0) + (summary.bundle_match_orders || 0);
+  const review = (summary.mismatch_orders || 0) + (summary.missing_in_gbs || 0) + (summary.missing_in_platform || 0);
+
+  const set = (id, value) => {
+    const el = qs(id);
+    if (el) el.textContent = fmtNum(value || 0);
+  };
+
+  set('#reconcile-stat-platform-orders', summary.platform_orders || 0);
+  set('#reconcile-stat-common-orders', summary.common_orders || 0);
+  set('#reconcile-stat-matched-orders', matched);
+  set('#reconcile-stat-review-orders', review);
+}
+
+function renderReconcileRunMeta(generatedAt, insights) {
+  const el = qs('#reconcileRunMeta');
+  if (!el) return;
+
+  const lines = Array.isArray(insights) ? insights.slice(0, 4) : [];
+  el.innerHTML = `
+    <div class="reconcile-run-stamp">Cập nhật: ${generatedAt ? escHtml(fmtDateTime(generatedAt)) : '—'}</div>
+    <div class="reconcile-run-points">
+      ${lines.length
+        ? lines.map(line => `<div class="reconcile-run-point">${escHtml(line)}</div>`).join('')
+        : '<div class="reconcile-run-point">Chưa có ghi chú đối soát.</div>'}
+    </div>
+  `;
+}
+
+function renderReconcileFileCards(files) {
+  const root = qs('#reconcileFileCards');
+  if (!root) return;
+
+  const order = ['gbs', 'shopee', 'lazada', 'tiktokshop'];
+  root.innerHTML = order.map(key => {
+    const file = files[key] || { status: 'missing' };
+    const ready = file.status === 'ready';
+    const label = key === 'gbs' ? 'GBS' : (key === 'tiktokshop' ? 'TikTok Shop' : platformLabel(key));
+    const badgeClass = key === 'gbs' ? 'badge-gbs' : ({ shopee: 'badge-shopee', lazada: 'badge-lazada', tiktokshop: 'badge-tiktokshop' }[key] || '');
+
+    return `
+      <div class="card reconcile-file-card ${ready ? '' : 'is-missing'}">
+        <div class="reconcile-file-head">
+          <span class="badge ${badgeClass}">${escHtml(label)}</span>
+          <span class="reconcile-file-state ${ready ? 'ready' : 'missing'}">${ready ? 'Sẵn sàng' : 'Thiếu file'}</span>
+        </div>
+        <div class="reconcile-file-name">${ready ? escHtml(file.filename || '—') : 'Chưa tìm thấy file'}</div>
+        <div class="reconcile-file-meta">${ready ? `Sửa lúc ${escHtml(fmtDateTime(file.modified_at || ''))}` : 'Đặt file vào thư mục gốc dự án.'}</div>
+        <div class="reconcile-file-stats">
+          <div><strong>${fmtNum(file.order_count || 0)}</strong><span>đơn</span></div>
+          <div><strong>${fmtNum(file.row_count || 0)}</strong><span>dòng</span></div>
+          <div><strong>${escHtml(file.size_label || '0 B')}</strong><span>kích thước</span></div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderReconcileMappings(mappings) {
+  const root = qs('#reconcileMappings');
+  if (!root) return;
+
+  const order = ['shopee', 'lazada', 'tiktokshop'];
+  root.innerHTML = order.map(platform => {
+    const rows = mappings[platform] || [];
+    return `
+      <section class="reconcile-map-card">
+        <div class="reconcile-map-head">
+          ${platformBadge(platform)}
+          <span class="reconcile-map-title">Khớp trường</span>
+        </div>
+        <div class="table-wrapper">
+          <table class="reconcile-map-table">
+            <thead>
+              <tr>
+                <th>Logic</th>
+                <th>GBS</th>
+                <th>File sàn</th>
+                <th>Quy tắc</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rows.map(row => `
+                <tr>
+                  <td class="font-mono">${escHtml(row.field || '')}</td>
+                  <td>${escHtml(row.gbs || '—')}</td>
+                  <td>${escHtml(row.platform || '—')}</td>
+                  <td>${escHtml(row.rule || '—')}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    `;
+  }).join('');
+}
+
+function renderReconcileSummary(platforms) {
+  const tbody = qs('#reconcileSummaryBody');
+  if (!tbody) return;
+
+  const order = ['shopee', 'lazada', 'tiktokshop'];
+  tbody.innerHTML = order.map(platform => {
+    const info = platforms[platform] || { summary: {} };
+    const summary = info.summary || {};
+    const matched = (summary.matched_orders || 0) + (summary.bundle_match_orders || 0);
+    return `
+      <tr>
+        <td>${platformBadge(platform)}</td>
+        <td class="text-right">${fmtNum(summary.platform_orders || 0)}</td>
+        <td class="text-right">${fmtNum(summary.gbs_orders || 0)}</td>
+        <td class="text-right">${fmtNum(summary.common_orders || 0)}</td>
+        <td class="text-right">${fmtNum(matched)}</td>
+        <td class="text-right">${fmtNum(summary.missing_in_gbs || 0)}</td>
+        <td class="text-right">${fmtNum(summary.missing_in_platform || 0)}</td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function renderReconcilePlatformSections(platforms) {
+  const root = qs('#reconcilePlatformSections');
+  if (!root) return;
+
+  const order = ['shopee', 'lazada', 'tiktokshop'];
+  root.innerHTML = order.map(platform => {
+    const info = platforms[platform] || { summary: {}, orders: [] };
+    const summary = info.summary || {};
+    const orders = Array.isArray(info.orders) ? info.orders : [];
+    const matched = (summary.matched_orders || 0) + (summary.bundle_match_orders || 0);
+    const displayOrders = orders.slice(0, 50);
+    const hiddenCount = Math.max(0, orders.length - displayOrders.length);
+
+    return `
+      <section class="card reconcile-platform-block">
+        <div class="reconcile-platform-top">
+          <div>
+            <div class="reconcile-platform-chip">${platformBadge(platform)}</div>
+            <div class="card-title">${escHtml(platform === 'tiktokshop' ? 'TikTok Shop' : platformLabel(platform))}</div>
+            <div class="card-subtitle">Đối soát theo đơn, hiển thị tối đa 50 dòng đầu sau khi sắp xếp theo mức độ cần xử lý.</div>
+          </div>
+          <div class="reconcile-mini-metrics">
+            <div class="reconcile-mini-metric"><span>Đơn sàn</span><strong>${fmtNum(summary.platform_orders || 0)}</strong></div>
+            <div class="reconcile-mini-metric"><span>Đơn khớp</span><strong>${fmtNum(matched)}</strong></div>
+            <div class="reconcile-mini-metric"><span>Thiếu trong GBS</span><strong>${fmtNum(summary.missing_in_gbs || 0)}</strong></div>
+            <div class="reconcile-mini-metric"><span>Thiếu trong file sàn</span><strong>${fmtNum(summary.missing_in_platform || 0)}</strong></div>
+          </div>
+        </div>
+        <div class="table-wrapper">
+          <table class="reconcile-order-table">
+            <thead>
+              <tr>
+                <th>Mã đơn</th>
+                <th>Kết quả</th>
+                <th>GBS</th>
+                <th>File sàn</th>
+                <th>SL</th>
+                <th>NMV</th>
+                <th>Ghi chú</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${displayOrders.length
+                ? displayOrders.map(orderRow => renderReconcileOrderRow(orderRow)).join('')
+                : `<tr><td colspan="7" class="reconcile-empty-cell">Không có dữ liệu để hiển thị.</td></tr>`}
+            </tbody>
+          </table>
+        </div>
+        ${hiddenCount > 0 ? `<div class="reconcile-hidden-note">Còn ${fmtNum(hiddenCount)} đơn chưa hiển thị trong bảng này.</div>` : ''}
+      </section>
+    `;
+  }).join('');
+}
+
+function renderReconcileOrderRow(order) {
+  const qtyChanged = Math.abs(Number(order.qty_diff || 0)) >= 0.001;
+  const nmvChanged = Math.abs(Number(order.nmv_diff || 0)) >= 0.05;
+
+  return `
+    <tr class="reconcile-order-row status-${escHtml(order.status || 'matched')}">
+      <td class="font-mono reconcile-order-id">${escHtml(order.order_id || '')}</td>
+      <td>${reconcileStatusBadge(order.status || 'matched')}</td>
+      <td>${renderReconcileSkuList(order.gbs_skus || [], 'gbs')}</td>
+      <td>${renderReconcileSkuList(order.platform_skus || [], 'platform')}</td>
+      <td>
+        <div class="reconcile-metric-pair">
+          <span class="reconcile-metric-line">GBS: <strong>${fmtQtyExact(order.gbs_qty || 0)}</strong></span>
+          <span class="reconcile-metric-line">Sàn: <strong>${fmtQtyExact(order.platform_qty || 0)}</strong></span>
+          <span class="reconcile-diff ${qtyChanged ? 'is-alert' : ''}">Δ ${fmtQtyExact(order.qty_diff || 0)}</span>
+        </div>
+      </td>
+      <td>
+        <div class="reconcile-metric-pair">
+          <span class="reconcile-metric-line">GBS: <strong>${fmtVNDExact(order.gbs_nmv || 0)}</strong></span>
+          <span class="reconcile-metric-line">Sàn: <strong>${fmtVNDExact(order.platform_nmv || 0)}</strong></span>
+          <span class="reconcile-diff ${nmvChanged ? 'is-alert' : ''}">Δ ${fmtVNDExact(order.nmv_diff || 0)}</span>
+        </div>
+      </td>
+      <td>
+        <div class="reconcile-note">${escHtml(order.note || '—')}</div>
+        <div class="reconcile-note-meta">
+          ${order.gbs_statuses?.length ? `GBS: ${escHtml(order.gbs_statuses.join(', '))}` : 'GBS: —'}
+          <br>
+          ${order.platform_statuses?.length ? `Sàn: ${escHtml(order.platform_statuses.join(', '))}` : 'Sàn: —'}
+        </div>
+      </td>
+    </tr>
+  `;
+}
+
+function renderReconcileSkuList(items, source) {
+  if (!Array.isArray(items) || !items.length) {
+    return '<span class="reconcile-empty-inline">—</span>';
+  }
+
+  return `
+    <div class="reconcile-sku-stack">
+      ${items.slice(0, 4).map(item => {
+        const rawSku = item.sku || '—';
+        const comparisonSku = item.comparison_sku && item.comparison_sku !== rawSku ? ` → ${item.comparison_sku}` : '';
+        const qty = source === 'platform'
+          ? (item.comparable_qty ?? item.quantity ?? 0)
+          : (item.quantity ?? 0);
+        const extra = source === 'platform' && Number(item.combo_multiplier || 1) > 1
+          ? ` <span class="reconcile-sku-extra">combo x${fmtQtyExact(item.combo_multiplier)}</span>`
+          : '';
+
+        return `
+          <div class="reconcile-sku-pill">
+            <span class="font-mono">${escHtml(rawSku)}${escHtml(comparisonSku)}</span>
+            <span class="reconcile-sku-qty">× ${fmtQtyExact(qty)}</span>${extra}
+          </div>
+        `;
+      }).join('')}
+      ${items.length > 4 ? `<div class="reconcile-more">+${fmtNum(items.length - 4)} dòng nữa</div>` : ''}
+    </div>
+  `;
+}
+
+function reconcileStatusBadge(status) {
+  const map = {
+    matched: ['badge-completed', 'Khớp'],
+    order_match: ['badge-delivered', 'Khớp đơn'],
+    bundle_match: ['badge-delivered', 'Khớp combo'],
+    mismatch: ['badge-cancelled', 'Lệch'],
+    missing_in_gbs: ['badge-pending', 'Thiếu GBS'],
+    missing_in_platform: ['badge-cancelled', 'Thiếu file sàn'],
+  };
+  const [cls, label] = map[status] || ['badge-pending', status];
+  return `<span class="badge ${cls}">${escHtml(label)}</span>`;
+}
+
+function fmtVNDExact(value) {
+  const num = Number(value) || 0;
+  return num.toLocaleString('vi-VN', {
+    minimumFractionDigits: Number.isInteger(num) ? 0 : 2,
+    maximumFractionDigits: 2,
+  }) + ' ₫';
+}
+
+function fmtQtyExact(value) {
+  const num = Number(value) || 0;
+  return num.toLocaleString('vi-VN', {
+    minimumFractionDigits: Number.isInteger(num) ? 0 : 0,
+    maximumFractionDigits: 4,
+  });
 }
 
 async function loadHeatmaps() {
@@ -2599,6 +2892,10 @@ function setupShopeeConnectPage() {
   qs('#btnShopeeRefresh')?.addEventListener('click', loadShopeeConnectPage);
 }
 
+function setupReconcilePage() {
+  qs('#btnRefreshReconcile')?.addEventListener('click', loadReconcile);
+}
+
 // ── Init ──────────────────────────────────────────────────────────────────
 let _appShellReady = false;
 
@@ -2613,6 +2910,7 @@ function setupAppShell() {
   setupConnectPage();
   setupLazadaConnectPage();
   setupShopeeConnectPage();
+  setupReconcilePage();
   setupAdminPage();
   setupCustomerDetailDrawer();
   setupSidebarCollapse();
@@ -2636,7 +2934,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   setupAppShell();
   await loadPeriods();
   const initPage = location.hash.replace('#', '') || 'overview';
-  loadPage(['overview','orders','products','customers','traffic','comparison','heatmaps','upload','logs','connect','settings','admin'].includes(initPage) ? initPage : 'overview');
+  loadPage(['overview','orders','products','customers','traffic','comparison','reconcile','heatmaps','upload','logs','connect','settings','admin'].includes(initPage) ? initPage : 'overview');
 });
 
 function setupMobileSidebar() {
