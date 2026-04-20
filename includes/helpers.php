@@ -28,6 +28,7 @@ function session_user_payload(): ?array
         'id'        => isset($_SESSION['user_id']) ? (int) $_SESSION['user_id'] : null,
         'username'  => (string) ($_SESSION['username'] ?? ''),
         'full_name' => (string) ($_SESSION['full_name'] ?? ''),
+        'avatar_path' => (string) ($_SESSION['avatar_path'] ?? ''),
         'role'      => (string) ($_SESSION['role'] ?? 'staff'),
     ];
 }
@@ -44,6 +45,7 @@ function store_user_session(array $user, bool $regenerate = true): void
     $_SESSION['user_id']   = isset($user['id']) ? (int) $user['id'] : null;
     $_SESSION['username']  = (string) ($user['username'] ?? '');
     $_SESSION['full_name'] = (string) ($user['full_name'] ?? '');
+    $_SESSION['avatar_path'] = (string) ($user['avatar_path'] ?? '');
     $_SESSION['role']      = (string) ($user['role'] ?? 'staff');
     $_SESSION['csrf_token'] ??= bin2hex(random_bytes(32));
 }
@@ -89,7 +91,7 @@ function current_user(): ?array
     try {
         $pdo  = db($config);
         $stmt = $pdo->prepare("
-            SELECT id, username, COALESCE(full_name, '') AS full_name, role, is_active
+            SELECT id, username, COALESCE(full_name, '') AS full_name, COALESCE(avatar_path, '') AS avatar_path, role, is_active
             FROM users
             WHERE username = ?
             LIMIT 1

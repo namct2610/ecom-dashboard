@@ -72,6 +72,20 @@ function getRoleLabel(role = App.user?.role || 'staff') {
   return t(`admin.role.${role}`) || role;
 }
 
+function resolveAvatarUrl(path) {
+  return path ? encodeURI(path).replace(/#/g, '%23') : '';
+}
+
+function paintAvatar(el, name, avatarPath = '') {
+  if (!el) return;
+  const initials = getUserInitials(name);
+  const imageUrl = resolveAvatarUrl(avatarPath);
+  el.textContent = imageUrl ? '' : initials;
+  el.style.backgroundImage = imageUrl ? `url("${imageUrl}")` : '';
+  el.classList.toggle('has-image', Boolean(imageUrl));
+  el.setAttribute('aria-label', imageUrl ? `${name} avatar` : initials);
+}
+
 function platformLabel(p) {
   return { shopee: 'Shopee', lazada: 'Lazada', tiktokshop: 'TikTok' }[p] || p;
 }
@@ -137,6 +151,7 @@ async function apiFetch(url, opts = {}) {
 function showAuth() {
   closeCustomerDetail();
   closeUserMenu();
+  closeProfileModal();
   closePasswordModal();
   qs('#auth-screen').classList.remove('hidden');
   qs('#app').classList.add('hidden');
@@ -149,13 +164,11 @@ function hideAuth() {
 
 function applyAuthUI() {
   const displayName = getUserDisplayName();
-  const initials = getUserInitials(displayName);
+  const avatarPath = App.user?.avatar_path || '';
 
-  const avatar = qs('#headerAvatar');
-  if (avatar) avatar.textContent = initials;
-
-  const menuAvatar = qs('#userMenuAvatar');
-  if (menuAvatar) menuAvatar.textContent = initials;
+  paintAvatar(qs('#headerAvatar'), displayName, avatarPath);
+  paintAvatar(qs('#userMenuAvatar'), displayName, avatarPath);
+  paintAvatar(qs('#profileAvatarPreview'), displayName, avatarPath);
 
   const headerUserName = qs('#headerUserName');
   if (headerUserName) headerUserName.textContent = displayName;
@@ -172,6 +185,14 @@ function applyAuthUI() {
   const userMenuRole = qs('#userMenuRole');
   if (userMenuRole) userMenuRole.textContent = getRoleLabel();
 
+  const profileUsername = qs('#profileUsername');
+  if (profileUsername) profileUsername.value = App.user?.username || '';
+
+  const profileFullName = qs('#profileFullName');
+  if (profileFullName && document.activeElement !== profileFullName) {
+    profileFullName.value = App.user?.full_name || '';
+  }
+
   qsa('.admin-only').forEach(el => {
     el.classList.toggle('hidden-by-role', !isAdminUser());
   });
@@ -181,14 +202,10 @@ function applyAuthUI() {
     roleEl.textContent = isAdminUser() ? 'Admin' : 'Staff';
   }
 
-  if (!isAdminUser()) {
-    const badge = qs('#adminNavBadge');
-    if (badge) badge.style.display = 'none';
-  }
+  const badge = qs('#adminNavBadge');
+  if (badge) badge.style.display = isAdminUser() ? (badge.style.display || 'none') : 'none';
 
-  if (qs('#langDropdown')) {
-    _renderLangOptions(I18n.getAvailableLangs());
-  }
+  renderUserLanguageOptions(I18n.getAvailableLangs());
 }
 
 async function initAuth() {
@@ -249,6 +266,7 @@ function setupLogin() {
 
 async function logout() {
   closeUserMenu();
+  closeProfileModal();
   closePasswordModal();
   await fetch('api/auth.php', {
     method: 'POST',
@@ -2469,6 +2487,7 @@ function setupAppShell() {
   setupMobileSidebar();
   setupLangDropdown();
   setupUserMenu();
+  setupProfileModal();
   setupPasswordModal();
   qs('#btnLogout')?.addEventListener('click', logout);
   if (isAdminUser()) checkForUpdates();
@@ -2516,50 +2535,35 @@ function setupMobileSidebar() {
 }
 
 function setupLangDropdown() {
-  const selector = qs('#langSelector');
-  const btn      = qs('#btnLang');
-  const dropdown = qs('#langDropdown');
-  if (!selector || !btn || !dropdown) return;
-
-  // Load available languages and build dropdown
   I18n.loadAvailableLangs().then(langs => {
-    _renderLangOptions(langs);
+    renderUserLanguageOptions(langs);
   });
-
-  btn.addEventListener('click', e => {
-    e.stopPropagation();
-    closeUserMenu();
-    const isOpen = selector.classList.toggle('open');
-    if (isOpen) _renderLangOptions(I18n.getAvailableLangs());
-  });
-
-  document.addEventListener('click', () => selector.classList.remove('open'));
-  dropdown.addEventListener('click', e => e.stopPropagation());
 }
 
-function _renderLangOptions(langs) {
-  const dropdown = qs('#langDropdown');
-  if (!dropdown) return;
-  const current = I18n.getLang();
+function renderUserLanguageOptions(langs) {
+  const list = qs('#userMenuLangList');
+  const currentBadge = qs('#userMenuLangCurrent');
+  if (!list) return;
 
-  dropdown.innerHTML = langs.map(lang => `
-    <div class="lang-option${lang.code === current ? ' active' : ''}" data-code="${lang.code}">
-      <span class="lang-option-flag">${lang.flag}</span>
-      <div class="lang-option-info">
-        <span class="lang-option-name">${lang.name}</span>
-        <span class="lang-option-code">${lang.code.toUpperCase()}</span>
-      </div>
-      ${lang.code === current ? '<svg class="lang-option-check" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>' : ''}
-    </div>
+  const current = I18n.getLang();
+  const currentMeta = (langs || []).find(lang => lang.code === current);
+  if (currentBadge) {
+    currentBadge.textContent = currentMeta ? `${currentMeta.flag} ${current.toUpperCase()}` : current.toUpperCase();
+  }
+
+  list.innerHTML = (langs || []).map(lang => `
+    <button class="user-lang-option${lang.code === current ? ' active' : ''}" type="button" data-code="${lang.code}">
+      <span class="user-lang-option-flag">${lang.flag}</span>
+      <span class="user-lang-option-name">${lang.name}</span>
+      <span class="user-lang-option-code">${lang.code.toUpperCase()}</span>
+    </button>
   `).join('');
 
-  dropdown.querySelectorAll('.lang-option[data-code]').forEach(el => {
+  list.querySelectorAll('.user-lang-option[data-code]').forEach(el => {
     el.addEventListener('click', async () => {
       const code = el.dataset.code;
-      qs('#langSelector')?.classList.remove('open');
       await I18n.setLang(code);
       applyAuthUI();
-      // Re-render current page so JS-generated content updates
       if (window.App) loadPage(App.currentPage);
     });
   });
@@ -2581,7 +2585,6 @@ function setupUserMenu() {
 
   btn.addEventListener('click', e => {
     e.stopPropagation();
-    qs('#langSelector')?.classList.remove('open');
     const isOpen = menu.classList.toggle('open');
     btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
   });
@@ -2592,9 +2595,19 @@ function setupUserMenu() {
     if (e.key === 'Escape') closeUserMenu();
   });
 
+  qs('#btnUserMenuProfile')?.addEventListener('click', () => {
+    closeUserMenu();
+    openProfileModal();
+  });
+
   qs('#btnUserMenuPassword')?.addEventListener('click', () => {
     closeUserMenu();
     openPasswordModal();
+  });
+
+  qs('#btnUserMenuLangSettings')?.addEventListener('click', () => {
+    closeUserMenu();
+    window.openAdminTab?.('system');
   });
 
   qs('#btnUserMenuAdmin')?.addEventListener('click', () => {
@@ -2605,6 +2618,123 @@ function setupUserMenu() {
   qs('#btnUserMenuLogout')?.addEventListener('click', () => {
     closeUserMenu();
     logout();
+  });
+}
+
+function openProfileModal() {
+  const modal = qs('#profileModal');
+  const errorEl = qs('#profileFormError');
+  if (!modal) return;
+
+  qs('#profileForm')?.reset();
+  qs('#profileFullName').value = App.user?.full_name || '';
+  qs('#profileUsername').value = App.user?.username || '';
+  qs('#profileAvatarFile').value = '';
+  modal.dataset.removeAvatar = '0';
+  if (errorEl) errorEl.textContent = '';
+  paintAvatar(qs('#profileAvatarPreview'), getUserDisplayName(), App.user?.avatar_path || '');
+  modal.classList.add('open');
+  modal.setAttribute('aria-hidden', 'false');
+  qs('#profileFullName')?.focus();
+}
+
+function closeProfileModal() {
+  const modal = qs('#profileModal');
+  const errorEl = qs('#profileFormError');
+  if (!modal) return;
+  modal.classList.remove('open');
+  modal.setAttribute('aria-hidden', 'true');
+  modal.dataset.removeAvatar = '0';
+  if (errorEl) errorEl.textContent = '';
+}
+
+function updateProfileAvatarPreview(file = null) {
+  const preview = qs('#profileAvatarPreview');
+  if (!preview) return;
+
+  if (!file) {
+    paintAvatar(preview, qs('#profileFullName')?.value || getUserDisplayName(), App.user?.avatar_path || '');
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    preview.textContent = '';
+    preview.classList.add('has-image');
+    preview.style.backgroundImage = `url("${reader.result}")`;
+  };
+  reader.readAsDataURL(file);
+}
+
+function setupProfileModal() {
+  const modal = qs('#profileModal');
+  const form = qs('#profileForm');
+  const fileInput = qs('#profileAvatarFile');
+  if (!modal || !form || !fileInput) return;
+
+  qsa('[data-profile-close]').forEach(el => {
+    el.addEventListener('click', closeProfileModal);
+  });
+  qs('#btnCloseProfileModal')?.addEventListener('click', closeProfileModal);
+  qs('#btnCancelProfileModal')?.addEventListener('click', closeProfileModal);
+  qs('#btnChooseAvatar')?.addEventListener('click', () => fileInput.click());
+  qs('#btnRemoveAvatar')?.addEventListener('click', () => {
+    fileInput.value = '';
+    modal.dataset.removeAvatar = '1';
+    paintAvatar(qs('#profileAvatarPreview'), qs('#profileFullName')?.value || getUserDisplayName(), '');
+  });
+
+  qs('#profileFullName')?.addEventListener('input', () => {
+    const file = fileInput.files?.[0];
+    if (file) return;
+    const shouldUseCurrent = modal.dataset.removeAvatar !== '1';
+    paintAvatar(qs('#profileAvatarPreview'), qs('#profileFullName')?.value || getUserDisplayName(), shouldUseCurrent ? (App.user?.avatar_path || '') : '');
+  });
+
+  fileInput.addEventListener('change', () => {
+    const file = fileInput.files?.[0] || null;
+    modal.dataset.removeAvatar = file ? '0' : modal.dataset.removeAvatar;
+    updateProfileAvatarPreview(file);
+  });
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeProfileModal();
+  });
+
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    const errorEl = qs('#profileFormError');
+    const submitBtn = qs('#btnSubmitProfileModal');
+    if (errorEl) errorEl.textContent = '';
+
+    const fd = new FormData();
+    fd.append('action', 'update_profile');
+    fd.append('_csrf', App.csrf);
+    fd.append('full_name', qs('#profileFullName')?.value || '');
+    fd.append('remove_avatar', modal.dataset.removeAvatar === '1' ? '1' : '');
+    if (fileInput.files?.[0]) {
+      fd.append('avatar_file', fileInput.files[0]);
+    }
+
+    submitBtn?.setAttribute('disabled', 'disabled');
+    try {
+      const res = await fetch('api/account.php', {
+        method: 'POST',
+        body: fd,
+      }).then(r => r.json());
+      if (!res.success) throw new Error(res.error || t('msg.failed'));
+      App.user = { ...(App.user || {}), ...(res.user || {}) };
+      applyAuthUI();
+      if (App.currentPage === 'admin' && App.adminTab === 'accounts') {
+        loadAdminUsers();
+      }
+      toast(t('account.profile.success'), 'success');
+      closeProfileModal();
+    } catch (e) {
+      if (errorEl) errorEl.textContent = e.message;
+    } finally {
+      submitBtn?.removeAttribute('disabled');
+    }
   });
 }
 
@@ -2685,7 +2815,7 @@ async function setupLangSettings() {
   async function refresh() {
     list.innerHTML = `<div style="text-align:center;padding:16px;color:var(--text-muted);font-size:13px">${t('msg.loading')}</div>`;
     const langs = await I18n.loadAvailableLangs();
-    _renderLangOptions(langs); // keep dropdown in sync
+    renderUserLanguageOptions(langs); // keep user menu in sync
 
     list.innerHTML = `
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px">

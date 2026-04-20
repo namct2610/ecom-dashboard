@@ -478,6 +478,7 @@ function initSchema(PDO $pdo): void
         id INT AUTO_INCREMENT PRIMARY KEY,
         username VARCHAR(100) NOT NULL,
         full_name VARCHAR(255) NULL,
+        avatar_path VARCHAR(500) NULL,
         password_hash VARCHAR(255) NOT NULL,
         role ENUM('admin','staff') NOT NULL DEFAULT 'staff',
         is_active TINYINT(1) NOT NULL DEFAULT 1,

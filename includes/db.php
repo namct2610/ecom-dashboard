@@ -47,6 +47,13 @@ function ensure_schema(PDO $pdo, array $config = []): void
         ensure_table_index($pdo, 'orders', 'idx_city_district_status', "CREATE INDEX idx_city_district_status ON orders (shipping_city, shipping_district, normalized_status)");
     }
 
+    if (in_array('users', $tables, true)) {
+        $avatarCol = $pdo->query("SHOW COLUMNS FROM users LIKE 'avatar_path'")->fetchAll();
+        if (empty($avatarCol)) {
+            $pdo->exec("ALTER TABLE users ADD COLUMN avatar_path VARCHAR(500) NULL AFTER full_name");
+        }
+    }
+
     // Create tiktok_connections if missing
     if (!in_array('tiktok_connections', $tables, true)) {
         $pdo->exec("CREATE TABLE IF NOT EXISTS tiktok_connections (
@@ -129,6 +136,7 @@ function ensure_schema(PDO $pdo, array $config = []): void
             id INT AUTO_INCREMENT PRIMARY KEY,
             username VARCHAR(100) NOT NULL,
             full_name VARCHAR(255) NULL,
+            avatar_path VARCHAR(500) NULL,
             password_hash VARCHAR(255) NOT NULL,
             role ENUM('admin','staff') NOT NULL DEFAULT 'staff',
             is_active TINYINT(1) NOT NULL DEFAULT 1,

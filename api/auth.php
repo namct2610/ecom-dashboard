@@ -39,7 +39,7 @@ if ($method === 'POST') {
 
     $pdo  = db($config);
     $stmt = $pdo->prepare("
-        SELECT id, username, COALESCE(full_name, '') AS full_name, password_hash, role, is_active
+        SELECT id, username, COALESCE(full_name, '') AS full_name, COALESCE(avatar_path, '') AS avatar_path, password_hash, role, is_active
         FROM users
         WHERE username = ?
         LIMIT 1
@@ -69,6 +69,7 @@ if ($method === 'POST') {
             'id'        => (int) $user['id'],
             'username'  => (string) $user['username'],
             'full_name' => (string) ($user['full_name'] ?? ''),
+            'avatar_path' => (string) ($user['avatar_path'] ?? ''),
             'role'      => (string) ($user['role'] ?? 'staff'),
         ],
         'username' => $username,

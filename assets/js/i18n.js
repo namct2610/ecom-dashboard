@@ -111,7 +111,12 @@ const I18n = (() => {
     'common.low':'Ít','common.high':'Nhiều',
     'login.sub':'Đăng nhập để tiếp tục','login.user':'Tên đăng nhập',
     'login.pass':'Mật khẩu','login.btn':'Đăng nhập',
-    'user.menu.account':'Tài khoản','user.menu.admin':'Quản trị hệ thống','user.menu.password':'Đổi mật khẩu',
+    'user.menu.account':'Tài khoản','user.menu.profile':'Hồ sơ tài khoản','user.menu.admin':'Quản trị hệ thống','user.menu.password':'Đổi mật khẩu',
+    'user.menu.language':'Ngôn ngữ hiển thị','user.menu.language_settings':'Cài đặt ngôn ngữ',
+    'account.profile.title':'Hồ sơ tài khoản','account.profile.sub':'Bạn có thể tự cập nhật tên hiển thị và ảnh đại diện dùng trong dashboard.',
+    'account.profile.full_name':'Tên hiển thị','account.profile.username':'Tên đăng nhập','account.profile.choose_avatar':'Chọn avatar',
+    'account.profile.remove_avatar':'Xóa avatar','account.profile.avatar_hint':'Hỗ trợ JPG, PNG, WEBP tối đa 2MB.',
+    'account.profile.submit':'Lưu hồ sơ','account.profile.success':'Đã cập nhật hồ sơ tài khoản.',
     'account.password.title':'Đổi mật khẩu','account.password.sub':'Mật khẩu mới sẽ được áp dụng ngay cho lần đăng nhập tiếp theo.',
     'account.password.current':'Mật khẩu hiện tại','account.password.new':'Mật khẩu mới','account.password.confirm':'Xác nhận mật khẩu mới',
     'account.password.hint':'Tối thiểu 6 ký tự. Nên dùng mật khẩu đủ mạnh và khác mật khẩu cũ.',
@@ -317,8 +322,10 @@ const I18n = (() => {
     const meta     = _availableLangs.find(l => l.code === _lang) || { flag: '🌐', code: _lang };
     const flagEl   = document.getElementById('langFlag');
     const codeEl   = document.getElementById('langCode');
+    const currentEl = document.getElementById('userMenuLangCurrent');
     if (flagEl) flagEl.textContent = meta.flag;
     if (codeEl) codeEl.textContent = _lang.toUpperCase();
+    if (currentEl) currentEl.textContent = `${meta.flag} ${_lang.toUpperCase()}`;
   }
 
   return { init, t, setLang, getLang, loadLanguage, loadAvailableLangs, getAvailableLangs, applyTranslations };
