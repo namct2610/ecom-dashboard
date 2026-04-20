@@ -10,7 +10,7 @@ require_auth();
 require_method('GET');
 
 try {
-    $service = new GbsReconciliationService(dirname(__DIR__));
+    $service = new GbsReconciliationService(dirname(__DIR__), $config);
     json_response($service->compare());
 } catch (\Throwable $e) {
     json_exception($e, 'Không thể đối soát file GBS với file sàn.');
