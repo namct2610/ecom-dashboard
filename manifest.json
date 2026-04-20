@@ -1,7 +1,7 @@
 {
-  "version": "1.2.10",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.2.10/release/dashboard-v3-1.2.10.zip",
-  "changelog": "- Header: chuyển menu quản trị vào dropdown avatar ở góc phải, bỏ entry riêng trong sidebar\n- Tài khoản: bổ sung đổi mật khẩu tự phục vụ cho tất cả user với kiểm tra mật khẩu hiện tại\n- Giao diện: thêm user menu và modal bảo mật đồng bộ với khu quản trị hiện có",
+  "version": "1.2.11",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.2.11/release/dashboard-v3-1.2.11.zip",
+  "changelog": "- Tài khoản: user có thể tự đổi tên hiển thị và upload/xóa avatar trong menu avatar\n- Header: chuyển luôn lựa chọn ngôn ngữ và cài đặt ngôn ngữ vào menu avatar\n- Quản trị: chỉnh lại hover bảng tài khoản để nền liền mạch trên cả dòng",
   "min_php": "8.1",
   "released_at": "2026-04-20"
 }

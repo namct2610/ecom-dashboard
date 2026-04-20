@@ -202,15 +202,6 @@ $initials = strtoupper(substr($user, 0, 2));
         </div>
       </div>
 
-      <div class="lang-selector" id="langSelector">
-        <button class="lang-btn" id="btnLang" title="Switch language">
-          <span class="lang-flag" id="langFlag">🇻🇳</span>
-          <span class="lang-code" id="langCode">VI</span>
-          <svg class="lang-caret" viewBox="0 0 10 6" width="8" height="8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 1l4 4 4-4"/></svg>
-        </button>
-        <div class="lang-dropdown" id="langDropdown"></div>
-      </div>
-
       <div class="user-menu" id="userMenu">
         <button class="user-menu-btn" id="btnUserMenu" type="button" aria-haspopup="true" aria-expanded="false">
           <span id="adminNavBadge" class="user-menu-badge" style="display:none"></span>
@@ -234,15 +225,35 @@ $initials = strtoupper(substr($user, 0, 2));
 
           <div class="user-menu-divider"></div>
 
+          <button class="user-menu-item" id="btnUserMenuProfile" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21a8 8 0 00-16 0"/><circle cx="12" cy="8" r="4"/></svg>
+            <span data-i18n="user.menu.profile">Hồ sơ tài khoản</span>
+          </button>
+
           <button class="user-menu-item" id="btnUserMenuPassword" type="button">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V8a5 5 0 0110 0v3"/><circle cx="12" cy="16" r="1"/></svg>
             <span data-i18n="user.menu.password">Đổi mật khẩu</span>
+          </button>
+
+          <div class="user-menu-divider"></div>
+
+          <div class="user-menu-lang-head">
+            <span data-i18n="user.menu.language">Ngôn ngữ hiển thị</span>
+            <span class="user-menu-lang-current" id="userMenuLangCurrent">VI</span>
+          </div>
+          <div class="user-menu-lang-list" id="userMenuLangList"></div>
+
+          <button class="user-menu-item admin-only hidden-by-role" id="btnUserMenuLangSettings" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M12 4h9"/><path d="M4 9h16"/><path d="M4 15h16"/><path d="M8 4v16"/></svg>
+            <span data-i18n="user.menu.language_settings">Cài đặt ngôn ngữ</span>
           </button>
 
           <button class="user-menu-item admin-only hidden-by-role" id="btnUserMenuAdmin" type="button">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l7 4v5c0 5-3.1 8.7-7 9.9C8.1 20.7 5 17 5 12V7l7-4z"/><path d="M9.5 12.5l1.8 1.8 3.9-4.2"/></svg>
             <span data-i18n="user.menu.admin">Quản trị hệ thống</span>
           </button>
+
+          <div class="user-menu-divider"></div>
 
           <button class="user-menu-item" id="btnUserMenuLogout" type="button">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
@@ -1487,6 +1498,51 @@ $initials = strtoupper(substr($user, 0, 2));
       <div class="customer-detail-loading" data-i18n="customer.detail.loading">Đang tải thông tin khách hàng...</div>
     </div>
   </aside>
+</div>
+
+<div class="password-modal profile-modal" id="profileModal" aria-hidden="true">
+  <div class="password-modal-backdrop" data-profile-close></div>
+  <div class="password-modal-panel" role="dialog" aria-modal="true" aria-labelledby="profileModalTitle">
+    <div class="password-modal-head">
+      <div>
+        <div class="password-modal-eyebrow" data-i18n="user.menu.account">Tài khoản</div>
+        <h3 class="password-modal-title" id="profileModalTitle" data-i18n="account.profile.title">Hồ sơ tài khoản</h3>
+        <p class="password-modal-sub" data-i18n="account.profile.sub">Bạn có thể tự cập nhật tên hiển thị và ảnh đại diện dùng trong dashboard.</p>
+      </div>
+      <button class="password-close-btn" id="btnCloseProfileModal" type="button" aria-label="Close">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+
+    <form class="password-form" id="profileForm" autocomplete="off">
+      <div class="profile-avatar-section">
+        <div class="profile-avatar-preview" id="profileAvatarPreview"><?= htmlspecialchars($initials) ?></div>
+        <div class="profile-avatar-actions">
+          <input id="profileAvatarFile" type="file" accept="image/png,image/jpeg,image/webp" hidden>
+          <button class="btn btn-secondary" id="btnChooseAvatar" type="button" data-i18n="account.profile.choose_avatar">Chọn avatar</button>
+          <button class="btn btn-secondary" id="btnRemoveAvatar" type="button" data-i18n="account.profile.remove_avatar">Xóa avatar</button>
+          <div class="password-note" data-i18n="account.profile.avatar_hint">Hỗ trợ JPG, PNG, WEBP tối đa 2MB.</div>
+        </div>
+      </div>
+
+      <div class="password-field">
+        <label for="profileFullName" data-i18n="account.profile.full_name">Tên hiển thị</label>
+        <input id="profileFullName" type="text" maxlength="255" autocomplete="name">
+      </div>
+
+      <div class="password-field">
+        <label for="profileUsername" data-i18n="account.profile.username">Tên đăng nhập</label>
+        <input id="profileUsername" type="text" disabled>
+      </div>
+
+      <div class="password-form-error" id="profileFormError"></div>
+
+      <div class="password-actions">
+        <button class="btn btn-secondary" id="btnCancelProfileModal" type="button" data-i18n="account.password.cancel">Đóng</button>
+        <button class="btn btn-primary" id="btnSubmitProfileModal" type="submit" data-i18n="account.profile.submit">Lưu hồ sơ</button>
+      </div>
+    </form>
+  </div>
 </div>
 
 <div class="password-modal" id="passwordModal" aria-hidden="true">

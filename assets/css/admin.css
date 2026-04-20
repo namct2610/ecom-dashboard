@@ -246,12 +246,31 @@
   transition: transform 0.16s ease, box-shadow 0.16s ease;
 }
 
+.admin-user-table tbody td {
+  transition: background 0.16s ease, border-color 0.16s ease;
+}
+
+.admin-user-table tbody tr:hover td,
+.admin-user-table tbody tr.is-selected td {
+  border-bottom-color: transparent;
+}
+
 .admin-user-table tbody tr:hover td {
-  background: linear-gradient(90deg, rgba(239, 246, 255, 0.86), rgba(248, 250, 252, 0.95));
+  background: #eff6ff;
 }
 
 .admin-user-table tbody tr.is-selected td {
   background: linear-gradient(90deg, rgba(219, 234, 254, 0.9), rgba(239, 246, 255, 0.96));
+}
+
+.admin-user-table tbody tr td:first-child {
+  border-top-left-radius: 14px;
+  border-bottom-left-radius: 14px;
+}
+
+.admin-user-table tbody tr td:last-child {
+  border-top-right-radius: 14px;
+  border-bottom-right-radius: 14px;
 }
 
 .admin-user-main {

@@ -11,7 +11,7 @@ try {
 
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         $users = $pdo->query("
-            SELECT id, username, COALESCE(full_name, '') AS full_name, role, is_active,
+            SELECT id, username, COALESCE(full_name, '') AS full_name, COALESCE(avatar_path, '') AS avatar_path, role, is_active,
                    last_login_at, created_at, updated_at
             FROM users
             ORDER BY role = 'admin' DESC, is_active DESC, username ASC
@@ -39,6 +39,7 @@ try {
                     'id'            => (int) $user['id'],
                     'username'      => (string) $user['username'],
                     'full_name'     => (string) $user['full_name'],
+                    'avatar_path'   => (string) $user['avatar_path'],
                     'role'          => (string) $user['role'],
                     'is_active'     => (int) $user['is_active'] === 1,
                     'last_login_at' => $user['last_login_at'],
