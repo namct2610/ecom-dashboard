@@ -776,11 +776,104 @@ $initials = strtoupper(substr($user, 0, 2));
           </button>
         </div>
 
+        <div class="grid-3-1 reconcile-upload-section">
+          <div class="card">
+            <div class="card-title">Kho file đối soát</div>
+            <div class="card-subtitle">Tách biệt với trang Upload dữ liệu. Mỗi nguồn giữ 1 file hiện hành để dùng cho đối soát.</div>
+            <div class="reconcile-upload-grid">
+              <button type="button" class="reconcile-upload-slot" data-source-key="gbs">
+                <div class="reconcile-upload-slot-head">
+                  <span class="badge badge-gbs">GBS</span>
+                  <span class="reconcile-upload-slot-state" id="reconcileSlotState-gbs">Chưa có file</span>
+                </div>
+                <div class="reconcile-upload-slot-title">File GBS</div>
+                <div class="reconcile-upload-slot-desc">File chuẩn để đối chiếu dữ liệu đơn hàng theo `platform + order_id`.</div>
+                <div class="reconcile-upload-slot-meta" id="reconcileSlotMeta-gbs">Chọn file `.xlsx` hoặc `.xls` để lưu vào kho đối soát.</div>
+              </button>
+
+              <button type="button" class="reconcile-upload-slot" data-source-key="shopee">
+                <div class="reconcile-upload-slot-head">
+                  <span class="badge badge-shopee">Shopee</span>
+                  <span class="reconcile-upload-slot-state" id="reconcileSlotState-shopee">Chưa có file</span>
+                </div>
+                <div class="reconcile-upload-slot-title">File Shopee</div>
+                <div class="reconcile-upload-slot-desc">Export đơn hàng Shopee dùng riêng cho đối soát GBS.</div>
+                <div class="reconcile-upload-slot-meta" id="reconcileSlotMeta-shopee">Upload nhầm loại file sẽ bị chặn ngay ở bước kiểm tra.</div>
+              </button>
+
+              <button type="button" class="reconcile-upload-slot" data-source-key="lazada">
+                <div class="reconcile-upload-slot-head">
+                  <span class="badge badge-lazada">Lazada</span>
+                  <span class="reconcile-upload-slot-state" id="reconcileSlotState-lazada">Chưa có file</span>
+                </div>
+                <div class="reconcile-upload-slot-title">File Lazada</div>
+                <div class="reconcile-upload-slot-desc">Giữ 1 file hiện hành để đối chiếu số lượng và NMV với GBS.</div>
+                <div class="reconcile-upload-slot-meta" id="reconcileSlotMeta-lazada">Upload file mới sẽ thay thế file cũ cùng nguồn.</div>
+              </button>
+
+              <button type="button" class="reconcile-upload-slot" data-source-key="tiktokshop">
+                <div class="reconcile-upload-slot-head">
+                  <span class="badge badge-tiktokshop">TikTok Shop</span>
+                  <span class="reconcile-upload-slot-state" id="reconcileSlotState-tiktokshop">Chưa có file</span>
+                </div>
+                <div class="reconcile-upload-slot-title">File TikTok Shop</div>
+                <div class="reconcile-upload-slot-desc">Dùng riêng cho luồng đối soát, không import vào bảng đơn hàng.</div>
+                <div class="reconcile-upload-slot-meta" id="reconcileSlotMeta-tiktokshop">Có thể xoá file sau khi hoàn tất đối soát.</div>
+              </button>
+            </div>
+            <input id="reconcileFileInput" type="file" accept=".xlsx,.xls" style="display:none">
+          </div>
+
+          <div class="card">
+            <div class="card-title">Quy ước sử dụng</div>
+            <div class="card-subtitle">Luồng upload này chỉ phục vụ đối soát, không thay thế trang upload dữ liệu hiện có.</div>
+            <div class="reconcile-upload-note">
+              <div class="reconcile-upload-note-item">
+                <strong>Luồng tách biệt:</strong> file ở đây không được import vào `orders` hay `traffic_daily`.
+              </div>
+              <div class="reconcile-upload-note-item">
+                <strong>Kiểm tra ngay khi upload:</strong> hệ thống sẽ xác nhận đúng loại file GBS, Shopee, Lazada hoặc TikTok Shop trước khi lưu.
+              </div>
+              <div class="reconcile-upload-note-item">
+                <strong>Dọn file sau khi dùng:</strong> bảng quản lý bên dưới cho phép xoá từng file để tránh lưu lâu không cần thiết.
+              </div>
+              <div class="reconcile-upload-note-item">
+                <strong>Tương thích cũ:</strong> nếu kho đối soát chưa có file, trang vẫn có thể fallback sang file cùng tên đang đặt ở thư mục gốc dự án.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="reconcile-managed-head">
+            <div>
+              <div class="card-title">Quản lý file đối soát</div>
+              <div class="card-subtitle">Xem nhanh file đang lưu trong kho đối soát và xoá sau khi sử dụng.</div>
+            </div>
+            <div class="reconcile-managed-summary" id="reconcileManagedSummary">0/4 file sẵn sàng</div>
+          </div>
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Nguồn</th>
+                  <th>File hiện tại</th>
+                  <th>Cập nhật</th>
+                  <th class="text-right">Kích thước</th>
+                  <th>Trạng thái</th>
+                  <th>Thao tác</th>
+                </tr>
+              </thead>
+              <tbody id="reconcileManagedFilesTable"></tbody>
+            </table>
+          </div>
+        </div>
+
         <div class="card reconcile-hero-card">
           <div class="reconcile-hero-copy">
             <div class="reconcile-kicker">GBS × Export sàn</div>
             <h3>So sánh theo `platform + order_id` và quy đổi combo trước khi đối chiếu</h3>
-            <p>Trang này đọc trực tiếp `GBS.xlsx`, `Shopee.xlsx`, `Lazada.xlsx`, `TiktokShop.xlsx` trong thư mục gốc dự án, rồi đối chiếu số lượng sản phẩm và NMV theo logic phù hợp với GBS.</p>
+            <p>Trang này ưu tiên đọc file từ kho đối soát bên trên. Nếu một nguồn chưa được upload tại đây, hệ thống sẽ fallback sang file cùng tên trong thư mục gốc dự án rồi đối chiếu số lượng sản phẩm và NMV theo logic phù hợp với GBS.</p>
           </div>
           <div class="reconcile-run-meta" id="reconcileRunMeta">Chưa tải dữ liệu đối soát.</div>
         </div>

@@ -511,11 +511,16 @@ function normalize_city(?string $city): ?string
 function ensure_upload_dir(array $config): void
 {
     $path = $config['app']['upload_path'];
+    ensure_protected_dir($path);
+}
+
+function ensure_protected_dir(string $path): void
+{
     if (!is_dir($path)) {
         mkdir($path, 0755, true);
     }
-    // Write .htaccess to block direct access
-    $htaccess = $path . '/.htaccess';
+
+    $htaccess = rtrim($path, '/\\') . '/.htaccess';
     if (!file_exists($htaccess)) {
         file_put_contents($htaccess, "Order deny,allow\nDeny from all\n");
     }

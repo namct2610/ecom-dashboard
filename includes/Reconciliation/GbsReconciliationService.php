@@ -64,17 +64,19 @@ final class GbsReconciliationService
     ];
 
     private string $baseDir;
+    private ReconciliationFileStore $fileStore;
 
-    public function __construct(string $baseDir)
+    public function __construct(string $baseDir, array $config = [])
     {
         $this->baseDir = rtrim($baseDir, DIRECTORY_SEPARATOR);
+        $this->fileStore = new ReconciliationFileStore($this->baseDir, $config);
     }
 
     public function compare(): array
     {
         $files = $this->discoverFiles();
         if (($files['gbs']['status'] ?? 'missing') !== 'ready') {
-            throw new RuntimeException('Không tìm thấy file GBS trong thư mục gốc dự án.');
+            throw new RuntimeException('Không tìm thấy file GBS. Hãy upload vào kho đối soát hoặc đặt file tại thư mục gốc dự án.');
         }
 
         $gbsRows          = $this->loadGbsRows($files['gbs']['path']);
@@ -130,6 +132,30 @@ final class GbsReconciliationService
             'mappings'     => $this->buildMappings(),
             'insights'     => $this->buildInsights($files, $platformSummaries),
             'platforms'    => $platformSummaries,
+        ];
+    }
+
+    public function inspectSourceFile(string $sourceKey, string $path): array
+    {
+        if ($sourceKey === 'gbs') {
+            $rows = $this->loadGbsRows($path);
+            $groupedOrders = $this->groupGbsOrdersByPlatform($rows);
+
+            return [
+                'row_count'   => count($rows),
+                'order_count' => $this->countGroupedOrders($groupedOrders),
+            ];
+        }
+
+        if (!in_array($sourceKey, self::PLATFORM_KEYS, true)) {
+            throw new RuntimeException('Loại file đối soát không hợp lệ.');
+        }
+
+        $rows = $this->loadPlatformRows($sourceKey, $path);
+
+        return [
+            'row_count'   => count($rows),
+            'order_count' => count($this->groupPlatformOrders($rows)),
         ];
     }
 
@@ -375,6 +401,13 @@ final class GbsReconciliationService
         $rows    = $sheet->toArray(null, false, true, false);
         $headers = array_map(static fn($value) => (string) ($value ?? ''), $rows[1] ?? []);
         $col     = $this->resolveColumns($headers, self::GBS_COLUMN_MAP);
+        $this->assertRequiredColumns($col, [
+            'platform'  => 'Nền tảng',
+            'order_id'  => 'Mã đơn hàng',
+            'sku'       => 'SKU',
+            'quantity'  => 'Số lượng',
+            'nmv'       => 'NMV',
+        ], 'GBS');
         $result  = [];
 
         foreach ($rows as $index => $row) {
@@ -423,6 +456,12 @@ final class GbsReconciliationService
         $rows    = $sheet->toArray(null, false, true, false);
         $headers = array_map(static fn($value) => (string) ($value ?? ''), $rows[0] ?? []);
         $col     = $this->resolveColumns($headers, self::SHOPEE_COLUMN_MAP);
+        $this->assertRequiredColumns($col, [
+            'order_id'   => 'Mã đơn hàng',
+            'sku'        => 'SKU sản phẩm',
+            'quantity'   => 'Số lượng',
+            'unit_price' => 'Giá gốc',
+        ], 'Shopee');
         $result  = [];
 
         foreach ($rows as $index => $row) {
@@ -471,6 +510,12 @@ final class GbsReconciliationService
         $rows    = $sheet->toArray(null, false, true, false);
         $headers = array_map(static fn($value) => (string) ($value ?? ''), $rows[0] ?? []);
         $col     = $this->resolveColumns($headers, self::LAZADA_COLUMN_MAP);
+        $this->assertRequiredColumns($col, [
+            'order_id'     => 'orderNumber',
+            'sku'          => 'sellerSku',
+            'product_name' => 'itemName',
+            'unit_price'   => 'unitPrice',
+        ], 'Lazada');
         $result  = [];
 
         foreach ($rows as $index => $row) {
@@ -512,6 +557,12 @@ final class GbsReconciliationService
         $rows    = $sheet->toArray(null, false, true, false);
         $headers = array_map(static fn($value) => (string) ($value ?? ''), $rows[0] ?? []);
         $col     = $this->resolveColumns($headers, self::TIKTOK_COLUMN_MAP);
+        $this->assertRequiredColumns($col, [
+            'order_id'        => 'Order ID',
+            'sku'             => 'Seller SKU',
+            'quantity'        => 'Quantity',
+            'subtotal_before' => 'SKU Subtotal Before Discount',
+        ], 'TikTok Shop');
         $result  = [];
 
         foreach ($rows as $index => $row) {
@@ -573,15 +624,26 @@ final class GbsReconciliationService
 
     private function discoverFiles(): array
     {
+        $managedFiles = $this->fileStore->listFiles();
+
         return [
-            'gbs'        => $this->discoverFile(['GBS*.xlsx', 'GBS*.xls']),
-            'shopee'     => $this->discoverFile(['Shopee*.xlsx', 'Shopee*.xls', 'shopee*.xlsx', 'shopee*.xls']),
-            'lazada'     => $this->discoverFile(['Lazada*.xlsx', 'Lazada*.xls', 'lazada*.xlsx', 'lazada*.xls']),
-            'tiktokshop' => $this->discoverFile(['TiktokShop*.xlsx', 'TiktokShop*.xls', 'TikTokShop*.xlsx', 'TikTokShop*.xls', 'tiktok*.xlsx', 'tiktok*.xls']),
+            'gbs'        => $this->preferManagedFile($managedFiles['gbs'] ?? ['status' => 'missing'], ['GBS*.xlsx', 'GBS*.xls']),
+            'shopee'     => $this->preferManagedFile($managedFiles['shopee'] ?? ['status' => 'missing'], ['Shopee*.xlsx', 'Shopee*.xls', 'shopee*.xlsx', 'shopee*.xls']),
+            'lazada'     => $this->preferManagedFile($managedFiles['lazada'] ?? ['status' => 'missing'], ['Lazada*.xlsx', 'Lazada*.xls', 'lazada*.xlsx', 'lazada*.xls']),
+            'tiktokshop' => $this->preferManagedFile($managedFiles['tiktokshop'] ?? ['status' => 'missing'], ['TiktokShop*.xlsx', 'TiktokShop*.xls', 'TikTokShop*.xlsx', 'TikTokShop*.xls', 'tiktok*.xlsx', 'tiktok*.xls']),
         ];
     }
 
-    private function discoverFile(array $patterns): array
+    private function preferManagedFile(array $managedFile, array $legacyPatterns): array
+    {
+        if (($managedFile['status'] ?? 'missing') === 'ready') {
+            return $managedFile;
+        }
+
+        return $this->discoverLegacyFile($legacyPatterns);
+    }
+
+    private function discoverLegacyFile(array $patterns): array
     {
         $candidates = [];
         foreach ($patterns as $pattern) {
@@ -605,6 +667,9 @@ final class GbsReconciliationService
             'filename'    => basename($path),
             'size_bytes'  => filesize($path) ?: 0,
             'modified_at' => date('Y-m-d H:i:s', filemtime($path) ?: time()),
+            'source'      => 'legacy_root',
+            'source_label'=> 'Thư mục gốc',
+            'deletable'   => false,
         ];
     }
 
@@ -621,10 +686,28 @@ final class GbsReconciliationService
         foreach ($files as $key => $file) {
             $entry = $file;
             unset($entry['path']);
-            $entry['size_label'] = $this->formatBytes((int) ($entry['size_bytes'] ?? 0));
+            $entry['size_label'] = $entry['size_label'] ?? $this->formatBytes((int) ($entry['size_bytes'] ?? 0));
             $result[$key] = $entry;
         }
         return $result;
+    }
+
+    private function assertRequiredColumns(array $resolved, array $labels, string $fileLabel): void
+    {
+        $missing = [];
+        foreach ($labels as $field => $label) {
+            if (($resolved[$field] ?? null) === null) {
+                $missing[] = $label;
+            }
+        }
+
+        if ($missing !== []) {
+            throw new RuntimeException(sprintf(
+                'File %s thiếu cột bắt buộc: %s.',
+                $fileLabel,
+                implode(', ', $missing)
+            ));
+        }
     }
 
     private function buildMappings(): array

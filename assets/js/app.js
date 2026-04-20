@@ -22,6 +22,13 @@ const App = {
 };
 window.App = App;
 
+const ReconcileFileManager = {
+  bound: false,
+  uploading: false,
+  activeSourceKey: '',
+  files: {},
+};
+
 // ── Helpers ──────────────────────────────────────────────────────────────
 function qs(sel, ctx = document)  { return ctx.querySelector(sel); }
 function qsa(sel, ctx = document) { return Array.from(ctx.querySelectorAll(sel)); }
@@ -199,6 +206,26 @@ function syncPasswordModalState() {
 
 function platformLabel(p) {
   return { shopee: 'Shopee', lazada: 'Lazada', tiktokshop: 'TikTok' }[p] || p;
+}
+
+function reconcileSourceLabel(sourceKey) {
+  return {
+    gbs: 'GBS',
+    shopee: 'Shopee',
+    lazada: 'Lazada',
+    tiktokshop: 'TikTok Shop',
+  }[sourceKey] || sourceKey;
+}
+
+function reconcileSourceBadge(sourceKey) {
+  const map = {
+    gbs: ['badge-gbs', 'GBS'],
+    shopee: ['badge-shopee', 'Shopee'],
+    lazada: ['badge-lazada', 'Lazada'],
+    tiktokshop: ['badge-tiktokshop', 'TikTok Shop'],
+  };
+  const [cls, label] = map[sourceKey] || ['badge-pending', sourceKey];
+  return `<span class="badge ${cls}">${label}</span>`;
 }
 
 function platformBadge(p) {
@@ -855,23 +882,220 @@ async function loadComparison() {
 }
 
 async function loadReconcile() {
-  try {
-    const data = await api('gbs-reconciliation.php', { params: {} });
+  const [compareResult, managedFilesResult] = await Promise.allSettled([
+    api('gbs-reconciliation.php', { params: {} }),
+    fetchReconcileManagedFiles(),
+  ]);
+
+  if (compareResult.status === 'fulfilled') {
+    const data = compareResult.value;
     renderReconcileStats(data.summary || {});
     renderReconcileRunMeta(data.generated_at, data.insights || []);
     renderReconcileFileCards(data.files || {});
     renderReconcileMappings(data.mappings || {});
     renderReconcileSummary(data.platforms || {});
     renderReconcilePlatformSections(data.platforms || {});
-  } catch (e) {
-    console.error('loadReconcile', e);
+  } else {
+    console.error('loadReconcile', compareResult.reason);
     renderReconcileStats({});
-    renderReconcileRunMeta('', [`${t('msg.error')}: ${e.message}`]);
+    renderReconcileRunMeta('', [`${t('msg.error')}: ${compareResult.reason?.message || 'Unknown error'}`]);
     renderReconcileFileCards({});
     renderReconcileMappings({});
     renderReconcileSummary({});
     renderReconcilePlatformSections({});
-    toast(t('toast.load_reconcile'), 'error');
+    const message = compareResult.reason?.message || '';
+    if (!message.includes('Không tìm thấy file GBS')) {
+      toast(t('toast.load_reconcile'), 'error');
+    }
+  }
+
+  if (managedFilesResult.status === 'fulfilled') {
+    renderReconcileManagedFiles(managedFilesResult.value.files || {});
+  } else {
+    console.error('loadReconcileManagedFiles', managedFilesResult.reason);
+    renderReconcileManagedFiles({});
+  }
+}
+
+async function fetchReconcileManagedFiles() {
+  const res = await fetch('api/reconciliation-files.php', {
+    headers: { 'X-CSRF-Token': App.csrf },
+  });
+  if (res.status === 401) {
+    showAuth();
+    throw new Error('Unauthenticated');
+  }
+
+  const data = await res.json();
+  if (!data.success) throw new Error(data.error || 'API error');
+  return data;
+}
+
+function renderReconcileManagedFiles(files) {
+  const order = ['gbs', 'shopee', 'lazada', 'tiktokshop'];
+  const normalized = {};
+
+  order.forEach(sourceKey => {
+    normalized[sourceKey] = files[sourceKey] || {
+      status: 'missing',
+      source_key: sourceKey,
+      source: 'managed_upload',
+      deletable: true,
+    };
+  });
+
+  ReconcileFileManager.files = normalized;
+  applyReconcileUploadState();
+
+  const tbody = qs('#reconcileManagedFilesTable');
+  const summaryEl = qs('#reconcileManagedSummary');
+  const readyCount = order.filter(sourceKey => normalized[sourceKey].status === 'ready').length;
+
+  if (summaryEl) {
+    summaryEl.textContent = `${readyCount}/4 file sẵn sàng`;
+  }
+
+  if (!tbody) return;
+
+  tbody.innerHTML = order.map(sourceKey => {
+    const file = normalized[sourceKey] || { status: 'missing' };
+    const ready = file.status === 'ready';
+    const statusBadge = ready
+      ? '<span class="badge badge-completed">Đang lưu</span>'
+      : '<span class="badge badge-pending">Trống</span>';
+
+    return `
+      <tr>
+        <td>${reconcileSourceBadge(sourceKey)}</td>
+        <td style="max-width:280px">
+          <div style="font-size:12px;font-weight:600;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+            ${ready ? escHtml(file.filename || '—') : 'Chưa có file'}
+          </div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:3px">
+            ${ready ? 'Lưu trong kho đối soát' : 'Nhấn vào ô upload tương ứng để thêm file'}
+          </div>
+        </td>
+        <td style="font-size:12px;color:var(--text-muted)">${ready ? escHtml(fmtDateTime(file.modified_at || '')) : '—'}</td>
+        <td class="text-right" style="font-size:12px;font-weight:600">${ready ? escHtml(file.size_label || '0 B') : '—'}</td>
+        <td>${statusBadge}</td>
+        <td>
+          ${ready
+            ? `<button class="btn btn-secondary btn-sm" data-action="delete-reconcile-file" data-source-key="${escHtml(sourceKey)}"${ReconcileFileManager.uploading ? ' disabled' : ''}>Xoá</button>`
+            : '<span style="font-size:12px;color:var(--text-muted)">—</span>'}
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function applyReconcileUploadState() {
+  qsa('.reconcile-upload-slot').forEach(slot => {
+    const sourceKey = slot.dataset.sourceKey || '';
+    const file = ReconcileFileManager.files[sourceKey] || { status: 'missing' };
+    const isActiveUpload = ReconcileFileManager.uploading && ReconcileFileManager.activeSourceKey === sourceKey;
+    const stateEl = qs(`#reconcileSlotState-${sourceKey}`);
+    const metaEl = qs(`#reconcileSlotMeta-${sourceKey}`);
+
+    slot.classList.toggle('is-busy', ReconcileFileManager.uploading);
+
+    if (stateEl) {
+      stateEl.className = 'reconcile-upload-slot-state';
+      if (isActiveUpload) {
+        stateEl.classList.add('uploading');
+        stateEl.textContent = 'Đang tải lên';
+      } else if (file.status === 'ready') {
+        stateEl.classList.add('ready');
+        stateEl.textContent = 'Sẵn sàng';
+      } else {
+        stateEl.classList.add('missing');
+        stateEl.textContent = 'Chưa có file';
+      }
+    }
+
+    if (metaEl) {
+      if (isActiveUpload) {
+        metaEl.textContent = 'Hệ thống đang kiểm tra cấu trúc file và lưu vào kho đối soát.';
+      } else if (file.status === 'ready') {
+        metaEl.textContent = `${file.filename || '—'} · ${fmtDateTime(file.modified_at || '')} · ${file.size_label || '0 B'}`;
+      } else {
+        metaEl.textContent = 'Chọn file `.xlsx` hoặc `.xls` để lưu vào kho đối soát.';
+      }
+    }
+  });
+
+  qsa('[data-action="delete-reconcile-file"]').forEach(btn => {
+    btn.disabled = ReconcileFileManager.uploading;
+  });
+}
+
+async function uploadReconcileManagedFile(sourceKey, file) {
+  ReconcileFileManager.uploading = true;
+  ReconcileFileManager.activeSourceKey = sourceKey;
+  applyReconcileUploadState();
+
+  try {
+    const formData = new FormData();
+    formData.append('source_key', sourceKey);
+    formData.append('file', file);
+
+    const res = await fetch('api/reconciliation-files.php', {
+      method: 'POST',
+      headers: { 'X-CSRF-Token': App.csrf },
+      body: formData,
+    });
+    if (res.status === 401) {
+      showAuth();
+      throw new Error('Unauthenticated');
+    }
+
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || 'Upload failed');
+
+    const stats = data.stats || {};
+    const details = [];
+    if (stats.order_count) details.push(`${fmtNum(stats.order_count)} đơn`);
+    if (stats.row_count) details.push(`${fmtNum(stats.row_count)} dòng`);
+
+    toast(
+      `${reconcileSourceLabel(sourceKey)}: đã lưu file${details.length ? ` (${details.join(', ')})` : ''}`,
+      'success'
+    );
+
+    await loadReconcile();
+  } catch (e) {
+    toast(`${reconcileSourceLabel(sourceKey)}: ${e.message || 'Upload thất bại'}`, 'error');
+  } finally {
+    ReconcileFileManager.uploading = false;
+    ReconcileFileManager.activeSourceKey = '';
+    applyReconcileUploadState();
+  }
+}
+
+async function deleteReconcileManagedFile(sourceKey) {
+  if (!window.confirm(`Xoá file ${reconcileSourceLabel(sourceKey)} khỏi kho đối soát?`)) {
+    return;
+  }
+
+  ReconcileFileManager.uploading = true;
+  ReconcileFileManager.activeSourceKey = sourceKey;
+  applyReconcileUploadState();
+
+  try {
+    const data = await apiFetch('api/reconciliation-file-delete.php', {
+      method: 'POST',
+      body: JSON.stringify({ source_key: sourceKey }),
+    });
+
+    if (!data.success) throw new Error(data.error || 'Delete failed');
+
+    toast(`${reconcileSourceLabel(sourceKey)}: đã xoá file`, 'success');
+    await loadReconcile();
+  } catch (e) {
+    toast(`${reconcileSourceLabel(sourceKey)}: ${e.message || 'Xoá thất bại'}`, 'error');
+  } finally {
+    ReconcileFileManager.uploading = false;
+    ReconcileFileManager.activeSourceKey = '';
+    applyReconcileUploadState();
   }
 }
 
@@ -915,6 +1139,7 @@ function renderReconcileFileCards(files) {
     const ready = file.status === 'ready';
     const label = key === 'gbs' ? 'GBS' : (key === 'tiktokshop' ? 'TikTok Shop' : platformLabel(key));
     const badgeClass = key === 'gbs' ? 'badge-gbs' : ({ shopee: 'badge-shopee', lazada: 'badge-lazada', tiktokshop: 'badge-tiktokshop' }[key] || '');
+    const sourceLabel = file.source_label || (file.source === 'legacy_root' ? 'Thư mục gốc' : 'Kho đối soát');
 
     return `
       <div class="card reconcile-file-card ${ready ? '' : 'is-missing'}">
@@ -923,7 +1148,7 @@ function renderReconcileFileCards(files) {
           <span class="reconcile-file-state ${ready ? 'ready' : 'missing'}">${ready ? 'Sẵn sàng' : 'Thiếu file'}</span>
         </div>
         <div class="reconcile-file-name">${ready ? escHtml(file.filename || '—') : 'Chưa tìm thấy file'}</div>
-        <div class="reconcile-file-meta">${ready ? `Sửa lúc ${escHtml(fmtDateTime(file.modified_at || ''))}` : 'Đặt file vào thư mục gốc dự án.'}</div>
+        <div class="reconcile-file-meta">${ready ? `${escHtml(sourceLabel)} · Sửa lúc ${escHtml(fmtDateTime(file.modified_at || ''))}` : 'Upload vào kho đối soát hoặc đặt file tại thư mục gốc dự án.'}</div>
         <div class="reconcile-file-stats">
           <div><strong>${fmtNum(file.order_count || 0)}</strong><span>đơn</span></div>
           <div><strong>${fmtNum(file.row_count || 0)}</strong><span>dòng</span></div>
@@ -2893,7 +3118,44 @@ function setupShopeeConnectPage() {
 }
 
 function setupReconcilePage() {
+  if (ReconcileFileManager.bound) return;
+  ReconcileFileManager.bound = true;
+
   qs('#btnRefreshReconcile')?.addEventListener('click', loadReconcile);
+
+  qsa('.reconcile-upload-slot').forEach(slot => {
+    slot.addEventListener('click', () => {
+      if (ReconcileFileManager.uploading) return;
+      ReconcileFileManager.activeSourceKey = slot.dataset.sourceKey || '';
+      qs('#reconcileFileInput')?.click();
+    });
+  });
+
+  qs('#reconcileFileInput')?.addEventListener('change', async e => {
+    const input = e.currentTarget;
+    const file = input?.files?.[0];
+    const sourceKey = ReconcileFileManager.activeSourceKey;
+
+    if (input) input.value = '';
+    if (!file || !sourceKey) {
+      ReconcileFileManager.activeSourceKey = '';
+      return;
+    }
+
+    await uploadReconcileManagedFile(sourceKey, file);
+  });
+
+  qs('#reconcileManagedFilesTable')?.addEventListener('click', async e => {
+    const btn = e.target instanceof Element
+      ? e.target.closest('[data-action="delete-reconcile-file"]')
+      : null;
+    if (!btn || ReconcileFileManager.uploading) return;
+
+    const sourceKey = btn.dataset.sourceKey || '';
+    if (!sourceKey) return;
+
+    await deleteReconcileManagedFile(sourceKey);
+  });
 }
 
 // ── Init ──────────────────────────────────────────────────────────────────

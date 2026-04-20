@@ -1,7 +1,7 @@
 {
-  "version": "1.2.15",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.2.15/release/dashboard-v3-1.2.15.zip",
-  "changelog": "- Thêm trang Đối soát GBS để so khớp GBS với file Shopee, Lazada, TikTok Shop theo order_id\n- Quy đổi combo ở Lazada và TikTok Shop trước khi so số lượng và NMV\n- Hiển thị tóm tắt file nguồn, mapping trường dữ liệu và danh sách đơn thiếu hoặc lệch",
+  "version": "1.2.16",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.2.16/release/dashboard-v3-1.2.16.zip",
+  "changelog": "- Thêm kho file đối soát riêng cho GBS, Shopee, Lazada và TikTok Shop ngay trong trang Đối soát GBS\n- Bổ sung bảng quản lý file đối soát để có thể xoá file sau khi sử dụng\n- Ưu tiên đọc file từ kho đối soát, đồng thời vẫn fallback về file ở thư mục gốc để tương thích dữ liệu cũ",
   "min_php": "8.1",
   "released_at": "2026-04-20"
 }
