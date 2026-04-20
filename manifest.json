@@ -1,7 +1,7 @@
 {
-  "version": "1.2.16",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.2.16/release/dashboard-v3-1.2.16.zip",
-  "changelog": "- Thêm kho file đối soát riêng cho GBS, Shopee, Lazada và TikTok Shop ngay trong trang Đối soát GBS\n- Bổ sung bảng quản lý file đối soát để có thể xoá file sau khi sử dụng\n- Ưu tiên đọc file từ kho đối soát, đồng thời vẫn fallback về file ở thư mục gốc để tương thích dữ liệu cũ",
+  "version": "1.2.17",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.2.17/release/dashboard-v3-1.2.17.zip",
+  "changelog": "- Bổ sung cài đặt đối soát GBS ngay trong phần Cài đặt hệ thống cho Bang_gia và Combo_to_single\n- Hỗ trợ thêm, sửa, xoá và nhập nhanh cấu hình Bang_gia / Combo_to_single từ file Excel\n- Cập nhật logic đối soát NMV theo doanh thu giá gốc trừ khuyến mãi gian hàng và dùng Bang_gia để phân bổ NMV khi tách combo",
   "min_php": "8.1",
   "released_at": "2026-04-20"
 }

@@ -29,6 +29,15 @@ const ReconcileFileManager = {
   files: {},
 };
 
+const ReconcileSettingsState = {
+  bound: false,
+  loading: false,
+  saving: false,
+  importing: '',
+  prices: [],
+  combos: [],
+};
+
 // ── Helpers ──────────────────────────────────────────────────────────────
 function qs(sel, ctx = document)  { return ctx.querySelector(sel); }
 function qsa(sel, ctx = document) { return Array.from(ctx.querySelectorAll(sel)); }
@@ -2245,9 +2254,320 @@ function setupConnectPage() {
 
 let _settingsPageBound = false;
 
+function makeEmptyReconcilePriceRow() {
+  return { sku: '', product_name: '', unit_price: '' };
+}
+
+function makeEmptyReconcileComboRow() {
+  return { platform: 'all', combo_sku: '', combo_name: '', single_sku: '', single_qty: '' };
+}
+
+function syncReconcileSettingsStateFromDom() {
+  ReconcileSettingsState.prices = readReconcilePriceRowsFromDom();
+  ReconcileSettingsState.combos = readReconcileComboRowsFromDom();
+}
+
+function formatReconcileSettingValue(value) {
+  if (value === null || typeof value === 'undefined') return '';
+  return String(value);
+}
+
+function setReconcileSettingsResult(message = '', type = 'info') {
+  const el = qs('#reconcileSettingsResult');
+  if (!el) return;
+
+  el.className = 'reconcile-settings-result';
+  el.textContent = '';
+
+  if (!message) return;
+
+  el.classList.add('is-visible', `is-${type}`);
+  el.textContent = message;
+}
+
+function renderReconcileSettingsSummary() {
+  const el = qs('#reconcileSettingsSummary');
+  if (!el) return;
+
+  const comboKeys = new Set(
+    ReconcileSettingsState.combos
+      .map(row => `${(row.platform || 'all').toLowerCase()}|${(row.combo_sku || '').toUpperCase()}|${String(row.combo_name || '').trim().toLowerCase()}`)
+      .filter(key => key !== 'all||')
+  );
+
+  const chips = [
+    `Bang_gia: ${fmtNum(ReconcileSettingsState.prices.length || 0)} SKU`,
+    `Combo_to_single: ${fmtNum(ReconcileSettingsState.combos.length || 0)} dòng`,
+    `Combo riêng: ${fmtNum(comboKeys.size || 0)} cấu hình`,
+  ];
+
+  el.innerHTML = chips.map(text => `<span class="reconcile-settings-chip">${escHtml(text)}</span>`).join('');
+}
+
+function renderReconcilePriceRows(rows) {
+  const tbody = qs('#reconcilePriceTableBody');
+  if (!tbody) return;
+
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="4" class="reconcile-settings-empty">Chưa có dòng Bang_gia. Có thể nhập từ Excel hoặc thêm thủ công.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = rows.map((row, index) => `
+    <tr data-reconcile-row="price" data-index="${index}">
+      <td><input type="text" data-field="sku" value="${escHtml(row.sku || '')}" placeholder="VD: MON055GH04VAN"></td>
+      <td><input type="text" data-field="product_name" value="${escHtml(row.product_name || '')}" placeholder="Tên sản phẩm (tuỳ chọn)"></td>
+      <td><input type="number" min="0" step="0.01" data-field="unit_price" value="${escHtml(formatReconcileSettingValue(row.unit_price))}" placeholder="0"></td>
+      <td><button class="btn btn-secondary btn-sm" data-action="delete-reconcile-price-row" data-index="${index}">Xoá</button></td>
+    </tr>
+  `).join('');
+}
+
+function renderReconcileComboRows(rows) {
+  const tbody = qs('#reconcileComboTableBody');
+  if (!tbody) return;
+
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="6" class="reconcile-settings-empty">Chưa có dòng Combo_to_single. Có thể nhập từ Excel hoặc thêm thủ công.</td></tr>';
+    return;
+  }
+
+  const platformOptions = [
+    ['all', 'Tất cả'],
+    ['shopee', 'Shopee'],
+    ['lazada', 'Lazada'],
+    ['tiktokshop', 'TikTok Shop'],
+  ];
+
+  tbody.innerHTML = rows.map((row, index) => `
+    <tr data-reconcile-row="combo" data-index="${index}">
+      <td>
+        <select data-field="platform">
+          ${platformOptions.map(([value, label]) => `
+            <option value="${value}"${(row.platform || 'all') === value ? ' selected' : ''}>${label}</option>
+          `).join('')}
+        </select>
+      </td>
+      <td><input type="text" data-field="combo_sku" value="${escHtml(row.combo_sku || '')}" placeholder="SKU combo"></td>
+      <td><input type="text" data-field="combo_name" value="${escHtml(row.combo_name || '')}" placeholder="Tên hoặc từ khóa combo"></td>
+      <td><input type="text" data-field="single_sku" value="${escHtml(row.single_sku || '')}" placeholder="SKU đơn GBS"></td>
+      <td><input type="number" min="0.0001" step="0.0001" data-field="single_qty" value="${escHtml(formatReconcileSettingValue(row.single_qty))}" placeholder="1"></td>
+      <td><button class="btn btn-secondary btn-sm" data-action="delete-reconcile-combo-row" data-index="${index}">Xoá</button></td>
+    </tr>
+  `).join('');
+}
+
+function renderReconcileSettingsTables() {
+  renderReconcilePriceRows(ReconcileSettingsState.prices);
+  renderReconcileComboRows(ReconcileSettingsState.combos);
+  renderReconcileSettingsSummary();
+  updateReconcileSettingsUiState();
+}
+
+function readReconcilePriceRowsFromDom() {
+  const tbody = qs('#reconcilePriceTableBody');
+  if (!tbody) return [];
+
+  return qsa('tr[data-reconcile-row="price"]', tbody).map(row => ({
+    sku: qs('[data-field="sku"]', row)?.value || '',
+    product_name: qs('[data-field="product_name"]', row)?.value || '',
+    unit_price: qs('[data-field="unit_price"]', row)?.value || '',
+  }));
+}
+
+function readReconcileComboRowsFromDom() {
+  const tbody = qs('#reconcileComboTableBody');
+  if (!tbody) return [];
+
+  return qsa('tr[data-reconcile-row="combo"]', tbody).map(row => ({
+    platform: qs('[data-field="platform"]', row)?.value || 'all',
+    combo_sku: qs('[data-field="combo_sku"]', row)?.value || '',
+    combo_name: qs('[data-field="combo_name"]', row)?.value || '',
+    single_sku: qs('[data-field="single_sku"]', row)?.value || '',
+    single_qty: qs('[data-field="single_qty"]', row)?.value || '',
+  }));
+}
+
+function updateReconcileSettingsUiState() {
+  const busy = ReconcileSettingsState.loading || ReconcileSettingsState.saving || Boolean(ReconcileSettingsState.importing);
+  const saveBtn = qs('#btnSaveReconcileSettings');
+  const reloadBtn = qs('#btnReloadReconcileSettings');
+  const priceImportBtn = qs('#btnImportReconcilePrices');
+  const comboImportBtn = qs('#btnImportReconcileCombos');
+  const addPriceBtn = qs('#btnAddReconcilePriceRow');
+  const addComboBtn = qs('#btnAddReconcileComboRow');
+
+  if (saveBtn) {
+    saveBtn.disabled = busy;
+    saveBtn.textContent = ReconcileSettingsState.saving ? 'Đang lưu...' : 'Lưu cài đặt đối soát';
+  }
+  if (reloadBtn) reloadBtn.disabled = busy;
+  if (priceImportBtn) {
+    priceImportBtn.disabled = busy;
+    priceImportBtn.textContent = ReconcileSettingsState.importing === 'prices' ? 'Đang nhập...' : 'Nhập từ Excel';
+  }
+  if (comboImportBtn) {
+    comboImportBtn.disabled = busy;
+    comboImportBtn.textContent = ReconcileSettingsState.importing === 'combos' ? 'Đang nhập...' : 'Nhập từ Excel';
+  }
+  if (addPriceBtn) addPriceBtn.disabled = busy;
+  if (addComboBtn) addComboBtn.disabled = busy;
+
+  qsa('#reconcileSettingsCard [data-action]').forEach(btn => {
+    btn.disabled = busy;
+  });
+  qsa('#reconcileSettingsCard input, #reconcileSettingsCard select').forEach(input => {
+    if (input.type === 'file') return;
+    input.disabled = ReconcileSettingsState.loading || ReconcileSettingsState.saving;
+  });
+}
+
+async function loadReconcileSettings() {
+  ReconcileSettingsState.loading = true;
+  updateReconcileSettingsUiState();
+  setReconcileSettingsResult('Đang tải cấu hình đối soát...', 'info');
+
+  try {
+    const data = await apiFetch('api/reconcile-settings.php', { method: 'GET' });
+    if (!data.success) throw new Error(data.error || 'Không thể tải cài đặt đối soát.');
+
+    ReconcileSettingsState.prices = Array.isArray(data.prices) ? data.prices : [];
+    ReconcileSettingsState.combos = Array.isArray(data.combos) ? data.combos : [];
+    renderReconcileSettingsTables();
+    setReconcileSettingsResult(
+      `Đã tải ${fmtNum(ReconcileSettingsState.prices.length)} dòng Bang_gia và ${fmtNum(ReconcileSettingsState.combos.length)} dòng Combo_to_single.`,
+      'info'
+    );
+  } catch (e) {
+    console.error('loadReconcileSettings', e);
+    ReconcileSettingsState.prices = [];
+    ReconcileSettingsState.combos = [];
+    renderReconcileSettingsTables();
+    setReconcileSettingsResult(e.message || 'Không thể tải cài đặt đối soát.', 'error');
+  } finally {
+    ReconcileSettingsState.loading = false;
+    updateReconcileSettingsUiState();
+  }
+}
+
+async function saveReconcileSettings() {
+  syncReconcileSettingsStateFromDom();
+  ReconcileSettingsState.saving = true;
+  updateReconcileSettingsUiState();
+  setReconcileSettingsResult('Đang lưu cài đặt đối soát...', 'info');
+
+  try {
+    const res = await apiFetch('api/reconcile-settings.php', {
+      method: 'POST',
+      body: JSON.stringify({
+        action: 'save',
+        prices: ReconcileSettingsState.prices,
+        combos: ReconcileSettingsState.combos,
+      }),
+    });
+    if (!res.success) throw new Error(res.error || 'Không thể lưu cài đặt đối soát.');
+
+    ReconcileSettingsState.prices = Array.isArray(res.prices) ? res.prices : [];
+    ReconcileSettingsState.combos = Array.isArray(res.combos) ? res.combos : [];
+    renderReconcileSettingsTables();
+    setReconcileSettingsResult(
+      `${res.message || 'Đã lưu cài đặt đối soát.'} Bang_gia: ${fmtNum(ReconcileSettingsState.prices.length)} dòng, Combo_to_single: ${fmtNum(ReconcileSettingsState.combos.length)} dòng.`,
+      'success'
+    );
+    toast('Đã lưu cài đặt đối soát GBS.', 'success');
+  } catch (e) {
+    setReconcileSettingsResult(e.message || 'Không thể lưu cài đặt đối soát.', 'error');
+    toast(e.message || 'Không thể lưu cài đặt đối soát.', 'error');
+  } finally {
+    ReconcileSettingsState.saving = false;
+    updateReconcileSettingsUiState();
+  }
+}
+
+async function importReconcileSettings(kind, file) {
+  if (!file) return;
+
+  syncReconcileSettingsStateFromDom();
+  ReconcileSettingsState.importing = kind;
+  updateReconcileSettingsUiState();
+  setReconcileSettingsResult(`Đang nhập ${kind === 'prices' ? 'Bang_gia' : 'Combo_to_single'} từ Excel...`, 'info');
+
+  try {
+    const formData = new FormData();
+    formData.append('action', kind === 'prices' ? 'import_prices' : 'import_combos');
+    formData.append('file', file);
+
+    const res = await fetch('api/reconcile-settings.php', {
+      method: 'POST',
+      headers: { 'X-CSRF-Token': App.csrf },
+      body: formData,
+    });
+    if (res.status === 401) {
+      showAuth();
+      throw new Error('Unauthenticated');
+    }
+
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || 'Không thể nhập file Excel.');
+
+    if (kind === 'prices') {
+      ReconcileSettingsState.prices = Array.isArray(data.prices) ? data.prices : [];
+    } else {
+      ReconcileSettingsState.combos = Array.isArray(data.combos) ? data.combos : [];
+    }
+
+    renderReconcileSettingsTables();
+
+    const count = kind === 'prices' ? ReconcileSettingsState.prices.length : ReconcileSettingsState.combos.length;
+    const label = kind === 'prices' ? 'Bang_gia' : 'Combo_to_single';
+    setReconcileSettingsResult(`${data.message || 'Đã nhập dữ liệu từ Excel.'} ${label}: ${fmtNum(count)} dòng.`, 'success');
+    toast(`${label}: đã nạp ${fmtNum(count)} dòng từ Excel.`, 'success');
+  } catch (e) {
+    setReconcileSettingsResult(e.message || 'Không thể nhập file Excel.', 'error');
+    toast(e.message || 'Không thể nhập file Excel.', 'error');
+  } finally {
+    ReconcileSettingsState.importing = '';
+    updateReconcileSettingsUiState();
+  }
+}
+
+async function handleReconcileImportInput(kind, input) {
+  const file = input?.files?.[0];
+  if (!file) return;
+
+  await importReconcileSettings(kind, file);
+  input.value = '';
+}
+
+function addReconcilePriceRow() {
+  syncReconcileSettingsStateFromDom();
+  ReconcileSettingsState.prices.push(makeEmptyReconcilePriceRow());
+  renderReconcileSettingsTables();
+}
+
+function addReconcileComboRow() {
+  syncReconcileSettingsStateFromDom();
+  ReconcileSettingsState.combos.push(makeEmptyReconcileComboRow());
+  renderReconcileSettingsTables();
+}
+
+function deleteReconcilePriceRow(index) {
+  if (!Number.isInteger(index) || index < 0) return;
+  syncReconcileSettingsStateFromDom();
+  ReconcileSettingsState.prices.splice(index, 1);
+  renderReconcileSettingsTables();
+}
+
+function deleteReconcileComboRow(index) {
+  if (!Number.isInteger(index) || index < 0) return;
+  syncReconcileSettingsStateFromDom();
+  ReconcileSettingsState.combos.splice(index, 1);
+  renderReconcileSettingsTables();
+}
+
 async function loadSettingsPage() {
   bindSettingsPage();
-  await Promise.all([loadSysInfo(), loadUpdateCard(), setupLangSettings()]);
+  await Promise.all([loadSysInfo(), loadUpdateCard(), setupLangSettings(), loadReconcileSettings()]);
 }
 
 function bindSettingsPage() {
@@ -2274,6 +2594,28 @@ function bindSettingsPage() {
       await loadUpdateCard();
     } else {
       toast(res.error || t('msg.save_failed'), 'error');
+    }
+  });
+
+  qs('#btnReloadReconcileSettings')?.addEventListener('click', loadReconcileSettings);
+  qs('#btnSaveReconcileSettings')?.addEventListener('click', saveReconcileSettings);
+  qs('#btnAddReconcilePriceRow')?.addEventListener('click', addReconcilePriceRow);
+  qs('#btnAddReconcileComboRow')?.addEventListener('click', addReconcileComboRow);
+  qs('#btnImportReconcilePrices')?.addEventListener('click', () => qs('#reconcilePriceImportInput')?.click());
+  qs('#btnImportReconcileCombos')?.addEventListener('click', () => qs('#reconcileComboImportInput')?.click());
+  qs('#reconcilePriceImportInput')?.addEventListener('change', event => handleReconcileImportInput('prices', event.currentTarget));
+  qs('#reconcileComboImportInput')?.addEventListener('change', event => handleReconcileImportInput('combos', event.currentTarget));
+
+  qs('#reconcileSettingsCard')?.addEventListener('click', event => {
+    const priceDeleteBtn = event.target.closest('[data-action="delete-reconcile-price-row"]');
+    if (priceDeleteBtn) {
+      deleteReconcilePriceRow(Number(priceDeleteBtn.dataset.index || -1));
+      return;
+    }
+
+    const comboDeleteBtn = event.target.closest('[data-action="delete-reconcile-combo-row"]');
+    if (comboDeleteBtn) {
+      deleteReconcileComboRow(Number(comboDeleteBtn.dataset.index || -1));
     }
   });
 }

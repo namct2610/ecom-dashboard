@@ -1618,6 +1618,96 @@ $initials = strtoupper(substr($user, 0, 2));
           </div>
         </div>
 
+        <!-- Reconciliation settings -->
+        <div class="card mb-4" id="reconcileSettingsCard">
+          <div class="reconcile-settings-head">
+            <div>
+              <div class="card-title" style="margin-bottom:4px">Cài đặt đối soát GBS</div>
+              <div class="card-subtitle">Quản lý `Bang_gia` và `Combo_to_single` để đối soát NMV, quy đổi combo và chỉnh sửa trực tiếp ngay trong hệ thống.</div>
+            </div>
+            <div class="reconcile-settings-actions">
+              <button id="btnReloadReconcileSettings" class="btn btn-secondary btn-sm">Tải lại</button>
+              <button id="btnSaveReconcileSettings" class="btn btn-primary btn-sm">Lưu cài đặt đối soát</button>
+            </div>
+          </div>
+
+          <div class="reconcile-settings-banner">
+            <strong>NMV đối soát:</strong> Doanh thu giá gốc sản phẩm - Khuyến mãi gian hàng
+            <span>(voucher shop và giảm giá nhà bán, không tính phần giảm giá của sàn).</span>
+          </div>
+
+          <div class="reconcile-settings-summary" id="reconcileSettingsSummary">
+            <span class="reconcile-settings-chip">Đang tải cấu hình đối soát...</span>
+          </div>
+
+          <div class="reconcile-settings-grid">
+            <section class="reconcile-settings-panel">
+              <div class="reconcile-settings-panel-head">
+                <div>
+                  <h3>Bang_gia</h3>
+                  <p>Bảng giá SKU đơn của GBS dùng để phân bổ NMV khi một SKU combo được tách thành nhiều SKU cơ sở.</p>
+                </div>
+                <div class="reconcile-settings-panel-actions">
+                  <button id="btnImportReconcilePrices" class="btn btn-secondary btn-sm">Nhập từ Excel</button>
+                  <button id="btnAddReconcilePriceRow" class="btn btn-primary btn-sm">Thêm dòng</button>
+                </div>
+              </div>
+              <div class="reconcile-settings-hint">Nhận file có cột như `Brand code (SKU)` và `Giá trên hóa đơn thanh toán (+VAT)`, hoặc sheet `Bang_gia` trong workbook GBS.</div>
+              <div class="table-wrapper">
+                <table class="reconcile-settings-table">
+                  <thead>
+                    <tr>
+                      <th>SKU GBS</th>
+                      <th>Tên sản phẩm</th>
+                      <th class="text-right">Đơn giá</th>
+                      <th>Thao tác</th>
+                    </tr>
+                  </thead>
+                  <tbody id="reconcilePriceTableBody">
+                    <tr><td colspan="4" class="reconcile-settings-empty">Đang tải dữ liệu...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+
+            <section class="reconcile-settings-panel">
+              <div class="reconcile-settings-panel-head">
+                <div>
+                  <h3>Combo_to_single</h3>
+                  <p>Quy đổi SKU combo về SKU đơn của GBS trước khi so sánh số lượng, SKU và NMV với file Shopee, Lazada, TikTok Shop.</p>
+                </div>
+                <div class="reconcile-settings-panel-actions">
+                  <button id="btnImportReconcileCombos" class="btn btn-secondary btn-sm">Nhập từ Excel</button>
+                  <button id="btnAddReconcileComboRow" class="btn btn-primary btn-sm">Thêm dòng</button>
+                </div>
+              </div>
+              <div class="reconcile-settings-hint">Nhận file có cột `SKU Sản phẩm`, `Sản phẩm quy đổi N`, `Số lượng sản phẩm N`, hoặc sheet `Combo_to_single` trong workbook GBS.</div>
+              <div class="table-wrapper">
+                <table class="reconcile-settings-table">
+                  <thead>
+                    <tr>
+                      <th>Sàn</th>
+                      <th>SKU combo</th>
+                      <th>Tên / từ khóa combo</th>
+                      <th>SKU đơn</th>
+                      <th class="text-right">SL quy đổi</th>
+                      <th>Thao tác</th>
+                    </tr>
+                  </thead>
+                  <tbody id="reconcileComboTableBody">
+                    <tr><td colspan="6" class="reconcile-settings-empty">Đang tải dữ liệu...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          </div>
+
+          <div id="reconcileSettingsResult" class="reconcile-settings-result" aria-live="polite"></div>
+
+          <input type="file" id="reconcilePriceImportInput" accept=".xlsx,.xls" style="display:none">
+          <input type="file" id="reconcileComboImportInput" accept=".xlsx,.xls" style="display:none">
+        </div>
+
         <!-- Danger zone -->
         <div class="card" style="border:2px solid #fecaca">
           <div class="card-title" style="color:#dc2626">⚠️ Vùng nguy hiểm — Reset Database</div>

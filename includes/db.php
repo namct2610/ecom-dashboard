@@ -318,6 +318,31 @@ function ensure_default_admin_user(PDO $pdo, array $config = []): void
     ]);
 }
 
+function get_app_setting(PDO $pdo, string $key, string $default = ''): string
+{
+    $stmt = $pdo->prepare("SELECT setting_value FROM app_settings WHERE setting_key = ? LIMIT 1");
+    $stmt->execute([$key]);
+    $value = $stmt->fetchColumn();
+
+    return $value === false ? $default : (string) $value;
+}
+
+function set_app_setting(PDO $pdo, string $key, string $value): void
+{
+    $stmt = $pdo->prepare("
+        INSERT INTO app_settings (setting_key, setting_value)
+        VALUES (?, ?)
+        ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)
+    ");
+    $stmt->execute([$key, $value]);
+}
+
+function delete_app_setting(PDO $pdo, string $key): void
+{
+    $stmt = $pdo->prepare("DELETE FROM app_settings WHERE setting_key = ?");
+    $stmt->execute([$key]);
+}
+
 function ensure_table_index(PDO $pdo, string $table, string $indexName, string $createSql): void
 {
     $stmt = $pdo->query("SHOW INDEX FROM `{$table}` WHERE Key_name = " . $pdo->quote($indexName));
