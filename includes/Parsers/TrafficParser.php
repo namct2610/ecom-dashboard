@@ -16,23 +16,8 @@ final class TrafficParser extends BaseParser
 
     public function parse(int $uploadId): array
     {
-        // Try "Tất cả" sheet first (Shopee), then sheet 0
         $spreadsheet = $this->loadSpreadsheet();
-        $sheetNames  = array_map(fn($s) => $s->getTitle(), $spreadsheet->getAllSheets());
-
-        $targetSheet = null;
-        $preferred   = ['Tất cả', 'Các chỉ số quan trọng', 'Sheet1', 'sheet1'];
-        foreach ($preferred as $name) {
-            foreach ($sheetNames as $i => $sn) {
-                if (mb_strtolower(trim($sn)) === mb_strtolower($name)) {
-                    $targetSheet = $spreadsheet->getSheet($i);
-                    break 2;
-                }
-            }
-        }
-        if (!$targetSheet) {
-            $targetSheet = $spreadsheet->getSheet(0);
-        }
+        $targetSheet = $this->resolveTargetSheet($spreadsheet);
 
         $rows   = $targetSheet->toArray(null, false, true, false);
         $result = ['rows' => [], 'errors' => [], 'total_rows' => 0, 'imported_rows' => 0, 'skipped_rows' => 0];
@@ -144,6 +129,45 @@ final class TrafficParser extends BaseParser
         if (str_contains($t, 'máy tính') || str_contains($t, 'desktop')) return 'desktop';
         if (str_contains($t, 'ứng dụng') || str_contains($t, 'mobile') || str_contains($t, 'app')) return 'mobile';
         return 'all';
+    }
+
+    private function resolveTargetSheet(\PhpOffice\PhpSpreadsheet\Spreadsheet $spreadsheet): \PhpOffice\PhpSpreadsheet\Worksheet\Worksheet
+    {
+        if ($this->platform === 'shopee') {
+            $sheet = $this->findSheetByName($spreadsheet, ['Tất cả']);
+            if ($sheet === null) {
+                throw new \RuntimeException('File traffic Shopee phải có sheet "Tất cả". Hệ thống chỉ import số liệu trong mục này.');
+            }
+
+            return $sheet;
+        }
+
+        if ($this->platform === 'lazada') {
+            return $this->findSheetByName($spreadsheet, ['Các chỉ số quan trọng']) ?? $spreadsheet->getSheet(0);
+        }
+
+        if ($this->platform === 'tiktokshop') {
+            return $this->findSheetByName($spreadsheet, ['Sheet1', 'sheet1']) ?? $spreadsheet->getSheet(0);
+        }
+
+        return $spreadsheet->getSheet(0);
+    }
+
+    private function findSheetByName(\PhpOffice\PhpSpreadsheet\Spreadsheet $spreadsheet, array $names): ?\PhpOffice\PhpSpreadsheet\Worksheet\Worksheet
+    {
+        $targets = array_map(
+            static fn(string $name): string => mb_strtolower(trim($name)),
+            $names
+        );
+
+        foreach ($spreadsheet->getAllSheets() as $sheet) {
+            $title = mb_strtolower(trim($sheet->getTitle()));
+            if (in_array($title, $targets, true)) {
+                return $sheet;
+            }
+        }
+
+        return null;
     }
 
     private function loadSpreadsheet(): \PhpOffice\PhpSpreadsheet\Spreadsheet
