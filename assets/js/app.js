@@ -1621,7 +1621,7 @@ function mountAdminContent() {
 
 function setupAdminPage() {
   qsa('[data-admin-tab]').forEach(btn => {
-    btn.addEventListener('click', () => openAdminTab(btn.dataset.adminTab));
+    btn.addEventListener('click', () => activateAdminTab(btn.dataset.adminTab));
   });
 
   qs('#btnAdminUserRefresh')?.addEventListener('click', loadAdminUsers);
@@ -1632,10 +1632,10 @@ function setupAdminPage() {
 function loadAdminPage() {
   if (!isAdminUser()) return;
   mountAdminContent();
-  openAdminTab(App.adminTab || 'accounts');
+  activateAdminTab(App.adminTab || 'accounts');
 }
 
-function openAdminTab(tab, options = {}) {
+function activateAdminTab(tab, options = {}) {
   const { skipLoad = false } = options;
   mountAdminContent();
   App.adminTab = ['accounts', 'api', 'system'].includes(tab) ? tab : 'accounts';
@@ -1661,7 +1661,7 @@ window.openAdminTab = function(tab = 'accounts') {
     loadPage('admin');
     return;
   }
-  openAdminTab(tab);
+  activateAdminTab(tab);
 };
 
 async function loadAdminUsers() {

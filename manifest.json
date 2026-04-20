@@ -1,7 +1,7 @@
 {
-  "version": "1.2.8",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.2.8/release/dashboard-v3-1.2.8.zip",
-  "changelog": "- Quản trị: Ẩn bộ lọc sàn và thời gian trong khu quản trị, đồng thời sửa truy cập tab API và Hệ thống\n- Khách hàng: Tối ưu truy vấn bằng bảng tạm và index để tăng tốc tải dữ liệu khách hàng\n- Khách hàng: Làm lại giao diện lịch sử đơn hàng dạng thẻ, bỏ cuộn ngang và cải thiện phần Top địa phương\n- Tổng quan: Sửa nguồn dữ liệu top sản phẩm để xếp hạng đúng theo doanh thu sản phẩm",
+  "version": "1.2.9",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.2.9/release/dashboard-v3-1.2.9.zip",
+  "changelog": "- Hotfix quản trị: sửa lỗi đệ quy openAdminTab gây treo tab Admin, API, Hệ thống và làm hỏng luồng cập nhật\n- Giữ nguyên toàn bộ cải tiến của 1.2.8 về hiệu năng khách hàng, giao diện lịch sử đơn hàng và thống kê sản phẩm",
   "min_php": "8.1",
   "released_at": "2026-04-20"
 }
