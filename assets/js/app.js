@@ -475,6 +475,10 @@ function setupNav() {
   });
 }
 
+function syncHeaderControls(page) {
+  document.body.classList.toggle('page-admin-active', page === 'admin');
+}
+
 function loadPage(name) {
   if (name === 'connect') {
     App.adminTab = 'api';
@@ -490,6 +494,7 @@ function loadPage(name) {
   }
 
   App.currentPage = name;
+  syncHeaderControls(name);
 
   // Update sidebar active
   qsa('.nav-item[data-page]').forEach(item => {
@@ -521,10 +526,11 @@ function loadPage(name) {
 
 async function loadOverview() {
   try {
-    const [rev, orders, traffic] = await Promise.all([
+    const [rev, orders, traffic, products] = await Promise.all([
       api('revenue.php'),
       api('orders.php'),
       api('traffic.php'),
+      api('products.php', { params: { limit: 6 } }),
     ]);
 
     // KPIs
@@ -537,7 +543,7 @@ async function loadOverview() {
     // Charts
     Charts.renderRevenueTrend('chartRevenueTrend', rev.timeseries, rev.granularity);
     Charts.renderPlatformDonut('chartPlatformDonut', rev.platform_breakdown);
-    renderTopProducts('topProductsOverview', orders, rev);
+    renderTopProducts('topProductsOverview', products.top_revenue || []);
     renderRecentOrders('recentOrdersMini', orders.recent);
 
     // Platform legend
@@ -784,22 +790,36 @@ function renderProductsTablePage(tbodyId, pagerId) {
 }
 
 function renderCityListPage(listId, pagerId) {
-  const page  = _citiesPage;
-  const slice = _citiesAll.slice((page-1)*PER_PAGE, page*PER_PAGE);
   const el = qs(`#${listId}`); if (!el) return;
-  const maxO = _citiesAll[0]?.orders || 1;
-  el.innerHTML = slice.map((c, i) => {
-    const rank = (page-1)*PER_PAGE + i + 1;
-    return `<div style="display:flex;align-items:center;gap:10px;padding:4px 0">
-      <span style="font-size:11px;color:var(--text-muted);width:22px;text-align:right">${rank}</span>
-      <span style="font-size:13px;flex:1;color:var(--text-primary)">${c.city}</span>
-      <div class="progress-bar-wrap" style="width:80px">
-        <div class="progress-bar-fill" style="width:${Math.round(c.orders/maxO*100)}%;background:var(--primary-light)"></div>
-      </div>
-      <span style="font-size:12px;font-weight:600;width:40px;text-align:right">${fmtNum(c.orders)}</span>
-    </div>`;
-  }).join('');
-  renderPager(pagerId, page, _citiesAll.length, PER_PAGE, 'gotoCityPage');
+  const list = _citiesAll.slice(0, 8);
+  const pager = qs(`#${pagerId}`);
+
+  if (!list.length) {
+    el.innerHTML = `<div class="empty-state"><p>${t('msg.no_data')}</p></div>`;
+    if (pager) pager.innerHTML = '';
+    return;
+  }
+
+  const maxO = Math.max(...list.map(c => c.orders || 0), 1);
+  el.innerHTML = `<div class="location-grid">${list.map((city, index) => {
+    const barWidth = Math.max(12, Math.round(((city.orders || 0) / maxO) * 100));
+    return `
+      <article class="location-card">
+        <div class="location-card-top">
+          <span class="location-rank">${index + 1}</span>
+          <span class="location-share">${city.percentage || 0}%</span>
+        </div>
+        <div class="location-city">${escHtml(city.city || '—')}</div>
+        <div class="location-orders">${fmtNum(city.orders || 0)} ${t('cl.orders')}</div>
+        <div class="location-bar"><span class="location-bar-fill" style="width:${barWidth}%"></span></div>
+        <div class="location-footer">
+          <span>${t('th.revenue')}</span>
+          <strong>${fmtVND(city.revenue || 0)}</strong>
+        </div>
+      </article>`;
+  }).join('')}</div>`;
+
+  if (pager) pager.innerHTML = '';
 }
 
 // ── DOM Renderers ─────────────────────────────────────────────────────────
@@ -835,20 +855,20 @@ function renderPlatformLegend(id, breakdown, total) {
   }).join('');
 }
 
-function renderTopProducts(id, orders, rev) {
+function renderTopProducts(id, products) {
   const el = qs(`#${id}`); if (!el) return;
-  const recent = (orders.recent || []).slice(0, 6);
-  if (!recent.length) { el.innerHTML = `<div class="empty-state"><p>${t('msg.no_data_yet')}</p></div>`; return; }
-  el.innerHTML = recent.map(o => `
-    <div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border)">
-      ${platformBadge(o.platform)}
+  const list = (products || []).slice(0, 6);
+  if (!list.length) { el.innerHTML = `<div class="empty-state"><p>${t('msg.no_data_yet')}</p></div>`; return; }
+  el.innerHTML = list.map(product => `
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)">
+      ${platformBadge(product.platform)}
       <div style="flex:1;min-width:0">
         <div style="font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
-          ${(o.product_name||'').replace(/\[.*?\]\s*/g,'').trim().slice(0,40)}
+          ${(product.product_name||'').replace(/\[.*?\]\s*/g,'').trim().slice(0,46)}
         </div>
-        <div style="font-size:11px;color:var(--text-muted)">${fmtDate(o.order_created_at)}</div>
+        <div style="font-size:11px;color:var(--text-muted)">${fmtNum(product.order_count || 0)} ${t('cl.orders')} · ${fmtNum(product.total_qty || 0)} ${t('cl.quantity')}</div>
       </div>
-      <div style="font-size:12px;font-weight:600;color:var(--primary);white-space:nowrap">${fmtVND(o.order_total)}</div>
+      <div style="font-size:12px;font-weight:700;color:var(--primary);white-space:nowrap">${fmtVND(product.total_revenue || 0)}</div>
     </div>`).join('');
 }
 
@@ -1080,38 +1100,29 @@ function renderCustomerDetail(data) {
           <p>${t('customer.detail.history_sub')}</p>
         </div>
       </div>
-      <div class="table-wrapper">
-        <table class="customer-history-table">
-          <thead>
-            <tr>
-              <th>${t('th.order_id')}</th>
-              <th>${t('th.product')}</th>
-              <th>${t('th.platform')}</th>
-              <th>${t('th.date')}</th>
-              <th class="text-right">${t('cl.quantity')}</th>
-              <th class="text-right">${t('th.revenue')}</th>
-              <th>${t('th.status')}</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${orders.length ? orders.map(order => `
-              <tr>
-                <td class="font-mono" style="font-size:11px;color:var(--text-muted)">${escHtml(order.order_id)}</td>
-                <td style="min-width:220px">
-                  <div class="customer-history-products">
-                    <strong>${escHtml((order.products || '').slice(0, 90) || '—')}</strong>
-                    <span>${escHtml([order.shipping_address, order.shipping_district, order.shipping_city].filter(Boolean).join(', ') || '—')}</span>
-                  </div>
-                </td>
-                <td>${platformBadge(order.platform)}</td>
-                <td style="font-size:12px;color:var(--text-muted)">${fmtDateTime(order.order_created_at)}</td>
-                <td class="text-right">${fmtNum(order.item_qty || 0)}</td>
-                <td class="text-right" style="font-weight:700;color:var(--text-primary)">${fmtVND(order.order_total || 0)}</td>
-                <td>${statusBadge(order.normalized_status)}</td>
-              </tr>
-            `).join('') : `<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--text-muted)">${t('msg.no_orders')}</td></tr>`}
-          </tbody>
-        </table>
+      <div class="customer-history-list">
+        ${orders.length ? orders.map(order => `
+          <article class="customer-order-card">
+            <div class="customer-order-head">
+              <div class="customer-order-main">
+                <div class="customer-order-id font-mono">${escHtml(order.order_id)}</div>
+                <div class="customer-order-date">${fmtDateTime(order.order_created_at)}${order.payment_method ? ` · ${escHtml(order.payment_method)}` : ''}</div>
+              </div>
+              <div class="customer-order-side">
+                ${platformBadge(order.platform)}
+                ${statusBadge(order.normalized_status)}
+                <div class="customer-order-revenue">${fmtVND(order.order_total || 0)}</div>
+              </div>
+            </div>
+            <div class="customer-order-products">${escHtml(order.products || '—')}</div>
+            <div class="customer-order-meta">
+              <span class="customer-order-chip">${fmtNum(order.item_qty || 0)} ${t('customer.detail.products')}</span>
+              ${order.shipping_city ? `<span class="customer-order-chip">${escHtml(order.shipping_city)}</span>` : ''}
+              ${order.shipping_district ? `<span class="customer-order-chip">${escHtml(order.shipping_district)}</span>` : ''}
+            </div>
+            <div class="customer-order-address">${escHtml([order.shipping_address, order.shipping_district, order.shipping_city].filter(Boolean).join(', ') || '—')}</div>
+          </article>
+        `).join('') : `<div class="customer-detail-loading">${t('msg.no_orders')}</div>`}
       </div>
     </div>
   `;
@@ -1621,14 +1632,12 @@ function setupAdminPage() {
 function loadAdminPage() {
   if (!isAdminUser()) return;
   mountAdminContent();
-  if ((App.adminTab || 'accounts') !== 'accounts') {
-    loadAdminUsers();
-  }
   openAdminTab(App.adminTab || 'accounts');
 }
 
 function openAdminTab(tab, options = {}) {
   const { skipLoad = false } = options;
+  mountAdminContent();
   App.adminTab = ['accounts', 'api', 'system'].includes(tab) ? tab : 'accounts';
 
   qsa('[data-admin-tab]').forEach(btn => {
@@ -1638,7 +1647,7 @@ function openAdminTab(tab, options = {}) {
     panel.classList.toggle('active', panel.dataset.adminTabPanel === App.adminTab);
   });
 
-  if (skipLoad || App.currentPage !== 'admin') return;
+  if (skipLoad) return;
 
   if (App.adminTab === 'accounts') loadAdminUsers();
   if (App.adminTab === 'api') loadConnectPage();

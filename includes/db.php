@@ -42,6 +42,11 @@ function ensure_schema(PDO $pdo, array $config = []): void
         }
     }
 
+    if (in_array('orders', $tables, true)) {
+        ensure_table_index($pdo, 'orders', 'idx_buyer_status_date', "CREATE INDEX idx_buyer_status_date ON orders (buyer_username, normalized_status, order_created_at)");
+        ensure_table_index($pdo, 'orders', 'idx_city_district_status', "CREATE INDEX idx_city_district_status ON orders (shipping_city, shipping_district, normalized_status)");
+    }
+
     // Create tiktok_connections if missing
     if (!in_array('tiktok_connections', $tables, true)) {
         $pdo->exec("CREATE TABLE IF NOT EXISTS tiktok_connections (
@@ -297,6 +302,16 @@ function ensure_default_admin_user(PDO $pdo, array $config = []): void
         'Administrator',
         password_hash($password, PASSWORD_BCRYPT),
     ]);
+}
+
+function ensure_table_index(PDO $pdo, string $table, string $indexName, string $createSql): void
+{
+    $stmt = $pdo->query("SHOW INDEX FROM `{$table}` WHERE Key_name = " . $pdo->quote($indexName));
+    if ($stmt->fetch()) {
+        return;
+    }
+
+    $pdo->exec($createSql);
 }
 
 // ── Upsert helpers ──────────────────────────────────────────────────────────

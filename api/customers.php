@@ -24,45 +24,27 @@ function build_customers_overview(PDO $pdo): array
     $params = [];
     $where  = sql_filters($params);
     $where .= " AND normalized_status IN ('completed','delivered')";
-    $whereInner = preg_replace('/^\s*WHERE\s+/i', '', $where);
+    build_customer_snapshot_tables($pdo, $where, $params);
 
-    $summaryStmt = $pdo->prepare("
+    $summary = $pdo->query("
         SELECT
             COUNT(*) AS total_orders,
             COALESCE(AVG(order_revenue), 0) AS avg_order_value,
-            COUNT(DISTINCT buyer_username) AS unique_buyers
-        FROM (
-            SELECT platform,
-                   order_id,
-                   buyer_username,
-                   COALESCE(MAX(order_total), 0) AS order_revenue
-            FROM orders {$where}
-            GROUP BY platform, order_id, buyer_username
-        ) order_summary
-    ");
-    $summaryStmt->execute($params);
-    $summary = $summaryStmt->fetch() ?: [];
+            COUNT(DISTINCT NULLIF(buyer_username, '')) AS unique_buyers
+        FROM tmp_customer_orders
+    ")->fetch() ?: [];
 
-    $buyerStmt = $pdo->prepare("
+    $buyerStmt = $pdo->query("
         SELECT buyer_username,
                COUNT(*) AS order_count,
                COALESCE(SUM(item_qty), 0) AS item_qty,
                COALESCE(SUM(order_revenue), 0) AS revenue
-        FROM (
-            SELECT buyer_username,
-                   platform,
-                   order_id,
-                   COALESCE(SUM(quantity), 0) AS item_qty,
-                   COALESCE(MAX(order_total), 0) AS order_revenue
-            FROM orders {$where}
-            AND buyer_username IS NOT NULL AND buyer_username != ''
-            GROUP BY buyer_username, platform, order_id
-        ) buyer_orders
+        FROM tmp_customer_orders
+        WHERE buyer_username != ''
         GROUP BY buyer_username
         ORDER BY revenue DESC, order_count DESC, item_qty DESC, buyer_username ASC
         LIMIT 20
     ");
-    $buyerStmt->execute($params);
     $buyerStats = array_map(static fn(array $row): array => [
         'buyer_username' => (string) $row['buyer_username'],
         'order_count'    => (int) $row['order_count'],
@@ -70,24 +52,16 @@ function build_customers_overview(PDO $pdo): array
         'revenue'        => (float) $row['revenue'],
     ], $buyerStmt->fetchAll());
 
-    $cityStmt = $pdo->prepare("
+    $cityStmt = $pdo->query("
         SELECT shipping_city AS city,
                COUNT(*) AS orders,
                COALESCE(SUM(order_revenue), 0) AS revenue
-        FROM (
-            SELECT platform,
-                   order_id,
-                   shipping_city,
-                   COALESCE(MAX(order_total), 0) AS order_revenue
-            FROM orders {$where}
-            AND shipping_city IS NOT NULL AND shipping_city != '' AND platform != 'lazada'
-            GROUP BY platform, order_id, shipping_city
-        ) city_orders
+        FROM tmp_customer_orders
+        WHERE shipping_city != '' AND platform != 'lazada'
         GROUP BY shipping_city
         ORDER BY orders DESC, revenue DESC
-        LIMIT 30
+        LIMIT 12
     ");
-    $cityStmt->execute($params);
     $cities = $cityStmt->fetchAll();
 
     $totalOrders = (int) ($summary['total_orders'] ?? 0);
@@ -98,78 +72,62 @@ function build_customers_overview(PDO $pdo): array
         'percentage' => $totalOrders > 0 ? round(((int) $c['orders']) / $totalOrders * 100, 1) : 0,
     ], $cities);
 
-    $hcmWhere = $where . " AND platform != 'lazada' AND shipping_district IS NOT NULL AND shipping_district != ''
-        AND (shipping_city LIKE '%Hồ Chí Minh%' OR shipping_city LIKE '%HCM%' OR shipping_city = 'TP. Hồ Chí Minh')";
-    $hcmStmt = $pdo->prepare("
+    $hcmStmt = $pdo->query("
         SELECT shipping_district AS district,
-               COUNT(DISTINCT CONCAT(platform,':',order_id)) AS orders
-        FROM orders {$hcmWhere}
+               COUNT(*) AS orders
+        FROM tmp_customer_orders
+        WHERE platform != 'lazada'
+          AND shipping_district != ''
+          AND (shipping_city LIKE '%Hồ Chí Minh%' OR shipping_city LIKE '%HCM%' OR shipping_city = 'TP. Hồ Chí Minh')
         GROUP BY shipping_district
         ORDER BY orders DESC
         LIMIT 20
     ");
-    $hcmStmt->execute($params);
 
-    $hanoiWhere = $where . " AND platform != 'lazada' AND shipping_district IS NOT NULL AND shipping_district != ''
-        AND (shipping_city LIKE '%Hà Nội%' OR shipping_city = 'Hà Nội')";
-    $hanoiStmt = $pdo->prepare("
+    $hanoiStmt = $pdo->query("
         SELECT shipping_district AS district,
-               COUNT(DISTINCT CONCAT(platform,':',order_id)) AS orders
-        FROM orders {$hanoiWhere}
+               COUNT(*) AS orders
+        FROM tmp_customer_orders
+        WHERE platform != 'lazada'
+          AND shipping_district != ''
+          AND (shipping_city LIKE '%Hà Nội%' OR shipping_city = 'Hà Nội')
         GROUP BY shipping_district
         ORDER BY orders DESC
         LIMIT 20
     ");
-    $hanoiStmt->execute($params);
 
-    $payStmt = $pdo->prepare("
+    $payStmt = $pdo->query("
         SELECT payment_method, COUNT(*) AS cnt
-        FROM (
-            SELECT platform, order_id, MAX(payment_method) AS payment_method
-            FROM orders {$where}
-            AND payment_method IS NOT NULL AND payment_method != ''
-            GROUP BY platform, order_id
-        ) payment_orders
+        FROM tmp_customer_orders
+        WHERE payment_method != ''
         GROUP BY payment_method
         ORDER BY cnt DESC
         LIMIT 8
     ");
-    $payStmt->execute($params);
 
-    $segStmt = $pdo->prepare("
+    $segStmt = $pdo->query("
         SELECT
             SUM(CASE WHEN ever_cnt = 1 THEN 1 ELSE 0 END) AS new_buyers,
             SUM(CASE WHEN ever_cnt >= 2 THEN 1 ELSE 0 END) AS returning_buyers
         FROM (
-            SELECT pb.buyer_username,
+            SELECT cb.buyer_username,
                    COUNT(DISTINCT CONCAT(a.platform,':',a.order_id)) AS ever_cnt
-            FROM (
-                SELECT DISTINCT buyer_username
-                FROM orders
-                WHERE {$whereInner}
-                  AND buyer_username IS NOT NULL AND buyer_username != ''
-            ) pb
-            JOIN orders a ON a.buyer_username = pb.buyer_username
+            FROM tmp_current_buyers cb
+            JOIN orders a ON a.buyer_username = cb.buyer_username
               AND a.normalized_status IN ('completed','delivered')
-            GROUP BY pb.buyer_username
+            GROUP BY cb.buyer_username
         ) t
     ");
-    $segStmt->execute($params);
     $seg = $segStmt->fetch() ?: [];
 
-    $potStmt = $pdo->prepare("
+    $potStmt = $pdo->query("
         SELECT COUNT(DISTINCT o.buyer_username) AS potential_buyers
         FROM orders o
+        LEFT JOIN tmp_current_buyers cb ON cb.buyer_username = o.buyer_username
         WHERE o.normalized_status IN ('completed','delivered')
           AND o.buyer_username IS NOT NULL AND o.buyer_username != ''
-          AND NOT EXISTS (
-              SELECT 1 FROM orders p
-              WHERE {$whereInner}
-                AND p.buyer_username = o.buyer_username
-                AND p.buyer_username IS NOT NULL
-          )
+          AND cb.buyer_username IS NULL
     ");
-    $potStmt->execute($params);
     $pot = $potStmt->fetch() ?: [];
 
     $trafficParams = [];
@@ -204,6 +162,41 @@ function build_customers_overview(PDO $pdo): array
         'hanoi_districts'   => $hanoiStmt->fetchAll(),
         'payment_methods'   => $payStmt->fetchAll(),
     ];
+}
+
+function build_customer_snapshot_tables(PDO $pdo, string $where, array $params): void
+{
+    $pdo->exec("DROP TEMPORARY TABLE IF EXISTS tmp_current_buyers");
+    $pdo->exec("DROP TEMPORARY TABLE IF EXISTS tmp_customer_orders");
+
+    $tmpOrdersStmt = $pdo->prepare("
+        CREATE TEMPORARY TABLE tmp_customer_orders AS
+        SELECT platform,
+               order_id,
+               COALESCE(NULLIF(MAX(buyer_username), ''), '') AS buyer_username,
+               COALESCE(NULLIF(MAX(buyer_name), ''), MAX(buyer_username), '') AS buyer_name,
+               MIN(order_created_at) AS order_created_at,
+               COALESCE(SUM(quantity), 0) AS item_qty,
+               COALESCE(MAX(order_total), 0) AS order_revenue,
+               COALESCE(MAX(shipping_address), '') AS shipping_address,
+               COALESCE(MAX(shipping_district), '') AS shipping_district,
+               COALESCE(MAX(shipping_city), '') AS shipping_city,
+               COALESCE(MAX(payment_method), '') AS payment_method
+        FROM orders {$where}
+        GROUP BY platform, order_id
+    ");
+    $tmpOrdersStmt->execute($params);
+
+    $pdo->exec("CREATE INDEX idx_tmp_customer_buyer ON tmp_customer_orders (buyer_username)");
+    $pdo->exec("CREATE INDEX idx_tmp_customer_city ON tmp_customer_orders (shipping_city, shipping_district)");
+
+    $pdo->exec("
+        CREATE TEMPORARY TABLE tmp_current_buyers AS
+        SELECT DISTINCT buyer_username
+        FROM tmp_customer_orders
+        WHERE buyer_username != ''
+    ");
+    $pdo->exec("CREATE INDEX idx_tmp_current_buyers ON tmp_current_buyers (buyer_username)");
 }
 
 function build_customer_detail(PDO $pdo): array
