@@ -39,6 +39,8 @@ rsync -a \
   --exclude='.env.*' \
   --exclude='.installed' \
   --exclude='*.zip' \
+  --exclude='*.xlsx' \
+  --exclude='*.xls' \
   --exclude='*.log' \
   --exclude='.DS_Store' \
   --exclude='__MACOSX/' \

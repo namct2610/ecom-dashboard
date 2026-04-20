@@ -217,6 +217,11 @@ const Upload = (() => {
   /* ── Build short summary string ── */
   function buildSummary(r) {
     const parts = [];
+    if (r.data_type === 'traffic' && r.platform) {
+      parts.push(`Traffic ${platformLabel(r.platform)}`);
+    } else if (r.platform) {
+      parts.push(platformLabel(r.platform));
+    }
     if (r.imported > 0) parts.push(`${r.imported} dòng`);
     if (r.skipped  > 0) parts.push(`${r.skipped} bỏ qua`);
     if (r.errors   > 0) parts.push(`${r.errors} lỗi`);
@@ -258,6 +263,10 @@ const Upload = (() => {
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;');
+  }
+
+  function platformLabel(platform) {
+    return { shopee: 'Shopee', lazada: 'Lazada', tiktokshop: 'TikTok Shop' }[platform] || platform || 'Không xác định';
   }
 
   function toast(msg, type = 'info', duration = 3000) {

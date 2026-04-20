@@ -73,30 +73,16 @@ try {
         $tempPath  = $file['tmp_name'];
         $isTraffic = false;
         $platform  = null;
+        $detectedBy = null;
 
         try {
-            $platform = detect_platform_from_file($tempPath);
+            $profile = detect_upload_profile_from_file($tempPath);
+            $platform = (string) ($profile['platform'] ?? '');
+            $isTraffic = (string) ($profile['data_type'] ?? 'orders') === 'traffic';
+            $detectedBy = (string) ($profile['detected_by'] ?? '');
         } catch (\Throwable $e) {
-            // Could be traffic data
-            if (is_traffic_file($tempPath)) {
-                $isTraffic = true;
-                // Guess platform from filename
-                $lower = mb_strtolower($originalName);
-                if (str_contains($lower, 'shopee'))     $platform = 'shopee';
-                elseif (str_contains($lower, 'lazada')) $platform = 'lazada';
-                elseif (str_contains($lower, 'tiktok')) $platform = 'tiktokshop';
-                else {
-                    $results[] = ['file' => $originalName, 'success' => false, 'error' => 'Không nhận diện được sàn. Đặt tên file chứa "shopee", "lazada" hoặc "tiktok".'];
-                    continue;
-                }
-            } else {
-                $results[] = ['file' => $originalName, 'success' => false, 'error' => $e->getMessage()];
-                continue;
-            }
-        }
-
-        if (!$isTraffic && is_traffic_file($tempPath)) {
-            $isTraffic = true;
+            $results[] = ['file' => $originalName, 'success' => false, 'error' => $e->getMessage()];
+            continue;
         }
 
         // Move to upload dir
@@ -137,6 +123,7 @@ try {
                 'upload_id'  => $uploadId,
                 'platform'   => $platform,
                 'data_type'  => $isTraffic ? 'traffic' : 'orders',
+                'detected_by'=> $detectedBy,
                 'total_rows' => $parsed['total_rows'],
                 'imported'   => $parsed['imported_rows'],
                 'skipped'    => $parsed['skipped_rows'],
@@ -150,6 +137,7 @@ try {
                 'upload_id'  => $uploadId,
                 'platform'   => $platform,
                 'data_type'  => $isTraffic ? 'traffic' : 'orders',
+                'detected_by'=> $detectedBy,
                 'total_rows' => $parsed['total_rows'],
                 'imported'   => $parsed['imported_rows'],
                 'skipped'    => $parsed['skipped_rows'],

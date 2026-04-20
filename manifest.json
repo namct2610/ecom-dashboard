@@ -1,7 +1,7 @@
 {
-  "version": "1.2.12",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.2.12/release/dashboard-v3-1.2.12.zip",
-  "changelog": "- Tài khoản: thêm đo độ mạnh mật khẩu và chặn lưu nếu chưa đạt tối thiểu mức Trung bình\n- Quản trị: admin có thể bật yêu cầu user đổi mật khẩu ở lần đăng nhập kế tiếp khi tạo hoặc cập nhật tài khoản\n- Giao diện: thêm phiên bản và ngày cập nhật mới nhất ở phần thương hiệu sidebar",
+  "version": "1.2.13",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.2.13/release/dashboard-v3-1.2.13.zip",
+  "changelog": "- Upload: tự động nhận diện đúng cấu trúc file traffic Shopee, Lazada và TikTok Shop dựa trên nội dung workbook, không còn phụ thuộc vào tên file\n- Import: hiển thị rõ sàn đã nhận diện trong kết quả upload để dễ kiểm tra\n- Build: loại các file Excel mẫu khỏi gói cập nhật phát hành",
   "min_php": "8.1",
   "released_at": "2026-04-20"
 }

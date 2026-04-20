@@ -829,7 +829,7 @@ $initials = strtoupper(substr($user, 0, 2));
               </svg>
               <div class="upload-area-title">Kéo thả file vào đây</div>
               <div class="upload-area-sub">hoặc <span id="browseBtn">chọn file</span> từ máy tính</div>
-              <div class="upload-area-hint">Hỗ trợ .xlsx và .xls — nhiều file cùng lúc</div>
+              <div class="upload-area-hint">Hỗ trợ .xlsx và .xls — nhiều file cùng lúc, tự nhận diện đúng mẫu traffic Shopee / Lazada / TikTok Shop khi upload</div>
               <input id="fileInput" type="file" accept=".xlsx,.xls" multiple style="display:none">
             </div>
 
