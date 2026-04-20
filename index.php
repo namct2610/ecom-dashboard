@@ -133,6 +133,10 @@ $initials = strtoupper(substr($user, 0, 2));
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
         <span class="nav-label" data-i18n="nav.comparison">So sánh</span>
       </div>
+      <div class="nav-item" data-page="reconcile" data-label="Đối soát GBS">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h10M4 9h16M4 13h10M4 17h16"/><path d="M18 4l2 2 4-4"/><path d="M18 12l2 2 4-4"/></svg>
+        <span class="nav-label" data-i18n="nav.reconcile">Đối soát GBS</span>
+      </div>
       <div class="nav-item" data-page="heatmaps" data-label="Phân tích">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="4" height="4" rx="1"/><rect x="10" y="3" width="4" height="4" rx="1"/><rect x="17" y="3" width="4" height="4" rx="1"/><rect x="3" y="10" width="4" height="4" rx="1"/><rect x="10" y="10" width="4" height="4" rx="1"/><rect x="17" y="10" width="4" height="4" rx="1"/><rect x="3" y="17" width="4" height="4" rx="1"/><rect x="10" y="17" width="4" height="4" rx="1"/><rect x="17" y="17" width="4" height="4" rx="1"/></svg>
         <span class="nav-label" data-i18n="nav.analytics">Phân tích</span>
@@ -757,6 +761,82 @@ $initials = strtoupper(substr($user, 0, 2));
             </table>
           </div>
         </div>
+      </div>
+
+      <!-- ── GBS Reconciliation ───────────────────────────────────────── -->
+      <div class="page" id="page-reconcile">
+        <div class="page-header reconcile-page-header">
+          <div>
+            <h1 data-i18n="page.reconcile.title">Đối soát GBS</h1>
+            <p data-i18n="page.reconcile.sub">Khớp file GBS với export Shopee, Lazada và TikTok Shop theo đơn hàng</p>
+          </div>
+          <button id="btnRefreshReconcile" class="btn btn-secondary">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 11a8.1 8.1 0 0 0-15.5-2M4 5v4h4"/><path d="M4 13a8.1 8.1 0 0 0 15.5 2M20 19v-4h-4"/></svg>
+            Làm mới đối soát
+          </button>
+        </div>
+
+        <div class="card reconcile-hero-card">
+          <div class="reconcile-hero-copy">
+            <div class="reconcile-kicker">GBS × Export sàn</div>
+            <h3>So sánh theo `platform + order_id` và quy đổi combo trước khi đối chiếu</h3>
+            <p>Trang này đọc trực tiếp `GBS.xlsx`, `Shopee.xlsx`, `Lazada.xlsx`, `TiktokShop.xlsx` trong thư mục gốc dự án, rồi đối chiếu số lượng sản phẩm và NMV theo logic phù hợp với GBS.</p>
+          </div>
+          <div class="reconcile-run-meta" id="reconcileRunMeta">Chưa tải dữ liệu đối soát.</div>
+        </div>
+
+        <div class="grid-4">
+          <div class="kpi-card border-blue">
+            <div class="kpi-label">Đơn ở file sàn</div>
+            <div class="kpi-value" id="reconcile-stat-platform-orders">0</div>
+            <div class="kpi-sub">Tổng số đơn tìm thấy trong các file Shopee, Lazada, TikTok Shop</div>
+          </div>
+          <div class="kpi-card border-green">
+            <div class="kpi-label">Đơn chung</div>
+            <div class="kpi-value" id="reconcile-stat-common-orders">0</div>
+            <div class="kpi-sub">Có mặt đồng thời trong GBS và file sàn</div>
+          </div>
+          <div class="kpi-card border-teal">
+            <div class="kpi-label">Đơn khớp</div>
+            <div class="kpi-value" id="reconcile-stat-matched-orders">0</div>
+            <div class="kpi-sub">Khớp số lượng và NMV sau khi quy đổi</div>
+          </div>
+          <div class="kpi-card border-red">
+            <div class="kpi-label">Đơn cần xem</div>
+            <div class="kpi-value" id="reconcile-stat-review-orders">0</div>
+            <div class="kpi-sub">Bao gồm đơn thiếu ở một phía hoặc lệch sau đối chiếu</div>
+          </div>
+        </div>
+
+        <div class="grid-4" id="reconcileFileCards"></div>
+
+        <div class="card">
+          <div class="card-title">Quy tắc khớp trường dữ liệu</div>
+          <div class="card-subtitle">Các trường sàn được quy đổi về cùng logic của GBS trước khi so sánh.</div>
+          <div class="reconcile-map-grid" id="reconcileMappings"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Tóm tắt theo sàn</div>
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Sàn</th>
+                  <th>Đơn sàn</th>
+                  <th>Đơn GBS</th>
+                  <th>Đơn chung</th>
+                  <th>Đơn khớp</th>
+                  <th>Thiếu trong GBS</th>
+                  <th>Thiếu trong file sàn</th>
+                </tr>
+              </thead>
+              <tbody id="reconcileSummaryBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="reconcile-platform-sections" id="reconcilePlatformSections"></div>
       </div>
 
       <!-- ── Heatmaps ──────────────────────────────────────────────────── -->

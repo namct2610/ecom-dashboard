@@ -28,7 +28,7 @@ const I18n = (() => {
   const _vi = {
     'nav.overview':'Tổng quan','nav.orders':'Đơn hàng','nav.products':'Sản phẩm',
     'nav.customers':'Khách hàng','nav.traffic':'Traffic','nav.comparison':'So sánh',
-    'nav.analytics':'Phân tích','nav.upload':'Upload','nav.connect':'Kết nối API',
+    'nav.analytics':'Phân tích','nav.reconcile':'Đối soát GBS','nav.upload':'Upload','nav.connect':'Kết nối API',
     'nav.logs':'Nhật ký','nav.settings':'Cài đặt','nav.admin':'Quản trị','nav.collapse':'Thu gọn','nav.logout':'Đăng xuất',
     'filter.all':'Tất cả','period.month':'Tháng','period.year':'Năm',
     'preset.today':'Hôm nay','preset.yesterday':'Hôm qua','preset.7days':'7 ngày',
@@ -39,6 +39,7 @@ const I18n = (() => {
     'page.customers.title':'Khách hàng','page.customers.sub':'Phân tích khách hàng theo địa lý và thanh toán',
     'page.traffic.title':'Traffic','page.traffic.sub':'Lượt xem, lượt truy cập và tỷ lệ chuyển đổi',
     'page.comparison.title':'So sánh sàn','page.comparison.sub':'Hiệu suất Shopee, Lazada và TikTok Shop',
+    'page.reconcile.title':'Đối soát GBS','page.reconcile.sub':'Khớp file GBS với export Shopee, Lazada và TikTok Shop theo đơn hàng',
     'page.analytics.title':'Phân tích nâng cao','page.analytics.sub':'Heatmap thời gian đặt hàng và doanh thu theo địa lý',
     'page.upload.title':'Upload dữ liệu','page.upload.sub':'Tải lên file Excel từ Shopee, Lazada, TikTok Shop',
     'page.logs.title':'Nhật ký hoạt động','page.logs.sub':'Tất cả sự kiện và lỗi được ghi lại tự động',
@@ -160,6 +161,7 @@ const I18n = (() => {
     'toast.load_customers':'Không thể tải dữ liệu khách hàng.',
     'toast.load_traffic':'Không thể tải dữ liệu traffic.',
     'toast.load_comparison':'Không thể tải dữ liệu so sánh.',
+    'toast.load_reconcile':'Không thể tải dữ liệu đối soát GBS.',
     'toast.load_heatmap':'Không thể tải dữ liệu heatmap.',
     'toast.sync_done':'Đồng bộ hoàn tất.','toast.sync_error':'Lỗi đồng bộ.',
     'toast.lazada_sync_done':'Đồng bộ Lazada hoàn tất.','toast.lazada_sync_error':'Lỗi đồng bộ Lazada.',
@@ -217,7 +219,7 @@ const I18n = (() => {
     document.querySelectorAll('.nav-item[data-label]').forEach(item => {
       const map = {
         overview:'nav.overview', orders:'nav.orders', products:'nav.products',
-        customers:'nav.customers', traffic:'nav.traffic', comparison:'nav.comparison',
+        customers:'nav.customers', traffic:'nav.traffic', comparison:'nav.comparison', reconcile:'nav.reconcile',
         heatmaps:'nav.analytics', upload:'nav.upload', connect:'nav.connect',
         logs:'nav.logs', settings:'nav.settings', admin:'nav.admin',
       };

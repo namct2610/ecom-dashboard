@@ -154,6 +154,10 @@
 .page-admin-active #periodPicker {
   display: none !important;
 }
+.page-reconcile-active .platform-filter,
+.page-reconcile-active #periodPicker {
+  display: none !important;
+}
 .platform-btn {
   padding: 5px 12px;
   border-radius: var(--radius-full);
