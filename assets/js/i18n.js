@@ -58,9 +58,13 @@ const I18n = (() => {
     'admin.form.create':'Tạo tài khoản mới','admin.form.edit':'Cập nhật tài khoản',
     'admin.form.sub':'Mỗi tài khoản staff có thể xem dashboard, chỉ admin mới truy cập được bảng quản trị này.',
     'admin.form.username':'Tên đăng nhập','admin.form.full_name':'Tên hiển thị','admin.form.role':'Vai trò','admin.form.password':'Mật khẩu',
-    'admin.form.password_keep':'Để trống để giữ mật khẩu hiện tại','admin.form.active':'Cho phép đăng nhập','admin.form.active.sub':'Tắt mục này để khóa tài khoản mà không cần xoá.',
+    'admin.form.password_keep':'Để trống để giữ mật khẩu hiện tại','admin.form.password_placeholder':'Từ 8 ký tự, tối thiểu mức Trung bình',
+    'admin.form.password_required':'Vui lòng nhập mật khẩu cho tài khoản mới.',
+    'admin.form.must_change_password':'Buộc đổi mật khẩu ở lần đăng nhập kế tiếp',
+    'admin.form.must_change_password.sub':'Nên bật khi admin cấp mật khẩu tạm hoặc vừa reset mật khẩu cho user.',
+    'admin.form.active':'Cho phép đăng nhập','admin.form.active.sub':'Tắt mục này để khóa tài khoản mà không cần xoá.',
     'admin.form.submit_create':'Tạo tài khoản','admin.form.submit_update':'Lưu thay đổi','admin.form.reset':'Đặt lại form',
-    'admin.form.note':'Khi đang sửa tài khoản, ô mật khẩu có thể để trống để giữ nguyên mật khẩu cũ. Để đổi mật khẩu, chỉ cần nhập mật khẩu mới rồi lưu lại.',
+    'admin.form.note':'Khi đang sửa tài khoản, ô mật khẩu có thể để trống để giữ nguyên mật khẩu cũ. Nếu đổi mật khẩu, mật khẩu mới phải đạt tối thiểu mức Trung bình.',
     'admin.role.admin':'Quản trị viên','admin.role.staff':'Nhân viên',
     'admin.state.active':'Hoạt động','admin.state.inactive':'Đã khóa',
     'admin.toast.created':'Đã tạo tài khoản.','admin.toast.updated':'Đã cập nhật tài khoản.','admin.toast.deleted':'Đã xóa tài khoản.',
@@ -118,9 +122,18 @@ const I18n = (() => {
     'account.profile.remove_avatar':'Xóa avatar','account.profile.avatar_hint':'Hỗ trợ JPG, PNG, WEBP tối đa 2MB.',
     'account.profile.submit':'Lưu hồ sơ','account.profile.success':'Đã cập nhật hồ sơ tài khoản.',
     'account.password.title':'Đổi mật khẩu','account.password.sub':'Mật khẩu mới sẽ được áp dụng ngay cho lần đăng nhập tiếp theo.',
+    'account.password.force.title':'Bạn cần đổi mật khẩu trước khi tiếp tục',
+    'account.password.force.sub':'Đây là mật khẩu tạm do admin thiết lập. Mật khẩu mới phải đạt tối thiểu mức Trung bình.',
+    'account.password.force.modal_title':'Cập nhật mật khẩu bắt buộc',
+    'account.password.force.modal_sub':'Hệ thống đang yêu cầu bạn thay mật khẩu tạm trước khi tiếp tục sử dụng dashboard.',
     'account.password.current':'Mật khẩu hiện tại','account.password.new':'Mật khẩu mới','account.password.confirm':'Xác nhận mật khẩu mới',
-    'account.password.hint':'Tối thiểu 6 ký tự. Nên dùng mật khẩu đủ mạnh và khác mật khẩu cũ.',
-    'account.password.cancel':'Đóng','account.password.submit':'Cập nhật mật khẩu','account.password.success':'Đã cập nhật mật khẩu.',
+    'account.password.hint':'Mật khẩu mới phải đạt tối thiểu mức Trung bình: từ 8 ký tự và có ít nhất 2 nhóm ký tự.',
+    'account.password.cancel':'Đóng','account.password.logout':'Đăng xuất','account.password.submit':'Cập nhật mật khẩu','account.password.success':'Đã cập nhật mật khẩu.',
+    'password.strength.label':'Độ mạnh','password.strength.empty':'Chưa nhập mật khẩu','password.strength.minimum':'Yêu cầu tối thiểu mức Trung bình',
+    'password.strength.weak':'Yếu','password.strength.medium':'Trung bình','password.strength.strong':'Mạnh','password.strength.very_strong':'Rất mạnh',
+    'password.strength.pass':'Đạt yêu cầu tối thiểu để lưu.','password.strength.fail':'Chưa đạt mức Trung bình để lưu.',
+    'password.rule.length':'Từ 8 ký tự trở lên','password.rule.variety':'Ít nhất 2 nhóm ký tự: chữ, số hoặc ký tự đặc biệt',
+    'password.error.minimum':'Mật khẩu phải đạt tối thiểu mức Trung bình: từ 8 ký tự và có ít nhất 2 nhóm ký tự.',
     'lang.manage':'Quản lý ngôn ngữ','lang.upload':'Upload ngôn ngữ',
     'lang.add':'Thêm ngôn ngữ','lang.template':'Tải file mẫu',
     'lang.keys':'khóa dịch','lang.delete':'Xoá','lang.builtin':'Tích hợp sẵn',
@@ -213,6 +226,8 @@ const I18n = (() => {
     });
 
     _updateSelectorUI();
+    window.syncPasswordStrengthIndicators?.();
+    window.syncPasswordModalState?.();
   }
 
   // ── Fetch a language file from server ─────────────────────────────────────

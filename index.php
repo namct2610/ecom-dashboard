@@ -6,6 +6,20 @@ start_session();
 // Generate CSRF token
 $csrf = generate_csrf();
 
+$appVersion = file_exists(__DIR__ . '/version.txt')
+    ? trim((string) file_get_contents(__DIR__ . '/version.txt'))
+    : '0.0.0';
+$appReleaseDate = '';
+$manifestPath = __DIR__ . '/manifest.json';
+if (file_exists($manifestPath)) {
+    $manifestPayload = json_decode((string) file_get_contents($manifestPath), true);
+    if (is_array($manifestPayload) && !empty($manifestPayload['released_at'])) {
+        $releaseAt = date_create((string) $manifestPayload['released_at']);
+        $appReleaseDate = $releaseAt ? $releaseAt->format('d/m/Y') : (string) $manifestPayload['released_at'];
+    }
+}
+$appVersionLabel = 'v' . $appVersion . ($appReleaseDate !== '' ? ' · ' . $appReleaseDate : '');
+
 // Detect current user initials for avatar
 $user = $_SESSION['username'] ?? 'A';
 $initials = strtoupper(substr($user, 0, 2));
@@ -90,6 +104,7 @@ $initials = strtoupper(substr($user, 0, 2));
       <div class="sidebar-brand-text">
         <div class="sidebar-brand-name">Dashboard v3</div>
         <div class="sidebar-brand-sub">Shopee · Lazada · TikTok</div>
+        <div class="sidebar-brand-meta"><?= htmlspecialchars($appVersionLabel, ENT_QUOTES, 'UTF-8') ?></div>
       </div>
     </div>
 
@@ -1062,7 +1077,18 @@ $initials = strtoupper(substr($user, 0, 2));
 
                   <div class="admin-field">
                     <label for="adminUserPassword" data-i18n="admin.form.password">Mật khẩu</label>
-                    <input id="adminUserPassword" type="password" placeholder="Tối thiểu 6 ký tự">
+                    <input id="adminUserPassword" type="password" placeholder="Từ 8 ký tự, tối thiểu mức Trung bình">
+                    <div class="password-strength is-empty" id="adminUserPasswordStrength">
+                      <div class="password-strength-bar"><span class="password-strength-fill"></span></div>
+                      <div class="password-strength-meta">
+                        <span class="password-strength-value" data-i18n="password.strength.empty">Chưa nhập mật khẩu</span>
+                        <span class="password-strength-note" data-i18n="password.strength.minimum">Yêu cầu tối thiểu mức Trung bình</span>
+                      </div>
+                    </div>
+                    <div class="password-strength-rules">
+                      <span class="password-strength-rule" data-password-rule="length" data-i18n="password.rule.length">Từ 8 ký tự trở lên</span>
+                      <span class="password-strength-rule" data-password-rule="variety" data-i18n="password.rule.variety">Ít nhất 2 nhóm ký tự: chữ, số hoặc ký tự đặc biệt</span>
+                    </div>
                   </div>
 
                   <div class="admin-toggle">
@@ -1073,13 +1099,21 @@ $initials = strtoupper(substr($user, 0, 2));
                     <input id="adminUserActive" type="checkbox" checked>
                   </div>
 
+                  <div class="admin-toggle">
+                    <div>
+                      <label for="adminUserMustChangePassword" data-i18n="admin.form.must_change_password">Buộc đổi mật khẩu ở lần đăng nhập kế tiếp</label>
+                      <small data-i18n="admin.form.must_change_password.sub">Nên bật khi admin cấp mật khẩu tạm hoặc vừa reset mật khẩu cho user.</small>
+                    </div>
+                    <input id="adminUserMustChangePassword" type="checkbox" checked>
+                  </div>
+
                   <div class="admin-form-actions">
                     <button class="btn btn-primary" id="btnAdminUserSubmit" type="submit" data-i18n="admin.form.submit_create">Tạo tài khoản</button>
                     <button class="btn btn-secondary" id="btnAdminUserReset" type="button" data-i18n="admin.form.reset">Đặt lại form</button>
                   </div>
                 </form>
 
-                <div class="admin-form-note" data-i18n="admin.form.note">Khi đang sửa tài khoản, ô mật khẩu có thể để trống để giữ nguyên mật khẩu cũ. Để đổi mật khẩu, chỉ cần nhập mật khẩu mới rồi lưu lại.</div>
+                <div class="admin-form-note" data-i18n="admin.form.note">Khi đang sửa tài khoản, ô mật khẩu có thể để trống để giữ nguyên mật khẩu cũ. Nếu đổi mật khẩu, mật khẩu mới phải đạt tối thiểu mức Trung bình.</div>
               </div>
             </div>
           </div>
@@ -1560,6 +1594,16 @@ $initials = strtoupper(substr($user, 0, 2));
     </div>
 
     <form class="password-form" id="changePasswordForm" autocomplete="off">
+      <div class="password-force-alert" id="passwordForceAlert" hidden>
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+        </svg>
+        <div>
+          <strong data-i18n="account.password.force.title">Bạn cần đổi mật khẩu trước khi tiếp tục</strong>
+          <span data-i18n="account.password.force.sub">Đây là mật khẩu tạm do admin thiết lập. Mật khẩu mới phải đạt tối thiểu mức Trung bình.</span>
+        </div>
+      </div>
+
       <div class="password-field">
         <label for="currentPassword" data-i18n="account.password.current">Mật khẩu hiện tại</label>
         <input id="currentPassword" type="password" autocomplete="current-password" required>
@@ -1568,6 +1612,17 @@ $initials = strtoupper(substr($user, 0, 2));
       <div class="password-field">
         <label for="newPassword" data-i18n="account.password.new">Mật khẩu mới</label>
         <input id="newPassword" type="password" autocomplete="new-password" required>
+        <div class="password-strength is-empty" id="changePasswordStrength">
+          <div class="password-strength-bar"><span class="password-strength-fill"></span></div>
+          <div class="password-strength-meta">
+            <span class="password-strength-value" data-i18n="password.strength.empty">Chưa nhập mật khẩu</span>
+            <span class="password-strength-note" data-i18n="password.strength.minimum">Yêu cầu tối thiểu mức Trung bình</span>
+          </div>
+        </div>
+        <div class="password-strength-rules">
+          <span class="password-strength-rule" data-password-rule="length" data-i18n="password.rule.length">Từ 8 ký tự trở lên</span>
+          <span class="password-strength-rule" data-password-rule="variety" data-i18n="password.rule.variety">Ít nhất 2 nhóm ký tự: chữ, số hoặc ký tự đặc biệt</span>
+        </div>
       </div>
 
       <div class="password-field">
@@ -1575,7 +1630,7 @@ $initials = strtoupper(substr($user, 0, 2));
         <input id="confirmPassword" type="password" autocomplete="new-password" required>
       </div>
 
-      <div class="password-note" data-i18n="account.password.hint">Tối thiểu 6 ký tự. Nên dùng mật khẩu đủ mạnh và khác mật khẩu cũ.</div>
+      <div class="password-note" data-i18n="account.password.hint">Mật khẩu mới phải đạt tối thiểu mức Trung bình: từ 8 ký tự và có ít nhất 2 nhóm ký tự.</div>
       <div class="password-form-error" id="changePasswordError"></div>
 
       <div class="password-actions">

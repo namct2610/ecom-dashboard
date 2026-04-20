@@ -1,7 +1,7 @@
 {
-  "version": "1.2.11",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.2.11/release/dashboard-v3-1.2.11.zip",
-  "changelog": "- Tài khoản: user có thể tự đổi tên hiển thị và upload/xóa avatar trong menu avatar\n- Header: chuyển luôn lựa chọn ngôn ngữ và cài đặt ngôn ngữ vào menu avatar\n- Quản trị: chỉnh lại hover bảng tài khoản để nền liền mạch trên cả dòng",
+  "version": "1.2.12",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.2.12/release/dashboard-v3-1.2.12.zip",
+  "changelog": "- Tài khoản: thêm đo độ mạnh mật khẩu và chặn lưu nếu chưa đạt tối thiểu mức Trung bình\n- Quản trị: admin có thể bật yêu cầu user đổi mật khẩu ở lần đăng nhập kế tiếp khi tạo hoặc cập nhật tài khoản\n- Giao diện: thêm phiên bản và ngày cập nhật mới nhất ở phần thương hiệu sidebar",
   "min_php": "8.1",
   "released_at": "2026-04-20"
 }

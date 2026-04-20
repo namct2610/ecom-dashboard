@@ -17,6 +17,7 @@ const App = {
   user: null,
   adminTab: 'accounts',
   adminMounted: false,
+  passwordModalForced: false,
   periods: { months: [], years: [] },
 };
 window.App = App;
@@ -86,6 +87,116 @@ function paintAvatar(el, name, avatarPath = '') {
   el.setAttribute('aria-label', imageUrl ? `${name} avatar` : initials);
 }
 
+function evaluatePasswordStrength(password) {
+  const value = String(password || '');
+  const length = value.length;
+  const hasLower = /[a-z]/.test(value);
+  const hasUpper = /[A-Z]/.test(value);
+  const hasDigit = /\d/.test(value);
+  const hasSymbol = /[^a-zA-Z\d]/.test(value);
+  const variety = [hasLower, hasUpper, hasDigit, hasSymbol].filter(Boolean).length;
+
+  let level = 'weak';
+  if (length >= 8 && variety >= 2) level = 'medium';
+  if (length >= 10 && variety >= 3) level = 'strong';
+  if (length >= 12 && variety === 4) level = 'very_strong';
+
+  return {
+    level,
+    length,
+    variety,
+    meetsMinimum: length >= 8 && variety >= 2,
+  };
+}
+
+function getPasswordStrengthLabel(level) {
+  return t(`password.strength.${level}`);
+}
+
+function renderPasswordStrength(root, password) {
+  if (!root) return;
+
+  const value = String(password || '');
+  const strength = evaluatePasswordStrength(value);
+  const fill = qs('.password-strength-fill', root);
+  const valueEl = qs('.password-strength-value', root);
+  const noteEl = qs('.password-strength-note', root);
+
+  root.classList.toggle('is-empty', value === '');
+  root.dataset.level = strength.level;
+
+  if (fill) {
+    const width = value === ''
+      ? 0
+      : ({ weak: 24, medium: 52, strong: 78, very_strong: 100 }[strength.level] || 0);
+    fill.style.width = `${width}%`;
+  }
+
+  if (valueEl) {
+    valueEl.textContent = value === ''
+      ? t('password.strength.empty')
+      : `${t('password.strength.label')}: ${getPasswordStrengthLabel(strength.level)}`;
+  }
+
+  if (noteEl) {
+    noteEl.textContent = value === ''
+      ? t('password.strength.minimum')
+      : (strength.meetsMinimum ? t('password.strength.pass') : t('password.strength.fail'));
+  }
+
+  qsa('[data-password-rule]', root.parentElement || root).forEach(rule => {
+    const ruleName = rule.dataset.passwordRule;
+    const met = ruleName === 'length'
+      ? strength.length >= 8
+      : ruleName === 'variety'
+        ? strength.variety >= 2
+        : false;
+    rule.classList.toggle('is-met', value !== '' && met);
+  });
+
+  return strength;
+}
+
+function syncPasswordStrengthIndicators() {
+  renderPasswordStrength(qs('#adminUserPasswordStrength'), qs('#adminUserPassword')?.value || '');
+  renderPasswordStrength(qs('#changePasswordStrength'), qs('#newPassword')?.value || '');
+}
+
+function ensurePasswordStrength(password) {
+  const strength = evaluatePasswordStrength(password);
+  if (strength.meetsMinimum) return strength;
+  throw new Error(t('password.error.minimum'));
+}
+
+function maybeForcePasswordChange() {
+  if (!App.user?.must_change_password) {
+    App.passwordModalForced = false;
+    return;
+  }
+  if (App.passwordModalForced && qs('#passwordModal')?.classList.contains('open')) {
+    return;
+  }
+  openPasswordModal({ forced: true });
+}
+
+function syncPasswordModalState() {
+  const modal = qs('#passwordModal');
+  if (!modal) return;
+
+  const forceAlert = qs('#passwordForceAlert');
+  const closeBtn = qs('#btnClosePasswordModal');
+  const cancelBtn = qs('#btnCancelPasswordModal');
+  const titleEl = qs('#passwordModalTitle');
+  const subEl = qs('.password-modal-sub', modal);
+
+  if (forceAlert) forceAlert.hidden = !App.passwordModalForced;
+  modal.classList.toggle('is-forced', App.passwordModalForced);
+  if (closeBtn) closeBtn.hidden = App.passwordModalForced;
+  if (cancelBtn) cancelBtn.textContent = App.passwordModalForced ? t('account.password.logout') : t('account.password.cancel');
+  if (titleEl) titleEl.textContent = App.passwordModalForced ? t('account.password.force.modal_title') : t('account.password.title');
+  if (subEl) subEl.textContent = App.passwordModalForced ? t('account.password.force.modal_sub') : t('account.password.sub');
+}
+
 function platformLabel(p) {
   return { shopee: 'Shopee', lazada: 'Lazada', tiktokshop: 'TikTok' }[p] || p;
 }
@@ -149,10 +260,11 @@ async function apiFetch(url, opts = {}) {
 
 // ── Auth ─────────────────────────────────────────────────────────────────
 function showAuth() {
+  App.passwordModalForced = false;
   closeCustomerDetail();
   closeUserMenu();
   closeProfileModal();
-  closePasswordModal();
+  closePasswordModal({ force: true });
   qs('#auth-screen').classList.remove('hidden');
   qs('#app').classList.add('hidden');
 }
@@ -265,9 +377,10 @@ function setupLogin() {
 }
 
 async function logout() {
+  App.passwordModalForced = false;
   closeUserMenu();
   closeProfileModal();
-  closePasswordModal();
+  closePasswordModal({ force: true });
   await fetch('api/auth.php', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': App.csrf },
@@ -567,6 +680,9 @@ function loadPage(name) {
     admin:      loadAdminPage,
   };
   if (loaders[name]) loaders[name]();
+  if (App.user?.must_change_password) {
+    setTimeout(() => maybeForcePasswordChange(), 0);
+  }
 }
 
 // ── Page Loaders ─────────────────────────────────────────────────────────
@@ -1674,6 +1790,7 @@ function setupAdminPage() {
   qs('#btnAdminUserRefresh')?.addEventListener('click', loadAdminUsers);
   qs('#btnAdminUserReset')?.addEventListener('click', resetAdminUserForm);
   qs('#adminUserForm')?.addEventListener('submit', submitAdminUserForm);
+  qs('#adminUserPassword')?.addEventListener('input', syncPasswordStrengthIndicators);
 }
 
 function loadAdminPage() {
@@ -1800,10 +1917,12 @@ function resetAdminUserForm() {
   qs('#adminUserFullName').value = '';
   qs('#adminUserRole').value = 'staff';
   qs('#adminUserPassword').value = '';
-  qs('#adminUserPassword').placeholder = 'Tối thiểu 6 ký tự';
+  qs('#adminUserPassword').placeholder = t('admin.form.password_placeholder');
   qs('#adminUserActive').checked = true;
+  qs('#adminUserMustChangePassword').checked = true;
   qs('#adminUserFormMode').textContent = t('admin.form.create');
   qs('#btnAdminUserSubmit').textContent = t('admin.form.submit_create');
+  syncPasswordStrengthIndicators();
   renderAdminUsersTable();
 }
 
@@ -1817,8 +1936,10 @@ function fillAdminUserForm(user) {
   qs('#adminUserPassword').value = '';
   qs('#adminUserPassword').placeholder = t('admin.form.password_keep');
   qs('#adminUserActive').checked = Boolean(user.is_active);
+  qs('#adminUserMustChangePassword').checked = Boolean(user.must_change_password);
   qs('#adminUserFormMode').textContent = t('admin.form.edit');
   qs('#btnAdminUserSubmit').textContent = t('admin.form.submit_update');
+  syncPasswordStrengthIndicators();
   renderAdminUsersTable();
 }
 
@@ -1832,6 +1953,7 @@ async function submitAdminUserForm(e) {
     full_name: qs('#adminUserFullName')?.value.trim() || '',
     role: qs('#adminUserRole')?.value || 'staff',
     password: qs('#adminUserPassword')?.value || '',
+    must_change_password: qs('#adminUserMustChangePassword')?.checked,
     is_active: qs('#adminUserActive')?.checked,
   };
 
@@ -1842,6 +1964,13 @@ async function submitAdminUserForm(e) {
   }
 
   try {
+    if (!isEditing && !payload.password) {
+      throw new Error(t('admin.form.password_required'));
+    }
+    if (payload.password) {
+      ensurePasswordStrength(payload.password);
+    }
+
     const res = await apiFetch('api/users.php', {
       method: 'POST',
       body: JSON.stringify(payload),
@@ -1858,6 +1987,9 @@ async function submitAdminUserForm(e) {
       if (editedUserId && editedUserId === App.user?.id && !isAdminUser()) {
         loadPage('overview');
         return;
+      }
+      if (editedUserId && editedUserId === App.user?.id) {
+        maybeForcePasswordChange();
       }
     }
 
@@ -2489,6 +2621,7 @@ function setupAppShell() {
   setupUserMenu();
   setupProfileModal();
   setupPasswordModal();
+  syncPasswordStrengthIndicators();
   qs('#btnLogout')?.addEventListener('click', logout);
   if (isAdminUser()) checkForUpdates();
 }
@@ -2738,40 +2871,54 @@ function setupProfileModal() {
   });
 }
 
-function openPasswordModal() {
+function openPasswordModal(options = {}) {
   const modal = qs('#passwordModal');
   const errorEl = qs('#changePasswordError');
   const form = qs('#changePasswordForm');
   if (!modal) return;
 
+  App.passwordModalForced = Boolean(options.forced);
   form?.reset();
   if (errorEl) errorEl.textContent = '';
+  syncPasswordModalState();
+  syncPasswordStrengthIndicators();
   modal.classList.add('open');
   modal.setAttribute('aria-hidden', 'false');
   qs('#currentPassword')?.focus();
 }
 
-function closePasswordModal() {
+function closePasswordModal(options = {}) {
   const modal = qs('#passwordModal');
   const errorEl = qs('#changePasswordError');
   if (!modal) return;
+  if (App.passwordModalForced && !options.force) return;
   modal.classList.remove('open');
   modal.setAttribute('aria-hidden', 'true');
   if (errorEl) errorEl.textContent = '';
+  syncPasswordModalState();
 }
 
 function setupPasswordModal() {
   const form = qs('#changePasswordForm');
   if (!form) return;
 
+  const handleCancel = () => {
+    if (App.passwordModalForced) {
+      logout();
+      return;
+    }
+    closePasswordModal();
+  };
+
   qsa('[data-password-close]').forEach(el => {
-    el.addEventListener('click', closePasswordModal);
+    el.addEventListener('click', handleCancel);
   });
-  qs('#btnClosePasswordModal')?.addEventListener('click', closePasswordModal);
-  qs('#btnCancelPasswordModal')?.addEventListener('click', closePasswordModal);
+  qs('#btnClosePasswordModal')?.addEventListener('click', handleCancel);
+  qs('#btnCancelPasswordModal')?.addEventListener('click', handleCancel);
   document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') closePasswordModal();
+    if (e.key === 'Escape' && !App.passwordModalForced) closePasswordModal();
   });
+  qs('#newPassword')?.addEventListener('input', syncPasswordStrengthIndicators);
 
   form.addEventListener('submit', async e => {
     e.preventDefault();
@@ -2788,13 +2935,17 @@ function setupPasswordModal() {
 
     submitBtn?.setAttribute('disabled', 'disabled');
     try {
+      ensurePasswordStrength(payload.new_password);
       const res = await apiFetch('api/account.php', {
         method: 'POST',
         body: JSON.stringify(payload),
       });
       if (!res.success) throw new Error(res.error || t('msg.failed'));
+      App.user = { ...(App.user || {}), ...(res.user || {}) };
+      applyAuthUI();
+      App.passwordModalForced = false;
       toast(t('account.password.success'), 'success');
-      closePasswordModal();
+      closePasswordModal({ force: true });
     } catch (e) {
       if (errorEl) errorEl.textContent = e.message;
     } finally {
@@ -2802,6 +2953,9 @@ function setupPasswordModal() {
     }
   });
 }
+
+window.syncPasswordStrengthIndicators = syncPasswordStrengthIndicators;
+window.syncPasswordModalState = syncPasswordModalState;
 
 let _langSettingsRefresh = async () => {};
 let _langSettingsBound = false;
