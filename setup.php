@@ -480,6 +480,7 @@ function initSchema(PDO $pdo): void
         full_name VARCHAR(255) NULL,
         avatar_path VARCHAR(500) NULL,
         password_hash VARCHAR(255) NOT NULL,
+        must_change_password TINYINT(1) NOT NULL DEFAULT 0,
         role ENUM('admin','staff') NOT NULL DEFAULT 'staff',
         is_active TINYINT(1) NOT NULL DEFAULT 1,
         last_login_at DATETIME NULL,

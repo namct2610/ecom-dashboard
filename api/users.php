@@ -11,7 +11,8 @@ try {
 
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         $users = $pdo->query("
-            SELECT id, username, COALESCE(full_name, '') AS full_name, COALESCE(avatar_path, '') AS avatar_path, role, is_active,
+            SELECT id, username, COALESCE(full_name, '') AS full_name, COALESCE(avatar_path, '') AS avatar_path,
+                   must_change_password, role, is_active,
                    last_login_at, created_at, updated_at
             FROM users
             ORDER BY role = 'admin' DESC, is_active DESC, username ASC
@@ -40,6 +41,7 @@ try {
                     'username'      => (string) $user['username'],
                     'full_name'     => (string) $user['full_name'],
                     'avatar_path'   => (string) $user['avatar_path'],
+                    'must_change_password' => (int) ($user['must_change_password'] ?? 0) === 1,
                     'role'          => (string) $user['role'],
                     'is_active'     => (int) $user['is_active'] === 1,
                     'last_login_at' => $user['last_login_at'],
@@ -61,13 +63,16 @@ try {
         $fullName = normalize_full_name((string) ($body['full_name'] ?? ''));
         $password = (string) ($body['password'] ?? '');
         $role     = normalize_role((string) ($body['role'] ?? 'staff'));
+        $isActive = !empty($body['is_active']) ? 1 : 0;
+        $mustChangePassword = !empty($body['must_change_password']) ? 1 : 0;
 
         if ($username === '') {
             json_error('Tên đăng nhập chỉ chấp nhận a-z, 0-9, ., _, - và tối thiểu 3 ký tự.', 422);
         }
-        if (strlen($password) < 6) {
-            json_error('Mật khẩu phải có ít nhất 6 ký tự.', 422);
+        if ($password === '') {
+            json_error('Vui lòng nhập mật khẩu cho tài khoản mới.', 422);
         }
+        ensure_password_meets_policy($password);
 
         $exists = $pdo->prepare("SELECT id FROM users WHERE username = ? LIMIT 1");
         $exists->execute([$username]);
@@ -76,17 +81,23 @@ try {
         }
 
         $stmt = $pdo->prepare("
-            INSERT INTO users (username, full_name, password_hash, role, is_active)
-            VALUES (?, ?, ?, ?, 1)
+            INSERT INTO users (username, full_name, password_hash, must_change_password, role, is_active)
+            VALUES (?, ?, ?, ?, ?, ?)
         ");
         $stmt->execute([
             $username,
             $fullName === '' ? null : $fullName,
             password_hash($password, PASSWORD_BCRYPT),
+            $mustChangePassword,
             $role,
+            $isActive,
         ]);
 
-        log_activity('info', 'admin', "Tạo tài khoản đăng nhập: {$username}", ['role' => $role]);
+        log_activity('info', 'admin', "Tạo tài khoản đăng nhập: {$username}", [
+            'role' => $role,
+            'is_active' => $isActive,
+            'must_change_password' => $mustChangePassword,
+        ]);
         json_response(['success' => true]);
     }
 
@@ -96,12 +107,13 @@ try {
         $role     = normalize_role((string) ($body['role'] ?? 'staff'));
         $isActive = !empty($body['is_active']) ? 1 : 0;
         $password = (string) ($body['password'] ?? '');
+        $mustChangePassword = !empty($body['must_change_password']) ? 1 : 0;
 
         if ($id <= 0) {
             json_error('Thiếu user id.', 422);
         }
-        if ($password !== '' && strlen($password) < 6) {
-            json_error('Mật khẩu phải có ít nhất 6 ký tự.', 422);
+        if ($password !== '') {
+            ensure_password_meets_policy($password);
         }
 
         $user = find_user_by_id($pdo, $id);
@@ -116,8 +128,9 @@ try {
             $fullName === '' ? null : $fullName,
             $role,
             $isActive,
+            $mustChangePassword,
         ];
-        $sql = "UPDATE users SET full_name = ?, role = ?, is_active = ?";
+        $sql = "UPDATE users SET full_name = ?, role = ?, is_active = ?, must_change_password = ?";
 
         if ($password !== '') {
             $sql .= ", password_hash = ?";
@@ -133,6 +146,7 @@ try {
         log_activity('info', 'admin', "Cập nhật tài khoản: {$user['username']}", [
             'role'      => $role,
             'is_active' => $isActive,
+            'must_change_password' => $mustChangePassword,
             'password'  => $password !== '' ? 'updated' : 'unchanged',
         ]);
         json_response(['success' => true]);
@@ -190,7 +204,7 @@ function normalize_role(string $role): string
 function find_user_by_id(PDO $pdo, int $id): ?array
 {
     $stmt = $pdo->prepare("
-        SELECT id, username, role, is_active
+        SELECT id, username, must_change_password, role, is_active
         FROM users
         WHERE id = ?
         LIMIT 1

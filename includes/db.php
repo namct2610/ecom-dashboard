@@ -52,6 +52,11 @@ function ensure_schema(PDO $pdo, array $config = []): void
         if (empty($avatarCol)) {
             $pdo->exec("ALTER TABLE users ADD COLUMN avatar_path VARCHAR(500) NULL AFTER full_name");
         }
+
+        $mustChangeCol = $pdo->query("SHOW COLUMNS FROM users LIKE 'must_change_password'")->fetchAll();
+        if (empty($mustChangeCol)) {
+            $pdo->exec("ALTER TABLE users ADD COLUMN must_change_password TINYINT(1) NOT NULL DEFAULT 0 AFTER password_hash");
+        }
     }
 
     // Create tiktok_connections if missing
@@ -134,13 +139,14 @@ function ensure_schema(PDO $pdo, array $config = []): void
     if (!in_array('users', $tables, true)) {
         $pdo->exec("CREATE TABLE IF NOT EXISTS users (
             id INT AUTO_INCREMENT PRIMARY KEY,
-            username VARCHAR(100) NOT NULL,
-            full_name VARCHAR(255) NULL,
-            avatar_path VARCHAR(500) NULL,
-            password_hash VARCHAR(255) NOT NULL,
-            role ENUM('admin','staff') NOT NULL DEFAULT 'staff',
-            is_active TINYINT(1) NOT NULL DEFAULT 1,
-            last_login_at DATETIME NULL,
+        username VARCHAR(100) NOT NULL,
+        full_name VARCHAR(255) NULL,
+        avatar_path VARCHAR(500) NULL,
+        password_hash VARCHAR(255) NOT NULL,
+        must_change_password TINYINT(1) NOT NULL DEFAULT 0,
+        role ENUM('admin','staff') NOT NULL DEFAULT 'staff',
+        is_active TINYINT(1) NOT NULL DEFAULT 1,
+        last_login_at DATETIME NULL,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             UNIQUE KEY uk_username (username),

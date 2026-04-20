@@ -44,7 +44,7 @@ function find_account_user(PDO $pdo, string $username): ?array
 {
     $stmt = $pdo->prepare("
         SELECT id, username, COALESCE(full_name, '') AS full_name, COALESCE(avatar_path, '') AS avatar_path,
-               password_hash, role, is_active
+               password_hash, must_change_password, role, is_active
         FROM users
         WHERE username = ?
         LIMIT 1
@@ -64,9 +64,6 @@ function change_password(PDO $pdo, array $user, array $body): void
     if ($currentPassword === '' || $newPassword === '' || $confirmPassword === '') {
         json_error('Vui lòng nhập đầy đủ các trường mật khẩu.', 422);
     }
-    if (strlen($newPassword) < 6) {
-        json_error('Mật khẩu mới phải có ít nhất 6 ký tự.', 422);
-    }
     if ($newPassword !== $confirmPassword) {
         json_error('Xác nhận mật khẩu mới không khớp.', 422);
     }
@@ -77,17 +74,33 @@ function change_password(PDO $pdo, array $user, array $body): void
         json_error('Mật khẩu mới phải khác mật khẩu hiện tại.', 422);
     }
 
+    ensure_password_meets_policy($newPassword, 'Mật khẩu mới');
+
     $pdo->prepare("
         UPDATE users
-        SET password_hash = ?
+        SET password_hash = ?, must_change_password = 0
         WHERE id = ?
     ")->execute([
         password_hash($newPassword, PASSWORD_BCRYPT),
         (int) $user['id'],
     ]);
 
+    $updatedUser = [
+        'id' => (int) $user['id'],
+        'username' => (string) $user['username'],
+        'full_name' => (string) ($user['full_name'] ?? ''),
+        'avatar_path' => (string) ($user['avatar_path'] ?? ''),
+        'must_change_password' => false,
+        'role' => (string) ($user['role'] ?? 'staff'),
+    ];
+    store_user_session($updatedUser, false);
+
     log_activity('info', 'auth', "Đổi mật khẩu thành công: {$user['username']}");
-    json_response(['success' => true]);
+    json_response([
+        'success' => true,
+        'user' => $updatedUser,
+        'strength' => evaluate_password_strength($newPassword),
+    ]);
 }
 
 function update_profile(PDO $pdo, array $user, array $body): void
@@ -118,6 +131,7 @@ function update_profile(PDO $pdo, array $user, array $body): void
         'username' => (string) $user['username'],
         'full_name' => $fullName,
         'avatar_path' => $avatarPath,
+        'must_change_password' => (int) ($user['must_change_password'] ?? 0) === 1,
         'role' => (string) ($user['role'] ?? 'staff'),
     ];
     store_user_session($updatedUser, false);

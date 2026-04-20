@@ -29,6 +29,7 @@ function session_user_payload(): ?array
         'username'  => (string) ($_SESSION['username'] ?? ''),
         'full_name' => (string) ($_SESSION['full_name'] ?? ''),
         'avatar_path' => (string) ($_SESSION['avatar_path'] ?? ''),
+        'must_change_password' => !empty($_SESSION['must_change_password']),
         'role'      => (string) ($_SESSION['role'] ?? 'staff'),
     ];
 }
@@ -46,6 +47,7 @@ function store_user_session(array $user, bool $regenerate = true): void
     $_SESSION['username']  = (string) ($user['username'] ?? '');
     $_SESSION['full_name'] = (string) ($user['full_name'] ?? '');
     $_SESSION['avatar_path'] = (string) ($user['avatar_path'] ?? '');
+    $_SESSION['must_change_password'] = !empty($user['must_change_password']);
     $_SESSION['role']      = (string) ($user['role'] ?? 'staff');
     $_SESSION['csrf_token'] ??= bin2hex(random_bytes(32));
 }
@@ -91,7 +93,8 @@ function current_user(): ?array
     try {
         $pdo  = db($config);
         $stmt = $pdo->prepare("
-            SELECT id, username, COALESCE(full_name, '') AS full_name, COALESCE(avatar_path, '') AS avatar_path, role, is_active
+            SELECT id, username, COALESCE(full_name, '') AS full_name, COALESCE(avatar_path, '') AS avatar_path,
+                   must_change_password, role, is_active
             FROM users
             WHERE username = ?
             LIMIT 1
@@ -170,6 +173,44 @@ function generate_csrf(): string
 function is_local(): bool
 {
     return in_array($_SERVER['REMOTE_ADDR'] ?? '', ['127.0.0.1', '::1'], true);
+}
+
+function evaluate_password_strength(string $password): array
+{
+    $length = strlen($password);
+    $hasLower = preg_match('/[a-z]/', $password) === 1;
+    $hasUpper = preg_match('/[A-Z]/', $password) === 1;
+    $hasDigit = preg_match('/\d/', $password) === 1;
+    $hasSymbol = preg_match('/[^a-zA-Z\d]/', $password) === 1;
+    $variety = ($hasLower ? 1 : 0) + ($hasUpper ? 1 : 0) + ($hasDigit ? 1 : 0) + ($hasSymbol ? 1 : 0);
+
+    $level = 'weak';
+    if ($length >= 8 && $variety >= 2) {
+        $level = 'medium';
+    }
+    if ($length >= 10 && $variety >= 3) {
+        $level = 'strong';
+    }
+    if ($length >= 12 && $variety === 4) {
+        $level = 'very_strong';
+    }
+
+    return [
+        'level'         => $level,
+        'length'        => $length,
+        'variety'       => $variety,
+        'meets_minimum' => $length >= 8 && $variety >= 2,
+    ];
+}
+
+function ensure_password_meets_policy(string $password, string $fieldLabel = 'Mật khẩu'): array
+{
+    $strength = evaluate_password_strength($password);
+    if ($strength['meets_minimum']) {
+        return $strength;
+    }
+
+    json_error("{$fieldLabel} phải đạt tối thiểu mức Trung bình: từ 8 ký tự và có ít nhất 2 nhóm ký tự (chữ thường, chữ hoa, số, ký tự đặc biệt).", 422);
 }
 
 // ── JSON responses ──────────────────────────────────────────────────────────
