@@ -560,25 +560,115 @@ function detect_platform_from_file(string $filePath): string
     return $best;
 }
 
+function detect_upload_profile_from_file(string $filePath): array
+{
+    try {
+        return [
+            'data_type'   => 'orders',
+            'platform'    => detect_platform_from_file($filePath),
+            'detected_by' => 'order_headers',
+        ];
+    } catch (\Throwable $orderError) {
+        try {
+            return [
+                'data_type'   => 'traffic',
+                'platform'    => detect_traffic_platform_from_file($filePath),
+                'detected_by' => 'traffic_template',
+            ];
+        } catch (\Throwable $trafficError) {
+            if (is_traffic_file($filePath)) {
+                throw new \RuntimeException('Không nhận diện được cấu trúc file traffic. Hiện chỉ hỗ trợ 3 mẫu traffic Shopee, Lazada và TikTok Shop có sẵn trong dự án.');
+            }
+
+            throw new \RuntimeException($orderError->getMessage());
+        }
+    }
+}
+
+function detect_traffic_platform_from_file(string $filePath): string
+{
+    $sheets = load_excel_probe_sheets($filePath, 4, 12, 20);
+    if (empty($sheets)) {
+        throw new \RuntimeException('File trống.');
+    }
+
+    $scores = [
+        'shopee'     => 0,
+        'lazada'     => 0,
+        'tiktokshop' => 0,
+    ];
+
+    foreach ($sheets as $sheet) {
+        $title = normalize_excel_probe_text((string) ($sheet['title'] ?? ''));
+        $lines = $sheet['lines'] ?? [];
+
+        if ($title === 'tất cả') {
+            $scores['shopee'] += 5;
+        }
+        if ($title === 'máy tính' || $title === 'ứng dụng') {
+            $scores['shopee'] += 3;
+        }
+        if ($title === 'các chỉ số quan trọng' || $title === 'định nghĩa chỉ số') {
+            $scores['lazada'] += 5;
+        }
+        if ($title === 'sheet1') {
+            $scores['tiktokshop'] += 1;
+        }
+
+        foreach ($lines as $line) {
+            if (excel_probe_line_has_all($line, ['ngày', 'lượt xem', 'số lượt xem trung bình', 'người theo dõi mới'])) {
+                $scores['shopee'] += 8;
+            }
+            if (excel_probe_line_has_all($line, ['tỉ lệ thoát trang', 'lượt truy cập', 'số khách truy cập hiện tại'])) {
+                $scores['shopee'] += 6;
+            }
+
+            if (excel_probe_line_has_all($line, ['nguồn: lazada', 'công cụ phân tích', 'tổng quan'])) {
+                $scores['lazada'] += 7;
+            }
+            if (excel_probe_line_has_all($line, ['ngày', 'lợi nhuận', 'khách truy cập', 'khách mua', 'đơn hàng', 'lượt xem'])) {
+                $scores['lazada'] += 9;
+            }
+            if (excel_probe_line_has_all($line, ['người dùng đã thêm sản phẩm vào giỏ hàng', 'số lượng thêm vào giỏ hàng'])) {
+                $scores['lazada'] += 5;
+            }
+
+            if (excel_probe_line_has_all($line, ['tổng quan dữ liệu', 'lượt xem trang', 'lượt truy cập trang cửa hàng'])) {
+                $scores['tiktokshop'] += 8;
+            }
+            if (excel_probe_line_has_all($line, ['dữ liệu theo ngày'])) {
+                $scores['tiktokshop'] += 4;
+            }
+            if (excel_probe_line_has_all($line, ['ngày', 'số khách hàng độc nhất', 'đơn hàng sku', 'tỷ lệ chuyển đổi'])) {
+                $scores['tiktokshop'] += 8;
+            }
+        }
+    }
+
+    arsort($scores);
+    $best = (string) array_key_first($scores);
+    $values = array_values($scores);
+    $bestScore = (int) ($values[0] ?? 0);
+    $secondScore = (int) ($values[1] ?? 0);
+
+    if ($bestScore < 6 || $bestScore <= $secondScore) {
+        throw new \RuntimeException('Không nhận diện được cấu trúc file traffic. Vui lòng dùng đúng mẫu Shopee, Lazada hoặc TikTok Shop.');
+    }
+
+    return $best;
+}
+
 function is_traffic_file(string $filePath): bool
 {
     try {
-        $reader = IOFactory::createReaderForFile($filePath);
-        $reader->setReadDataOnly(true);
-        if (method_exists($reader, 'setReadEmptyCells')) {
-            $reader->setReadEmptyCells(false);
-        }
-        $rows   = $reader->load($filePath)->getSheet(0)->toArray(null, false, true, false);
+        $sheets = load_excel_probe_sheets($filePath, 4, 12, 20);
         $trafficSignals = ['lượt xem', 'lượt truy cập', 'tỉ lệ thoát', 'page views', 'visits', 'visitors', 'bounce rate', 'tổng quan dữ liệu', 'khách truy cập'];
-        // Scan first 10 rows — Lazada places headers in row 5
-        for ($i = 0; $i < min(10, count($rows)); $i++) {
-            $line = implode(' ', array_map(
-                static fn($v) => mb_strtolower(trim((string)($v ?? ''))),
-                $rows[$i]
-            ));
-            foreach ($trafficSignals as $s) {
-                if (str_contains($line, $s)) {
-                    return true;
+        foreach ($sheets as $sheet) {
+            foreach (($sheet['lines'] ?? []) as $line) {
+                foreach ($trafficSignals as $s) {
+                    if (str_contains($line, $s)) {
+                        return true;
+                    }
                 }
             }
         }
@@ -601,4 +691,69 @@ function create_order_parser(string $platform, string $filePath): object
 function create_traffic_parser(string $platform, string $filePath): object
 {
     return new TrafficParser($filePath, $platform);
+}
+
+function load_excel_probe_sheets(string $filePath, int $maxSheets = 4, int $maxRows = 12, int $maxCols = 20): array
+{
+    if (!class_exists(IOFactory::class)) {
+        throw new \RuntimeException('PhpSpreadsheet not installed. Run: composer install');
+    }
+
+    $reader = IOFactory::createReaderForFile($filePath);
+    $reader->setReadDataOnly(true);
+    if (method_exists($reader, 'setReadEmptyCells')) {
+        $reader->setReadEmptyCells(false);
+    }
+
+    $spreadsheet = $reader->load($filePath);
+    $result = [];
+
+    foreach (array_slice($spreadsheet->getAllSheets(), 0, $maxSheets) as $sheet) {
+        $range = sprintf('A1:%s%d', \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($maxCols), $maxRows);
+        $rows = $sheet->rangeToArray($range, null, false, false, false);
+        $lines = [];
+        foreach ($rows as $row) {
+            $cells = array_map(
+                static fn($v) => normalize_excel_probe_text((string) ($v ?? '')),
+                $row
+            );
+            $line = trim(implode(' ', array_filter($cells, static fn($v) => $v !== '')));
+            if ($line !== '') {
+                $lines[] = $line;
+            }
+        }
+
+        $result[] = [
+            'title' => $sheet->getTitle(),
+            'lines' => $lines,
+        ];
+    }
+
+    return $result;
+}
+
+function normalize_excel_probe_text(string $value): string
+{
+    $value = trim(mb_strtolower($value));
+    $value = preg_replace('/\s+/u', ' ', $value) ?? $value;
+
+    if (class_exists('\Normalizer')) {
+        $normalized = \Normalizer::normalize($value, \Normalizer::FORM_C);
+        if ($normalized !== false) {
+            $value = $normalized;
+        }
+    }
+
+    return $value;
+}
+
+function excel_probe_line_has_all(string $line, array $tokens): bool
+{
+    foreach ($tokens as $token) {
+        if (!str_contains($line, normalize_excel_probe_text((string) $token))) {
+            return false;
+        }
+    }
+
+    return true;
 }
