@@ -11,6 +11,8 @@ use RuntimeException;
 final class GbsReconciliationService
 {
     private const PLATFORM_KEYS = ['shopee', 'lazada', 'tiktokshop'];
+    private const PRICE_SETTING_KEY = 'reconcile_price_table';
+    private const COMBO_SETTING_KEY = 'reconcile_combo_to_single';
 
     private const GBS_COLUMN_MAP = [
         'created_at'        => ['thời gian tạo'],
@@ -64,11 +66,15 @@ final class GbsReconciliationService
     ];
 
     private string $baseDir;
+    private array $config;
     private ReconciliationFileStore $fileStore;
+    private ?array $managedPriceTable = null;
+    private ?array $managedComboRules = null;
 
     public function __construct(string $baseDir, array $config = [])
     {
         $this->baseDir = rtrim($baseDir, DIRECTORY_SEPARATOR);
+        $this->config = $config;
         $this->fileStore = new ReconciliationFileStore($this->baseDir, $config);
     }
 
@@ -343,22 +349,44 @@ final class GbsReconciliationService
                 $grouped[$orderId] = $this->emptyOrderGroup();
             }
 
-            $skuKey = $this->normalizeSkuKey($row['comparison_sku'], $row['combo_multiplier']);
-            $grouped[$orderId]['total_qty'] += $row['comparable_qty'];
-            $grouped[$orderId]['total_nmv'] += $row['comparable_nmv'];
             $grouped[$orderId]['line_count']++;
-            $grouped[$orderId]['has_bundle'] = $grouped[$orderId]['has_bundle'] || ($row['combo_multiplier'] > 1);
             $grouped[$orderId]['statuses'][$row['status']] = $row['status'];
-            $grouped[$orderId]['sku_map'][$skuKey] = ($grouped[$orderId]['sku_map'][$skuKey] ?? 0) + $row['comparable_qty'];
-            $grouped[$orderId]['sku_items'][] = [
+
+            $items = $row['expanded_items'] ?? [[
                 'sku'              => $row['sku'],
                 'comparison_sku'   => $row['comparison_sku'],
-                'quantity'         => $this->roundNumber($row['raw_qty'], 4),
-                'comparable_qty'   => $this->roundNumber($row['comparable_qty'], 4),
-                'comparable_nmv'   => $this->roundNumber($row['comparable_nmv'], 2),
+                'quantity'         => $row['raw_qty'],
+                'comparable_qty'   => $row['comparable_qty'],
+                'comparable_nmv'   => $row['comparable_nmv'],
                 'combo_multiplier' => $row['combo_multiplier'],
                 'name'             => $row['product_name'],
-            ];
+            ]];
+
+            foreach ($items as $item) {
+                $skuMultiplier = !empty($item['is_combo_mapping'])
+                    ? 1
+                    : (int) round((float) ($item['combo_multiplier'] ?? 1));
+                $skuKey = $this->normalizeSkuKey(
+                    (string) ($item['comparison_sku'] ?? ''),
+                    $skuMultiplier
+                );
+                $grouped[$orderId]['total_qty'] += (float) ($item['comparable_qty'] ?? 0);
+                $grouped[$orderId]['total_nmv'] += (float) ($item['comparable_nmv'] ?? 0);
+                $grouped[$orderId]['has_bundle'] = $grouped[$orderId]['has_bundle']
+                    || ((float) ($item['combo_multiplier'] ?? 1) > 1)
+                    || !empty($item['is_combo_mapping']);
+                $grouped[$orderId]['sku_map'][$skuKey] = ($grouped[$orderId]['sku_map'][$skuKey] ?? 0)
+                    + (float) ($item['comparable_qty'] ?? 0);
+                $grouped[$orderId]['sku_items'][] = [
+                    'sku'              => $item['sku'] ?? '',
+                    'comparison_sku'   => $item['comparison_sku'] ?? '',
+                    'quantity'         => $this->roundNumber((float) ($item['quantity'] ?? 0), 4),
+                    'comparable_qty'   => $this->roundNumber((float) ($item['comparable_qty'] ?? 0), 4),
+                    'comparable_nmv'   => $this->roundNumber((float) ($item['comparable_nmv'] ?? 0), 2),
+                    'combo_multiplier' => (float) ($item['combo_multiplier'] ?? 1),
+                    'name'             => $item['name'] ?? ($row['product_name'] ?? ''),
+                ];
+            }
         }
 
         foreach ($grouped as $orderId => &$order) {
@@ -486,6 +514,16 @@ final class GbsReconciliationService
             $productName = trim((string) ($row[$col['product_name'] ?? -1] ?? ''));
             $comboMultiplier = $this->comboMultiplierFromName($productName);
             $comparableNmv = max(0.0, ($unitPrice * $qty) - $sellerVoucher - $sellerDiscountTotal);
+            $expandedItems = $this->buildExpandedItems(
+                'shopee',
+                $sku,
+                $sku,
+                $productName,
+                $qty,
+                $qty * $comboMultiplier,
+                $comparableNmv,
+                $comboMultiplier
+            );
 
             $result[] = [
                 'order_id'         => $orderId,
@@ -498,6 +536,8 @@ final class GbsReconciliationService
                 'comparable_qty'   => $qty * $comboMultiplier,
                 'comparable_nmv'   => $comparableNmv,
                 'combo_multiplier' => $comboMultiplier,
+                'expanded_items'   => $expandedItems,
+                'has_bundle'       => count($expandedItems) > 1 || $comboMultiplier > 1,
             ];
         }
 
@@ -533,6 +573,17 @@ final class GbsReconciliationService
             $comboMultiplier = $this->comboMultiplierFromName($productName);
             $unitPrice = $this->parseNumber($row[$col['unit_price'] ?? -1] ?? null);
             $sellerDiscount = abs($this->parseNumber($row[$col['seller_discount'] ?? -1] ?? null));
+            $comparableNmv = max(0.0, $unitPrice - $sellerDiscount);
+            $expandedItems = $this->buildExpandedItems(
+                'lazada',
+                $sku,
+                $sku,
+                $productName,
+                1.0,
+                (float) $comboMultiplier,
+                $comparableNmv,
+                $comboMultiplier
+            );
 
             $result[] = [
                 'order_id'         => $orderId,
@@ -543,8 +594,10 @@ final class GbsReconciliationService
                 'created_at'       => trim((string) ($row[$col['created_at'] ?? -1] ?? '')),
                 'raw_qty'          => 1.0,
                 'comparable_qty'   => (float) $comboMultiplier,
-                'comparable_nmv'   => max(0.0, $unitPrice - $sellerDiscount),
+                'comparable_nmv'   => $comparableNmv,
                 'combo_multiplier' => $comboMultiplier,
+                'expanded_items'   => $expandedItems,
+                'has_bundle'       => count($expandedItems) > 1 || $comboMultiplier > 1,
             ];
         }
 
@@ -581,18 +634,32 @@ final class GbsReconciliationService
             $comboMultiplier = $this->comboMultiplierFromName($productName);
             $subtotalBefore = $this->parseNumber($row[$col['subtotal_before'] ?? -1] ?? null);
             $sellerDiscount = $this->parseNumber($row[$col['seller_discount'] ?? -1] ?? null);
+            $comparisonSku = preg_replace('/-[A-Z0-9]+$/', '', $sku) ?? $sku;
+            $comparableNmv = max(0.0, $subtotalBefore - $sellerDiscount);
+            $expandedItems = $this->buildExpandedItems(
+                'tiktokshop',
+                $sku,
+                $comparisonSku,
+                $productName,
+                $qty,
+                $qty * $comboMultiplier,
+                $comparableNmv,
+                $comboMultiplier
+            );
 
             $result[] = [
                 'order_id'         => $orderId,
                 'sku'              => $sku,
-                'comparison_sku'   => preg_replace('/-[A-Z0-9]+$/', '', $sku) ?? $sku,
+                'comparison_sku'   => $comparisonSku,
                 'product_name'     => $productName,
                 'status'           => trim((string) ($row[$col['status'] ?? -1] ?? '')),
                 'created_at'       => trim((string) ($row[$col['created_at'] ?? -1] ?? '')),
                 'raw_qty'          => $qty,
                 'comparable_qty'   => $qty * $comboMultiplier,
-                'comparable_nmv'   => max(0.0, $subtotalBefore - $sellerDiscount),
+                'comparable_nmv'   => $comparableNmv,
                 'combo_multiplier' => $comboMultiplier,
+                'expanded_items'   => $expandedItems,
+                'has_bundle'       => count($expandedItems) > 1 || $comboMultiplier > 1,
             ];
         }
 
@@ -715,21 +782,21 @@ final class GbsReconciliationService
         return [
             'shopee' => [
                 ['field' => 'order_id', 'gbs' => 'Mã đơn hàng', 'platform' => 'Mã đơn hàng', 'rule' => 'Khớp trực tiếp theo đơn.'],
-                ['field' => 'sku', 'gbs' => 'sku', 'platform' => 'SKU sản phẩm', 'rule' => 'Dùng để tham chiếu; combo có thể bị GBS tách nhỏ.'],
-                ['field' => 'quantity', 'gbs' => 'Số lượng', 'platform' => 'Số lượng', 'rule' => 'So sánh theo tổng số lượng quy đổi của đơn.'],
-                ['field' => 'nmv', 'gbs' => 'NMV', 'platform' => 'Giá gốc x Số lượng - Mã giảm giá của Shop - Tổng số tiền được người bán trợ giá', 'rule' => 'Công thức suy ra để khớp logic GBS.'],
+                ['field' => 'sku', 'gbs' => 'sku', 'platform' => 'SKU sản phẩm', 'rule' => 'Ưu tiên quy đổi theo cấu hình Combo_to_single; nếu không có sẽ fallback về heuristic combo trong tên sản phẩm.'],
+                ['field' => 'quantity', 'gbs' => 'Số lượng', 'platform' => 'Số lượng', 'rule' => 'So sánh theo tổng số lượng sau khi quy đổi combo về SKU đơn của GBS.'],
+                ['field' => 'nmv', 'gbs' => 'NMV', 'platform' => 'Giá gốc x Số lượng - Voucher shop - Giảm giá nhà bán', 'rule' => 'Chỉ trừ khuyến mãi gian hàng, không trừ phần giảm giá của sàn.'],
             ],
             'lazada' => [
                 ['field' => 'order_id', 'gbs' => 'Mã đơn hàng', 'platform' => 'orderNumber', 'rule' => 'Khớp trực tiếp theo đơn.'],
-                ['field' => 'sku', 'gbs' => 'sku', 'platform' => 'sellerSku', 'rule' => 'Nhiều SKU combo được GBS tách thành SKU thành phần.'],
-                ['field' => 'quantity', 'gbs' => 'Số lượng', 'platform' => '1 dòng = 1 item, nhân thêm hệ số COMBO trong tên sản phẩm', 'rule' => 'Dùng số lượng quy đổi để so sánh.'],
-                ['field' => 'nmv', 'gbs' => 'NMV', 'platform' => 'unitPrice - |sellerDiscountTotal|', 'rule' => 'Bỏ qua shipping và platform discount để khớp GBS.'],
+                ['field' => 'sku', 'gbs' => 'sku', 'platform' => 'sellerSku', 'rule' => 'Ưu tiên quy đổi theo Combo_to_single; fallback dùng hệ số COMBO trong tên sản phẩm.'],
+                ['field' => 'quantity', 'gbs' => 'Số lượng', 'platform' => '1 dòng = 1 item', 'rule' => 'Nếu có mapping combo thì quy đổi về SKU đơn GBS trước khi so sánh.'],
+                ['field' => 'nmv', 'gbs' => 'NMV', 'platform' => 'unitPrice - sellerDiscountTotal', 'rule' => 'Chỉ trừ khuyến mãi gian hàng; Bang_gia dùng để phân bổ NMV khi 1 combo tách thành nhiều SKU đơn.'],
             ],
             'tiktokshop' => [
                 ['field' => 'order_id', 'gbs' => 'Mã đơn hàng', 'platform' => 'Order ID', 'rule' => 'Khớp trực tiếp theo đơn.'],
-                ['field' => 'sku', 'gbs' => 'sku', 'platform' => 'Seller SKU', 'rule' => 'Bỏ suffix vùng; combo có thể bị GBS tách nhỏ.'],
-                ['field' => 'quantity', 'gbs' => 'Số lượng', 'platform' => 'Quantity x hệ số COMBO trong tên sản phẩm', 'rule' => 'Dùng số lượng quy đổi để so sánh.'],
-                ['field' => 'nmv', 'gbs' => 'NMV', 'platform' => 'SKU Subtotal Before Discount - SKU Seller Discount', 'rule' => 'Giữ platform discount bên ngoài để khớp logic GBS.'],
+                ['field' => 'sku', 'gbs' => 'sku', 'platform' => 'Seller SKU', 'rule' => 'Bỏ suffix vùng rồi áp dụng Combo_to_single nếu có cấu hình phù hợp.'],
+                ['field' => 'quantity', 'gbs' => 'Số lượng', 'platform' => 'Quantity', 'rule' => 'Số lượng được nhân theo mapping combo hoặc fallback hệ số COMBO trong tên sản phẩm.'],
+                ['field' => 'nmv', 'gbs' => 'NMV', 'platform' => 'SKU Subtotal Before Discount - SKU Seller Discount', 'rule' => 'Không trừ phần giảm giá của sàn; Bang_gia hỗ trợ phân bổ NMV khi tách combo.'],
             ],
         ];
     }
@@ -739,8 +806,18 @@ final class GbsReconciliationService
         $insights = [
             'GBS chuẩn hóa giá trị nền tảng từ `shopee_v2`, `lazada`, `tiktok` thành `shopee`, `lazada`, `tiktokshop` để so khớp.',
             'Đối soát ưu tiên cấp đơn hàng (`platform + order_id`) vì GBS thường tách SKU combo thành SKU cơ sở.',
-            'NMV quy đổi ở file sàn được tính theo phần giảm giá của người bán; platform discount không trừ thêm để bám cách tính trong GBS.',
+            'NMV quy đổi ở file sàn = Doanh thu giá gốc - khuyến mãi gian hàng (voucher shop và giảm giá nhà bán); không trừ phần giảm giá của sàn.',
         ];
+
+        $priceCount = count($this->loadManagedPriceTable());
+        $comboCount = count($this->loadManagedComboRuleRows());
+        if ($priceCount > 0 || $comboCount > 0) {
+            $insights[] = sprintf(
+                'Cấu hình đối soát hiện có %d dòng Bang_gia và %d dòng Combo_to_single trong phần cài đặt hệ thống.',
+                $priceCount,
+                $comboCount
+            );
+        }
 
         if (($files['shopee']['row_count'] ?? 0) === 0 && ($files['shopee']['status'] ?? '') === 'ready') {
             $insights[] = 'File Shopee hiện chỉ có header, chưa có dòng dữ liệu đơn hàng nên mọi đơn Shopee trong GBS sẽ được xem là thiếu phía file sàn.';
@@ -847,6 +924,261 @@ final class GbsReconciliationService
         }
 
         return $value;
+    }
+
+    private function buildExpandedItems(
+        string $platform,
+        string $rawSku,
+        string $defaultComparisonSku,
+        string $productName,
+        float $rawQty,
+        float $fallbackComparableQty,
+        float $baseComparableNmv,
+        int $fallbackComboMultiplier
+    ): array {
+        $comboRule = $this->resolveComboRule($platform, $rawSku, $productName);
+        if ($comboRule === null) {
+            return [[
+                'sku'              => $rawSku,
+                'comparison_sku'   => $defaultComparisonSku,
+                'quantity'         => $rawQty,
+                'comparable_qty'   => $fallbackComparableQty,
+                'comparable_nmv'   => $baseComparableNmv,
+                'combo_multiplier' => $fallbackComboMultiplier,
+                'name'             => $productName,
+                'is_combo_mapping' => false,
+            ]];
+        }
+
+        $priceTable = $this->loadManagedPriceTable();
+        $items = $comboRule['items'];
+        $weights = [];
+        $totalWeight = 0.0;
+
+        foreach ($items as $index => $item) {
+            $price = (float) ($priceTable[$item['single_sku']]['unit_price'] ?? 0);
+            $weight = $price > 0
+                ? $price * $item['single_qty']
+                : $item['single_qty'];
+            $weights[$index] = $weight;
+            $totalWeight += $weight;
+        }
+
+        if ($totalWeight <= 0) {
+            $totalWeight = count($items) > 0 ? (float) count($items) : 1.0;
+            foreach ($items as $index => $item) {
+                $weights[$index] = 1.0;
+            }
+        }
+
+        $expanded = [];
+        $remainingNmv = $baseComparableNmv;
+        $lastIndex = count($items) - 1;
+
+        foreach ($items as $index => $item) {
+            $allocatedNmv = $index === $lastIndex
+                ? $remainingNmv
+                : ($baseComparableNmv * ($weights[$index] / $totalWeight));
+            $remainingNmv -= $allocatedNmv;
+
+            $expanded[] = [
+                'sku'              => $rawSku,
+                'comparison_sku'   => $item['single_sku'],
+                'quantity'         => $rawQty,
+                'comparable_qty'   => $rawQty * $item['single_qty'],
+                'comparable_nmv'   => $allocatedNmv,
+                'combo_multiplier' => $item['single_qty'],
+                'name'             => $productName,
+                'is_combo_mapping' => true,
+            ];
+        }
+
+        return $expanded;
+    }
+
+    private function resolveComboRule(string $platform, string $rawSku, string $productName): ?array
+    {
+        $rules = $this->loadManagedComboRules();
+        $platformScopes = [$platform, 'all'];
+
+        foreach ($platformScopes as $scope) {
+            foreach ($this->comboSkuCandidates($rawSku) as $candidate) {
+                if (isset($rules['by_sku'][$scope][$candidate])) {
+                    return $rules['by_sku'][$scope][$candidate];
+                }
+            }
+        }
+
+        $normalizedName = $this->normalizeMatchText($productName);
+        if ($normalizedName === '') {
+            return null;
+        }
+
+        foreach ($platformScopes as $scope) {
+            foreach ($rules['by_name'][$scope] ?? [] as $rule) {
+                if (($rule['combo_name_needle'] ?? '') !== '' && str_contains($normalizedName, $rule['combo_name_needle'])) {
+                    return $rule;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private function comboSkuCandidates(string $sku): array
+    {
+        $raw = strtoupper(trim($sku));
+        $candidates = [$raw];
+
+        $stripped = preg_replace('/-[A-Z0-9]+$/', '', $raw) ?? $raw;
+        $normalized = $this->normalizeSkuKey($raw);
+
+        foreach ([$stripped, $normalized] as $candidate) {
+            if ($candidate !== '' && !in_array($candidate, $candidates, true)) {
+                $candidates[] = $candidate;
+            }
+        }
+
+        return $candidates;
+    }
+
+    private function loadManagedPriceTable(): array
+    {
+        if ($this->managedPriceTable !== null) {
+            return $this->managedPriceTable;
+        }
+
+        $result = [];
+        try {
+            if ($this->config === [] || !\function_exists('db') || !\function_exists('get_app_setting')) {
+                return $this->managedPriceTable = [];
+            }
+
+            $pdo = \db($this->config);
+            $rows = json_decode(\get_app_setting($pdo, self::PRICE_SETTING_KEY, '[]'), true);
+            if (!is_array($rows)) {
+                $rows = [];
+            }
+
+            foreach ($rows as $row) {
+                if (!is_array($row)) {
+                    continue;
+                }
+                $sku = strtoupper(trim((string) ($row['sku'] ?? '')));
+                if ($sku === '') {
+                    continue;
+                }
+                $result[$sku] = [
+                    'sku'          => $sku,
+                    'product_name' => trim((string) ($row['product_name'] ?? '')),
+                    'unit_price'   => (float) ($row['unit_price'] ?? 0),
+                ];
+            }
+        } catch (\Throwable $e) {
+            $result = [];
+        }
+
+        return $this->managedPriceTable = $result;
+    }
+
+    private function loadManagedComboRuleRows(): array
+    {
+        try {
+            if ($this->config === [] || !\function_exists('db') || !\function_exists('get_app_setting')) {
+                return [];
+            }
+
+            $pdo = \db($this->config);
+            $rows = json_decode(\get_app_setting($pdo, self::COMBO_SETTING_KEY, '[]'), true);
+            return is_array($rows) ? $rows : [];
+        } catch (\Throwable $e) {
+            return [];
+        }
+    }
+
+    private function loadManagedComboRules(): array
+    {
+        if ($this->managedComboRules !== null) {
+            return $this->managedComboRules;
+        }
+
+        $compiled = [
+            'by_sku' => [
+                'all'        => [],
+                'shopee'     => [],
+                'lazada'     => [],
+                'tiktokshop' => [],
+            ],
+            'by_name' => [
+                'all'        => [],
+                'shopee'     => [],
+                'lazada'     => [],
+                'tiktokshop' => [],
+            ],
+        ];
+
+        $grouped = [];
+        foreach ($this->loadManagedComboRuleRows() as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+
+            $platform = (string) ($row['platform'] ?? 'all');
+            if (!in_array($platform, ['all', 'shopee', 'lazada', 'tiktokshop'], true)) {
+                $platform = 'all';
+            }
+
+            $comboSku = strtoupper(trim((string) ($row['combo_sku'] ?? '')));
+            $comboName = trim((string) ($row['combo_name'] ?? ''));
+            $comboNameNeedle = $this->normalizeMatchText($comboName);
+            $singleSku = strtoupper(trim((string) ($row['single_sku'] ?? '')));
+            $singleQty = (float) ($row['single_qty'] ?? 0);
+
+            if ($singleSku === '' || $singleQty <= 0 || ($comboSku === '' && $comboNameNeedle === '')) {
+                continue;
+            }
+
+            $ruleKey = implode('|', [$platform, $comboSku, $comboNameNeedle]);
+            if (!isset($grouped[$ruleKey])) {
+                $grouped[$ruleKey] = [
+                    'platform'          => $platform,
+                    'combo_sku'         => $comboSku,
+                    'combo_name'        => $comboName,
+                    'combo_name_needle' => $comboNameNeedle,
+                    'items'             => [],
+                ];
+            }
+
+            $grouped[$ruleKey]['items'][] = [
+                'single_sku' => $singleSku,
+                'single_qty' => $singleQty,
+            ];
+        }
+
+        foreach ($grouped as $rule) {
+            $scope = $rule['platform'];
+            if ($rule['combo_sku'] !== '') {
+                $compiled['by_sku'][$scope][$rule['combo_sku']] = $rule;
+            }
+            if ($rule['combo_name_needle'] !== '') {
+                $compiled['by_name'][$scope][] = $rule;
+            }
+        }
+
+        foreach ($compiled['by_name'] as $scope => $rules) {
+            usort($rules, static fn(array $left, array $right): int =>
+                strlen((string) ($right['combo_name_needle'] ?? '')) <=> strlen((string) ($left['combo_name_needle'] ?? ''))
+            );
+            $compiled['by_name'][$scope] = $rules;
+        }
+
+        return $this->managedComboRules = $compiled;
+    }
+
+    private function normalizeMatchText(string $value): string
+    {
+        $normalized = $this->normalizeHeader($value);
+        return preg_replace('/[^a-z0-9]+/u', '', $normalized) ?? $normalized;
     }
 
     private function skuMapsEqual(array $left, array $right): bool
