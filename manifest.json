@@ -1,7 +1,7 @@
 {
-  "version": "1.2.13",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.2.13/release/dashboard-v3-1.2.13.zip",
-  "changelog": "- Upload: tự động nhận diện đúng cấu trúc file traffic Shopee, Lazada và TikTok Shop dựa trên nội dung workbook, không còn phụ thuộc vào tên file\n- Import: hiển thị rõ sàn đã nhận diện trong kết quả upload để dễ kiểm tra\n- Build: loại các file Excel mẫu khỏi gói cập nhật phát hành",
+  "version": "1.2.14",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.2.14/release/dashboard-v3-1.2.14.zip",
+  "changelog": "- Traffic Shopee: chỉ import dữ liệu từ sheet \"Tất cả\", không còn fallback sang các mục như Máy tính hoặc Ứng dụng\n- Nếu file Shopee thiếu sheet \"Tất cả\", hệ thống sẽ dừng import và báo lỗi rõ ràng\n- Giữ nguyên cơ chế tự nhận diện cấu trúc traffic theo nội dung workbook",
   "min_php": "8.1",
   "released_at": "2026-04-20"
 }
