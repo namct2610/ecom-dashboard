@@ -25,7 +25,9 @@ final class ShopeeParser extends BaseParser
         'product_name'       => ['tên sản phẩm', 'product name'],
         'variation'          => ['tên phân loại hàng', 'phân loại'],
         'unit_price'         => ['giá gốc', 'đơn giá'],
-        'seller_discount'    => ['người bán trợ giá', 'giảm giá người bán'],
+        'seller_voucher'     => ['mã giảm giá của shop', 'mã giảm giá từ shop'],
+        'seller_discount_total' => ['tổng số tiền được người bán trợ giá'],
+        'seller_discount_unit'  => ['người bán trợ giá', 'giảm giá người bán'],
         'platform_discount'  => ['được shopee trợ giá', 'giảm giá shopee'],
         'promo_price'        => ['giá ưu đãi', 'giá sau giảm'],
         'quantity'           => ['số lượng'],
@@ -71,6 +73,11 @@ final class ShopeeParser extends BaseParser
             $qty        = max(1, (int) parse_amount($this->cell($row, $col['quantity'] ?? null)));
             $unitPrice  = parse_amount($this->cell($row, $col['unit_price'] ?? null));
             $promoPrice = parse_amount($this->cell($row, $col['promo_price'] ?? null));
+            $sellerVoucher = abs(parse_amount($this->cell($row, $col['seller_voucher'] ?? null)));
+            $sellerDiscountTotal = abs(parse_amount($this->cell($row, $col['seller_discount_total'] ?? null)));
+            if ($sellerDiscountTotal <= 0) {
+                $sellerDiscountTotal = abs(parse_amount($this->cell($row, $col['seller_discount_unit'] ?? null))) * $qty;
+            }
             $city       = normalize_city($this->cell($row, $col['shipping_city'] ?? null));
 
             $result['rows'][] = [
@@ -89,7 +96,8 @@ final class ShopeeParser extends BaseParser
                 'unit_price'             => $unitPrice,
                 'subtotal_before_discount' => $unitPrice * $qty,
                 'platform_discount'      => parse_amount($this->cell($row, $col['platform_discount'] ?? null)),
-                'seller_discount'        => parse_amount($this->cell($row, $col['seller_discount'] ?? null)),
+                'seller_voucher'         => $sellerVoucher,
+                'seller_discount'        => $sellerDiscountTotal,
                 'subtotal_after_discount'=> $promoPrice * $qty,
                 'order_total'            => parse_amount($this->cell($row, $col['order_total'] ?? null)),
                 'shipping_fee'           => parse_amount($this->cell($row, $col['shipping_fee'] ?? null)),

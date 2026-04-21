@@ -9,7 +9,7 @@ use RuntimeException;
 
 final class ReconciliationFileStore
 {
-    public const SOURCE_KEYS = ['gbs', 'shopee', 'lazada', 'tiktokshop'];
+    public const SOURCE_KEYS = ['gbs'];
 
     private string $storageDir;
 
@@ -31,12 +31,23 @@ final class ReconciliationFileStore
 
     public function listFiles(): array
     {
-        $result = [];
-        foreach (self::SOURCE_KEYS as $sourceKey) {
-            $result[$sourceKey] = $this->findFile($sourceKey);
+        return [
+            'gbs' => $this->findFile('gbs'),
+        ];
+    }
+
+    public function listGbsFiles(): array
+    {
+        $files = [];
+        foreach (array_keys($this->discoverCandidates('gbs')) as $path) {
+            $files[] = $this->buildMeta('gbs', $path);
         }
 
-        return $result;
+        usort($files, static fn(array $left, array $right): int =>
+            strcmp((string) ($right['modified_at'] ?? ''), (string) ($left['modified_at'] ?? ''))
+        );
+
+        return $files;
     }
 
     public function findFile(string $sourceKey): array
@@ -85,29 +96,24 @@ final class ReconciliationFileStore
             throw new RuntimeException('Không thể lưu file đối soát lên server.');
         }
 
-        try {
-            $this->deleteOlderFiles($sourceKey, $destPath);
-            return $this->buildMeta($sourceKey, $destPath);
-        } catch (\Throwable $e) {
-            if (is_file($destPath)) {
-                @unlink($destPath);
-            }
-            throw $e;
-        }
+        return $this->buildMeta($sourceKey, $destPath);
     }
 
-    public function deleteFile(string $sourceKey): bool
+    public function deleteFile(string $sourceKeyOrFilename): bool
     {
-        $this->assertSourceKey($sourceKey);
-
-        $deleted = false;
-        foreach (array_keys($this->discoverCandidates($sourceKey)) as $path) {
-            if (is_file($path) && @unlink($path)) {
-                $deleted = true;
+        if (self::isValidSourceKey($sourceKeyOrFilename)) {
+            $deleted = false;
+            foreach (array_keys($this->discoverCandidates($sourceKeyOrFilename)) as $path) {
+                if (is_file($path) && @unlink($path)) {
+                    $deleted = true;
+                }
             }
+
+            return $deleted;
         }
 
-        return $deleted;
+        $path = $this->resolveManagedFilePath($sourceKeyOrFilename);
+        return is_file($path) ? (bool) @unlink($path) : false;
     }
 
     private function assertSourceKey(string $sourceKey): void
@@ -129,18 +135,6 @@ final class ReconciliationFileStore
         }
 
         return $candidates;
-    }
-
-    private function deleteOlderFiles(string $sourceKey, string $keepPath): void
-    {
-        foreach (array_keys($this->discoverCandidates($sourceKey)) as $path) {
-            if ($path === $keepPath) {
-                continue;
-            }
-            if (is_file($path)) {
-                @unlink($path);
-            }
-        }
     }
 
     private function buildStoredFilename(string $sourceKey, string $originalName, string $ext): string
@@ -181,6 +175,16 @@ final class ReconciliationFileStore
             'modified_at'  => date('Y-m-d H:i:s', $modifiedAt),
             'size_label'   => $this->formatBytes($sizeBytes),
         ];
+    }
+
+    private function resolveManagedFilePath(string $filename): string
+    {
+        $safeName = basename($filename);
+        if ($safeName === '' || !str_starts_with($safeName, 'gbs_')) {
+            throw new InvalidArgumentException('Tên file đối soát không hợp lệ.');
+        }
+
+        return $this->storageDir . DIRECTORY_SEPARATOR . $safeName;
     }
 
     private function formatBytes(int $bytes): string

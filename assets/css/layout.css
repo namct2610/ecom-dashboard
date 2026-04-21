@@ -90,12 +90,12 @@
 }
 .sidebar-brand-icon svg { width: 18px; height: 18px; color: white; }
 .sidebar-brand-name { font-size: 13px; font-weight: 700; color: white; line-height: 1.2; }
-.sidebar-brand-sub  { font-size: 10px; color: var(--sidebar-text); }
 .sidebar-brand-meta {
-  margin-top: 6px;
-  font-size: 10px;
-  color: rgba(148, 163, 184, 0.82);
+  margin-top: 5px;
+  font-size: 11px;
+  color: rgba(191, 219, 254, 0.88);
   letter-spacing: 0.01em;
+  line-height: 1.45;
 }
 
 .sidebar-nav { flex: 1; padding: 4px 10px; }
