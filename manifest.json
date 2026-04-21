@@ -1,7 +1,7 @@
 {
-  "version": "1.2.20",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.2.20/release/dashboard-v3-1.2.20.zip",
-  "changelog": "- Sửa logic NMV Shopee trong đối soát GBS: dùng Gia uu dai tru Ma giam gia cua Shop va chi tru voucher shop 1 lan duy nhat theo don hang\n- Lam tron NMV phia GBS truoc khi doi soat de tranh lech tien do so le\n- Va parser/import Shopee de cac dot dong bo moi khong tiep tuc luu voucher shop lap theo tung SKU",
+  "version": "1.2.21",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.2.21/release/dashboard-v3-1.2.21.zip",
+  "changelog": "- Bo sung nguong khop NMV +/-1 VND cho doi soat GBS khi chenh lech chi do lam tron tu he thong GBS\n- Neu khop trong nguong lam tron thi he thong lay so chuan theo san va khong con danh dau lech NMV\n- Cap nhat ghi chu doi soat de the hien ro quy tac lam tron nay",
   "min_php": "8.1",
   "released_at": "2026-04-21"
 }
