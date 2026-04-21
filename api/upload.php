@@ -112,6 +112,11 @@ try {
             if ($isTraffic) {
                 foreach ($parsed['rows'] as $row) upsert_traffic_daily($pdo, $row);
             } else {
+                delete_orders_by_platform_and_ids(
+                    $pdo,
+                    $platform,
+                    array_column($parsed['rows'] ?? [], 'order_id')
+                );
                 foreach ($parsed['rows'] as $row) upsert_order($pdo, $row);
             }
             $pdo->commit();

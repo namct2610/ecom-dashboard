@@ -384,29 +384,35 @@ function upsert_order(PDO $pdo, array $row): void
                  :normalized_status, :original_status, :order_created_at, :order_paid_at,
                  :order_completed_at, :upload_id)
             ON DUPLICATE KEY UPDATE
-                buyer_name               = VALUES(buyer_name),
-                shipping_address         = VALUES(shipping_address),
-                shipping_district        = VALUES(shipping_district),
-                shipping_city            = VALUES(shipping_city),
-                payment_method           = VALUES(payment_method),
-                product_name             = VALUES(product_name),
-                variation                = VALUES(variation),
-                quantity                 = VALUES(quantity),
-                unit_price               = VALUES(unit_price),
-                subtotal_before_discount = VALUES(subtotal_before_discount),
-                platform_discount        = VALUES(platform_discount),
-                seller_voucher          = VALUES(seller_voucher),
-                seller_discount          = VALUES(seller_discount),
-                subtotal_after_discount  = VALUES(subtotal_after_discount),
-                order_total              = VALUES(order_total),
-                shipping_fee             = VALUES(shipping_fee),
-                platform_fee_fixed       = VALUES(platform_fee_fixed),
-                platform_fee_service     = VALUES(platform_fee_service),
-                platform_fee_payment     = VALUES(platform_fee_payment),
+                buyer_name               = COALESCE(NULLIF(VALUES(buyer_name), ''), buyer_name),
+                buyer_username           = COALESCE(NULLIF(VALUES(buyer_username), ''), buyer_username),
+                shipping_address         = COALESCE(NULLIF(VALUES(shipping_address), ''), shipping_address),
+                shipping_district        = COALESCE(NULLIF(VALUES(shipping_district), ''), shipping_district),
+                shipping_city            = COALESCE(NULLIF(VALUES(shipping_city), ''), shipping_city),
+                payment_method           = COALESCE(NULLIF(VALUES(payment_method), ''), payment_method),
+                product_name             = COALESCE(NULLIF(VALUES(product_name), ''), product_name),
+                variation                = COALESCE(NULLIF(VALUES(variation), ''), variation),
+                unit_price               = CASE
+                    WHEN (quantity + VALUES(quantity)) > 0
+                        THEN ROUND((subtotal_before_discount + VALUES(subtotal_before_discount)) / (quantity + VALUES(quantity)), 2)
+                    ELSE VALUES(unit_price)
+                END,
+                quantity                 = quantity + VALUES(quantity),
+                subtotal_before_discount = subtotal_before_discount + VALUES(subtotal_before_discount),
+                platform_discount        = platform_discount + VALUES(platform_discount),
+                seller_voucher           = seller_voucher + VALUES(seller_voucher),
+                seller_discount          = seller_discount + VALUES(seller_discount),
+                subtotal_after_discount  = subtotal_after_discount + VALUES(subtotal_after_discount),
+                order_total              = GREATEST(order_total, VALUES(order_total)),
+                shipping_fee             = GREATEST(shipping_fee, VALUES(shipping_fee)),
+                platform_fee_fixed       = GREATEST(platform_fee_fixed, VALUES(platform_fee_fixed)),
+                platform_fee_service     = GREATEST(platform_fee_service, VALUES(platform_fee_service)),
+                platform_fee_payment     = GREATEST(platform_fee_payment, VALUES(platform_fee_payment)),
                 normalized_status        = VALUES(normalized_status),
-                original_status          = VALUES(original_status),
-                order_paid_at            = VALUES(order_paid_at),
-                order_completed_at       = VALUES(order_completed_at),
+                original_status          = COALESCE(NULLIF(VALUES(original_status), ''), original_status),
+                order_created_at         = LEAST(order_created_at, VALUES(order_created_at)),
+                order_paid_at            = COALESCE(VALUES(order_paid_at), order_paid_at),
+                order_completed_at       = COALESCE(VALUES(order_completed_at), order_completed_at),
                 upload_id                = VALUES(upload_id)
         ");
     }
@@ -441,6 +447,29 @@ function upsert_order(PDO $pdo, array $row): void
         ':order_completed_at'      => $row['order_completed_at'] ?? null,
         ':upload_id'               => $row['upload_id'] ?? null,
     ]);
+}
+
+function delete_orders_by_platform_and_ids(PDO $pdo, string $platform, array $orderIds): void
+{
+    $platform = trim($platform);
+    if ($platform === '') {
+        return;
+    }
+
+    $orderIds = array_values(array_unique(array_filter(array_map(
+        static fn($value) => trim((string) $value),
+        $orderIds
+    ), static fn($value) => $value !== '')));
+
+    if ($orderIds === []) {
+        return;
+    }
+
+    foreach (array_chunk($orderIds, 500) as $chunk) {
+        $placeholders = implode(',', array_fill(0, count($chunk), '?'));
+        $stmt = $pdo->prepare("DELETE FROM orders WHERE platform = ? AND order_id IN ({$placeholders})");
+        $stmt->execute(array_merge([$platform], $chunk));
+    }
 }
 
 function upsert_traffic_daily(PDO $pdo, array $row): void

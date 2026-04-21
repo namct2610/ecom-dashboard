@@ -243,13 +243,25 @@ function syncShopeeShop(PDO $pdo, ShopeeClient $client, array $shop): array
             }
 
             foreach ($detailRes['response']['order_list'] ?? [] as $order) {
-                foreach (($order['item_list'] ?? []) as $itemIndex => $item) {
-                    try {
+                $orderSn = (string) ($order['order_sn'] ?? '');
+                $items = $order['item_list'] ?? [];
+                if ($orderSn === '' || empty($items)) {
+                    continue;
+                }
+
+                try {
+                    $pdo->beginTransaction();
+                    delete_orders_by_platform_and_ids($pdo, 'shopee', [$orderSn]);
+                    foreach ($items as $itemIndex => $item) {
                         insertShopeeOrder($pdo, $order, $item, $itemIndex === 0);
-                        $imported++;
-                    } catch (\Throwable $e) {
-                        $errors++;
                     }
+                    $pdo->commit();
+                    $imported += count($items);
+                } catch (\Throwable $e) {
+                    if ($pdo->inTransaction()) {
+                        $pdo->rollBack();
+                    }
+                    $errors += count($items);
                 }
             }
         }
