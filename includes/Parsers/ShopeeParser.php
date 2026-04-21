@@ -43,6 +43,7 @@ final class ShopeeParser extends BaseParser
         $sheet = $this->sheet();
         $rows  = $sheet->toArray(null, false, true, false);
         $result = ['rows' => [], 'errors' => [], 'total_rows' => 0, 'imported_rows' => 0, 'skipped_rows' => 0];
+        $voucherAppliedOrders = [];
 
         if (empty($rows)) return $result;
 
@@ -73,7 +74,9 @@ final class ShopeeParser extends BaseParser
             $qty        = max(1, (int) parse_amount($this->cell($row, $col['quantity'] ?? null)));
             $unitPrice  = parse_amount($this->cell($row, $col['unit_price'] ?? null));
             $promoPrice = parse_amount($this->cell($row, $col['promo_price'] ?? null));
-            $sellerVoucher = abs(parse_amount($this->cell($row, $col['seller_voucher'] ?? null)));
+            $sellerVoucherRaw = abs(parse_amount($this->cell($row, $col['seller_voucher'] ?? null)));
+            $sellerVoucher = isset($voucherAppliedOrders[$orderId]) ? 0.0 : $sellerVoucherRaw;
+            $voucherAppliedOrders[$orderId] = true;
             $sellerDiscountTotal = abs(parse_amount($this->cell($row, $col['seller_discount_total'] ?? null)));
             if ($sellerDiscountTotal <= 0) {
                 $sellerDiscountTotal = abs(parse_amount($this->cell($row, $col['seller_discount_unit'] ?? null))) * $qty;

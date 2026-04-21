@@ -243,9 +243,9 @@ function syncShopeeShop(PDO $pdo, ShopeeClient $client, array $shop): array
             }
 
             foreach ($detailRes['response']['order_list'] ?? [] as $order) {
-                foreach ($order['item_list'] ?? [] as $item) {
+                foreach (($order['item_list'] ?? []) as $itemIndex => $item) {
                     try {
-                        insertShopeeOrder($pdo, $order, $item);
+                        insertShopeeOrder($pdo, $order, $item, $itemIndex === 0);
                         $imported++;
                     } catch (\Throwable $e) {
                         $errors++;
@@ -266,7 +266,7 @@ function syncShopeeShop(PDO $pdo, ShopeeClient $client, array $shop): array
     return ['shop' => $shopName, 'success' => true, 'imported' => $imported, 'errors' => $errors];
 }
 
-function insertShopeeOrder(PDO $pdo, array $order, array $item): void
+function insertShopeeOrder(PDO $pdo, array $order, array $item, bool $applySellerVoucher = false): void
 {
     $orderSn = (string) ($order['order_sn'] ?? '');
     $status  = (string) ($order['order_status'] ?? '');
@@ -288,7 +288,9 @@ function insertShopeeOrder(PDO $pdo, array $order, array $item): void
 
     $sellerDisc   = abs((float) ($item['seller_discount']  ?? $order['seller_discount']  ?? 0));
     $shopeeDisc   = abs((float) ($item['shopee_discount']  ?? $order['shopee_discount']  ?? 0));
-    $sellerVoucher = max(0.0, $grossSubtotal - $discountedSubtotal - $sellerDisc - $shopeeDisc);
+    $sellerVoucher = $applySellerVoucher
+        ? max(0.0, $grossSubtotal - $discountedSubtotal - $sellerDisc - $shopeeDisc)
+        : 0.0;
     $shippingFee  = (float) ($order['actual_shipping_fee'] ?? $order['estimated_shipping_fee'] ?? 0);
     $orderTotal   = (float) ($order['total_amount'] ?? 0);
     $payMethod    = (string) ($order['payment_method'] ?? '');
