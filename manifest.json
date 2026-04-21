@@ -1,7 +1,7 @@
 {
-  "version": "1.2.23",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.2.23/release/dashboard-v3-1.2.23.zip",
-  "changelog": "- Sửa lỗi đơn hàng có nhiều dòng trùng order_id + sku bị ghi đè, khiến hệ thống bỏ sót số lần tặng quà khi đối soát GBS\n- Khi import hoặc đồng bộ lại, hệ thống xóa dữ liệu cũ theo từng order_id rồi nạp lại để tránh cộng dồn sai",
+  "version": "1.2.24",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.2.24/release/dashboard-v3-1.2.24.zip",
+  "changelog": "- Sửa lỗi các dòng quà tặng / hàng tặng không bán trong GBS vẫn bị cộng vào NMV khi đối soát với sàn\n- Với đơn 523586247432246 và các ca tương tự, hệ thống nay chuẩn hóa NMV của dòng gift về 0 trước khi so khớp",
   "min_php": "8.1",
   "released_at": "2026-04-21"
 }
