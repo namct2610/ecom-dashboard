@@ -1,7 +1,7 @@
 {
-  "version": "1.2.22",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.2.22/release/dashboard-v3-1.2.22.zip",
-  "changelog": "- Chuyen xuat danh sach don chua khop GBS tu CSV sang XLSX de de loc va xu ly tren Excel\n- Them cot Ly do chua khop rieng cho tung don ben canh cot Ghi chu he thong\n- Giu nguyen nut export tren giao dien, chi doi dau ra sang file XLSX",
+  "version": "1.2.23",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.2.23/release/dashboard-v3-1.2.23.zip",
+  "changelog": "- Sua loi don hang co nhieu dong trung order_id + sku bi ghi de, khien he thong bo sot so lan tang qua khi doi soat GBS\n- Khi import hoac dong bo lai, he thong xoa du lieu cu theo tung order_id roi nap lai de tranh cong don sai",
   "min_php": "8.1",
   "released_at": "2026-04-21"
 }
