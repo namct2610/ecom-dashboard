@@ -1,7 +1,7 @@
 {
-  "version": "1.2.18",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.2.18/release/dashboard-v3-1.2.18.zip",
-  "changelog": "- Chuyển đối soát GBS sang mô hình theo tháng, dùng dữ liệu đơn hàng chung của hệ thống thay cho upload file sàn riêng\n- Tự nhận diện tháng từ cột Thời gian đối soát, thêm xác nhận tháng hoàn tất và export danh sách đơn sàn chưa khớp\n- Làm gọn lại giao diện trang đối soát và sidebar, đồng thời cập nhật Shopee/Lazada để lưu đủ mốc và dữ liệu NMV phục vụ đối soát",
+  "version": "1.2.19",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.2.19/release/dashboard-v3-1.2.19.zip",
+  "changelog": "- Tối ưu lại UI phần đối soát GBS theo hướng gọn hơn, dễ scan hơn và giảm các khối thao tác trùng lặp\n- Làm lại khu vực chọn tháng, trạng thái đối soát, bảng file GBS và danh sách đơn chưa khớp để thao tác nhanh hơn\n- Thu gọn phần mapping và chi tiết theo sàn bằng panel mở rộng, giữ nguyên luồng đối soát hiện có",
   "min_php": "8.1",
   "released_at": "2026-04-21"
 }

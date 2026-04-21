@@ -950,17 +950,28 @@ function renderReconcileUploadStatus(files) {
   if (!statusEl) return;
 
   if (ReconcileFileManager.uploading) {
-    statusEl.textContent = 'Đang kiểm tra và lưu file GBS vào kho đối soát.';
+    statusEl.innerHTML = `
+      <span class="reconcile-status-pill is-busy">Đang xử lý file</span>
+      <span class="reconcile-status-inline">Hệ thống đang kiểm tra cấu trúc và nhận diện tháng đối soát từ file GBS.</span>
+    `;
     return;
   }
 
   if (!Array.isArray(files) || !files.length) {
-    statusEl.textContent = 'Chưa có file GBS nào trong kho đối soát.';
+    statusEl.innerHTML = `
+      <span class="reconcile-status-pill">Chưa có file GBS</span>
+      <span class="reconcile-status-inline">Upload file GBS để hệ thống tự gom tháng đối soát.</span>
+    `;
     return;
   }
 
   const latest = files[0] || {};
-  statusEl.textContent = `${fmtNum(files.length)} file GBS đang lưu • mới nhất: ${latest.filename || '—'} • ${fmtDateTime(latest.modified_at || '')}`;
+  const monthCount = Array.isArray(ReconcileFileManager.months) ? ReconcileFileManager.months.length : 0;
+  statusEl.innerHTML = `
+    <span class="reconcile-status-pill is-live">${fmtNum(files.length)} file đang lưu</span>
+    <span class="reconcile-status-pill">${fmtNum(monthCount)} tháng sẵn sàng</span>
+    <span class="reconcile-status-inline">Mới nhất: <strong>${escHtml(latest.filename || '—')}</strong> • ${escHtml(fmtDateTime(latest.modified_at || ''))}</span>
+  `;
 }
 
 function renderReconcileMonthList(months, selectedMonth) {
@@ -979,15 +990,31 @@ function renderReconcileMonthList(months, selectedMonth) {
   root.innerHTML = months.map(month => {
     const active = (month.month || '') === selectedMonth;
     const confirmed = Boolean(month.confirmed);
+    const stamp = month.confirmed_at
+      ? `Xác nhận lúc ${escHtml(fmtDateTime(month.confirmed_at))}`
+      : `Cập nhật ${escHtml(fmtDateTime(month.latest_modified_at || ''))}`;
     return `
       <button type="button" class="reconcile-month-card ${active ? 'is-active' : ''} ${confirmed ? 'is-confirmed' : ''}" data-action="select-reconcile-month" data-month="${escHtml(month.month || '')}">
         <div class="reconcile-month-card-head">
-          <strong>${escHtml(month.label || fmtMonthLabel(month.month || ''))}</strong>
+          <div class="reconcile-month-card-title">
+            <strong>${escHtml(month.label || fmtMonthLabel(month.month || ''))}</strong>
+            <div class="reconcile-month-card-sub">${stamp}</div>
+          </div>
           <span class="badge ${confirmed ? 'badge-completed' : 'badge-pending'}">${confirmed ? 'Đã xác nhận' : 'Chưa xác nhận'}</span>
         </div>
-        <div class="reconcile-month-card-meta">${escHtml(month.file_count || 0)} file • ${escHtml(month.gbs_orders || 0)} đơn GBS</div>
-        <div class="reconcile-month-card-sub">
-          ${month.confirmed_at ? `Xác nhận lúc ${escHtml(fmtDateTime(month.confirmed_at))}` : `Cập nhật gần nhất ${escHtml(fmtDateTime(month.latest_modified_at || ''))}`}
+        <div class="reconcile-month-card-stats">
+          <div class="reconcile-month-stat">
+            <strong>${fmtNum(month.file_count || 0)}</strong>
+            <small>file GBS</small>
+          </div>
+          <div class="reconcile-month-stat">
+            <strong>${fmtNum(month.gbs_orders || 0)}</strong>
+            <small>đơn GBS</small>
+          </div>
+        </div>
+        <div class="reconcile-month-card-foot">
+          <span>${active ? 'Đang xem kỳ này' : 'Chọn để xem chi tiết'}</span>
+          <span>${confirmed ? 'Đã chốt kỳ' : 'Đang mở kỳ'}</span>
         </div>
       </button>
     `;
@@ -1001,7 +1028,7 @@ function renderReconcileSelectedMonthMeta(meta, summary, unmatchedCount) {
 
   if (confirmBtn) {
     confirmBtn.disabled = !meta;
-    confirmBtn.textContent = meta?.confirmed ? 'Bỏ xác nhận tháng' : 'Xác nhận tháng';
+    confirmBtn.textContent = meta?.confirmed ? 'Bỏ xác nhận kỳ' : 'Xác nhận kỳ';
   }
   if (exportBtn) {
     exportBtn.disabled = !meta;
@@ -1014,10 +1041,18 @@ function renderReconcileSelectedMonthMeta(meta, summary, unmatchedCount) {
   }
 
   const matched = (summary.matched_orders || 0) + (summary.bundle_match_orders || 0);
+  const scopeTotal = Number(summary.common_orders || 0) || Number(matched || 0) + Number(unmatchedCount || 0);
+  const completion = scopeTotal > 0 ? Math.round((matched / scopeTotal) * 100) : 0;
+  const progressNote = scopeTotal > 0
+    ? `${fmtNum(matched)} / ${fmtNum(scopeTotal)} đơn giao nhau đã khớp.`
+    : 'Chưa có đơn giao nhau trong kỳ này.';
   root.innerHTML = `
     <div class="reconcile-current-month-head">
-      <span class="badge badge-gbs">${escHtml(meta.label || fmtMonthLabel(meta.month || ''))}</span>
-      <span class="badge ${meta.confirmed ? 'badge-completed' : 'badge-pending'}">${meta.confirmed ? 'Đã xác nhận' : 'Đang mở'}</span>
+      <div class="reconcile-current-month-title">
+        <span class="badge badge-gbs">${escHtml(meta.label || fmtMonthLabel(meta.month || ''))}</span>
+        <span class="badge ${meta.confirmed ? 'badge-completed' : 'badge-pending'}">${meta.confirmed ? 'Đã xác nhận' : 'Đang mở'}</span>
+      </div>
+      <span class="reconcile-status-pill is-live">${fmtNum(scopeTotal || 0)} đơn trong phạm vi khớp</span>
     </div>
     <div class="reconcile-current-month-grid">
       <div><span>File GBS</span><strong>${fmtNum(meta.file_count || 0)}</strong></div>
@@ -1025,10 +1060,20 @@ function renderReconcileSelectedMonthMeta(meta, summary, unmatchedCount) {
       <div><span>Đơn khớp</span><strong>${fmtNum(matched)}</strong></div>
       <div><span>Chưa khớp</span><strong>${fmtNum(unmatchedCount || 0)}</strong></div>
     </div>
-    <div class="reconcile-current-month-note">
-      ${meta.confirmed_at
-        ? `Xác nhận lúc ${escHtml(fmtDateTime(meta.confirmed_at))}${meta.confirmed_by ? ` bởi ${escHtml(meta.confirmed_by)}` : ''}.`
-        : 'Tháng này chưa được xác nhận hoàn tất.'}
+    <div class="reconcile-current-month-foot">
+      <div class="reconcile-current-month-note">
+        ${meta.confirmed_at
+          ? `Xác nhận lúc ${escHtml(fmtDateTime(meta.confirmed_at))}${meta.confirmed_by ? ` bởi ${escHtml(meta.confirmed_by)}` : ''}.`
+          : 'Tháng này chưa được xác nhận hoàn tất.'}
+      </div>
+      <div class="reconcile-progress-card">
+        <div class="reconcile-progress-head">
+          <span>Độ phủ khớp</span>
+          <strong>${fmtNum(completion)}%</strong>
+        </div>
+        <div class="reconcile-progress-bar"><span style="width:${Math.max(0, Math.min(completion, 100))}%"></span></div>
+        <div class="reconcile-progress-note">${progressNote}</div>
+      </div>
     </div>
   `;
 }
@@ -1037,7 +1082,7 @@ function renderReconcileManagedFiles(files) {
   const tbody = qs('#reconcileManagedFilesTable');
   const summaryEl = qs('#reconcileManagedFileCount');
   if (summaryEl) {
-    summaryEl.textContent = `${fmtNum(Array.isArray(files) ? files.length : 0)} file`;
+    summaryEl.textContent = `${fmtNum(Array.isArray(files) ? files.length : 0)} file trong kho`;
   }
   if (!tbody) return;
 
@@ -1171,7 +1216,7 @@ function renderReconcileRunMeta(generatedAt, insights) {
 
   const lines = Array.isArray(insights) ? insights.slice(0, 4) : [];
   el.innerHTML = `
-    <div class="reconcile-run-stamp">Cập nhật: ${generatedAt ? escHtml(fmtDateTime(generatedAt)) : '—'}</div>
+    <div class="reconcile-run-stamp">Lần làm mới gần nhất: ${generatedAt ? escHtml(fmtDateTime(generatedAt)) : '—'}</div>
     <div class="reconcile-run-points">
       ${lines.length
         ? lines.map(line => `<div class="reconcile-run-point">${escHtml(line)}</div>`).join('')
@@ -1246,8 +1291,11 @@ function renderReconcileSummary(platforms) {
 function renderReconcileUnmatched(orders) {
   const tbody = qs('#reconcileUnmatchedBody');
   const summaryEl = qs('#reconcileUnmatchedSummary');
+  const totalOrders = Array.isArray(orders) ? orders.length : 0;
   if (summaryEl) {
-    summaryEl.textContent = `${fmtNum(Array.isArray(orders) ? orders.length : 0)} đơn`;
+    summaryEl.textContent = totalOrders > 120
+      ? `${fmtNum(totalOrders)} đơn • xem 120 dòng đầu`
+      : `${fmtNum(totalOrders)} đơn cần xem`;
   }
   if (!tbody) return;
 
@@ -1293,46 +1341,53 @@ function renderReconcilePlatformSections(platforms) {
     const summary = info.summary || {};
     const orders = Array.isArray(info.orders) ? info.orders : [];
     const matched = (summary.matched_orders || 0) + (summary.bundle_match_orders || 0);
+    const reviewCount = (summary.mismatch_orders || 0) + (summary.missing_in_gbs || 0) + (summary.missing_in_platform || 0);
     const displayOrders = orders.slice(0, 40);
     const hiddenCount = Math.max(0, orders.length - displayOrders.length);
+    const defaultOpen = reviewCount > 0 ? ' open' : '';
 
     return `
-      <section class="card reconcile-platform-block">
-        <div class="reconcile-platform-top">
-          <div>
-            <div class="reconcile-platform-chip">${platformBadge(platform)}</div>
-            <div class="card-title">${escHtml(reconcilePlatformName(platform))}</div>
-            <div class="card-subtitle">${escHtml(info.scope_note || 'Đối soát theo đơn hàng và quy đổi combo trước khi so sánh.')}</div>
+      <details class="card reconcile-platform-panel"${defaultOpen}>
+        <summary>
+          <div class="reconcile-platform-top">
+            <div>
+              <div class="reconcile-platform-chip">${platformBadge(platform)}</div>
+              <div class="card-title">${escHtml(reconcilePlatformName(platform))}</div>
+              <div class="card-subtitle">${escHtml(info.scope_note || 'Đối soát theo đơn hàng và quy đổi combo trước khi so sánh.')}</div>
+              <div class="reconcile-platform-toggle">${reviewCount > 0 ? `${fmtNum(reviewCount)} đơn cần xem` : 'Mở chi tiết'}</div>
+            </div>
+            <div class="reconcile-mini-metrics">
+              <div class="reconcile-mini-metric"><span>Đơn sàn</span><strong>${fmtNum(summary.platform_orders || 0)}</strong></div>
+              <div class="reconcile-mini-metric"><span>Đơn khớp</span><strong>${fmtNum(matched)}</strong></div>
+              <div class="reconcile-mini-metric"><span>Thiếu trong GBS</span><strong>${fmtNum(summary.missing_in_gbs || 0)}</strong></div>
+              <div class="reconcile-mini-metric"><span>Thiếu dữ liệu sàn</span><strong>${fmtNum(summary.missing_in_platform || 0)}</strong></div>
+            </div>
           </div>
-          <div class="reconcile-mini-metrics">
-            <div class="reconcile-mini-metric"><span>Đơn sàn</span><strong>${fmtNum(summary.platform_orders || 0)}</strong></div>
-            <div class="reconcile-mini-metric"><span>Đơn khớp</span><strong>${fmtNum(matched)}</strong></div>
-            <div class="reconcile-mini-metric"><span>Thiếu trong GBS</span><strong>${fmtNum(summary.missing_in_gbs || 0)}</strong></div>
-            <div class="reconcile-mini-metric"><span>Thiếu dữ liệu sàn</span><strong>${fmtNum(summary.missing_in_platform || 0)}</strong></div>
+        </summary>
+        <div class="reconcile-platform-body">
+          <div class="table-wrapper">
+            <table class="reconcile-order-table">
+              <thead>
+                <tr>
+                  <th>Mã đơn</th>
+                  <th>Kết quả</th>
+                  <th>GBS</th>
+                  <th>File sàn</th>
+                  <th>SL</th>
+                  <th>NMV</th>
+                  <th>Ghi chú</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${displayOrders.length
+                  ? displayOrders.map(orderRow => renderReconcileOrderRow(orderRow)).join('')
+                  : `<tr><td colspan="7" class="reconcile-empty-cell">Không có dữ liệu để hiển thị.</td></tr>`}
+              </tbody>
+            </table>
           </div>
+          ${hiddenCount > 0 ? `<div class="reconcile-hidden-note">Còn ${fmtNum(hiddenCount)} đơn chưa hiển thị trong bảng này.</div>` : ''}
         </div>
-        <div class="table-wrapper">
-          <table class="reconcile-order-table">
-            <thead>
-              <tr>
-                <th>Mã đơn</th>
-                <th>Kết quả</th>
-                <th>GBS</th>
-                <th>File sàn</th>
-                <th>SL</th>
-                <th>NMV</th>
-                <th>Ghi chú</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${displayOrders.length
-                ? displayOrders.map(orderRow => renderReconcileOrderRow(orderRow)).join('')
-                : `<tr><td colspan="7" class="reconcile-empty-cell">Không có dữ liệu để hiển thị.</td></tr>`}
-            </tbody>
-          </table>
-        </div>
-        ${hiddenCount > 0 ? `<div class="reconcile-hidden-note">Còn ${fmtNum(hiddenCount)} đơn chưa hiển thị trong bảng này.</div>` : ''}
-      </section>
+      </details>
     `;
   }).join('');
 }
