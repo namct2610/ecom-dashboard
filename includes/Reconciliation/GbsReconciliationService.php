@@ -717,12 +717,19 @@ final class GbsReconciliationService
         $productName = trim((string) ($row['product_name'] ?? ''));
         $qty = max(0.0, (float) ($row['quantity'] ?? 0));
         $gross = (float) ($row['subtotal_before_discount'] ?? 0);
+        $subtotalAfterDiscount = (float) ($row['subtotal_after_discount'] ?? 0);
         $sellerVoucher = abs((float) ($row['seller_voucher'] ?? 0));
         $sellerDiscount = abs((float) ($row['seller_discount'] ?? 0));
         $platformDiscount = abs((float) ($row['platform_discount'] ?? 0));
-        $comparableNmv = max(0.0, $gross - $sellerVoucher - $sellerDiscount);
-        if ($comparableNmv <= 0 && $gross <= 0 && $sellerVoucher <= 0 && $sellerDiscount <= 0) {
-            $comparableNmv = max(0.0, ((float) ($row['subtotal_after_discount'] ?? 0)) + $platformDiscount);
+        if ($platform === 'shopee') {
+            $comparableNmv = $subtotalAfterDiscount > 0
+                ? $subtotalAfterDiscount
+                : max(0.0, $gross - $sellerDiscount - $platformDiscount);
+        } else {
+            $comparableNmv = max(0.0, $gross - $sellerVoucher - $sellerDiscount);
+            if ($comparableNmv <= 0 && $gross <= 0 && $sellerVoucher <= 0 && $sellerDiscount <= 0) {
+                $comparableNmv = max(0.0, $subtotalAfterDiscount + $platformDiscount);
+            }
         }
 
         $comparisonSku = $platform === 'tiktokshop'
@@ -751,6 +758,7 @@ final class GbsReconciliationService
             'raw_qty' => $qty,
             'comparable_qty' => $qty * $comboMultiplier,
             'comparable_nmv' => $comparableNmv,
+            'order_level_seller_voucher' => $platform === 'shopee' ? $sellerVoucher : 0.0,
             'combo_multiplier' => $comboMultiplier,
             'expanded_items' => $expandedItems,
             'has_bundle' => count($expandedItems) > 1 || $comboMultiplier > 1,
@@ -785,7 +793,7 @@ final class GbsReconciliationService
 
             $skuKey = $this->normalizeSkuKey($row['sku']);
             $grouped[$platform][$orderId]['total_qty'] += $row['quantity'];
-            $grouped[$platform][$orderId]['total_nmv'] += $row['nmv'];
+            $grouped[$platform][$orderId]['total_nmv'] += $this->roundCurrency((float) ($row['nmv'] ?? 0));
             $grouped[$platform][$orderId]['line_count']++;
             $grouped[$platform][$orderId]['statuses'][$row['status']] = $row['status'];
             if (($row['reconcile_at'] ?? '') > ($grouped[$platform][$orderId]['reconcile_at'] ?? '')) {
@@ -795,13 +803,22 @@ final class GbsReconciliationService
             $grouped[$platform][$orderId]['sku_items'][] = [
                 'sku'       => $row['sku'],
                 'quantity'  => $this->roundNumber($row['quantity'], 4),
-                'nmv'       => $this->roundNumber($row['nmv'], 2),
+                'nmv'       => $this->roundCurrency((float) ($row['nmv'] ?? 0)),
                 'type'      => $row['product_type'],
                 'name'      => $row['product_name'],
             ];
         }
 
-        return $this->finalizeGroupedOrders($grouped);
+        foreach ($grouped as &$platformOrders) {
+            foreach ($platformOrders as &$order) {
+                $order['total_nmv'] = $this->roundCurrency((float) ($order['total_nmv'] ?? 0));
+                $order['statuses'] = array_values($order['statuses']);
+            }
+            unset($order);
+        }
+        unset($platformOrders);
+
+        return $grouped;
     }
 
     private function groupPlatformOrders(array $rows): array
@@ -818,6 +835,10 @@ final class GbsReconciliationService
             if (($row['reconcile_at'] ?? '') > ($grouped[$orderId]['reconcile_at'] ?? '')) {
                 $grouped[$orderId]['reconcile_at'] = (string) ($row['reconcile_at'] ?? '');
             }
+            $grouped[$orderId]['order_level_seller_voucher'] = max(
+                (float) ($grouped[$orderId]['order_level_seller_voucher'] ?? 0.0),
+                max(0.0, (float) ($row['order_level_seller_voucher'] ?? 0.0))
+            );
 
             $items = $row['expanded_items'] ?? [[
                 'sku'              => $row['sku'],
@@ -857,7 +878,10 @@ final class GbsReconciliationService
         }
 
         foreach ($grouped as $orderId => &$order) {
+            $order['total_nmv'] = max(0.0, (float) ($order['total_nmv'] ?? 0) - (float) ($order['order_level_seller_voucher'] ?? 0));
+            $order['total_nmv'] = $this->roundNumber((float) $order['total_nmv'], 2);
             $order['statuses'] = array_values($order['statuses']);
+            unset($order['order_level_seller_voucher']);
         }
         unset($order);
 
@@ -888,6 +912,7 @@ final class GbsReconciliationService
             'reconcile_at' => '',
             'sku_map'    => [],
             'sku_items'  => [],
+            'order_level_seller_voucher' => 0.0,
         ];
     }
 
@@ -927,6 +952,7 @@ final class GbsReconciliationService
             $nmv = ($grossRevenue !== 0.0 || $sellerVoucher !== 0.0 || $sellerDiscount !== 0.0)
                 ? max(0.0, $grossRevenue - $sellerVoucher - $sellerDiscount)
                 : $fallbackNmv;
+            $nmv = $this->roundCurrency($nmv);
 
             $result[] = [
                 'platform'       => $platform,
@@ -986,6 +1012,8 @@ final class GbsReconciliationService
 
             $qty = max(0.0, $this->parseNumber($row[$col['quantity'] ?? -1] ?? null));
             $unitPrice = $this->parseNumber($row[$col['unit_price'] ?? -1] ?? null);
+            $platformDiscount = abs($this->parseNumber($row[$col['platform_discount'] ?? -1] ?? null));
+            $promoPrice = $this->parseNumber($row[$col['promo_price'] ?? -1] ?? null);
             $sellerVoucher = $this->parseNumber($row[$col['seller_voucher'] ?? -1] ?? null);
             $sellerDiscountTotal = $this->parseNumber($row[$col['seller_discount_total'] ?? -1] ?? null);
             if ($sellerDiscountTotal === 0.0) {
@@ -994,7 +1022,9 @@ final class GbsReconciliationService
 
             $productName = trim((string) ($row[$col['product_name'] ?? -1] ?? ''));
             $comboMultiplier = $this->comboMultiplierFromName($productName);
-            $comparableNmv = max(0.0, ($unitPrice * $qty) - $sellerVoucher - $sellerDiscountTotal);
+            $comparableNmv = $promoPrice > 0
+                ? max(0.0, $promoPrice * $qty)
+                : max(0.0, ($unitPrice * $qty) - $sellerDiscountTotal - $platformDiscount);
             $expandedItems = $this->buildExpandedItems(
                 'shopee',
                 $sku,
@@ -1016,6 +1046,7 @@ final class GbsReconciliationService
                 'raw_qty'          => $qty,
                 'comparable_qty'   => $qty * $comboMultiplier,
                 'comparable_nmv'   => $comparableNmv,
+                'order_level_seller_voucher' => $sellerVoucher,
                 'combo_multiplier' => $comboMultiplier,
                 'expanded_items'   => $expandedItems,
                 'has_bundle'       => count($expandedItems) > 1 || $comboMultiplier > 1,
@@ -1337,7 +1368,7 @@ final class GbsReconciliationService
                 ['field' => 'time_scope', 'gbs' => 'Thời gian đối soát', 'platform' => 'Thời gian hoàn thành đơn hàng', 'rule' => 'Shopee dùng dữ liệu trong bảng orders chung, lọc theo tháng của thời gian hoàn thành đơn hàng.'],
                 ['field' => 'order_id', 'gbs' => 'Mã đơn hàng', 'platform' => 'order_id', 'rule' => 'Khớp trực tiếp theo đơn hàng sau khi đã lọc đúng tháng.'],
                 ['field' => 'sku', 'gbs' => 'sku', 'platform' => 'sku', 'rule' => 'Ưu tiên quy đổi theo Combo_to_single; nếu chưa có mapping sẽ fallback về heuristic COMBO trong tên sản phẩm.'],
-                ['field' => 'nmv', 'gbs' => 'Doanh thu - Voucher người bán - Giảm giá nhà bán', 'platform' => 'subtotal_before_discount - seller_voucher - seller_discount', 'rule' => 'Không trừ platform_discount của Shopee.'],
+                ['field' => 'nmv', 'gbs' => 'Doanh thu - Mã giảm giá từ người bán - Giảm giá từ người bán (làm tròn tiền)', 'platform' => 'subtotal_after_discount - seller_voucher', 'rule' => 'Shopee lấy `Giá ưu đãi`; voucher shop chỉ trừ 1 lần duy nhất theo đơn hàng.'],
             ],
             'lazada' => [
                 ['field' => 'time_scope', 'gbs' => 'Thời gian đối soát', 'platform' => 'ttsSla', 'rule' => 'Lazada dùng dữ liệu trong bảng orders chung, lọc theo tháng của TTS SLA.'],
@@ -1359,7 +1390,8 @@ final class GbsReconciliationService
         $insights = [
             'GBS chuẩn hóa giá trị nền tảng từ `shopee_v2`, `lazada`, `tiktok` thành `shopee`, `lazada`, `tiktokshop` để so khớp.',
             'Nguồn dữ liệu sàn giờ dùng chung từ bảng orders; không cần upload và quản lý file Shopee/Lazada/TikTok riêng cho đối soát nữa.',
-            'NMV đối soát = Doanh thu giá gốc - khuyến mãi gian hàng (voucher người bán và giảm giá nhà bán); không trừ phần giảm giá của sàn.',
+            'NMV Shopee đối soát = `Giá ưu đãi - Mã giảm giá của Shop`, trong đó voucher shop chỉ tính 1 lần duy nhất ở cấp đơn hàng.',
+            'NMV của GBS được làm tròn trước khi so khớp để tránh lệch tiền do số lẻ khi quy đổi.',
         ];
 
         if ($selectedMonth !== null) {
@@ -1841,6 +1873,11 @@ final class GbsReconciliationService
     private function roundNumber(float $value, int $precision): float
     {
         return round($value, $precision);
+    }
+
+    private function roundCurrency(float $value): float
+    {
+        return round($value, 0, \PHP_ROUND_HALF_UP);
     }
 
     private function platformLabel(string $platform): string

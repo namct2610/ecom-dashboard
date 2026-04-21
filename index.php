@@ -865,7 +865,7 @@ $initials = strtoupper(substr($user, 0, 2));
             <div class="reconcile-hero-points">
               <div class="reconcile-hero-point">
                 <strong>NMV</strong>
-                <span>`Giá gốc sản phẩm - Voucher / giảm giá nhà bán`, không trừ phần giảm giá của sàn.</span>
+                <span>Shopee khớp theo `Giá ưu đãi - Mã giảm giá của Shop` và chỉ trừ voucher shop 1 lần / đơn; GBS làm tròn tiền trước khi so sánh.</span>
               </div>
               <div class="reconcile-hero-point">
                 <strong>Combo</strong>
@@ -1708,8 +1708,8 @@ $initials = strtoupper(substr($user, 0, 2));
           </div>
 
           <div class="reconcile-settings-banner">
-            <strong>NMV đối soát:</strong> Doanh thu giá gốc sản phẩm - Khuyến mãi gian hàng
-            <span>(voucher shop và giảm giá nhà bán, không tính phần giảm giá của sàn).</span>
+            <strong>NMV đối soát:</strong> Shopee dùng `Giá ưu đãi - Mã giảm giá của Shop`
+            <span>(voucher shop chỉ tính 1 lần / đơn); GBS làm tròn tiền trước khi khớp.</span>
           </div>
 
           <div class="reconcile-settings-summary" id="reconcileSettingsSummary">
