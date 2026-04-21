@@ -9,16 +9,20 @@ $csrf = generate_csrf();
 $appVersion = file_exists(__DIR__ . '/version.txt')
     ? trim((string) file_get_contents(__DIR__ . '/version.txt'))
     : '0.0.0';
-$appReleaseDate = '';
+$appUpdatedAt = '';
 $manifestPath = __DIR__ . '/manifest.json';
 if (file_exists($manifestPath)) {
     $manifestPayload = json_decode((string) file_get_contents($manifestPath), true);
     if (is_array($manifestPayload) && !empty($manifestPayload['released_at'])) {
         $releaseAt = date_create((string) $manifestPayload['released_at']);
-        $appReleaseDate = $releaseAt ? $releaseAt->format('d/m/Y') : (string) $manifestPayload['released_at'];
+        $appUpdatedAt = $releaseAt ? $releaseAt->format('d/m/Y H:i') : (string) $manifestPayload['released_at'];
     }
 }
-$appVersionLabel = 'v' . $appVersion . ($appReleaseDate !== '' ? ' · ' . $appReleaseDate : '');
+if ($appUpdatedAt === '' && file_exists($manifestPath)) {
+    $appUpdatedAt = date('d/m/Y H:i', filemtime($manifestPath) ?: time());
+}
+$appVersionLabel = 'v' . $appVersion;
+$appVersionMeta = $appUpdatedAt !== '' ? $appVersionLabel . ' · ' . $appUpdatedAt : $appVersionLabel;
 
 // Detect current user initials for avatar
 $user = $_SESSION['username'] ?? 'A';
@@ -103,8 +107,7 @@ $initials = strtoupper(substr($user, 0, 2));
       </div>
       <div class="sidebar-brand-text">
         <div class="sidebar-brand-name">Dashboard v3</div>
-        <div class="sidebar-brand-sub">Shopee · Lazada · TikTok</div>
-        <div class="sidebar-brand-meta"><?= htmlspecialchars($appVersionLabel, ENT_QUOTES, 'UTF-8') ?></div>
+        <div class="sidebar-brand-meta"><?= htmlspecialchars($appVersionMeta, ENT_QUOTES, 'UTF-8') ?></div>
       </div>
     </div>
 
@@ -768,126 +771,107 @@ $initials = strtoupper(substr($user, 0, 2));
         <div class="page-header reconcile-page-header">
           <div>
             <h1 data-i18n="page.reconcile.title">Đối soát GBS</h1>
-            <p data-i18n="page.reconcile.sub">Khớp file GBS với export Shopee, Lazada và TikTok Shop theo đơn hàng</p>
+            <p data-i18n="page.reconcile.sub">Đối soát GBS theo tháng với dữ liệu đơn hàng chung của Shopee, Lazada và TikTok Shop</p>
           </div>
-          <button id="btnRefreshReconcile" class="btn btn-secondary">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 11a8.1 8.1 0 0 0-15.5-2M4 5v4h4"/><path d="M4 13a8.1 8.1 0 0 0 15.5 2M20 19v-4h-4"/></svg>
-            Làm mới đối soát
-          </button>
+          <div class="reconcile-page-actions">
+            <button id="btnRefreshReconcile" class="btn btn-secondary">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 11a8.1 8.1 0 0 0-15.5-2M4 5v4h4"/><path d="M4 13a8.1 8.1 0 0 0 15.5 2M20 19v-4h-4"/></svg>
+              Làm mới
+            </button>
+            <button id="btnUploadReconcileGbs" class="btn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><path d="M7 10l5-5 5 5"/><path d="M12 5v12"/></svg>
+              Upload file GBS
+            </button>
+          </div>
         </div>
+        <input id="reconcileFileInput" type="file" accept=".xlsx,.xls" style="display:none">
 
-        <div class="grid-3-1 reconcile-upload-section">
-          <div class="card">
-            <div class="card-title">Kho file đối soát</div>
-            <div class="card-subtitle">Tách biệt với trang Upload dữ liệu. Mỗi nguồn giữ 1 file hiện hành để dùng cho đối soát.</div>
-            <div class="reconcile-upload-grid">
-              <button type="button" class="reconcile-upload-slot" data-source-key="gbs">
-                <div class="reconcile-upload-slot-head">
-                  <span class="badge badge-gbs">GBS</span>
-                  <span class="reconcile-upload-slot-state" id="reconcileSlotState-gbs">Chưa có file</span>
-                </div>
-                <div class="reconcile-upload-slot-title">File GBS</div>
-                <div class="reconcile-upload-slot-desc">File chuẩn để đối chiếu dữ liệu đơn hàng theo `platform + order_id`.</div>
-                <div class="reconcile-upload-slot-meta" id="reconcileSlotMeta-gbs">Chọn file `.xlsx` hoặc `.xls` để lưu vào kho đối soát.</div>
+        <div class="reconcile-shell">
+          <section class="card reconcile-upload-card">
+            <div class="card-title">Nguồn dữ liệu đối soát</div>
+            <div class="card-subtitle">GBS quản lý riêng theo file tháng. Dữ liệu Shopee, Lazada, TikTok Shop lấy trực tiếp từ bảng đơn hàng chung của hệ thống.</div>
+            <div class="reconcile-upload-actions">
+              <button type="button" class="btn" id="btnReconcileUploadPrimary">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5-5 5 5"/><path d="M12 5v12"/></svg>
+                Thêm file GBS
               </button>
-
-              <button type="button" class="reconcile-upload-slot" data-source-key="shopee">
-                <div class="reconcile-upload-slot-head">
-                  <span class="badge badge-shopee">Shopee</span>
-                  <span class="reconcile-upload-slot-state" id="reconcileSlotState-shopee">Chưa có file</span>
-                </div>
-                <div class="reconcile-upload-slot-title">File Shopee</div>
-                <div class="reconcile-upload-slot-desc">Export đơn hàng Shopee dùng riêng cho đối soát GBS.</div>
-                <div class="reconcile-upload-slot-meta" id="reconcileSlotMeta-shopee">Upload nhầm loại file sẽ bị chặn ngay ở bước kiểm tra.</div>
-              </button>
-
-              <button type="button" class="reconcile-upload-slot" data-source-key="lazada">
-                <div class="reconcile-upload-slot-head">
-                  <span class="badge badge-lazada">Lazada</span>
-                  <span class="reconcile-upload-slot-state" id="reconcileSlotState-lazada">Chưa có file</span>
-                </div>
-                <div class="reconcile-upload-slot-title">File Lazada</div>
-                <div class="reconcile-upload-slot-desc">Giữ 1 file hiện hành để đối chiếu số lượng và NMV với GBS.</div>
-                <div class="reconcile-upload-slot-meta" id="reconcileSlotMeta-lazada">Upload file mới sẽ thay thế file cũ cùng nguồn.</div>
-              </button>
-
-              <button type="button" class="reconcile-upload-slot" data-source-key="tiktokshop">
-                <div class="reconcile-upload-slot-head">
-                  <span class="badge badge-tiktokshop">TikTok Shop</span>
-                  <span class="reconcile-upload-slot-state" id="reconcileSlotState-tiktokshop">Chưa có file</span>
-                </div>
-                <div class="reconcile-upload-slot-title">File TikTok Shop</div>
-                <div class="reconcile-upload-slot-desc">Dùng riêng cho luồng đối soát, không import vào bảng đơn hàng.</div>
-                <div class="reconcile-upload-slot-meta" id="reconcileSlotMeta-tiktokshop">Có thể xoá file sau khi hoàn tất đối soát.</div>
-              </button>
+              <div class="reconcile-upload-status" id="reconcileUploadStatus">Chưa có file GBS nào trong kho đối soát.</div>
             </div>
-            <input id="reconcileFileInput" type="file" accept=".xlsx,.xls" style="display:none">
-          </div>
-
-          <div class="card">
-            <div class="card-title">Quy ước sử dụng</div>
-            <div class="card-subtitle">Luồng upload này chỉ phục vụ đối soát, không thay thế trang upload dữ liệu hiện có.</div>
-            <div class="reconcile-upload-note">
-              <div class="reconcile-upload-note-item">
-                <strong>Luồng tách biệt:</strong> file ở đây không được import vào `orders` hay `traffic_daily`.
+            <div class="reconcile-source-grid">
+              <div class="reconcile-source-chip">
+                <span class="badge badge-gbs">GBS</span>
+                <div>
+                  <strong>File chuẩn theo tháng</strong>
+                  <span>Tự nhận diện tháng bằng `Thời gian đối soát` và giữ nhiều file để quản lý / xoá sau khi dùng.</span>
+                </div>
               </div>
-              <div class="reconcile-upload-note-item">
-                <strong>Kiểm tra ngay khi upload:</strong> hệ thống sẽ xác nhận đúng loại file GBS, Shopee, Lazada hoặc TikTok Shop trước khi lưu.
+              <div class="reconcile-source-chip">
+                <span class="badge badge-shopee">Shopee</span>
+                <div>
+                  <strong>Dữ liệu dùng chung</strong>
+                  <span>Khớp tháng theo `Thời gian hoàn thành đơn hàng` trong `orders`.</span>
+                </div>
               </div>
-              <div class="reconcile-upload-note-item">
-                <strong>Dọn file sau khi dùng:</strong> bảng quản lý bên dưới cho phép xoá từng file để tránh lưu lâu không cần thiết.
+              <div class="reconcile-source-chip">
+                <span class="badge badge-lazada">Lazada</span>
+                <div>
+                  <strong>Dữ liệu dùng chung</strong>
+                  <span>Khớp tháng theo `ttsSla` đã đồng bộ vào `orders`.</span>
+                </div>
               </div>
-              <div class="reconcile-upload-note-item">
-                <strong>Tương thích cũ:</strong> nếu kho đối soát chưa có file, trang vẫn có thể fallback sang file cùng tên đang đặt ở thư mục gốc dự án.
+              <div class="reconcile-source-chip">
+                <span class="badge badge-tiktokshop">TikTok Shop</span>
+                <div>
+                  <strong>Dữ liệu dùng chung</strong>
+                  <span>Chưa có mốc thời gian ổn định nên hiện chỉ kiểm tra các mã đơn xuất hiện trong GBS.</span>
+                </div>
               </div>
             </div>
-          </div>
+          </section>
+
+          <section class="card reconcile-control-card">
+            <div class="card-title">Tháng đang đối soát</div>
+            <div class="card-subtitle">Chọn tháng GBS để xem kết quả, xác nhận hoàn tất và export đơn sàn chưa khớp.</div>
+            <div id="reconcileSelectedMonthMeta" class="reconcile-current-month">
+              Chưa có tháng đối soát nào sẵn sàng.
+            </div>
+            <div class="reconcile-control-actions">
+              <button id="btnToggleReconcileMonthConfirm" class="btn btn-secondary" disabled>Xác nhận tháng</button>
+              <button id="btnExportReconcileUnmatched" class="btn btn-secondary" disabled>Xuất đơn chưa khớp</button>
+            </div>
+          </section>
         </div>
 
         <div class="card">
           <div class="reconcile-managed-head">
             <div>
-              <div class="card-title">Quản lý file đối soát</div>
-              <div class="card-subtitle">Xem nhanh file đang lưu trong kho đối soát và xoá sau khi sử dụng.</div>
+              <div class="card-title">Danh sách tháng GBS</div>
+              <div class="card-subtitle">Hệ thống gom tháng từ tất cả file GBS đang lưu, cho phép xác nhận sau khi đối soát xong.</div>
             </div>
-            <div class="reconcile-managed-summary" id="reconcileManagedSummary">0/4 file sẵn sàng</div>
+            <div class="reconcile-managed-summary" id="reconcileManagedSummary">0 tháng</div>
           </div>
-          <div class="table-wrapper">
-            <table>
-              <thead>
-                <tr>
-                  <th>Nguồn</th>
-                  <th>File hiện tại</th>
-                  <th>Cập nhật</th>
-                  <th class="text-right">Kích thước</th>
-                  <th>Trạng thái</th>
-                  <th>Thao tác</th>
-                </tr>
-              </thead>
-              <tbody id="reconcileManagedFilesTable"></tbody>
-            </table>
-          </div>
+          <div class="reconcile-month-list" id="reconcileMonthList"></div>
         </div>
 
         <div class="card reconcile-hero-card">
           <div class="reconcile-hero-copy">
-            <div class="reconcile-kicker">GBS × Export sàn</div>
-            <h3>So sánh theo `platform + order_id` và quy đổi combo trước khi đối chiếu</h3>
-            <p>Trang này ưu tiên đọc file từ kho đối soát bên trên. Nếu một nguồn chưa được upload tại đây, hệ thống sẽ fallback sang file cùng tên trong thư mục gốc dự án rồi đối chiếu số lượng sản phẩm và NMV theo logic phù hợp với GBS.</p>
+            <div class="reconcile-kicker">GBS × Orders Chung</div>
+            <h3>So sánh theo `platform + order_id`, quy đổi combo trước khi đối chiếu NMV và số lượng</h3>
+            <p>NMV được tính theo công thức `Doanh thu giá gốc - Voucher người bán - Giảm giá nhà bán`. File GBS là đầu vào đối soát theo tháng, còn dữ liệu sàn được đọc trực tiếp từ `orders` để tránh upload trùng và giữ một nguồn dữ liệu dùng chung.</p>
           </div>
           <div class="reconcile-run-meta" id="reconcileRunMeta">Chưa tải dữ liệu đối soát.</div>
         </div>
 
         <div class="grid-4">
           <div class="kpi-card border-blue">
-            <div class="kpi-label">Đơn ở file sàn</div>
+            <div class="kpi-label">Đơn sàn trong phạm vi</div>
             <div class="kpi-value" id="reconcile-stat-platform-orders">0</div>
-            <div class="kpi-sub">Tổng số đơn tìm thấy trong các file Shopee, Lazada, TikTok Shop</div>
+            <div class="kpi-sub">Dữ liệu lấy từ bảng orders theo logic thời gian của từng sàn</div>
           </div>
           <div class="kpi-card border-green">
-            <div class="kpi-label">Đơn chung</div>
+            <div class="kpi-label">Đơn giao nhau</div>
             <div class="kpi-value" id="reconcile-stat-common-orders">0</div>
-            <div class="kpi-sub">Có mặt đồng thời trong GBS và file sàn</div>
+            <div class="kpi-sub">Có mặt đồng thời trong GBS và dữ liệu sàn chung</div>
           </div>
           <div class="kpi-card border-teal">
             <div class="kpi-label">Đơn khớp</div>
@@ -901,11 +885,34 @@ $initials = strtoupper(substr($user, 0, 2));
           </div>
         </div>
 
-        <div class="grid-4" id="reconcileFileCards"></div>
+        <div class="card">
+          <div class="reconcile-managed-head">
+            <div>
+              <div class="card-title">Quản lý file GBS</div>
+              <div class="card-subtitle">Theo dõi file đã upload, tháng nhận diện được và xoá từng file sau khi hoàn tất đối soát.</div>
+            </div>
+            <div class="reconcile-managed-summary" id="reconcileManagedFileCount">0 file</div>
+          </div>
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>File GBS</th>
+                  <th>Tháng nhận diện</th>
+                  <th>Cập nhật</th>
+                  <th class="text-right">Kích thước</th>
+                  <th class="text-right">Dòng / Đơn</th>
+                  <th>Thao tác</th>
+                </tr>
+              </thead>
+              <tbody id="reconcileManagedFilesTable"></tbody>
+            </table>
+          </div>
+        </div>
 
         <div class="card">
           <div class="card-title">Quy tắc khớp trường dữ liệu</div>
-          <div class="card-subtitle">Các trường sàn được quy đổi về cùng logic của GBS trước khi so sánh.</div>
+          <div class="card-subtitle">Các trường sàn được quy đổi về cùng logic của GBS trước khi so sánh theo tháng.</div>
           <div class="reconcile-map-grid" id="reconcileMappings"></div>
         </div>
 
@@ -925,6 +932,32 @@ $initials = strtoupper(substr($user, 0, 2));
                 </tr>
               </thead>
               <tbody id="reconcileSummaryBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="reconcile-managed-head">
+            <div>
+              <div class="card-title">Đơn sàn chưa khớp với GBS</div>
+              <div class="card-subtitle">Chỉ gồm đơn nằm trong dữ liệu sàn chung nhưng thiếu ở GBS hoặc còn lệch số lượng / NMV.</div>
+            </div>
+            <div class="reconcile-managed-summary" id="reconcileUnmatchedSummary">0 đơn</div>
+          </div>
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Sàn</th>
+                  <th>Mã đơn</th>
+                  <th>Kết quả</th>
+                  <th>Thời gian sàn</th>
+                  <th>SL / NMV sàn</th>
+                  <th>SL / NMV GBS</th>
+                  <th>Ghi chú</th>
+                </tr>
+              </thead>
+              <tbody id="reconcileUnmatchedBody"></tbody>
             </table>
           </div>
         </div>

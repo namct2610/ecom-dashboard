@@ -11,6 +11,7 @@ final class LazadaParser extends BaseParser
         'order_id'        => ['ordernumber', 'order number'],
         'order_created_at'=> ['createtime', 'create time'],
         'order_paid_at'   => ['updatetime', 'update time'],
+        'reconcile_at'    => ['ttssla', 'tts sla'],
         'delivered_at'    => ['delivereddate', 'delivered date'],
         'status'          => ['status'],
         'cancel_reason'   => ['buyerfaileddeliveryreason', 'cancelreason'],
@@ -65,6 +66,8 @@ final class LazadaParser extends BaseParser
             $paidPrice     = parse_amount($this->cell($row, $col['paid_price'] ?? null));
             $unitPrice     = parse_amount($this->cell($row, $col['unit_price'] ?? null));
             $sellerDisc    = abs(parse_amount($this->cell($row, $col['seller_discount'] ?? null)));
+            $completedAt   = parse_datetime_value($this->cell($row, $col['reconcile_at'] ?? null))
+                ?: parse_datetime_value($this->cell($row, $col['delivered_at'] ?? null));
             $city          = normalize_city(
                 $this->cell($row, $col['shipping_city'] ?? null)
                 ?? $this->cell($row, $col['shipping_region'] ?? null)
@@ -97,7 +100,7 @@ final class LazadaParser extends BaseParser
                 'original_status'        => $this->cell($row, $col['status'] ?? null) ?? '',
                 'order_created_at'       => $createdAt,
                 'order_paid_at'          => null,
-                'order_completed_at'     => parse_datetime_value($this->cell($row, $col['delivered_at'] ?? null)),
+                'order_completed_at'     => $completedAt,
                 'upload_id'              => $uploadId,
             ];
             $result['imported_rows']++;

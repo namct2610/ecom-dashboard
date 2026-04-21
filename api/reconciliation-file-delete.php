@@ -16,23 +16,29 @@ try {
         $payload = $_POST;
     }
 
-    $sourceKey = trim((string) ($payload['source_key'] ?? ''));
-    if (!ReconciliationFileStore::isValidSourceKey($sourceKey)) {
-        json_error('Loại file đối soát không hợp lệ.', 422);
+    $filename = trim((string) ($payload['filename'] ?? ''));
+    if ($filename === '') {
+        json_error('Thiếu tên file GBS cần xoá.', 422);
     }
 
     $store = new ReconciliationFileStore(dirname(__DIR__), $config);
-    $currentFile = $store->findFile($sourceKey);
-    if (($currentFile['status'] ?? 'missing') !== 'ready') {
+    $currentFile = null;
+    foreach ($store->listGbsFiles() as $file) {
+        if (($file['filename'] ?? '') === $filename) {
+            $currentFile = $file;
+            break;
+        }
+    }
+
+    if ($currentFile === null) {
         json_error('Không tìm thấy file để xoá.', 404);
     }
 
-    if (!$store->deleteFile($sourceKey)) {
+    if (!$store->deleteFile($filename)) {
         json_error('Không thể xoá file đối soát.', 500);
     }
 
     log_activity('info', 'reconcile_upload', 'Xoá file đối soát', [
-        'source_key' => $sourceKey,
         'filename'   => $currentFile['filename'] ?? '',
     ]);
 

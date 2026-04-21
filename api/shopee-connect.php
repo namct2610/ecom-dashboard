@@ -283,9 +283,12 @@ function insertShopeeOrder(PDO $pdo, array $order, array $item): void
     $qty       = (int)    ($item['model_quantity_purchased'] ?? 1);
     $unitPrice = (float)  ($item['model_discounted_price']   ?? $item['model_original_price'] ?? 0);
     $origPrice = (float)  ($item['model_original_price']     ?? $unitPrice);
+    $grossSubtotal = $origPrice * $qty;
+    $discountedSubtotal = $unitPrice * $qty;
 
     $sellerDisc   = abs((float) ($item['seller_discount']  ?? $order['seller_discount']  ?? 0));
     $shopeeDisc   = abs((float) ($item['shopee_discount']  ?? $order['shopee_discount']  ?? 0));
+    $sellerVoucher = max(0.0, $grossSubtotal - $discountedSubtotal - $sellerDisc - $shopeeDisc);
     $shippingFee  = (float) ($order['actual_shipping_fee'] ?? $order['estimated_shipping_fee'] ?? 0);
     $orderTotal   = (float) ($order['total_amount'] ?? 0);
     $payMethod    = (string) ($order['payment_method'] ?? '');
@@ -310,10 +313,11 @@ function insertShopeeOrder(PDO $pdo, array $order, array $item): void
         'variation'                => $variation  ?: null,
         'quantity'                 => $qty,
         'unit_price'               => $unitPrice,
-        'subtotal_before_discount' => $origPrice * $qty,
+        'subtotal_before_discount' => $grossSubtotal,
         'platform_discount'        => $shopeeDisc,
+        'seller_voucher'          => $sellerVoucher,
         'seller_discount'          => $sellerDisc,
-        'subtotal_after_discount'  => $unitPrice  * $qty,
+        'subtotal_after_discount'  => $discountedSubtotal,
         'order_total'              => $orderTotal,
         'shipping_fee'             => $shippingFee,
         'platform_fee_fixed'       => 0,

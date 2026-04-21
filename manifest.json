@@ -1,7 +1,7 @@
 {
-  "version": "1.2.17",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.2.17/release/dashboard-v3-1.2.17.zip",
-  "changelog": "- Bổ sung cài đặt đối soát GBS ngay trong phần Cài đặt hệ thống cho Bang_gia và Combo_to_single\n- Hỗ trợ thêm, sửa, xoá và nhập nhanh cấu hình Bang_gia / Combo_to_single từ file Excel\n- Cập nhật logic đối soát NMV theo doanh thu giá gốc trừ khuyến mãi gian hàng và dùng Bang_gia để phân bổ NMV khi tách combo",
+  "version": "1.2.18",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.2.18/release/dashboard-v3-1.2.18.zip",
+  "changelog": "- Chuyển đối soát GBS sang mô hình theo tháng, dùng dữ liệu đơn hàng chung của hệ thống thay cho upload file sàn riêng\n- Tự nhận diện tháng từ cột Thời gian đối soát, thêm xác nhận tháng hoàn tất và export danh sách đơn sàn chưa khớp\n- Làm gọn lại giao diện trang đối soát và sidebar, đồng thời cập nhật Shopee/Lazada để lưu đủ mốc và dữ liệu NMV phục vụ đối soát",
   "min_php": "8.1",
-  "released_at": "2026-04-20"
+  "released_at": "2026-04-21"
 }

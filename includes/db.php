@@ -45,6 +45,12 @@ function ensure_schema(PDO $pdo, array $config = []): void
     if (in_array('orders', $tables, true)) {
         ensure_table_index($pdo, 'orders', 'idx_buyer_status_date', "CREATE INDEX idx_buyer_status_date ON orders (buyer_username, normalized_status, order_created_at)");
         ensure_table_index($pdo, 'orders', 'idx_city_district_status', "CREATE INDEX idx_city_district_status ON orders (shipping_city, shipping_district, normalized_status)");
+        ensure_table_index($pdo, 'orders', 'idx_platform_completed_at', "CREATE INDEX idx_platform_completed_at ON orders (platform, order_completed_at)");
+
+        $sellerVoucherCol = $pdo->query("SHOW COLUMNS FROM orders LIKE 'seller_voucher'")->fetchAll();
+        if (empty($sellerVoucherCol)) {
+            $pdo->exec("ALTER TABLE orders ADD COLUMN seller_voucher DECIMAL(15,2) DEFAULT 0 AFTER platform_discount");
+        }
     }
 
     if (in_array('users', $tables, true)) {
@@ -197,6 +203,7 @@ function ensure_schema(PDO $pdo, array $config = []): void
         unit_price DECIMAL(15,2) DEFAULT 0,
         subtotal_before_discount DECIMAL(15,2) DEFAULT 0,
         platform_discount DECIMAL(15,2) DEFAULT 0,
+        seller_voucher DECIMAL(15,2) DEFAULT 0,
         seller_discount DECIMAL(15,2) DEFAULT 0,
         subtotal_after_discount DECIMAL(15,2) DEFAULT 0,
         order_total DECIMAL(15,2) DEFAULT 0,
@@ -364,7 +371,7 @@ function upsert_order(PDO $pdo, array $row): void
                 (platform, order_id, buyer_name, buyer_username, shipping_address,
                  shipping_district, shipping_city, payment_method, sku, product_name,
                  variation, quantity, unit_price, subtotal_before_discount, platform_discount,
-                 seller_discount, subtotal_after_discount, order_total, shipping_fee,
+                 seller_voucher, seller_discount, subtotal_after_discount, order_total, shipping_fee,
                  platform_fee_fixed, platform_fee_service, platform_fee_payment,
                  normalized_status, original_status, order_created_at, order_paid_at,
                  order_completed_at, upload_id)
@@ -372,7 +379,7 @@ function upsert_order(PDO $pdo, array $row): void
                 (:platform, :order_id, :buyer_name, :buyer_username, :shipping_address,
                  :shipping_district, :shipping_city, :payment_method, :sku, :product_name,
                  :variation, :quantity, :unit_price, :subtotal_before_discount, :platform_discount,
-                 :seller_discount, :subtotal_after_discount, :order_total, :shipping_fee,
+                 :seller_voucher, :seller_discount, :subtotal_after_discount, :order_total, :shipping_fee,
                  :platform_fee_fixed, :platform_fee_service, :platform_fee_payment,
                  :normalized_status, :original_status, :order_created_at, :order_paid_at,
                  :order_completed_at, :upload_id)
@@ -388,6 +395,7 @@ function upsert_order(PDO $pdo, array $row): void
                 unit_price               = VALUES(unit_price),
                 subtotal_before_discount = VALUES(subtotal_before_discount),
                 platform_discount        = VALUES(platform_discount),
+                seller_voucher          = VALUES(seller_voucher),
                 seller_discount          = VALUES(seller_discount),
                 subtotal_after_discount  = VALUES(subtotal_after_discount),
                 order_total              = VALUES(order_total),
@@ -418,6 +426,7 @@ function upsert_order(PDO $pdo, array $row): void
         ':unit_price'              => $row['unit_price'] ?? 0,
         ':subtotal_before_discount'=> $row['subtotal_before_discount'] ?? 0,
         ':platform_discount'       => $row['platform_discount'] ?? 0,
+        ':seller_voucher'          => $row['seller_voucher'] ?? 0,
         ':seller_discount'         => $row['seller_discount'] ?? 0,
         ':subtotal_after_discount' => $row['subtotal_after_discount'] ?? 0,
         ':order_total'             => $row['order_total'] ?? 0,

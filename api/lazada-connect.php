@@ -375,15 +375,20 @@ function insertLazadaOrder(PDO $pdo, array $header, array $item): void
 
     $createdAt   = (string) ($item['created_at'] ?? $header['created_at'] ?? date('Y-m-d H:i:s'));
     $updatedAt   = (string) ($item['updated_at'] ?? null);
+    $deliveredAt = (string) ($item['delivered_date'] ?? $item['deliveredDate'] ?? $header['delivered_date'] ?? $header['deliveredDate'] ?? '');
+    $ttsSla      = (string) ($item['tts_sla'] ?? $item['ttsSla'] ?? $header['tts_sla'] ?? $header['ttsSla'] ?? '');
 
     // Normalize ISO 8601 dates to MySQL DATETIME
-    $createdAt = normalizeLazadaDatetime($createdAt);
-    $updatedAt = normalizeLazadaDatetime($updatedAt);
+    $createdAt   = normalizeLazadaDatetime($createdAt);
+    $updatedAt   = normalizeLazadaDatetime($updatedAt);
+    $deliveredAt = normalizeLazadaDatetime($deliveredAt);
+    $ttsSla      = normalizeLazadaDatetime($ttsSla);
 
-    // Determine completed_at when status indicates delivery
-    $completedAt = in_array(strtolower($status), ['delivered', 'success', 'confirmed'], true)
-        ? $updatedAt
-        : null;
+    // GBS đối soát theo TTS SLA của Lazada; fallback về delivered/updated_at nếu API không trả.
+    $completedAt = $ttsSla;
+    if ($completedAt === null && in_array(strtolower($status), ['delivered', 'success', 'confirmed'], true)) {
+        $completedAt = $deliveredAt ?: $updatedAt;
+    }
 
     upsert_order($pdo, [
         'platform'                 => 'lazada',

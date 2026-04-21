@@ -21,10 +21,10 @@ try {
     $store = new ReconciliationFileStore(dirname(__DIR__), $config);
 
     if ($method === 'GET') {
-        $files = [];
-        foreach ($store->listFiles() as $sourceKey => $file) {
-            $files[$sourceKey] = sanitize_reconciliation_file_meta($file);
-        }
+        $files = array_map(
+            'sanitize_reconciliation_file_meta',
+            $store->listGbsFiles()
+        );
 
         json_response([
             'success' => true,
@@ -40,10 +40,7 @@ try {
     set_time_limit(180);
     ensure_upload_dir($config);
 
-    $sourceKey = trim((string) ($_POST['source_key'] ?? ''));
-    if (!ReconciliationFileStore::isValidSourceKey($sourceKey)) {
-        json_error('Loại file đối soát không hợp lệ.', 422);
-    }
+    $sourceKey = 'gbs';
 
     if (!isset($_FILES['file']) || !is_array($_FILES['file'])) {
         json_error('Không có file nào được gửi lên.', 422);
@@ -77,21 +74,6 @@ try {
         json_error('File upload không hợp lệ.', 422);
     }
 
-    if ($sourceKey !== 'gbs') {
-        $detectedPlatform = detect_platform_from_file($tmpPath);
-        if ($detectedPlatform !== $sourceKey) {
-            $labels = [
-                'shopee'     => 'Shopee',
-                'lazada'     => 'Lazada',
-                'tiktokshop' => 'TikTok Shop',
-            ];
-            json_error(sprintf(
-                'Bạn đang upload nhầm loại file. Hệ thống nhận diện đây là file %s.',
-                $labels[$detectedPlatform] ?? $detectedPlatform
-            ), 422);
-        }
-    }
-
     $inspector = new GbsReconciliationService(dirname(__DIR__), $config);
     $stats = $inspector->inspectSourceFile($sourceKey, $tmpPath);
     $storedFile = $store->storeUploadedFile($sourceKey, $file);
@@ -101,6 +83,7 @@ try {
         'filename'    => $storedFile['filename'] ?? '',
         'row_count'   => $stats['row_count'] ?? 0,
         'order_count' => $stats['order_count'] ?? 0,
+        'months'      => $stats['months'] ?? [],
         'size_bytes'  => $storedFile['size_bytes'] ?? 0,
     ]);
 
