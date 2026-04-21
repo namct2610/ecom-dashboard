@@ -1440,11 +1440,17 @@ function renderReconcileSkuList(items, source) {
       ${items.slice(0, 4).map(item => {
         const rawSku = item.sku || '—';
         const comparisonSku = item.comparison_sku && item.comparison_sku !== rawSku ? ` → ${item.comparison_sku}` : '';
-        const qty = source === 'platform'
-          ? (item.comparable_qty ?? item.quantity ?? 0)
-          : (item.quantity ?? 0);
-        const extra = source === 'platform' && Number(item.combo_multiplier || 1) > 1
-          ? ` <span class="reconcile-sku-extra">combo x${fmtQtyExact(item.combo_multiplier)}</span>`
+        const qty = item.quantity ?? 0;
+        const comparedQty = item.comparable_qty ?? item.quantity ?? 0;
+        const extras = [];
+        if (source === 'platform' && Number(item.combo_multiplier || 1) > 1) {
+          extras.push(`combo x${fmtQtyExact(item.combo_multiplier)}`);
+        }
+        if (source === 'platform' && Math.abs(Number(comparedQty || 0) - Number(qty || 0)) >= 0.001) {
+          extras.push(`so khớp ${fmtQtyExact(comparedQty)}`);
+        }
+        const extra = extras.length
+          ? ` <span class="reconcile-sku-extra">${escHtml(extras.join(' · '))}</span>`
           : '';
 
         return `

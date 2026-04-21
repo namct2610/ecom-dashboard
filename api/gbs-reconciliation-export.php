@@ -212,8 +212,13 @@ function exportPlatformSkuList(array $items): string
 {
     return implode(' | ', array_map(static function (array $sku): string {
         $value = (string) ($sku['sku'] ?? '');
-        $qty = (string) ($sku['comparable_qty'] ?? $sku['quantity'] ?? 0);
-        return trim($value) !== '' ? $value . ' x' . $qty : 'x' . $qty;
+        $qty = (string) ($sku['quantity'] ?? 0);
+        $comparableQty = (float) ($sku['comparable_qty'] ?? $sku['quantity'] ?? 0);
+        $label = trim($value) !== '' ? $value . ' x' . $qty : 'x' . $qty;
+        if (abs($comparableQty - (float) ($sku['quantity'] ?? 0)) >= 0.001) {
+            $label .= ' (so khớp ' . rtrim(rtrim(number_format($comparableQty, 4, '.', ''), '0'), '.') . ')';
+        }
+        return $label;
     }, $items));
 }
 

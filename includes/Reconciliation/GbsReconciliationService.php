@@ -316,7 +316,7 @@ final class GbsReconciliationService
                 'gbs_reconcile_at'    => $gbsOrder['reconcile_at'] ?? '',
                 'platform_reconcile_at' => $platformOrder['reconcile_at'] ?? '',
                 'gbs_skus'            => $gbsOrder['sku_items'],
-                'platform_skus'       => $platformOrder['sku_items'],
+                'platform_skus'       => $platformOrder['display_sku_items'] ?? $platformOrder['sku_items'],
                 'note'                => $this->buildMatchNote($status, $qtyMatch, $nmvMatch, $hasBundle, $nmvRoundedFromGbs),
             ];
         }
@@ -374,7 +374,7 @@ final class GbsReconciliationService
             'gbs_reconcile_at'    => $isMissingInGbs ? '' : (string) ($source['reconcile_at'] ?? ''),
             'platform_reconcile_at' => $isMissingInGbs ? (string) ($source['reconcile_at'] ?? '') : '',
             'gbs_skus'            => $isMissingInGbs ? [] : ($source['sku_items'] ?? []),
-            'platform_skus'       => $isMissingInGbs ? ($source['sku_items'] ?? []) : [],
+            'platform_skus'       => $isMissingInGbs ? ($source['display_sku_items'] ?? $source['sku_items'] ?? []) : [],
             'note'                => $isMissingInGbs
                 ? 'Đơn có trong dữ liệu sàn chung nhưng không tìm thấy ở GBS tháng đang chọn.'
                 : 'Đơn có trong GBS nhưng chưa thấy trong dữ liệu sàn chung.',
@@ -848,6 +848,31 @@ final class GbsReconciliationService
                 (float) ($grouped[$orderId]['order_level_seller_voucher'] ?? 0.0),
                 max(0.0, (float) ($row['order_level_seller_voucher'] ?? 0.0))
             );
+            $displayKey = strtoupper(trim((string) ($row['sku'] ?? '')));
+            if ($displayKey === '') {
+                $displayKey = '__EMPTY__';
+            }
+            if (!isset($grouped[$orderId]['display_sku_items'][$displayKey])) {
+                $grouped[$orderId]['display_sku_items'][$displayKey] = [
+                    'sku'              => (string) ($row['sku'] ?? ''),
+                    'comparison_sku'   => (string) ($row['comparison_sku'] ?? ''),
+                    'quantity'         => 0.0,
+                    'comparable_qty'   => 0.0,
+                    'comparable_nmv'   => 0.0,
+                    'combo_multiplier' => (float) ($row['combo_multiplier'] ?? 1),
+                    'name'             => (string) ($row['product_name'] ?? ''),
+                ];
+            }
+            $grouped[$orderId]['display_sku_items'][$displayKey]['quantity'] += (float) ($row['raw_qty'] ?? 0);
+            $grouped[$orderId]['display_sku_items'][$displayKey]['comparable_qty'] += (float) ($row['comparable_qty'] ?? 0);
+            $grouped[$orderId]['display_sku_items'][$displayKey]['comparable_nmv'] += (float) ($row['comparable_nmv'] ?? 0);
+            $grouped[$orderId]['display_sku_items'][$displayKey]['combo_multiplier'] = max(
+                (float) ($grouped[$orderId]['display_sku_items'][$displayKey]['combo_multiplier'] ?? 1),
+                (float) ($row['combo_multiplier'] ?? 1)
+            );
+            if (($grouped[$orderId]['display_sku_items'][$displayKey]['name'] ?? '') === '' && ($row['product_name'] ?? '') !== '') {
+                $grouped[$orderId]['display_sku_items'][$displayKey]['name'] = (string) ($row['product_name'] ?? '');
+            }
 
             $items = $row['expanded_items'] ?? [[
                 'sku'              => $row['sku'],
@@ -890,6 +915,12 @@ final class GbsReconciliationService
             $order['total_nmv'] = max(0.0, (float) ($order['total_nmv'] ?? 0) - (float) ($order['order_level_seller_voucher'] ?? 0));
             $order['total_nmv'] = $this->roundNumber((float) $order['total_nmv'], 2);
             $order['statuses'] = array_values($order['statuses']);
+            $order['display_sku_items'] = array_values(array_map(function (array $item): array {
+                $item['quantity'] = $this->roundNumber((float) ($item['quantity'] ?? 0), 4);
+                $item['comparable_qty'] = $this->roundNumber((float) ($item['comparable_qty'] ?? 0), 4);
+                $item['comparable_nmv'] = $this->roundNumber((float) ($item['comparable_nmv'] ?? 0), 2);
+                return $item;
+            }, $order['display_sku_items'] ?? []));
             unset($order['order_level_seller_voucher']);
         }
         unset($order);
@@ -921,6 +952,7 @@ final class GbsReconciliationService
             'reconcile_at' => '',
             'sku_map'    => [],
             'sku_items'  => [],
+            'display_sku_items' => [],
             'order_level_seller_voucher' => 0.0,
         ];
     }
