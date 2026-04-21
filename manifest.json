@@ -1,7 +1,7 @@
 {
-  "version": "1.2.21",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.2.21/release/dashboard-v3-1.2.21.zip",
-  "changelog": "- Bo sung nguong khop NMV +/-1 VND cho doi soat GBS khi chenh lech chi do lam tron tu he thong GBS\n- Neu khop trong nguong lam tron thi he thong lay so chuan theo san va khong con danh dau lech NMV\n- Cap nhat ghi chu doi soat de the hien ro quy tac lam tron nay",
+  "version": "1.2.22",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.2.22/release/dashboard-v3-1.2.22.zip",
+  "changelog": "- Chuyen xuat danh sach don chua khop GBS tu CSV sang XLSX de de loc va xu ly tren Excel\n- Them cot Ly do chua khop rieng cho tung don ben canh cot Ghi chu he thong\n- Giu nguyen nut export tren giao dien, chi doi dau ra sang file XLSX",
   "min_php": "8.1",
   "released_at": "2026-04-21"
 }
