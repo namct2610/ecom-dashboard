@@ -269,6 +269,10 @@ function syncShop(PDO $pdo, TiktokShopClient $client, array $shop): array
 function insertTiktokOrder(PDO $pdo, array $o): int
 {
     $orderId   = (string) ($o['id'] ?? '');
+    if ($orderId === '') {
+        return 0;
+    }
+
     $status    = strtoupper((string) ($o['status'] ?? ''));
     $createTs  = (int) ($o['create_time'] ?? 0);
     $paidTs    = (int) ($o['paid_time'] ?? 0);
@@ -302,18 +306,21 @@ function insertTiktokOrder(PDO $pdo, array $o): int
     }
 
     $inserted = 0;
-    foreach ($lineItems as $item) {
-        $sku          = (string) ($item['seller_sku']    ?? $item['sku_id'] ?? 'unknown');
-        $productName  = (string) ($item['product_name']  ?? '');
-        $variation    = (string) ($item['sku_name']       ?? '');
-        $quantity     = (int)   ($item['quantity']        ?? 1);
-        $unitPrice    = (float) ($item['sale_price']      ?? $item['original_price'] ?? 0);
-        $subtotalBefore = (float) ($item['original_price'] ?? $unitPrice * $quantity);
-        $platDiscount = (float) ($item['platform_discount'] ?? 0);
-        $sellDiscount = (float) ($item['seller_discount']   ?? 0);
-        $subtotalAfter = (float) ($item['sku_total_amount']  ?? ($subtotalBefore - $platDiscount - $sellDiscount));
+    $pdo->beginTransaction();
+    try {
+        delete_orders_by_platform_and_ids($pdo, 'tiktokshop', [$orderId]);
 
-        try {
+        foreach ($lineItems as $item) {
+            $sku          = (string) ($item['seller_sku']    ?? $item['sku_id'] ?? 'unknown');
+            $productName  = (string) ($item['product_name']  ?? '');
+            $variation    = (string) ($item['sku_name']       ?? '');
+            $quantity     = (int)   ($item['quantity']        ?? 1);
+            $unitPrice    = (float) ($item['sale_price']      ?? $item['original_price'] ?? 0);
+            $subtotalBefore = (float) ($item['original_price'] ?? $unitPrice * $quantity);
+            $platDiscount = (float) ($item['platform_discount'] ?? 0);
+            $sellDiscount = (float) ($item['seller_discount']   ?? 0);
+            $subtotalAfter = (float) ($item['sku_total_amount']  ?? ($subtotalBefore - $platDiscount - $sellDiscount));
+
             upsert_order($pdo, [
                 'platform'                 => 'tiktokshop',
                 'order_id'                 => $orderId,
@@ -345,9 +352,15 @@ function insertTiktokOrder(PDO $pdo, array $o): int
                 'upload_id'                => null,
             ]);
             $inserted++;
-        } catch (\Throwable $e) {
-            // skip duplicate / bad rows
         }
+
+        $pdo->commit();
+    } catch (\Throwable $e) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+        throw $e;
     }
+
     return $inserted;
 }

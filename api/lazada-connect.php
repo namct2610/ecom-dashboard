@@ -306,13 +306,23 @@ function syncLazadaAccount(PDO $pdo, LazadaClient $client, array $account, strin
                     $oid        = (string) ($orderItemGroup['order_id'] ?? '');
                     $orderItems = $orderItemGroup['order_items'] ?? [];
                     $header     = $orderMap[$oid] ?? [];
-                    foreach ($orderItems as $item) {
-                        try {
+                    if ($oid === '' || empty($orderItems)) {
+                        continue;
+                    }
+
+                    try {
+                        $pdo->beginTransaction();
+                        delete_orders_by_platform_and_ids($pdo, 'lazada', [$oid]);
+                        foreach ($orderItems as $item) {
                             insertLazadaOrder($pdo, $header, $item);
-                            $imported++;
-                        } catch (\Throwable $e) {
-                            $errors++;
                         }
+                        $pdo->commit();
+                        $imported += count($orderItems);
+                    } catch (\Throwable $e) {
+                        if ($pdo->inTransaction()) {
+                            $pdo->rollBack();
+                        }
+                        $errors += count($orderItems);
                     }
                 }
             }
