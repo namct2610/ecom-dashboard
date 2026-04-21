@@ -961,14 +961,20 @@ final class GbsReconciliationService
             $nmv = ($grossRevenue !== 0.0 || $sellerVoucher !== 0.0 || $sellerDiscount !== 0.0)
                 ? max(0.0, $grossRevenue - $sellerVoucher - $sellerDiscount)
                 : $fallbackNmv;
+            $sku = trim((string) ($row[$col['sku'] ?? -1] ?? ''));
+            $productName = trim((string) ($row[$col['product_name'] ?? -1] ?? ''));
+            $productType = trim((string) ($row[$col['product_type'] ?? -1] ?? ''));
+            if ($this->isGiftLikeGbsRow($sku, $productName, $productType)) {
+                $nmv = 0.0;
+            }
             $nmv = $this->roundCurrency($nmv);
 
             $result[] = [
                 'platform'       => $platform,
                 'order_id'       => $orderId,
-                'sku'            => trim((string) ($row[$col['sku'] ?? -1] ?? '')),
-                'product_name'   => trim((string) ($row[$col['product_name'] ?? -1] ?? '')),
-                'product_type'   => trim((string) ($row[$col['product_type'] ?? -1] ?? '')),
+                'sku'            => $sku,
+                'product_name'   => $productName,
+                'product_type'   => $productType,
                 'status'         => trim((string) ($row[$col['status'] ?? -1] ?? '')),
                 'created_at'     => $this->parseDateTimeCell($row[$col['created_at'] ?? -1] ?? null) ?? '',
                 'reconcile_at'   => $reconcileAt ?? '',
@@ -1400,6 +1406,7 @@ final class GbsReconciliationService
             'GBS chuẩn hóa giá trị nền tảng từ `shopee_v2`, `lazada`, `tiktok` thành `shopee`, `lazada`, `tiktokshop` để so khớp.',
             'Nguồn dữ liệu sàn giờ dùng chung từ bảng orders; không cần upload và quản lý file Shopee/Lazada/TikTok riêng cho đối soát nữa.',
             'NMV Shopee đối soát = `Giá ưu đãi - Mã giảm giá của Shop`, trong đó voucher shop chỉ tính 1 lần duy nhất ở cấp đơn hàng.',
+            'Các dòng GBS có dấu hiệu quà tặng / hàng tặng không bán được chuẩn hóa NMV = 0 trước khi so khớp với sàn.',
             'NMV của GBS được làm tròn trước khi so khớp để tránh lệch tiền do số lẻ khi quy đổi.',
             'Nếu NMV giữa GBS và sàn chỉ lệch trong phạm vi 1 VND do làm tròn, hệ thống vẫn coi là khớp và lấy số chuẩn theo sàn.',
         ];
@@ -1783,6 +1790,25 @@ final class GbsReconciliationService
     {
         $normalized = $this->normalizeHeader($value);
         return preg_replace('/[^a-z0-9]+/u', '', $normalized) ?? $normalized;
+    }
+
+    private function isGiftLikeGbsRow(string $sku, string $productName, string $productType): bool
+    {
+        if ($this->normalizeMatchText($productType) === 'gift') {
+            return true;
+        }
+
+        $normalizedSku = strtoupper(trim($sku));
+        if ($normalizedSku !== '' && str_starts_with($normalizedSku, 'GIFT-')) {
+            return true;
+        }
+
+        $normalizedName = $this->normalizeMatchText($productName);
+        return $normalizedName !== ''
+            && (
+                str_contains($normalizedName, 'hangtangkhongban')
+                || str_contains($normalizedName, 'freegift')
+            );
     }
 
     private function skuMapsEqual(array $left, array $right): bool
