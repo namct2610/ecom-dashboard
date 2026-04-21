@@ -14,6 +14,7 @@ final class GbsReconciliationService
     private const PRICE_SETTING_KEY = 'reconcile_price_table';
     private const COMBO_SETTING_KEY = 'reconcile_combo_to_single';
     private const CONFIRMED_MONTHS_SETTING_KEY = 'reconcile_gbs_confirmed_months';
+    private const NMV_ROUNDING_TOLERANCE = 1.0;
 
     private const GBS_COLUMN_MAP = [
         'created_at'        => ['thời gian tạo'],
@@ -260,9 +261,15 @@ final class GbsReconciliationService
             $summary['common_orders']++;
 
             $qtyDiff = round($gbsOrder['total_qty'] - $platformOrder['total_qty'], 4);
-            $nmvDiff = round($gbsOrder['total_nmv'] - $platformOrder['total_nmv'], 2);
+            $rawNmvDiff = round($gbsOrder['total_nmv'] - $platformOrder['total_nmv'], 2);
             $qtyMatch = abs($qtyDiff) < 0.001;
-            $nmvMatch = abs($nmvDiff) < 0.05;
+            $nmvMatch = abs($rawNmvDiff) <= self::NMV_ROUNDING_TOLERANCE;
+            $nmvRoundedFromGbs = $nmvMatch && abs($rawNmvDiff) >= 0.05;
+            $platformNmv = $this->roundNumber($platformOrder['total_nmv'], 2);
+            $gbsNmv = $nmvRoundedFromGbs
+                ? $platformNmv
+                : $this->roundNumber($gbsOrder['total_nmv'], 2);
+            $nmvDiff = $nmvRoundedFromGbs ? 0.0 : $rawNmvDiff;
             $skuAligned = $this->skuMapsEqual($gbsOrder['sku_map'], $platformOrder['sku_map']);
             $hasBundle = $platformOrder['has_bundle'];
 
@@ -298,9 +305,10 @@ final class GbsReconciliationService
                 'gbs_qty'             => $this->roundNumber($gbsOrder['total_qty'], 4),
                 'platform_qty'        => $this->roundNumber($platformOrder['total_qty'], 4),
                 'qty_diff'            => $qtyDiff,
-                'gbs_nmv'             => $this->roundNumber($gbsOrder['total_nmv'], 2),
-                'platform_nmv'        => $this->roundNumber($platformOrder['total_nmv'], 2),
+                'gbs_nmv'             => $gbsNmv,
+                'platform_nmv'        => $platformNmv,
                 'nmv_diff'            => $nmvDiff,
+                'nmv_raw_diff'        => $rawNmvDiff,
                 'gbs_line_count'      => $gbsOrder['line_count'],
                 'platform_line_count' => $platformOrder['line_count'],
                 'gbs_statuses'        => $gbsOrder['statuses'],
@@ -309,7 +317,7 @@ final class GbsReconciliationService
                 'platform_reconcile_at' => $platformOrder['reconcile_at'] ?? '',
                 'gbs_skus'            => $gbsOrder['sku_items'],
                 'platform_skus'       => $platformOrder['sku_items'],
-                'note'                => $this->buildMatchNote($status, $qtyMatch, $nmvMatch, $hasBundle),
+                'note'                => $this->buildMatchNote($status, $qtyMatch, $nmvMatch, $hasBundle, $nmvRoundedFromGbs),
             ];
         }
 
@@ -358,6 +366,7 @@ final class GbsReconciliationService
             'gbs_nmv'             => $isMissingInGbs ? 0.0 : $this->roundNumber($source['total_nmv'], 2),
             'platform_nmv'        => $isMissingInGbs ? $this->roundNumber($source['total_nmv'], 2) : 0.0,
             'nmv_diff'            => $isMissingInGbs ? -$this->roundNumber($source['total_nmv'], 2) : $this->roundNumber($source['total_nmv'], 2),
+            'nmv_raw_diff'        => $isMissingInGbs ? -$this->roundNumber($source['total_nmv'], 2) : $this->roundNumber($source['total_nmv'], 2),
             'gbs_line_count'      => $isMissingInGbs ? 0 : ($source['line_count'] ?? 0),
             'platform_line_count' => $isMissingInGbs ? ($source['line_count'] ?? 0) : 0,
             'gbs_statuses'        => $isMissingInGbs ? [] : ($source['statuses'] ?? []),
@@ -1392,6 +1401,7 @@ final class GbsReconciliationService
             'Nguồn dữ liệu sàn giờ dùng chung từ bảng orders; không cần upload và quản lý file Shopee/Lazada/TikTok riêng cho đối soát nữa.',
             'NMV Shopee đối soát = `Giá ưu đãi - Mã giảm giá của Shop`, trong đó voucher shop chỉ tính 1 lần duy nhất ở cấp đơn hàng.',
             'NMV của GBS được làm tròn trước khi so khớp để tránh lệch tiền do số lẻ khi quy đổi.',
+            'Nếu NMV giữa GBS và sàn chỉ lệch trong phạm vi 1 VND do làm tròn, hệ thống vẫn coi là khớp và lấy số chuẩn theo sàn.',
         ];
 
         if ($selectedMonth !== null) {
@@ -1805,14 +1815,20 @@ final class GbsReconciliationService
         return $count;
     }
 
-    private function buildMatchNote(string $status, bool $qtyMatch, bool $nmvMatch, bool $hasBundle): string
+    private function buildMatchNote(string $status, bool $qtyMatch, bool $nmvMatch, bool $hasBundle, bool $nmvRoundedFromGbs = false): string
     {
-        return match ($status) {
+        $note = match ($status) {
             'matched'      => 'Khớp trực tiếp giữa GBS và file sàn.',
             'order_match'  => 'Khớp ở cấp đơn hàng, nhưng cấu trúc SKU khác giữa hai file.',
             'bundle_match' => 'Khớp sau khi quy đổi SKU combo về số lượng cơ sở.',
             default        => $this->buildMismatchNote($qtyMatch, $nmvMatch, $hasBundle),
         };
+
+        if ($nmvRoundedFromGbs && $status !== 'mismatch') {
+            $note .= ' NMV GBS lệch làm tròn trong phạm vi 1 VND; lấy số chuẩn theo sàn.';
+        }
+
+        return $note;
     }
 
     private function buildMismatchNote(bool $qtyMatch, bool $nmvMatch, bool $hasBundle): string
