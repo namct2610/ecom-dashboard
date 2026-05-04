@@ -43,7 +43,7 @@
   "page.reconcile.title":  "GBS Reconciliation",
   "page.reconcile.sub":    "Match the GBS file against Shopee, Lazada, and TikTok Shop exports at order level",
   "page.analytics.title":  "Advanced Analytics",
-  "page.analytics.sub":    "Order time heatmap and revenue by geography",
+  "page.analytics.sub":    "Order time heatmap and revenue by geography, product, and brand",
   "page.upload.title":     "Upload Data",
   "page.upload.sub":       "Upload Excel files from Shopee, Lazada, TikTok Shop",
   "page.logs.title":       "Activity Logs",

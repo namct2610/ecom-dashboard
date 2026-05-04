@@ -241,6 +241,101 @@ function json_exception(\Throwable $e, string $fallback = 'Server error.'): void
     json_error($msg, 500, is_local() ? ['trace' => array_slice(explode("\n", $e->getTraceAsString()), 0, 5)] : []);
 }
 
+// ── SKU brand mapping ───────────────────────────────────────────────────────
+
+const SKU_BRAND_RULES_SETTING_KEY = 'sku_brand_rules';
+
+function normalize_sku_brand_prefix(string $value): string
+{
+    $value = strtoupper(trim($value));
+    return preg_replace('/\s+/', '', $value) ?: '';
+}
+
+function decode_sku_brand_rules(string $raw): array
+{
+    if ($raw === '') {
+        return [];
+    }
+
+    $data = json_decode($raw, true);
+    if (!is_array($data)) {
+        return [];
+    }
+
+    $normalized = [];
+    foreach ($data as $row) {
+        if (!is_array($row)) {
+            continue;
+        }
+
+        $prefix = normalize_sku_brand_prefix((string) ($row['prefix'] ?? $row['sku_prefix'] ?? ''));
+        $brandName = trim((string) ($row['brand_name'] ?? $row['brand'] ?? ''));
+
+        if (strlen($prefix) !== 3 || $brandName === '') {
+            continue;
+        }
+
+        $normalized[$prefix] = [
+            'prefix'     => $prefix,
+            'brand_name' => $brandName,
+        ];
+    }
+
+    ksort($normalized);
+    return array_values($normalized);
+}
+
+function normalize_sku_brand_rules(array $rows): array
+{
+    $normalized = [];
+
+    foreach ($rows as $row) {
+        if (!is_array($row)) {
+            continue;
+        }
+
+        $prefix = normalize_sku_brand_prefix((string) ($row['prefix'] ?? $row['sku_prefix'] ?? ''));
+        $brandName = trim((string) ($row['brand_name'] ?? $row['brand'] ?? ''));
+
+        if ($prefix === '' && $brandName === '') {
+            continue;
+        }
+        if (strlen($prefix) !== 3) {
+            json_error('Quy ước thương hiệu: mã SKU phải đúng 3 ký tự đầu.', 422);
+        }
+        if ($brandName === '') {
+            json_error("Quy ước thương hiệu: mã {$prefix} chưa có tên thương hiệu.", 422);
+        }
+
+        $normalized[$prefix] = [
+            'prefix'     => $prefix,
+            'brand_name' => $brandName,
+        ];
+    }
+
+    ksort($normalized);
+    return array_values($normalized);
+}
+
+function load_sku_brand_rules(PDO $pdo): array
+{
+    return decode_sku_brand_rules(get_app_setting($pdo, SKU_BRAND_RULES_SETTING_KEY, '[]'));
+}
+
+function sku_brand_rule_map(array $rules): array
+{
+    $map = [];
+    foreach ($rules as $rule) {
+        $prefix = normalize_sku_brand_prefix((string) ($rule['prefix'] ?? ''));
+        $brandName = trim((string) ($rule['brand_name'] ?? ''));
+        if (strlen($prefix) === 3 && $brandName !== '') {
+            $map[$prefix] = $brandName;
+        }
+    }
+
+    return $map;
+}
+
 // ── Time filter & granularity ───────────────────────────────────────────────
 
 /**

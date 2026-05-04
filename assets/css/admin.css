@@ -402,6 +402,26 @@
   margin: 14px 0 16px;
 }
 
+.brand-settings-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 10px;
+}
+
+.brand-settings-table {
+  table-layout: fixed;
+}
+
+.brand-settings-table th:first-child,
+.brand-settings-table td:first-child {
+  width: 170px;
+}
+
+.brand-settings-table th:last-child,
+.brand-settings-table td:last-child {
+  width: 110px;
+}
+
 .reconcile-settings-chip {
   display: inline-flex;
   align-items: center;
@@ -980,6 +1000,10 @@
   .reconcile-settings-head,
   .reconcile-settings-panel-head {
     flex-direction: column;
+  }
+
+  .brand-settings-toolbar {
+    justify-content: flex-start;
   }
 
   .customer-info-item {
