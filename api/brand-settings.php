@@ -12,7 +12,7 @@ try {
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         json_response([
             'success' => true,
-            'rules'   => load_sku_brand_rules($pdo),
+            'rules'   => fetch_sku_brand_rules($pdo),
         ]);
     }
 
@@ -26,11 +26,11 @@ try {
     }
 
     $rules = normalize_sku_brand_rules((array) ($body['rules'] ?? []));
-    set_app_setting(
-        $pdo,
-        SKU_BRAND_RULES_SETTING_KEY,
-        json_encode($rules, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '[]'
-    );
+
+    $pdo->beginTransaction();
+    replace_sku_brand_rules($pdo, $rules);
+    delete_app_setting($pdo, SKU_BRAND_RULES_SETTING_KEY);
+    $pdo->commit();
 
     log_activity('info', 'brand_settings', 'Cập nhật quy ước SKU sang thương hiệu.', [
         'brand_rules' => count($rules),
@@ -39,8 +39,11 @@ try {
     json_response([
         'success' => true,
         'message' => 'Đã lưu quy ước SKU sang thương hiệu.',
-        'rules'   => $rules,
+        'rules'   => fetch_sku_brand_rules($pdo),
     ]);
 } catch (\Throwable $e) {
+    if (isset($pdo) && $pdo instanceof PDO && $pdo->inTransaction()) {
+        $pdo->rollBack();
+    }
     json_exception($e, 'Không thể lưu quy ước thương hiệu.');
 }

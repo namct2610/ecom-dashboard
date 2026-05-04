@@ -229,6 +229,29 @@ function syncPasswordModalState() {
   if (subEl) subEl.textContent = App.passwordModalForced ? t('account.password.force.modal_sub') : t('account.password.sub');
 }
 
+function iconSvg(name, className = '') {
+  const icons = {
+    check: '<path d="M20 6 9 17l-5-5"/>',
+    x: '<path d="M18 6 6 18"/><path d="M6 6l12 12"/>',
+    refresh: '<path d="M21 12a9 9 0 0 1-15.5 6.2"/><path d="M3 12A9 9 0 0 1 18.5 5.8"/><path d="M18 2v5h-5"/><path d="M6 22v-5h5"/>',
+    arrowRight: '<path d="M5 12h14"/><path d="m13 6 6 6-6 6"/>',
+    alert: '<path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
+    loader: '<path d="M21 12a9 9 0 1 1-6.2-8.6"/>',
+  };
+  const body = icons[name] || icons.check;
+  const classes = ['inline-icon', className].filter(Boolean).join(' ');
+  return `<svg class="${classes}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${body}</svg>`;
+}
+
+function languageIconSvg(code = '', className = '') {
+  if (typeof I18n !== 'undefined' && I18n.languageIconSvg) {
+    return I18n.languageIconSvg(code, className);
+  }
+
+  const classes = ['inline-icon', 'lang-icon', className].filter(Boolean).join(' ');
+  return `<svg class="${classes}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 8 6 6"/><path d="m4 14 6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="m22 22-5-10-5 10"/><path d="M14 18h6"/></svg>`;
+}
+
 function platformLabel(p) {
   return { shopee: 'Shopee', lazada: 'Lazada', tiktokshop: 'TikTok' }[p] || p;
 }
@@ -461,9 +484,11 @@ function renderPeriodLabel() {
   if (!el) return;
 
   if (hasActiveDateRange()) {
-    el.textContent = App.rangeLabel
-      ? (t(App.rangeLabel) || App.rangeLabel)
-      : `${App.dateFrom} → ${App.dateTo}`;
+    if (App.rangeLabel) {
+      el.textContent = t(App.rangeLabel) || App.rangeLabel;
+    } else {
+      el.innerHTML = `${escHtml(App.dateFrom)} ${iconSvg('arrowRight')} ${escHtml(App.dateTo)}`;
+    }
     if (prev) prev.disabled = true;
     if (next) next.disabled = true;
     return;
@@ -1466,7 +1491,9 @@ function renderReconcileSkuList(items, source) {
     <div class="reconcile-sku-stack">
       ${items.slice(0, 4).map(item => {
         const rawSku = item.sku || '—';
-        const comparisonSku = item.comparison_sku && item.comparison_sku !== rawSku ? ` → ${item.comparison_sku}` : '';
+        const comparisonSku = item.comparison_sku && item.comparison_sku !== rawSku
+          ? ` ${iconSvg('arrowRight')} ${escHtml(item.comparison_sku)}`
+          : '';
         const qty = item.quantity ?? 0;
         const comparedQty = item.comparable_qty ?? item.quantity ?? 0;
         const extras = [];
@@ -1482,7 +1509,7 @@ function renderReconcileSkuList(items, source) {
 
         return `
           <div class="reconcile-sku-pill">
-            <span class="font-mono">${escHtml(rawSku)}${escHtml(comparisonSku)}</span>
+            <span class="font-mono">${escHtml(rawSku)}${comparisonSku}</span>
             <span class="reconcile-sku-qty">× ${fmtQtyExact(qty)}</span>${extra}
           </div>
         `;
@@ -2343,7 +2370,9 @@ function renderShopsTable(shops) {
   }
 
   tbody.innerHTML = shops.map(s => {
-    const active  = s.is_active ? `✓ ${t('msg.active')}` : `✗ ${t('msg.inactive')}`;
+    const active  = s.is_active
+      ? `${iconSvg('check', 'icon-status-success')} ${t('msg.active')}`
+      : `${iconSvg('x', 'icon-status-error')} ${t('msg.inactive')}`;
     const expiry  = s.access_token_expire_at ? s.access_token_expire_at.substring(0, 16) : '—';
     const synced  = s.last_synced_at ? s.last_synced_at.substring(0, 16) : t('msg.not_synced');
     const fromDate = s.sync_from_date || '';
@@ -2359,7 +2388,7 @@ function renderShopsTable(shops) {
           style="border:1px solid var(--border);border-radius:4px;padding:2px 6px;background:var(--bg-card);color:var(--text-primary);font-size:12px;width:100%"></td>
       <td style="display:flex;gap:6px;flex-wrap:wrap">
         <button class="btn btn-primary btn-sm btn-sync-shop" data-shop="${escHtml(s.shop_id)}" title="${t('btn.sync')}">Sync</button>
-        <button class="btn btn-secondary btn-sm btn-disconnect-shop" data-shop="${escHtml(s.shop_id)}" title="${t('btn.disconnect')}" style="color:var(--red,#ef4444)">✕</button>
+        <button class="btn btn-secondary btn-sm btn-disconnect-shop" data-shop="${escHtml(s.shop_id)}" title="${t('btn.disconnect')}" style="color:var(--red,#ef4444)">${iconSvg('x')}</button>
       </td>
     </tr>`;
   }).join('');
@@ -2412,8 +2441,8 @@ async function syncShop(shopId) {
     }
 
     const rows = (res.results || []).map(r => {
-      if (r.success) return `<div style="color:var(--green,#22c55e);font-size:13px">✓ ${escHtml(r.shop)}: +${r.imported} ${t('cl.orders_unit')}${r.errors ? `, ${r.errors} ${t('msg.error')}` : ''}</div>`;
-      return `<div style="color:var(--red,#ef4444);font-size:13px">✗ ${escHtml(r.shop)}: ${escHtml(r.error || '')}</div>`;
+      if (r.success) return `<div style="color:var(--green,#22c55e);font-size:13px">${iconSvg('check')} ${escHtml(r.shop)}: +${r.imported} ${t('cl.orders_unit')}${r.errors ? `, ${r.errors} ${t('msg.error')}` : ''}</div>`;
+      return `<div style="color:var(--red,#ef4444);font-size:13px">${iconSvg('x')} ${escHtml(r.shop)}: ${escHtml(r.error || '')}</div>`;
     }).join('');
 
     if (resultsEl) resultsEl.innerHTML = rows || `<div style="color:var(--text-muted);font-size:13px">${t('msg.no_results')}</div>`;
@@ -3315,8 +3344,8 @@ async function loadSysInfo() {
     }).join('');
 
     const dateRange = (i.order_date_min && i.order_date_max)
-      ? `${i.order_date_min.substring(0,10)} → ${i.order_date_max.substring(0,10)}`
-      : t('sys.no_data');
+      ? `${escHtml(i.order_date_min.substring(0,10))} ${iconSvg('arrowRight')} ${escHtml(i.order_date_max.substring(0,10))}`
+      : escHtml(t('sys.no_data'));
 
     qs('#dataStatsContent').innerHTML = `
       <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px">
@@ -3338,7 +3367,7 @@ async function loadSysInfo() {
         </div>
       </div>
       <div style="display:flex;gap:10px;flex-wrap:wrap">${platRows}</div>
-      <div style="margin-top:10px;font-size:12px;color:var(--text-muted)">${t('sys.date_range')} <strong>${escHtml(dateRange)}</strong></div>`;
+      <div style="margin-top:10px;font-size:12px;color:var(--text-muted)">${t('sys.date_range')} <strong>${dateRange}</strong></div>`;
   } catch (e) {
     qs('#sysInfoContent').innerHTML = `<div style="color:var(--red,#ef4444);font-size:13px">${t('sys.load_error')} ${escHtml(e.message)}</div>`;
   }
@@ -3351,7 +3380,7 @@ async function confirmReset(action, title, promptText, confirmWord) {
   const answer = window.prompt(`${title}\n\n${promptText}`);
   if (answer === null) return; // cancelled
   if (answer.trim() !== confirmWord) {
-    alert(`❌ ${t('msg.error')}: "${confirmWord}"`);
+    alert(`${t('msg.error')}: "${confirmWord}"`);
     return;
   }
 
@@ -3361,12 +3390,12 @@ async function confirmReset(action, title, promptText, confirmWord) {
       body: JSON.stringify({ action }),
     });
     if (res.success) {
-      if (resultEl) resultEl.innerHTML = `<div style="color:var(--green,#22c55e);font-size:13px;padding:10px 14px;background:#f0fdf4;border-radius:8px">✅ ${escHtml(res.message)}</div>`;
+      if (resultEl) resultEl.innerHTML = `<div style="color:var(--green,#22c55e);font-size:13px;padding:10px 14px;background:#f0fdf4;border-radius:8px">${iconSvg('check')} ${escHtml(res.message)}</div>`;
       toast(res.message, 'success');
       // Refresh stats
       setTimeout(loadSysInfo, 500);
     } else {
-      if (resultEl) resultEl.innerHTML = `<div style="color:var(--red,#ef4444);font-size:13px;padding:10px 14px;background:#fef2f2;border-radius:8px">❌ ${escHtml(res.error || t('msg.failed'))}</div>`;
+      if (resultEl) resultEl.innerHTML = `<div style="color:var(--red,#ef4444);font-size:13px;padding:10px 14px;background:#fef2f2;border-radius:8px">${iconSvg('x')} ${escHtml(res.error || t('msg.failed'))}</div>`;
     }
   } catch (e) {
     if (resultEl) resultEl.innerHTML = `<div style="color:var(--red,#ef4444);font-size:13px">${t('msg.error')}: ${escHtml(e.message)}</div>`;
@@ -3448,7 +3477,7 @@ ${escHtml(data.changelog)}
     } else if (data.latest) {
       panel.innerHTML = `
         <div style="padding:14px 16px;background:#f0fdf4;border-radius:10px;display:flex;align-items:center;gap:14px">
-          <div style="font-size:20px;flex-shrink:0">✓</div>
+          <div style="font-size:20px;flex-shrink:0">${iconSvg('check', 'icon-status-success')}</div>
           <div>
             <div style="font-weight:600;color:#166534;font-size:13px">${t('update.up_to_date')} (v${escHtml(data.current)})</div>
             <div style="font-size:12px;color:var(--text-muted);margin-top:2px">
@@ -3475,7 +3504,7 @@ async function applySystemUpdate(downloadUrl, version) {
   if (panel) {
     panel.innerHTML = `
       <div style="padding:24px;text-align:center;color:var(--text-muted)">
-        <div style="font-size:32px;margin-bottom:10px">⏳</div>
+        <div style="margin-bottom:10px">${iconSvg('loader', 'icon-lg')}</div>
         <div style="font-weight:600;font-size:14px">${t('update.installing')} v${escHtml(version)}</div>
         <div style="font-size:12px;margin-top:6px">${t('update.wait')}</div>
       </div>`;
@@ -3491,7 +3520,7 @@ async function applySystemUpdate(downloadUrl, version) {
       if (panel) {
         panel.innerHTML = `
           <div style="padding:20px;background:#f0fdf4;border-radius:10px;text-align:center">
-            <div style="font-size:32px;margin-bottom:8px">🎉</div>
+            <div style="margin-bottom:8px;color:#16a34a">${iconSvg('check', 'icon-lg')}</div>
             <div style="font-weight:700;color:#166534;font-size:15px">${t('update.success')}</div>
             <div style="font-size:13px;color:var(--text-muted);margin-top:4px">${escHtml(res.message)}</div>
             <button class="btn btn-primary" style="margin-top:16px" onclick="location.reload()">
@@ -3571,7 +3600,9 @@ function renderLazadaAccountsTable(accounts) {
   }
 
   tbody.innerHTML = accounts.map(a => {
-    const active   = a.is_active ? `✓ ${t('msg.active')}` : `✗ ${t('msg.inactive')}`;
+    const active   = a.is_active
+      ? `${iconSvg('check', 'icon-status-success')} ${t('msg.active')}`
+      : `${iconSvg('x', 'icon-status-error')} ${t('msg.inactive')}`;
     const expiry   = a.access_token_expire_at ? a.access_token_expire_at.substring(0, 16) : '—';
     const synced   = a.last_synced_at ? a.last_synced_at.substring(0, 16) : t('msg.not_synced');
     const fromDate = a.sync_from_date || '';
@@ -3588,13 +3619,13 @@ function renderLazadaAccountsTable(accounts) {
       <td style="white-space:nowrap">
         <input type="date" class="lazada-sync-from-date" data-account="${escHtml(a.account_id)}" value="${escHtml(fromDate)}"
             style="${inputStyle}" title="${t('btn.date_from')}">
-        <span style="font-size:11px;color:var(--text-muted);margin:0 2px">→</span>
+        <span style="font-size:11px;color:var(--text-muted);margin:0 2px">${iconSvg('arrowRight')}</span>
         <input type="date" class="lazada-sync-to-date" data-account="${escHtml(a.account_id)}" value="${escHtml(todayStr)}"
             style="${inputStyle}" title="${t('btn.date_to')}">
       </td>
       <td style="display:flex;gap:6px;flex-wrap:wrap">
         <button class="btn btn-primary btn-sm btn-lazada-sync" data-account="${escHtml(a.account_id)}" title="${t('btn.sync')}">Sync</button>
-        <button class="btn btn-secondary btn-sm btn-lazada-disconnect" data-account="${escHtml(a.account_id)}" title="${t('btn.disconnect')}" style="color:var(--red,#ef4444)">✕</button>
+        <button class="btn btn-secondary btn-sm btn-lazada-disconnect" data-account="${escHtml(a.account_id)}" title="${t('btn.disconnect')}" style="color:var(--red,#ef4444)">${iconSvg('x')}</button>
       </td>
     </tr>`;
   }).join('');
@@ -3652,8 +3683,8 @@ async function syncLazadaAccount(accountId) {
     }
 
     const rows = (res.results || []).map(r => {
-      if (r.success) return `<div style="color:var(--green,#22c55e);font-size:13px">✓ ${escHtml(r.account)}: +${r.imported} ${t('connect.items_unit')}${r.errors ? `, ${r.errors} ${t('msg.error')}` : ''}</div>`;
-      return `<div style="color:var(--red,#ef4444);font-size:13px">✗ ${escHtml(r.account)}: ${escHtml(r.error || '')}</div>`;
+      if (r.success) return `<div style="color:var(--green,#22c55e);font-size:13px">${iconSvg('check')} ${escHtml(r.account)}: +${r.imported} ${t('connect.items_unit')}${r.errors ? `, ${r.errors} ${t('msg.error')}` : ''}</div>`;
+      return `<div style="color:var(--red,#ef4444);font-size:13px">${iconSvg('x')} ${escHtml(r.account)}: ${escHtml(r.error || '')}</div>`;
     }).join('');
 
     if (resultsEl) resultsEl.innerHTML = rows || `<div style="color:var(--text-muted);font-size:13px">${t('msg.no_results')}</div>`;
@@ -3776,7 +3807,7 @@ async function syncShopeeShop(shopId) {
     if (res.success && resultsEl) {
       resultsEl.innerHTML = res.results.map(r =>
         `<div style="font-size:13px;padding:6px 0;border-bottom:1px solid var(--border)">
-          ${r.success ? '✓' : '✗'} <strong>${escHtml(r.shop)}</strong>:
+          ${r.success ? iconSvg('check') : iconSvg('x')} <strong>${escHtml(r.shop)}</strong>:
           ${r.success ? `+${r.imported} ${t('connect.items_unit')}` : escHtml(r.error)}
         </div>`
       ).join('');
@@ -4018,14 +4049,16 @@ function renderUserLanguageOptions(langs) {
   const current = I18n.getLang();
   const currentMeta = (langs || []).find(lang => lang.code === current);
   if (currentBadge) {
-    currentBadge.textContent = currentMeta ? `${currentMeta.flag} ${current.toUpperCase()}` : current.toUpperCase();
+    currentBadge.innerHTML = currentMeta
+      ? `${languageIconSvg(currentMeta.code)} ${escHtml(current.toUpperCase())}`
+      : escHtml(current.toUpperCase());
   }
 
   list.innerHTML = (langs || []).map(lang => `
-    <button class="user-lang-option${lang.code === current ? ' active' : ''}" type="button" data-code="${lang.code}">
-      <span class="user-lang-option-flag">${lang.flag}</span>
-      <span class="user-lang-option-name">${lang.name}</span>
-      <span class="user-lang-option-code">${lang.code.toUpperCase()}</span>
+    <button class="user-lang-option${lang.code === current ? ' active' : ''}" type="button" data-code="${escHtml(lang.code)}">
+      <span class="user-lang-option-flag">${languageIconSvg(lang.code)}</span>
+      <span class="user-lang-option-name">${escHtml(lang.name)}</span>
+      <span class="user-lang-option-code">${escHtml(lang.code.toUpperCase())}</span>
     </button>
   `).join('');
 
@@ -4312,10 +4345,10 @@ async function setupLangSettings() {
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px">
         ${langs.map(l => `
           <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--bg-base,#f8fafc);border-radius:10px">
-            <span style="font-size:24px;line-height:1">${l.flag}</span>
+            <span class="user-lang-option-flag">${languageIconSvg(l.code, 'lang-icon-lg')}</span>
             <div style="flex:1;min-width:0">
-              <div style="font-size:13px;font-weight:600">${l.name}</div>
-              <div style="font-size:11px;color:var(--text-muted)">${l.code.toUpperCase()} · ${l.keys} ${t('lang.keys')}</div>
+              <div style="font-size:13px;font-weight:600">${escHtml(l.name)}</div>
+              <div style="font-size:11px;color:var(--text-muted)">${escHtml(l.code.toUpperCase())} · ${escHtml(l.keys)} ${t('lang.keys')}</div>
             </div>
             ${l.builtin
               ? `<span style="font-size:10px;color:var(--text-muted);background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:2px 6px">${t('lang.builtin')}</span>`
@@ -4341,7 +4374,7 @@ async function setupLangSettings() {
     try {
       const data = await fetch('api/lang.php', { method: 'POST', body: fd }).then(r => r.json());
       if (!data.success) throw new Error(data.error || 'Upload failed');
-      toast(`${data.flag} ${data.name}`, 'success');
+      toast(data.name || t('msg.success'), 'success');
       input.value = '';
       await _langSettingsRefresh();
     } catch (e) {

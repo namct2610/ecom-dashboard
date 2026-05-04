@@ -1657,7 +1657,10 @@ $initials = strtoupper(substr($user, 0, 2));
         <div class="card mb-4">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
             <div class="card-title" style="margin-bottom:0">Thông tin hệ thống</div>
-            <button id="btnRefreshSysInfo" class="btn btn-secondary btn-sm">🔄 Làm mới</button>
+            <button id="btnRefreshSysInfo" class="btn btn-secondary btn-sm">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 0 1-15.5 6.2"/><path d="M3 12A9 9 0 0 1 18.5 5.8"/><path d="M18 2v5h-5"/><path d="M6 22v-5h5"/></svg>
+              Làm mới
+            </button>
           </div>
           <div id="sysInfoContent">
             <div style="text-align:center;padding:32px;color:var(--text-muted)">Đang tải...</div>
@@ -1676,7 +1679,10 @@ $initials = strtoupper(substr($user, 0, 2));
         <div class="card mb-4">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
             <div class="card-title" style="margin-bottom:0">Cập nhật tự động</div>
-            <button id="btnCheckUpdateNow" class="btn btn-secondary btn-sm">🔄 Kiểm tra ngay</button>
+            <button id="btnCheckUpdateNow" class="btn btn-secondary btn-sm">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 0 1-15.5 6.2"/><path d="M3 12A9 9 0 0 1 18.5 5.8"/><path d="M18 2v5h-5"/><path d="M6 22v-5h5"/></svg>
+              Kiểm tra ngay
+            </button>
           </div>
 
           <div style="margin-bottom:16px">
@@ -1714,7 +1720,8 @@ $initials = strtoupper(substr($user, 0, 2));
             <div style="text-align:center;padding:24px;color:var(--text-muted)">Đang tải...</div>
           </div>
           <div style="margin-top:14px;font-size:12px;color:var(--text-muted)">
-            📄 <a href="assets/lang/vi.json" download="lang-template.json" style="color:var(--primary);text-decoration:none" data-i18n="lang.template">Tải file mẫu</a>
+            <svg class="inline-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 15h6"/><path d="M9 18h6"/></svg>
+            <a href="assets/lang/vi.json" download="lang-template.json" style="color:var(--primary);text-decoration:none" data-i18n="lang.template">Tải file mẫu</a>
             &nbsp;— chỉnh sửa các giá trị (không đổi key), giữ nguyên <code>_meta</code>, rồi upload.
           </div>
         </div>
@@ -1723,7 +1730,7 @@ $initials = strtoupper(substr($user, 0, 2));
         <div class="card mb-4" id="brandSettingsCard">
           <div class="reconcile-settings-head">
             <div>
-              <div class="card-title" style="margin-bottom:4px">Quy ước SKU → Thương hiệu</div>
+              <div class="card-title" style="margin-bottom:4px">Quy ước SKU sang Thương hiệu</div>
               <div class="card-subtitle">Thiết lập tên thương hiệu theo đúng 3 ký tự đầu trong mã SKU để dùng trong phần phân tích.</div>
             </div>
             <div class="reconcile-settings-actions">
@@ -1855,7 +1862,10 @@ $initials = strtoupper(substr($user, 0, 2));
 
         <!-- Danger zone -->
         <div class="card" style="border:2px solid #fecaca">
-          <div class="card-title" style="color:#dc2626">⚠️ Vùng nguy hiểm — Reset Database</div>
+          <div class="card-title" style="color:#dc2626;display:flex;align-items:center;gap:8px">
+            <svg class="inline-icon icon-status-warning" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+            <span>Vùng nguy hiểm — Reset Database</span>
+          </div>
           <p style="color:var(--text-muted);font-size:13px;margin-bottom:20px">
             Các thao tác dưới đây không thể hoàn tác. Hãy chắc chắn trước khi thực hiện.
           </p>
@@ -1901,12 +1911,16 @@ $initials = strtoupper(substr($user, 0, 2));
             <!-- Full reset -->
             <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:#fef2f2;border:2px dashed #fca5a5;border-radius:10px;gap:16px;flex-wrap:wrap">
               <div>
-                <div style="font-weight:700;font-size:14px;color:#dc2626">💣 Reset TOÀN BỘ database</div>
+                <div style="font-weight:700;font-size:14px;color:#dc2626;display:flex;align-items:center;gap:6px">
+                  <svg class="inline-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 15H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+                  <span>Reset TOÀN BỘ database</span>
+                </div>
                 <div style="font-size:12px;color:var(--text-muted);margin-top:2px">Xóa tất cả: đơn hàng, traffic, API keys, logs, cài đặt</div>
               </div>
               <button class="btn btn-sm" style="background:#7f1d1d;color:#fff;border:none;white-space:nowrap"
                       onclick="confirmReset('reset_all','CẢNH BÁO: Xóa TOÀN BỘ dữ liệu không thể khôi phục!','Nhập RESET ALL để xác nhận:','RESET ALL')">
-                💣 Reset toàn bộ
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 15H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+                Reset toàn bộ
               </button>
             </div>
 

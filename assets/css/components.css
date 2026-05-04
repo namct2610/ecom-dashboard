@@ -114,6 +114,22 @@
 .btn-secondary:hover { background: var(--border); }
 .btn-sm { padding: 4px 10px; font-size: 12px; }
 .btn svg { width: 14px; height: 14px; }
+.inline-icon {
+  width: 14px;
+  height: 14px;
+  display: inline-block;
+  vertical-align: -2px;
+  flex-shrink: 0;
+}
+.icon-lg {
+  width: 32px;
+  height: 32px;
+}
+.icon-status-success { color: #16a34a; }
+.icon-status-error { color: #dc2626; }
+.icon-status-warning { color: #d97706; }
+.lang-icon { color: var(--text-secondary); }
+.lang-icon-lg { width: 22px; height: 22px; }
 .icon-only-btn {
   width: 34px;
   padding-left: 0;

@@ -164,6 +164,7 @@ function ensure_schema(PDO $pdo, array $config = []): void
 
     $missing = array_diff($missing, ['app_logs', 'tiktok_connections', 'lazada_connections', 'shopee_connections', 'users']); // already handled above
     if (empty($missing)) {
+        ensure_managed_settings_schema($pdo);
         return;
     }
 
@@ -295,6 +296,8 @@ function ensure_schema(PDO $pdo, array $config = []): void
         UNIQUE KEY uk_shop_id (shop_id),
         INDEX idx_is_active (is_active)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+    ensure_managed_settings_schema($pdo);
 }
 
 function ensure_default_admin_user(PDO $pdo, array $config = []): void
@@ -358,6 +361,253 @@ function ensure_table_index(PDO $pdo, string $table, string $indexName, string $
     }
 
     $pdo->exec($createSql);
+}
+
+function ensure_managed_settings_schema(PDO $pdo): void
+{
+    $pdo->exec("CREATE TABLE IF NOT EXISTS reconcile_price_items (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        sku VARCHAR(100) NOT NULL,
+        product_name VARCHAR(500) NOT NULL DEFAULT '',
+        unit_price DECIMAL(15,2) NOT NULL DEFAULT 0,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        UNIQUE KEY uk_reconcile_price_sku (sku),
+        INDEX idx_reconcile_price_name (product_name(100))
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+    $pdo->exec("CREATE TABLE IF NOT EXISTS reconcile_combo_items (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        platform ENUM('all','shopee','lazada','tiktokshop') NOT NULL DEFAULT 'all',
+        combo_sku VARCHAR(100) NOT NULL DEFAULT '',
+        combo_name VARCHAR(500) NOT NULL DEFAULT '',
+        single_sku VARCHAR(100) NOT NULL,
+        single_qty DECIMAL(12,4) NOT NULL DEFAULT 1,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        INDEX idx_reconcile_combo_sku (platform, combo_sku),
+        INDEX idx_reconcile_combo_single (single_sku),
+        INDEX idx_reconcile_combo_name (combo_name(100))
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+    $pdo->exec("CREATE TABLE IF NOT EXISTS sku_brand_rules (
+        prefix CHAR(3) NOT NULL PRIMARY KEY,
+        brand_name VARCHAR(255) NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+    migrate_managed_settings_from_app_settings($pdo);
+}
+
+function migrate_managed_settings_from_app_settings(PDO $pdo): void
+{
+    migrate_reconcile_price_setting($pdo);
+    migrate_reconcile_combo_setting($pdo);
+    migrate_sku_brand_setting($pdo);
+}
+
+function decode_app_setting_json(PDO $pdo, string $key): array
+{
+    $raw = get_app_setting($pdo, $key, '');
+    if ($raw === '') {
+        return [];
+    }
+
+    $data = json_decode($raw, true);
+    return is_array($data) ? $data : [];
+}
+
+function migrate_reconcile_price_setting(PDO $pdo): void
+{
+    if ((int) $pdo->query("SELECT COUNT(*) FROM reconcile_price_items")->fetchColumn() > 0) {
+        delete_app_setting($pdo, 'reconcile_price_table');
+        return;
+    }
+
+    $rows = decode_app_setting_json($pdo, 'reconcile_price_table');
+    if ($rows === []) {
+        delete_app_setting($pdo, 'reconcile_price_table');
+        return;
+    }
+
+    replace_reconcile_price_rows($pdo, $rows);
+    delete_app_setting($pdo, 'reconcile_price_table');
+}
+
+function migrate_reconcile_combo_setting(PDO $pdo): void
+{
+    if ((int) $pdo->query("SELECT COUNT(*) FROM reconcile_combo_items")->fetchColumn() > 0) {
+        delete_app_setting($pdo, 'reconcile_combo_to_single');
+        return;
+    }
+
+    $rows = decode_app_setting_json($pdo, 'reconcile_combo_to_single');
+    if ($rows === []) {
+        delete_app_setting($pdo, 'reconcile_combo_to_single');
+        return;
+    }
+
+    replace_reconcile_combo_rows($pdo, $rows);
+    delete_app_setting($pdo, 'reconcile_combo_to_single');
+}
+
+function migrate_sku_brand_setting(PDO $pdo): void
+{
+    if ((int) $pdo->query("SELECT COUNT(*) FROM sku_brand_rules")->fetchColumn() > 0) {
+        delete_app_setting($pdo, 'sku_brand_rules');
+        return;
+    }
+
+    $rows = decode_app_setting_json($pdo, 'sku_brand_rules');
+    if ($rows === []) {
+        delete_app_setting($pdo, 'sku_brand_rules');
+        return;
+    }
+
+    replace_sku_brand_rules($pdo, $rows);
+    delete_app_setting($pdo, 'sku_brand_rules');
+}
+
+function fetch_reconcile_price_rows(PDO $pdo): array
+{
+    $stmt = $pdo->query("
+        SELECT sku, product_name, unit_price
+        FROM reconcile_price_items
+        ORDER BY sku ASC
+    ");
+
+    return array_map(static fn(array $row): array => [
+        'sku'          => (string) $row['sku'],
+        'product_name' => (string) ($row['product_name'] ?? ''),
+        'unit_price'   => (float) $row['unit_price'],
+    ], $stmt->fetchAll());
+}
+
+function fetch_reconcile_combo_rows(PDO $pdo): array
+{
+    $stmt = $pdo->query("
+        SELECT platform, combo_sku, combo_name, single_sku, single_qty
+        FROM reconcile_combo_items
+        ORDER BY platform ASC, combo_sku ASC, combo_name ASC, single_sku ASC, id ASC
+    ");
+
+    return array_map(static fn(array $row): array => [
+        'platform'   => (string) ($row['platform'] ?? 'all'),
+        'combo_sku'  => (string) ($row['combo_sku'] ?? ''),
+        'combo_name' => (string) ($row['combo_name'] ?? ''),
+        'single_sku' => (string) ($row['single_sku'] ?? ''),
+        'single_qty' => (float) $row['single_qty'],
+    ], $stmt->fetchAll());
+}
+
+function fetch_sku_brand_rules(PDO $pdo): array
+{
+    $stmt = $pdo->query("
+        SELECT prefix, brand_name
+        FROM sku_brand_rules
+        ORDER BY prefix ASC
+    ");
+
+    return array_map(static fn(array $row): array => [
+        'prefix'     => (string) $row['prefix'],
+        'brand_name' => (string) $row['brand_name'],
+    ], $stmt->fetchAll());
+}
+
+function replace_reconcile_price_rows(PDO $pdo, array $rows): void
+{
+    $pdo->exec("DELETE FROM reconcile_price_items");
+    if ($rows === []) {
+        return;
+    }
+
+    $stmt = $pdo->prepare("
+        INSERT INTO reconcile_price_items (sku, product_name, unit_price)
+        VALUES (?, ?, ?)
+        ON DUPLICATE KEY UPDATE
+            product_name = VALUES(product_name),
+            unit_price = VALUES(unit_price)
+    ");
+
+    foreach ($rows as $row) {
+        if (!is_array($row)) {
+            continue;
+        }
+
+        $sku = strtoupper(trim((string) ($row['sku'] ?? '')));
+        $productName = trim((string) ($row['product_name'] ?? ''));
+        $unitPrice = (float) ($row['unit_price'] ?? 0);
+        if ($sku === '') {
+            continue;
+        }
+
+        $stmt->execute([$sku, $productName, $unitPrice]);
+    }
+}
+
+function replace_reconcile_combo_rows(PDO $pdo, array $rows): void
+{
+    $pdo->exec("DELETE FROM reconcile_combo_items");
+    if ($rows === []) {
+        return;
+    }
+
+    $stmt = $pdo->prepare("
+        INSERT INTO reconcile_combo_items (platform, combo_sku, combo_name, single_sku, single_qty)
+        VALUES (?, ?, ?, ?, ?)
+    ");
+
+    foreach ($rows as $row) {
+        if (!is_array($row)) {
+            continue;
+        }
+
+        $platform = mb_strtolower(trim((string) ($row['platform'] ?? 'all')));
+        if (!in_array($platform, ['all', 'shopee', 'lazada', 'tiktokshop'], true)) {
+            $platform = 'all';
+        }
+
+        $comboSku = strtoupper(trim((string) ($row['combo_sku'] ?? '')));
+        $comboName = trim((string) ($row['combo_name'] ?? ''));
+        $singleSku = strtoupper(trim((string) ($row['single_sku'] ?? '')));
+        $singleQty = (float) ($row['single_qty'] ?? 0);
+        if ($singleSku === '' || $singleQty <= 0 || ($comboSku === '' && $comboName === '')) {
+            continue;
+        }
+
+        $stmt->execute([$platform, $comboSku, $comboName, $singleSku, $singleQty]);
+    }
+}
+
+function replace_sku_brand_rules(PDO $pdo, array $rows): void
+{
+    $pdo->exec("DELETE FROM sku_brand_rules");
+    if ($rows === []) {
+        return;
+    }
+
+    $stmt = $pdo->prepare("
+        INSERT INTO sku_brand_rules (prefix, brand_name)
+        VALUES (?, ?)
+        ON DUPLICATE KEY UPDATE
+            brand_name = VALUES(brand_name)
+    ");
+
+    foreach ($rows as $row) {
+        if (!is_array($row)) {
+            continue;
+        }
+
+        $prefix = strtoupper(trim((string) ($row['prefix'] ?? $row['sku_prefix'] ?? '')));
+        $prefix = preg_replace('/\s+/', '', $prefix) ?: '';
+        $brandName = trim((string) ($row['brand_name'] ?? $row['brand'] ?? ''));
+        if (strlen($prefix) !== 3 || $brandName === '') {
+            continue;
+        }
+
+        $stmt->execute([$prefix, $brandName]);
+    }
 }
 
 // ── Upsert helpers ──────────────────────────────────────────────────────────

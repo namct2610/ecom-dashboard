@@ -203,6 +203,15 @@ const I18n = (() => {
   let _translations   = { ..._vi };
   let _availableLangs = [];
 
+  function languageIconSvg(code = '', className = '') {
+    const classes = ['inline-icon', 'lang-icon', className].filter(Boolean).join(' ');
+    return `<svg class="${classes}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 8 6 6"/><path d="m4 14 6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="m22 22-5-10-5 10"/><path d="M14 18h6"/></svg>`;
+  }
+
+  function escHtml(value) {
+    return String(value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
   // ── Core translation ──────────────────────────────────────────────────────
   function t(key) {
     return _translations[key] ?? _vi[key] ?? key;
@@ -324,8 +333,8 @@ const I18n = (() => {
     } catch (_) {
       // Fallback when not logged in or API unavailable
       _availableLangs = [
-        { code: 'vi', name: 'Tiếng Việt', flag: '🇻🇳', builtin: true },
-        { code: 'en', name: 'English',    flag: '🇬🇧', builtin: true },
+        { code: 'vi', name: 'Tiếng Việt', flag: '', builtin: true },
+        { code: 'en', name: 'English',    flag: '', builtin: true },
       ];
     }
     return _availableLangs;
@@ -336,16 +345,16 @@ const I18n = (() => {
 
   // ── Update the language selector button ───────────────────────────────────
   function _updateSelectorUI() {
-    const meta     = _availableLangs.find(l => l.code === _lang) || { flag: '🌐', code: _lang };
+    const meta     = _availableLangs.find(l => l.code === _lang) || { code: _lang };
     const flagEl   = document.getElementById('langFlag');
     const codeEl   = document.getElementById('langCode');
     const currentEl = document.getElementById('userMenuLangCurrent');
-    if (flagEl) flagEl.textContent = meta.flag;
+    if (flagEl) flagEl.innerHTML = languageIconSvg(meta.code);
     if (codeEl) codeEl.textContent = _lang.toUpperCase();
-    if (currentEl) currentEl.textContent = `${meta.flag} ${_lang.toUpperCase()}`;
+    if (currentEl) currentEl.innerHTML = `${languageIconSvg(meta.code)} ${escHtml(_lang.toUpperCase())}`;
   }
 
-  return { init, t, setLang, getLang, loadLanguage, loadAvailableLangs, getAvailableLangs, applyTranslations };
+  return { init, t, setLang, getLang, loadLanguage, loadAvailableLangs, getAvailableLangs, applyTranslations, languageIconSvg };
 })();
 
 // ── Global helpers (for charts.js, app.js backward compat) ──────────────────

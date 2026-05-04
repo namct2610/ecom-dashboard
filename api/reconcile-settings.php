@@ -9,19 +9,6 @@ use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
 require_admin();
 
-const RECONCILE_PRICE_SETTING_KEY = 'reconcile_price_table';
-const RECONCILE_COMBO_SETTING_KEY = 'reconcile_combo_to_single';
-
-function decode_reconcile_setting(string $raw): array
-{
-    if ($raw === '') {
-        return [];
-    }
-
-    $data = json_decode($raw, true);
-    return is_array($data) ? $data : [];
-}
-
 function parse_reconcile_number(mixed $value): ?float
 {
     if ($value === null || $value === '') {
@@ -365,7 +352,7 @@ function import_combo_rows_from_file(string $path): array
     return $normalized;
 }
 
-function import_reconcile_settings_from_upload(string $action): void
+function import_reconcile_settings_from_upload(PDO $pdo, string $action): void
 {
     if (!isset($_FILES['file']) || !is_array($_FILES['file'])) {
         json_error('Thiếu file upload.', 422);
@@ -383,6 +370,11 @@ function import_reconcile_settings_from_upload(string $action): void
 
     if ($action === 'import_prices') {
         $prices = import_price_rows_from_file($tmpName);
+        $pdo->beginTransaction();
+        replace_reconcile_price_rows($pdo, $prices);
+        delete_app_setting($pdo, 'reconcile_price_table');
+        $pdo->commit();
+
         log_activity('info', 'reconcile_settings', 'Nạp Bang_gia từ file Excel.', [
             'filename'   => (string) ($file['name'] ?? ''),
             'price_rows' => count($prices),
@@ -390,13 +382,18 @@ function import_reconcile_settings_from_upload(string $action): void
 
         json_response([
             'success' => true,
-            'message' => 'Đã nạp dữ liệu Bang_gia từ file Excel.',
-            'prices'  => $prices,
+            'message' => 'Đã nạp và lưu dữ liệu Bang_gia vào database.',
+            'prices'  => fetch_reconcile_price_rows($pdo),
         ]);
     }
 
     if ($action === 'import_combos') {
         $combos = import_combo_rows_from_file($tmpName);
+        $pdo->beginTransaction();
+        replace_reconcile_combo_rows($pdo, $combos);
+        delete_app_setting($pdo, 'reconcile_combo_to_single');
+        $pdo->commit();
+
         log_activity('info', 'reconcile_settings', 'Nạp Combo_to_single từ file Excel.', [
             'filename'   => (string) ($file['name'] ?? ''),
             'combo_rows' => count($combos),
@@ -404,8 +401,8 @@ function import_reconcile_settings_from_upload(string $action): void
 
         json_response([
             'success' => true,
-            'message' => 'Đã nạp dữ liệu Combo_to_single từ file Excel.',
-            'combos'  => $combos,
+            'message' => 'Đã nạp và lưu dữ liệu Combo_to_single vào database.',
+            'combos'  => fetch_reconcile_combo_rows($pdo),
         ]);
     }
 
@@ -416,13 +413,10 @@ try {
     $pdo = db($config);
 
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-        $prices = decode_reconcile_setting(get_app_setting($pdo, RECONCILE_PRICE_SETTING_KEY));
-        $combos = decode_reconcile_setting(get_app_setting($pdo, RECONCILE_COMBO_SETTING_KEY));
-
         json_response([
             'success' => true,
-            'prices'  => $prices,
-            'combos'  => $combos,
+            'prices'  => fetch_reconcile_price_rows($pdo),
+            'combos'  => fetch_reconcile_combo_rows($pdo),
         ]);
     }
 
@@ -430,7 +424,7 @@ try {
     require_csrf();
 
     if (isset($_FILES['file'])) {
-        import_reconcile_settings_from_upload((string) ($_POST['action'] ?? ''));
+        import_reconcile_settings_from_upload($pdo, (string) ($_POST['action'] ?? ''));
     }
 
     $body = (array) json_decode((string) file_get_contents('php://input'), true);
@@ -444,8 +438,10 @@ try {
     $combos = normalize_reconcile_combos((array) ($body['combos'] ?? []));
 
     $pdo->beginTransaction();
-    set_app_setting($pdo, RECONCILE_PRICE_SETTING_KEY, json_encode($prices, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '[]');
-    set_app_setting($pdo, RECONCILE_COMBO_SETTING_KEY, json_encode($combos, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '[]');
+    replace_reconcile_price_rows($pdo, $prices);
+    replace_reconcile_combo_rows($pdo, $combos);
+    delete_app_setting($pdo, 'reconcile_price_table');
+    delete_app_setting($pdo, 'reconcile_combo_to_single');
     $pdo->commit();
 
     log_activity('info', 'reconcile_settings', 'Cập nhật cấu hình đối soát GBS.', [
@@ -456,8 +452,8 @@ try {
     json_response([
         'success' => true,
         'message' => 'Đã lưu cài đặt đối soát.',
-        'prices'  => $prices,
-        'combos'  => $combos,
+        'prices'  => fetch_reconcile_price_rows($pdo),
+        'combos'  => fetch_reconcile_combo_rows($pdo),
     ]);
 } catch (\Throwable $e) {
     if (isset($pdo) && $pdo instanceof PDO && $pdo->inTransaction()) {
