@@ -319,6 +319,14 @@ function normalize_sku_brand_rules(array $rows): array
 
 function load_sku_brand_rules(PDO $pdo): array
 {
+    if (function_exists('fetch_sku_brand_rules')) {
+        try {
+            return fetch_sku_brand_rules($pdo);
+        } catch (\Throwable $e) {
+            // Fall back to legacy JSON below if the table is not available yet.
+        }
+    }
+
     return decode_sku_brand_rules(get_app_setting($pdo, SKU_BRAND_RULES_SETTING_KEY, '[]'));
 }
 

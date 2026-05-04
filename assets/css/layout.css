@@ -592,9 +592,15 @@
 }
 
 .user-menu-lang-current {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   font-size: 11px;
   font-weight: 700;
   color: #1d4ed8;
+}
+.user-menu-lang-current .lang-icon {
+  color: currentColor;
 }
 
 .user-menu-lang-list {
@@ -630,7 +636,9 @@
 }
 
 .user-lang-option-flag {
-  font-size: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   line-height: 1;
 }
 

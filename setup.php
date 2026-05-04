@@ -425,6 +425,38 @@ function initSchema(PDO $pdo): void
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
+    $pdo->exec("CREATE TABLE IF NOT EXISTS reconcile_price_items (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        sku VARCHAR(100) NOT NULL,
+        product_name VARCHAR(500) NOT NULL DEFAULT '',
+        unit_price DECIMAL(15,2) NOT NULL DEFAULT 0,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        UNIQUE KEY uk_reconcile_price_sku (sku),
+        INDEX idx_reconcile_price_name (product_name(100))
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+    $pdo->exec("CREATE TABLE IF NOT EXISTS reconcile_combo_items (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        platform ENUM('all','shopee','lazada','tiktokshop') NOT NULL DEFAULT 'all',
+        combo_sku VARCHAR(100) NOT NULL DEFAULT '',
+        combo_name VARCHAR(500) NOT NULL DEFAULT '',
+        single_sku VARCHAR(100) NOT NULL,
+        single_qty DECIMAL(12,4) NOT NULL DEFAULT 1,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        INDEX idx_reconcile_combo_sku (platform, combo_sku),
+        INDEX idx_reconcile_combo_single (single_sku),
+        INDEX idx_reconcile_combo_name (combo_name(100))
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+    $pdo->exec("CREATE TABLE IF NOT EXISTS sku_brand_rules (
+        prefix CHAR(3) NOT NULL PRIMARY KEY,
+        brand_name VARCHAR(255) NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
     $pdo->exec("CREATE TABLE IF NOT EXISTS app_logs (
         id INT AUTO_INCREMENT PRIMARY KEY,
         level ENUM('debug','info','warning','error','critical') NOT NULL DEFAULT 'info',
@@ -548,7 +580,8 @@ function showLocked(): void
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f8fafc;display:flex;align-items:center;justify-content:center;min-height:100vh;color:#334155}
 .card{background:#fff;border-radius:16px;padding:40px;max-width:440px;width:100%;text-align:center;box-shadow:0 4px 24px rgba(0,0,0,.08)}
-.icon{font-size:48px;margin-bottom:16px}
+.icon{width:52px;height:52px;margin:0 auto 16px;color:#4f46e5}
+.icon svg{width:100%;height:100%;display:block}
 h1{font-size:20px;font-weight:700;margin-bottom:8px}
 p{color:#64748b;font-size:14px;line-height:1.6;margin-bottom:20px}
 a{display:inline-block;background:#4f46e5;color:#fff;padding:10px 24px;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px}
@@ -557,7 +590,7 @@ small{display:block;margin-top:12px;color:#94a3b8;font-size:12px}
 </head>
 <body>
 <div class="card">
-  <div class="icon">🔒</div>
+  <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
   <h1>Đã cài đặt xong</h1>
   <p>Dashboard đã được cài đặt thành công. Setup wizard đã bị khóa để bảo mật.</p>
   <a href="index.php">Vào Dashboard</a>
@@ -595,8 +628,9 @@ function renderPage(string $csrf): void
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f1f5f9;color:#1e293b;min-height:100vh}
 .wrap{max-width:740px;margin:0 auto;padding:40px 20px 80px}
 .logo{text-align:center;margin-bottom:32px}
-.logo h1{font-size:24px;font-weight:800;color:#1e293b}
+.logo h1{font-size:24px;font-weight:800;color:#1e293b;display:inline-flex;align-items:center;justify-content:center;gap:10px}
 .logo p{color:#64748b;font-size:14px;margin-top:4px}
+.logo-mark{width:22px;height:22px;color:#4f46e5;flex-shrink:0}
 
 /* Steps */
 .steps{display:flex;gap:0;margin-bottom:32px;background:#fff;border-radius:12px;overflow:hidden;border:1px solid #e2e8f0}
@@ -644,6 +678,11 @@ input:focus,select:focus{border-color:#4f46e5;box-shadow:0 0 0 3px rgba(79,70,22
 .btn-secondary{background:#f1f5f9;color:#475569;border:1px solid #e2e8f0}
 .btn-secondary:hover{background:#e2e8f0}
 .btn-actions{display:flex;gap:10px;margin-top:20px;justify-content:flex-end}
+.inline-icon{width:14px;height:14px;display:inline-block;vertical-align:-2px;flex-shrink:0}
+.icon-lg{width:48px;height:48px}
+.icon-status-success{color:#16a34a}
+.icon-status-error{color:#dc2626}
+.icon-status-warning{color:#d97706}
 
 /* Status badges */
 .badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600}
@@ -679,7 +718,7 @@ input:focus,select:focus{border-color:#4f46e5;box-shadow:0 0 0 3px rgba(79,70,22
 <body>
 <div class="wrap">
   <div class="logo">
-    <h1>⚡ Dashboard v3 — Cài đặt</h1>
+    <h1><svg class="logo-mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg>Dashboard v3 — Cài đặt</h1>
     <p>Wizard thiết lập lần đầu cho shared hosting</p>
   </div>
 
@@ -705,8 +744,8 @@ input:focus,select:focus{border-color:#4f46e5;box-shadow:0 0 0 3px rgba(79,70,22
       <div id="checksSummary" class="hidden" style="margin-top:16px"></div>
     </div>
     <div class="btn-actions">
-      <button class="btn btn-secondary" onclick="runChecks()">🔄 Chạy lại</button>
-      <button class="btn btn-primary hidden" id="btn1Next" onclick="goStep(2)">Tiếp theo →</button>
+      <button class="btn btn-secondary" onclick="runChecks()"><svg class="inline-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 0 1-15.5 6.2"/><path d="M3 12A9 9 0 0 1 18.5 5.8"/><path d="M18 2v5h-5"/><path d="M6 22v-5h5"/></svg> Chạy lại</button>
+      <button class="btn btn-primary hidden" id="btn1Next" onclick="goStep(2)">Tiếp theo <svg class="inline-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg></button>
     </div>
   </div>
 
@@ -744,9 +783,9 @@ input:focus,select:focus{border-color:#4f46e5;box-shadow:0 0 0 3px rgba(79,70,22
       <div id="dbTestResult" style="margin-top:14px"></div>
     </div>
     <div class="btn-actions">
-      <button class="btn btn-secondary" onclick="goStep(1)">← Quay lại</button>
-      <button class="btn btn-secondary" id="btnTestDb" onclick="testDb()">🔌 Kiểm tra kết nối</button>
-      <button class="btn btn-primary hidden" id="btn2Next" onclick="goStep(3)">Tiếp theo →</button>
+      <button class="btn btn-secondary" onclick="goStep(1)"><svg class="inline-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5"/><path d="m11 18-6-6 6-6"/></svg> Quay lại</button>
+      <button class="btn btn-secondary" id="btnTestDb" onclick="testDb()"><svg class="inline-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22v-5"/><path d="M9 8V2"/><path d="M15 8V2"/><path d="M18 8v5a6 6 0 0 1-12 0V8Z"/></svg> Kiểm tra kết nối</button>
+      <button class="btn btn-primary hidden" id="btn2Next" onclick="goStep(3)">Tiếp theo <svg class="inline-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg></button>
     </div>
   </div>
 
@@ -785,9 +824,9 @@ input:focus,select:focus{border-color:#4f46e5;box-shadow:0 0 0 3px rgba(79,70,22
     </div>
 
     <div class="btn-actions">
-      <button class="btn btn-secondary" onclick="goStep(2)">← Quay lại</button>
+      <button class="btn btn-secondary" onclick="goStep(2)"><svg class="inline-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5"/><path d="m11 18-6-6 6-6"/></svg> Quay lại</button>
       <button class="btn btn-primary" id="btnInstall" onclick="doInstall()">
-        🚀 Cài đặt ngay
+        <svg class="inline-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> Cài đặt ngay
       </button>
     </div>
   </div>
@@ -795,20 +834,20 @@ input:focus,select:focus{border-color:#4f46e5;box-shadow:0 0 0 3px rgba(79,70,22
   <!-- ─── STEP 4: Done ──────────────────────────────────────────────── -->
   <div id="page-4" class="hidden">
     <div class="card" style="text-align:center">
-      <div style="font-size:56px;margin-bottom:16px">🎉</div>
+      <div style="margin-bottom:16px;color:#16a34a"><svg class="inline-icon icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></div>
       <div class="card-title" style="font-size:22px;margin-bottom:8px">Cài đặt thành công!</div>
       <p style="color:#64748b;font-size:14px;line-height:1.7;margin-bottom:24px">
         Database đã được khởi tạo, config.php đã được ghi.<br>
         File <code style="background:#f1f5f9;padding:2px 6px;border-radius:4px">.installed</code> đã được tạo để khóa wizard này.
       </p>
       <div class="alert alert-warn" style="text-align:left;margin-bottom:20px">
-        <span>⚠️</span>
+        <span><svg class="inline-icon icon-status-warning" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg></span>
         <div>
           <strong>Bảo mật:</strong> Khuyến nghị xóa hoặc đổi tên <code>setup.php</code> trên server sau khi cài đặt xong.
         </div>
       </div>
-      <a href="index.php" style="display:inline-block;background:#4f46e5;color:#fff;padding:12px 32px;border-radius:10px;text-decoration:none;font-weight:700;font-size:15px">
-        → Vào Dashboard
+      <a href="index.php" style="display:inline-flex;align-items:center;gap:8px;background:#4f46e5;color:#fff;padding:12px 32px;border-radius:10px;text-decoration:none;font-weight:700;font-size:15px">
+        <svg class="inline-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg> Vào Dashboard
       </a>
     </div>
   </div>
@@ -823,6 +862,18 @@ const REINSTALL = $reinstall;
 let currentStep = 1;
 let checksOk    = false;
 let dbOk        = false;
+
+function iconSvg(name, className = '') {
+  const icons = {
+    check: '<path d="M20 6 9 17l-5-5"/>',
+    x: '<path d="M18 6 6 18"/><path d="M6 6l12 12"/>',
+    alert: '<path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
+    plug: '<path d="M12 22v-5"/><path d="M9 8V2"/><path d="M15 8V2"/><path d="M18 8v5a6 6 0 0 1-12 0V8Z"/>',
+  };
+  const body = icons[name] || icons.check;
+  const classes = ['inline-icon', className].filter(Boolean).join(' ');
+  return '<svg class="' + classes + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + body + '</svg>';
+}
 
 function goStep(n) {
   document.getElementById('page-' + currentStep).classList.add('hidden');
@@ -850,7 +901,11 @@ async function runChecks() {
   const res = await fetch('setup.php', { method: 'POST', body: new URLSearchParams({ action: 'check' }) });
   const data = await res.json();
 
-  const icons = { ok: '✅', warn: '⚠️', fail: '❌' };
+  const icons = {
+    ok: iconSvg('check', 'icon-status-success'),
+    warn: iconSvg('alert', 'icon-status-warning'),
+    fail: iconSvg('x', 'icon-status-error'),
+  };
   container.innerHTML = '<div class="check-list">' + data.checks.map(c => `
     <div class="check-item \${c.status}">
       <span class="check-icon">\${icons[c.status]}</span>
@@ -864,11 +919,11 @@ async function runChecks() {
   const fc = data.fail_count, wc = data.warn_count;
   let summaryHtml = '';
   if (fc === 0 && wc === 0) {
-    summaryHtml = '<div class="alert alert-success">✅ Tất cả điều kiện đều đạt. Bạn có thể tiếp tục cài đặt.</div>';
+    summaryHtml = '<div class="alert alert-success">' + iconSvg('check', 'icon-status-success') + ' Tất cả điều kiện đều đạt. Bạn có thể tiếp tục cài đặt.</div>';
   } else if (fc === 0) {
-    summaryHtml = '<div class="alert alert-warn">⚠️ Có ' + wc + ' cảnh báo nhưng không ngăn cài đặt. Kiểm tra sau khi cài xong.</div>';
+    summaryHtml = '<div class="alert alert-warn">' + iconSvg('alert', 'icon-status-warning') + ' Có ' + wc + ' cảnh báo nhưng không ngăn cài đặt. Kiểm tra sau khi cài xong.</div>';
   } else {
-    summaryHtml = '<div class="alert alert-error">❌ Có ' + fc + ' lỗi cần sửa trước khi cài đặt.</div>';
+    summaryHtml = '<div class="alert alert-error">' + iconSvg('x', 'icon-status-error') + ' Có ' + fc + ' lỗi cần sửa trước khi cài đặt.</div>';
   }
   summary.innerHTML = summaryHtml;
   summary.classList.remove('hidden');
@@ -897,14 +952,14 @@ async function testDb() {
   const data = await res.json();
 
   btn.disabled = false;
-  btn.innerHTML = '🔌 Kiểm tra kết nối';
+  btn.innerHTML = iconSvg('plug') + ' Kiểm tra kết nối';
 
   if (data.success) {
-    result.innerHTML = '<div class="alert alert-success">✅ Kết nối thành công! MySQL ' + esc(data.version) + '</div>';
+    result.innerHTML = '<div class="alert alert-success">' + iconSvg('check', 'icon-status-success') + ' Kết nối thành công! MySQL ' + esc(data.version) + '</div>';
     nextBtn.classList.remove('hidden');
     dbOk = true;
   } else {
-    result.innerHTML = '<div class="alert alert-error">❌ ' + esc(data.error) + '</div>';
+    result.innerHTML = '<div class="alert alert-error">' + iconSvg('x', 'icon-status-error') + ' ' + esc(data.error) + '</div>';
   }
 }
 
@@ -968,12 +1023,12 @@ async function doInstall() {
   const data = await res.json();
 
   btn.disabled = false;
-  btn.innerHTML = '🚀 Cài đặt ngay';
+  btn.innerHTML = iconSvg('check') + ' Cài đặt ngay';
 
   if (data.success) {
     goStep(4);
   } else {
-    errEl.innerHTML = '<div class="alert alert-error">❌ ' + esc(data.error) + '</div>';
+    errEl.innerHTML = '<div class="alert alert-error">' + iconSvg('x', 'icon-status-error') + ' ' + esc(data.error) + '</div>';
   }
 }
 

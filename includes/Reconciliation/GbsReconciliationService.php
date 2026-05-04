@@ -11,8 +11,6 @@ use RuntimeException;
 final class GbsReconciliationService
 {
     private const PLATFORM_KEYS = ['shopee', 'lazada', 'tiktokshop'];
-    private const PRICE_SETTING_KEY = 'reconcile_price_table';
-    private const COMBO_SETTING_KEY = 'reconcile_combo_to_single';
     private const CONFIRMED_MONTHS_SETTING_KEY = 'reconcile_gbs_confirmed_months';
     private const NMV_ROUNDING_TOLERANCE = 1.0;
 
@@ -1693,15 +1691,15 @@ final class GbsReconciliationService
 
         $result = [];
         try {
-            if ($this->config === [] || !\function_exists('db') || !\function_exists('get_app_setting')) {
+            if ($this->config === [] || !\function_exists('db')) {
                 return $this->managedPriceTable = [];
             }
 
             $pdo = \db($this->config);
-            $rows = json_decode(\get_app_setting($pdo, self::PRICE_SETTING_KEY, '[]'), true);
-            if (!is_array($rows)) {
-                $rows = [];
-            }
+            $rows = \function_exists('fetch_reconcile_price_rows')
+                ? \fetch_reconcile_price_rows($pdo)
+                : json_decode(\get_app_setting($pdo, 'reconcile_price_table', '[]'), true);
+            $rows = is_array($rows) ? $rows : [];
 
             foreach ($rows as $row) {
                 if (!is_array($row)) {
@@ -1727,12 +1725,14 @@ final class GbsReconciliationService
     private function loadManagedComboRuleRows(): array
     {
         try {
-            if ($this->config === [] || !\function_exists('db') || !\function_exists('get_app_setting')) {
+            if ($this->config === [] || !\function_exists('db')) {
                 return [];
             }
 
             $pdo = \db($this->config);
-            $rows = json_decode(\get_app_setting($pdo, self::COMBO_SETTING_KEY, '[]'), true);
+            $rows = \function_exists('fetch_reconcile_combo_rows')
+                ? \fetch_reconcile_combo_rows($pdo)
+                : json_decode(\get_app_setting($pdo, 'reconcile_combo_to_single', '[]'), true);
             return is_array($rows) ? $rows : [];
         } catch (\Throwable $e) {
             return [];

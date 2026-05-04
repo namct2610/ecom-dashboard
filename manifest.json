@@ -1,7 +1,7 @@
 {
-  "version": "1.2.26",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.2.26/release/dashboard-v3-1.2.26.zip",
-  "changelog": "- Thêm bộ lọc phân tích theo từng sản phẩm trong phần Phân tích\n- Thêm bộ lọc phân tích theo thương hiệu, nhận diện theo 3 ký tự đầu SKU\n- Bổ sung cài đặt hệ thống cho quy ước SKU -> Thương hiệu",
+  "version": "1.2.27",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.2.27/release/dashboard-v3-1.2.27.zip",
+  "changelog": "- Chuyển Bang_gia và Combo_to_single sang bảng database riêng, cho phép hiển thị và sửa trực tiếp trong cài đặt\n- Chuyển Quy ước SKU -> Thương hiệu sang bảng database riêng và tự migrate dữ liệu cũ\n- Chuyển các ký hiệu trạng thái/nút trong giao diện sang icon SVG",
   "min_php": "8.1",
   "released_at": "2026-05-04"
 }
