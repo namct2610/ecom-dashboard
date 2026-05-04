@@ -1,7 +1,7 @@
 {
-  "version": "1.2.25",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.2.25/release/dashboard-v3-1.2.25.zip",
-  "changelog": "- Sửa lỗi giao diện và file export đối soát hiển thị số lượng SKU phía sàn theo số lượng quy đổi thay vì số lượng đặt thực tế\n- Với đơn 525836549136523 và các đơn combo tương tự, hệ thống nay hiển thị đúng MON055GC12CXP x1 và MNS055GC12MIX x2, đồng thời vẫn giữ số lượng quy đổi cho bước so khớp nội bộ",
+  "version": "1.2.26",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.2.26/release/dashboard-v3-1.2.26.zip",
+  "changelog": "- Thêm bộ lọc phân tích theo từng sản phẩm trong phần Phân tích\n- Thêm bộ lọc phân tích theo thương hiệu, nhận diện theo 3 ký tự đầu SKU\n- Bổ sung cài đặt hệ thống cho quy ước SKU -> Thương hiệu",
   "min_php": "8.1",
-  "released_at": "2026-04-21"
+  "released_at": "2026-05-04"
 }
