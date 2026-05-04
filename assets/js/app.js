@@ -13,6 +13,8 @@ const App = {
   dateFrom: '',         // 'YYYY-MM-DD' — khi dùng preset ngày (Hôm nay, 7 ngày…)
   dateTo:   '',         // 'YYYY-MM-DD'
   rangeLabel: '',       // nhãn hiển thị khi dùng date range
+  analyticsProductSku: '',
+  analyticsBrandPrefix: '',
   currentPage: 'overview',
   user: null,
   adminTab: 'accounts',
@@ -38,6 +40,12 @@ const ReconcileSettingsState = {
   importing: '',
   prices: [],
   combos: [],
+};
+
+const BrandSettingsState = {
+  loading: false,
+  saving: false,
+  rules: [],
 };
 
 // ── Helpers ──────────────────────────────────────────────────────────────
@@ -661,6 +669,25 @@ function setupPlatformFilter() {
       btn.classList.add('active');
       loadPage(App.currentPage);
     });
+  });
+}
+
+// ── Analytics filters ────────────────────────────────────────────────────
+function setupAnalyticsFilters() {
+  qs('#analyticsProductFilter')?.addEventListener('change', event => {
+    App.analyticsProductSku = event.currentTarget.value || '';
+    loadPage('heatmaps');
+  });
+
+  qs('#analyticsBrandFilter')?.addEventListener('change', event => {
+    App.analyticsBrandPrefix = event.currentTarget.value || '';
+    loadPage('heatmaps');
+  });
+
+  qs('#btnClearAnalyticsFilters')?.addEventListener('click', () => {
+    App.analyticsProductSku = '';
+    App.analyticsBrandPrefix = '';
+    loadPage('heatmaps');
   });
 }
 
@@ -1494,9 +1521,86 @@ function fmtQtyExact(value) {
   });
 }
 
+function analyticsFilterParams() {
+  const params = {};
+  if (App.analyticsProductSku) params.product_sku = App.analyticsProductSku;
+  if (App.analyticsBrandPrefix) params.brand_prefix = App.analyticsBrandPrefix;
+  return params;
+}
+
+function shortAnalyticsLabel(value, max = 92) {
+  const text = String(value || '').trim();
+  return text.length > max ? text.slice(0, max - 1) + '…' : text;
+}
+
+function renderAnalyticsFilters(filters = {}) {
+  const productSelect = qs('#analyticsProductFilter');
+  const brandSelect = qs('#analyticsBrandFilter');
+  const summaryEl = qs('#analyticsFilterSummary');
+  const clearBtn = qs('#btnClearAnalyticsFilters');
+
+  const products = Array.isArray(filters.products) ? filters.products : [];
+  const brands = Array.isArray(filters.brands) ? filters.brands : [];
+  const active = filters.active || {};
+  const activeProductSku = active.product_sku || App.analyticsProductSku || '';
+  const activeBrandPrefix = active.brand_prefix || App.analyticsBrandPrefix || '';
+
+  App.analyticsProductSku = activeProductSku;
+  App.analyticsBrandPrefix = activeBrandPrefix;
+
+  if (productSelect) {
+    const productRows = activeProductSku && !products.some(row => row.sku === activeProductSku)
+      ? [{ sku: activeProductSku, product_name: 'Đang chọn', order_count: 0 }, ...products]
+      : products;
+
+    productSelect.innerHTML = [
+      '<option value="">Tất cả sản phẩm</option>',
+      ...productRows.map(row => {
+        const name = row.product_name ? ` - ${row.product_name}` : '';
+        const label = `${row.sku || ''}${name}`;
+        const meta = row.order_count ? ` (${fmtNum(row.order_count)} đơn)` : '';
+        return `<option value="${escHtml(row.sku || '')}">${escHtml(shortAnalyticsLabel(label + meta))}</option>`;
+      }),
+    ].join('');
+    productSelect.value = activeProductSku;
+  }
+
+  if (brandSelect) {
+    const activeBrandName = active.brand_name || activeBrandPrefix;
+    const brandRows = activeBrandPrefix && !brands.some(row => row.prefix === activeBrandPrefix)
+      ? [{ prefix: activeBrandPrefix, brand_name: activeBrandName, sku_count: 0 }, ...brands]
+      : brands;
+
+    brandSelect.innerHTML = [
+      '<option value="">Tất cả thương hiệu</option>',
+      ...brandRows.map(row => {
+        const label = row.brand_name && row.brand_name !== row.prefix
+          ? `${row.brand_name} (${row.prefix})`
+          : `${row.prefix}`;
+        const meta = row.sku_count ? ` - ${fmtNum(row.sku_count)} SKU` : '';
+        return `<option value="${escHtml(row.prefix || '')}">${escHtml(shortAnalyticsLabel(label + meta, 70))}</option>`;
+      }),
+    ].join('');
+    brandSelect.value = activeBrandPrefix;
+  }
+
+  if (summaryEl) {
+    const activeParts = [];
+    if (activeProductSku) activeParts.push(`SKU ${activeProductSku}`);
+    if (activeBrandPrefix) activeParts.push(`thương hiệu ${active.brand_name || activeBrandPrefix}`);
+
+    summaryEl.textContent = activeParts.length
+      ? `Đang lọc theo ${activeParts.join(' · ')}`
+      : `Có ${fmtNum(products.length)} SKU và ${fmtNum(brands.length)} nhóm thương hiệu trong kỳ hiện tại.`;
+  }
+
+  if (clearBtn) clearBtn.disabled = !activeProductSku && !activeBrandPrefix;
+}
+
 async function loadHeatmaps() {
   try {
-    const data = await api('heatmap.php');
+    const data = await api('heatmap.php', { params: analyticsFilterParams() });
+    renderAnalyticsFilters(data.filters || {});
     _ensureHeatmapTooltip();
     renderHeatmap7x24('heatmap7x24',        data.heatmap, data.max_orders,  'orders');
     renderHeatmap7x24('heatmapRevenue7x24', data.heatmap, data.max_revenue, 'revenue');
@@ -2369,6 +2473,162 @@ function setupConnectPage() {
 
 let _settingsPageBound = false;
 
+function makeEmptyBrandRuleRow() {
+  return { prefix: '', brand_name: '' };
+}
+
+function setBrandSettingsResult(message = '', type = 'info') {
+  const el = qs('#brandSettingsResult');
+  if (!el) return;
+
+  el.className = 'reconcile-settings-result';
+  el.textContent = '';
+
+  if (!message) return;
+
+  el.classList.add('is-visible', `is-${type}`);
+  el.textContent = message;
+}
+
+function renderBrandSettingsSummary() {
+  const el = qs('#brandSettingsSummary');
+  if (!el) return;
+
+  const preview = BrandSettingsState.rules
+    .slice(0, 4)
+    .map(row => `${row.prefix}: ${row.brand_name}`);
+  const chips = [
+    `${fmtNum(BrandSettingsState.rules.length || 0)} quy ước thương hiệu`,
+    preview.length ? `Ví dụ: ${preview.join(' · ')}` : 'Chưa có quy ước nào',
+  ];
+
+  el.innerHTML = chips.map(text => `<span class="reconcile-settings-chip">${escHtml(text)}</span>`).join('');
+}
+
+function renderBrandRuleRows(rows) {
+  const tbody = qs('#brandRuleTableBody');
+  if (!tbody) return;
+
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="3" class="reconcile-settings-empty">Chưa có quy ước thương hiệu. Thêm mã 3 ký tự đầu SKU để đặt tên thương hiệu.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = rows.map((row, index) => `
+    <tr data-brand-row data-index="${index}">
+      <td><input type="text" maxlength="3" data-field="prefix" value="${escHtml(row.prefix || '')}" placeholder="MON" style="text-transform:uppercase"></td>
+      <td><input type="text" data-field="brand_name" value="${escHtml(row.brand_name || '')}" placeholder="Tên thương hiệu"></td>
+      <td><button class="btn btn-secondary btn-sm" data-action="delete-brand-rule-row" data-index="${index}">Xoá</button></td>
+    </tr>
+  `).join('');
+}
+
+function renderBrandSettingsTable() {
+  renderBrandRuleRows(BrandSettingsState.rules);
+  renderBrandSettingsSummary();
+  updateBrandSettingsUiState();
+}
+
+function readBrandRuleRowsFromDom() {
+  const tbody = qs('#brandRuleTableBody');
+  if (!tbody) return [];
+
+  return qsa('tr[data-brand-row]', tbody).map(row => ({
+    prefix: qs('[data-field="prefix"]', row)?.value || '',
+    brand_name: qs('[data-field="brand_name"]', row)?.value || '',
+  }));
+}
+
+function syncBrandSettingsStateFromDom() {
+  BrandSettingsState.rules = readBrandRuleRowsFromDom();
+}
+
+function updateBrandSettingsUiState() {
+  const busy = BrandSettingsState.loading || BrandSettingsState.saving;
+  const saveBtn = qs('#btnSaveBrandSettings');
+  const reloadBtn = qs('#btnReloadBrandSettings');
+  const addBtn = qs('#btnAddBrandRuleRow');
+
+  if (saveBtn) {
+    saveBtn.disabled = busy;
+    saveBtn.textContent = BrandSettingsState.saving ? 'Đang lưu...' : 'Lưu thương hiệu';
+  }
+  if (reloadBtn) reloadBtn.disabled = busy;
+  if (addBtn) addBtn.disabled = busy;
+
+  qsa('#brandSettingsCard [data-action]').forEach(btn => {
+    btn.disabled = busy;
+  });
+  qsa('#brandSettingsCard input').forEach(input => {
+    input.disabled = busy;
+  });
+}
+
+async function loadBrandSettings() {
+  BrandSettingsState.loading = true;
+  updateBrandSettingsUiState();
+  setBrandSettingsResult('Đang tải quy ước thương hiệu...', 'info');
+
+  try {
+    const data = await apiFetch('api/brand-settings.php', { method: 'GET' });
+    if (!data.success) throw new Error(data.error || 'Không thể tải quy ước thương hiệu.');
+
+    BrandSettingsState.rules = Array.isArray(data.rules) ? data.rules : [];
+    renderBrandSettingsTable();
+    setBrandSettingsResult(`Đã tải ${fmtNum(BrandSettingsState.rules.length)} quy ước thương hiệu.`, 'info');
+  } catch (e) {
+    console.error('loadBrandSettings', e);
+    BrandSettingsState.rules = [];
+    renderBrandSettingsTable();
+    setBrandSettingsResult(e.message || 'Không thể tải quy ước thương hiệu.', 'error');
+  } finally {
+    BrandSettingsState.loading = false;
+    updateBrandSettingsUiState();
+  }
+}
+
+async function saveBrandSettings() {
+  syncBrandSettingsStateFromDom();
+  BrandSettingsState.saving = true;
+  updateBrandSettingsUiState();
+  setBrandSettingsResult('Đang lưu quy ước thương hiệu...', 'info');
+
+  try {
+    const res = await apiFetch('api/brand-settings.php', {
+      method: 'POST',
+      body: JSON.stringify({
+        action: 'save',
+        rules: BrandSettingsState.rules,
+      }),
+    });
+    if (!res.success) throw new Error(res.error || 'Không thể lưu quy ước thương hiệu.');
+
+    BrandSettingsState.rules = Array.isArray(res.rules) ? res.rules : [];
+    renderBrandSettingsTable();
+    setBrandSettingsResult(`${res.message || 'Đã lưu quy ước thương hiệu.'} Tổng: ${fmtNum(BrandSettingsState.rules.length)} dòng.`, 'success');
+    toast('Đã lưu quy ước thương hiệu.', 'success');
+  } catch (e) {
+    setBrandSettingsResult(e.message || 'Không thể lưu quy ước thương hiệu.', 'error');
+    toast(e.message || 'Không thể lưu quy ước thương hiệu.', 'error');
+  } finally {
+    BrandSettingsState.saving = false;
+    updateBrandSettingsUiState();
+  }
+}
+
+function addBrandRuleRow() {
+  syncBrandSettingsStateFromDom();
+  BrandSettingsState.rules.push(makeEmptyBrandRuleRow());
+  renderBrandSettingsTable();
+}
+
+function deleteBrandRuleRow(index) {
+  if (!Number.isInteger(index) || index < 0) return;
+  syncBrandSettingsStateFromDom();
+  BrandSettingsState.rules.splice(index, 1);
+  renderBrandSettingsTable();
+}
+
 function makeEmptyReconcilePriceRow() {
   return { sku: '', product_name: '', unit_price: '' };
 }
@@ -2682,7 +2942,7 @@ function deleteReconcileComboRow(index) {
 
 async function loadSettingsPage() {
   bindSettingsPage();
-  await Promise.all([loadSysInfo(), loadUpdateCard(), setupLangSettings(), loadReconcileSettings()]);
+  await Promise.all([loadSysInfo(), loadUpdateCard(), setupLangSettings(), loadBrandSettings(), loadReconcileSettings()]);
 }
 
 function bindSettingsPage() {
@@ -2710,6 +2970,22 @@ function bindSettingsPage() {
     } else {
       toast(res.error || t('msg.save_failed'), 'error');
     }
+  });
+
+  qs('#btnReloadBrandSettings')?.addEventListener('click', loadBrandSettings);
+  qs('#btnSaveBrandSettings')?.addEventListener('click', saveBrandSettings);
+  qs('#btnAddBrandRuleRow')?.addEventListener('click', addBrandRuleRow);
+
+  qs('#brandSettingsCard')?.addEventListener('input', event => {
+    const input = event.target instanceof HTMLInputElement ? event.target : null;
+    if (input?.dataset.field === 'prefix') {
+      input.value = input.value.toUpperCase().replace(/\s+/g, '').slice(0, 3);
+    }
+  });
+
+  qs('#brandSettingsCard')?.addEventListener('click', event => {
+    const deleteBtn = event.target.closest('[data-action="delete-brand-rule-row"]');
+    if (deleteBtn) deleteBrandRuleRow(Number(deleteBtn.dataset.index || -1));
   });
 
   qs('#btnReloadReconcileSettings')?.addEventListener('click', loadReconcileSettings);
@@ -3667,6 +3943,7 @@ function setupAppShell() {
 
   setupNav();
   setupPlatformFilter();
+  setupAnalyticsFilters();
   setupPeriodPicker();
   setupLogsPage();
   setupConnectPage();

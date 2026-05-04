@@ -40,7 +40,7 @@ const I18n = (() => {
     'page.traffic.title':'Traffic','page.traffic.sub':'Lượt xem, lượt truy cập và tỷ lệ chuyển đổi',
     'page.comparison.title':'So sánh sàn','page.comparison.sub':'Hiệu suất Shopee, Lazada và TikTok Shop',
     'page.reconcile.title':'Đối soát GBS','page.reconcile.sub':'Khớp file GBS với export Shopee, Lazada và TikTok Shop theo đơn hàng',
-    'page.analytics.title':'Phân tích nâng cao','page.analytics.sub':'Heatmap thời gian đặt hàng và doanh thu theo địa lý',
+    'page.analytics.title':'Phân tích nâng cao','page.analytics.sub':'Heatmap thời gian đặt hàng, doanh thu theo địa lý, sản phẩm và thương hiệu',
     'page.upload.title':'Upload dữ liệu','page.upload.sub':'Tải lên file Excel từ Shopee, Lazada, TikTok Shop',
     'page.logs.title':'Nhật ký hoạt động','page.logs.sub':'Tất cả sự kiện và lỗi được ghi lại tự động',
     'page.connect.title':'Kết nối API','page.connect.sub':'Tự động đồng bộ đơn hàng qua Open Platform API',

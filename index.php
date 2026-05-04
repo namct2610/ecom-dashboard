@@ -1012,7 +1012,32 @@ $initials = strtoupper(substr($user, 0, 2));
       <div class="page" id="page-heatmaps">
         <div class="page-header">
           <h1 data-i18n="page.analytics.title">Phân tích nâng cao</h1>
-          <p data-i18n="page.analytics.sub">Heatmap thời gian đặt hàng và doanh thu theo địa lý</p>
+          <p data-i18n="page.analytics.sub">Heatmap thời gian đặt hàng, doanh thu theo địa lý, sản phẩm và thương hiệu</p>
+        </div>
+
+        <div class="analytics-filter-card">
+          <div class="analytics-filter-head">
+            <div>
+              <div class="card-title">Bộ lọc phân tích</div>
+              <div class="card-subtitle">Lọc riêng heatmap và biểu đồ địa phương theo SKU sản phẩm hoặc thương hiệu.</div>
+            </div>
+            <button id="btnClearAnalyticsFilters" class="btn btn-secondary btn-sm">Xóa lọc</button>
+          </div>
+          <div class="analytics-filter-grid">
+            <label class="analytics-filter-field">
+              <span>Sản phẩm</span>
+              <select id="analyticsProductFilter">
+                <option value="">Tất cả sản phẩm</option>
+              </select>
+            </label>
+            <label class="analytics-filter-field">
+              <span>Thương hiệu</span>
+              <select id="analyticsBrandFilter">
+                <option value="">Tất cả thương hiệu</option>
+              </select>
+            </label>
+            <div class="analytics-filter-summary" id="analyticsFilterSummary">Đang tải danh sách lọc...</div>
+          </div>
         </div>
 
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
@@ -1692,6 +1717,50 @@ $initials = strtoupper(substr($user, 0, 2));
             📄 <a href="assets/lang/vi.json" download="lang-template.json" style="color:var(--primary);text-decoration:none" data-i18n="lang.template">Tải file mẫu</a>
             &nbsp;— chỉnh sửa các giá trị (không đổi key), giữ nguyên <code>_meta</code>, rồi upload.
           </div>
+        </div>
+
+        <!-- SKU brand settings -->
+        <div class="card mb-4" id="brandSettingsCard">
+          <div class="reconcile-settings-head">
+            <div>
+              <div class="card-title" style="margin-bottom:4px">Quy ước SKU → Thương hiệu</div>
+              <div class="card-subtitle">Thiết lập tên thương hiệu theo đúng 3 ký tự đầu trong mã SKU để dùng trong phần phân tích.</div>
+            </div>
+            <div class="reconcile-settings-actions">
+              <button id="btnReloadBrandSettings" class="btn btn-secondary btn-sm">Tải lại</button>
+              <button id="btnSaveBrandSettings" class="btn btn-primary btn-sm">Lưu thương hiệu</button>
+            </div>
+          </div>
+
+          <div class="reconcile-settings-banner">
+            <strong>Nhận diện thương hiệu:</strong> hệ thống lấy 3 ký tự đầu của SKU sau khi chuẩn hóa chữ hoa.
+            <span>Ví dụ SKU `MON055GH04VAN` sẽ thuộc mã thương hiệu `MON`.</span>
+          </div>
+
+          <div class="reconcile-settings-summary" id="brandSettingsSummary">
+            <span class="reconcile-settings-chip">Đang tải quy ước thương hiệu...</span>
+          </div>
+
+          <div class="brand-settings-toolbar">
+            <button id="btnAddBrandRuleRow" class="btn btn-primary btn-sm">Thêm dòng</button>
+          </div>
+
+          <div class="table-wrapper">
+            <table class="reconcile-settings-table brand-settings-table">
+              <thead>
+                <tr>
+                  <th>Mã SKU 3 ký tự</th>
+                  <th>Tên thương hiệu</th>
+                  <th>Thao tác</th>
+                </tr>
+              </thead>
+              <tbody id="brandRuleTableBody">
+                <tr><td colspan="3" class="reconcile-settings-empty">Đang tải dữ liệu...</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div id="brandSettingsResult" class="reconcile-settings-result" aria-live="polite"></div>
         </div>
 
         <!-- Reconciliation settings -->
