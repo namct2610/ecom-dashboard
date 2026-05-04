@@ -701,11 +701,13 @@ function setupPlatformFilter() {
 function setupAnalyticsFilters() {
   qs('#analyticsProductFilter')?.addEventListener('change', event => {
     App.analyticsProductSku = event.currentTarget.value || '';
+    if (App.analyticsProductSku) App.analyticsBrandPrefix = '';
     loadPage('heatmaps');
   });
 
   qs('#analyticsBrandFilter')?.addEventListener('change', event => {
     App.analyticsBrandPrefix = event.currentTarget.value || '';
+    if (App.analyticsBrandPrefix) App.analyticsProductSku = '';
     loadPage('heatmaps');
   });
 
@@ -844,6 +846,9 @@ async function loadProducts() {
 
     Charts.renderTopQtyBar('chartTopQty', data.top_qty);
     Charts.renderTopRevBar('chartTopRev', data.top_revenue);
+    Charts.renderBrandShareDonut('chartBrandQtyShare', data.brand_breakdown, 'qty');
+    Charts.renderBrandShareDonut('chartBrandRevenueShare', data.brand_breakdown, 'revenue');
+    renderBrandShareTable('brandShareTable', data.brand_breakdown || []);
     renderTopRevMini('topRevMini', data.top_revenue);
     _productsAll  = data.all || [];
     _productsPage = 1;
@@ -1723,6 +1728,52 @@ function renderProductsTablePage(tbodyId, pagerId) {
     </tr>`).join('');
   }
   renderPager(pagerId, page, _productsAll.length, PER_PAGE, 'gotoProductsPage');
+}
+
+function pctText(value) {
+  return `${Number(value || 0).toLocaleString('vi-VN', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`;
+}
+
+function brandShareBar(value, tone = 'blue') {
+  const pct = Math.max(0, Math.min(100, Number(value || 0)));
+  return `
+    <div class="brand-share-meter brand-share-${tone}">
+      <span style="width:${pct}%"></span>
+    </div>`;
+}
+
+function renderBrandShareTable(tbodyId, brands) {
+  const tbody = qs(`#${tbodyId}`); if (!tbody) return;
+  const rows = Array.isArray(brands) ? brands : [];
+  if (!rows.length) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text-muted)">${t('msg.no_data')}</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = rows.slice(0, 20).map(row => {
+    const brandName = row.brand_name || row.prefix || 'N/A';
+    const prefix = row.prefix || '';
+    const configuredNote = row.is_configured ? '' : '<span class="brand-share-unmapped">Chưa quy ước</span>';
+
+    return `
+      <tr>
+        <td>
+          <div class="brand-share-name">${escHtml(brandName)}</div>
+          <div class="brand-share-meta">${escHtml(prefix)} · ${fmtNum(row.order_count || 0)} đơn ${configuredNote}</div>
+        </td>
+        <td class="text-right" style="font-weight:600;font-size:12px">${fmtNum(row.sku_count || 0)}</td>
+        <td class="text-right" style="font-weight:600;font-size:12px">${fmtNum(row.total_qty || 0)}</td>
+        <td class="text-right brand-share-percent">
+          ${pctText(row.qty_share)}
+          ${brandShareBar(row.qty_share, 'green')}
+        </td>
+        <td class="text-right" style="font-weight:600;font-size:12px;color:var(--primary)">${fmtVND(row.total_revenue || 0)}</td>
+        <td class="text-right brand-share-percent">
+          ${pctText(row.revenue_share)}
+          ${brandShareBar(row.revenue_share, 'blue')}
+        </td>
+      </tr>`;
+  }).join('');
 }
 
 function renderCityListPage(listId, pagerId) {

@@ -528,6 +528,51 @@ $initials = strtoupper(substr($user, 0, 2));
           </div>
         </div>
 
+        <!-- Brand share analysis -->
+        <div class="grid-2">
+          <div class="chart-card">
+            <div class="chart-header">
+              <div class="chart-header-left">
+                <h3>Tỉ trọng doanh số theo thương hiệu</h3>
+                <p>Số lượng bán ra, gom theo 3 ký tự đầu SKU</p>
+              </div>
+            </div>
+            <div class="chart-wrap" style="height:260px">
+              <canvas id="chartBrandQtyShare"></canvas>
+            </div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-header">
+              <div class="chart-header-left">
+                <h3>Tỉ trọng doanh thu theo thương hiệu</h3>
+                <p>Doanh thu sau giảm giá của đơn hoàn thành</p>
+              </div>
+            </div>
+            <div class="chart-wrap" style="height:260px">
+              <canvas id="chartBrandRevenueShare"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div class="card mb-4">
+          <div class="card-title" style="margin-bottom:12px">Phân tích thương hiệu</div>
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Thương hiệu</th>
+                  <th class="text-right">SKU</th>
+                  <th class="text-right">SL bán</th>
+                  <th class="text-right">Tỉ trọng SL</th>
+                  <th class="text-right">Doanh thu</th>
+                  <th class="text-right">Tỉ trọng DT</th>
+                </tr>
+              </thead>
+              <tbody id="brandShareTable"></tbody>
+            </table>
+          </div>
+        </div>
+
         <!-- Mini bars + products table -->
         <div class="grid-3-1">
           <div class="card">
