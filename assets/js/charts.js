@@ -376,6 +376,64 @@ const Charts = (() => {
     }));
   }
 
+  function renderBrandShareDonut(id, brands, metric = 'revenue') {
+    destroy(id);
+    const el = canvas(id); if (!el) return;
+    const rows = Array.isArray(brands) ? brands.filter(row => Number(row?.[metric === 'qty' ? 'total_qty' : 'total_revenue'] || 0) > 0) : [];
+    if (!rows.length) return renderEmpty(el, t('cl.no_data'));
+
+    const valueKey = metric === 'qty' ? 'total_qty' : 'total_revenue';
+    const shareKey = metric === 'qty' ? 'qty_share' : 'revenue_share';
+    const top = rows.slice(0, 8);
+    const rest = rows.slice(8);
+    const chartRows = top.map(row => ({ ...row }));
+    if (rest.length) {
+      const restQty = rest.reduce((sum, row) => sum + Number(row.total_qty || 0), 0);
+      const restRevenue = rest.reduce((sum, row) => sum + Number(row.total_revenue || 0), 0);
+      const restQtyShare = rest.reduce((sum, row) => sum + Number(row.qty_share || 0), 0);
+      const restRevenueShare = rest.reduce((sum, row) => sum + Number(row.revenue_share || 0), 0);
+      chartRows.push({
+        brand_name: 'Khác',
+        total_qty: restQty,
+        total_revenue: restRevenue,
+        qty_share: restQtyShare,
+        revenue_share: restRevenueShare,
+      });
+    }
+
+    save(id, new Chart(el, {
+      type: 'doughnut',
+      data: {
+        labels: chartRows.map(row => truncate(row.brand_name || row.prefix || 'N/A', 28)),
+        datasets: [{
+          data: chartRows.map(row => Number(row[valueKey] || 0)),
+          backgroundColor: chartRows.map((_, index) => CHART_COLORS[index % CHART_COLORS.length]),
+          borderWidth: 3,
+          borderColor: '#fff',
+          hoverOffset: 5,
+        }],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '68%',
+        plugins: {
+          legend: { position: 'bottom', labels: { boxWidth: 10, boxHeight: 10, font: { size: 11 } } },
+          tooltip: {
+            callbacks: {
+              label: ctx => {
+                const row = chartRows[ctx.dataIndex] || {};
+                const value = metric === 'qty' ? Number(row.total_qty || 0).toLocaleString('vi-VN') : vndFormatter(Number(row.total_revenue || 0));
+                const share = Number(row[shareKey] || 0).toFixed(1);
+                return ` ${ctx.label}: ${value} (${share}%)`;
+              },
+            },
+          },
+        },
+      },
+    }));
+  }
+
   /* ── City Bar (horizontal) ── */
   function renderCityBar(id, cities) {
     destroy(id);
@@ -784,6 +842,7 @@ const Charts = (() => {
     renderHourlyBar,
     renderTopQtyBar,
     renderTopRevBar,
+    renderBrandShareDonut,
     renderCityBar,
     renderTrafficTrend,
     renderTrafficPlatform,
