@@ -249,11 +249,25 @@ tbody tr:hover td { background: var(--surface-hover); }
 .reconcile-page-actions .btn {
   white-space: nowrap;
 }
+#page-reconcile {
+  --reconcile-section-gap: 16px;
+}
+#page-reconcile > .reconcile-shell,
+#page-reconcile > .card,
+#page-reconcile > .reconcile-kpi-grid,
+#page-reconcile > .reconcile-hero-card {
+  margin-bottom: var(--reconcile-section-gap);
+}
+#page-reconcile > :last-child {
+  margin-bottom: 0;
+}
+#page-reconcile .grid-4 {
+  gap: var(--reconcile-section-gap);
+}
 .reconcile-shell {
   display: grid;
   grid-template-columns: minmax(0, 1.4fr) minmax(320px, 0.9fr);
-  gap: 16px;
-  margin-bottom: 16px;
+  gap: var(--reconcile-section-gap);
 }
 .reconcile-section-head,
 .reconcile-managed-head {
@@ -702,27 +716,35 @@ tbody tr:hover td { background: var(--surface-hover); }
 .reconcile-map-grid,
 .reconcile-platform-sections {
   display: grid;
-  gap: 16px;
+  gap: var(--reconcile-section-gap, 16px);
 }
 .reconcile-map-grid {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: 1fr;
 }
 .reconcile-map-card {
+  display: grid;
+  grid-template-columns: minmax(180px, 220px) minmax(0, 1fr);
+  align-items: flex-start;
+  gap: var(--reconcile-section-gap, 16px);
   border: 1px solid var(--border);
   border-radius: 16px;
   background: linear-gradient(180deg, rgba(255,255,255,0.94), rgba(248,250,252,0.94));
-  padding: 14px;
+  padding: 16px;
 }
 .reconcile-map-head {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
+  flex-direction: column;
   gap: 10px;
-  margin-bottom: 12px;
 }
 .reconcile-map-title {
   font-size: 13px;
   font-weight: 700;
   color: var(--text-primary);
+  line-height: 1.4;
+}
+.reconcile-map-table {
+  min-width: 720px;
 }
 .reconcile-table thead th,
 .reconcile-map-table thead th,
@@ -1056,6 +1078,12 @@ tbody tr:hover td { background: var(--surface-hover); }
   }
   .reconcile-disclosure-head {
     flex-direction: column;
+  }
+  .reconcile-map-card {
+    grid-template-columns: 1fr;
+  }
+  .reconcile-map-table {
+    min-width: 640px;
   }
   .reconcile-sku-stack {
     min-width: 0;
