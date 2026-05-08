@@ -91,6 +91,8 @@ const I18n = (() => {
     'chart.top_qty':'Top sản phẩm bán chạy','chart.by_qty':'Theo số lượng',
     'chart.top_revenue':'Top sản phẩm doanh thu cao','chart.by_revenue':'Theo doanh thu',
     'chart.by_city':'Phân bổ theo tỉnh / thành','chart.traffic_trend':'Traffic theo thời gian',
+    'chart.customer_segments':'Phân loại khách hàng','chart.customer_segments.sub':'Mới · Cũ · Tiềm năng',
+    'seg.new':'Khách mới','seg.returning':'Khách cũ','seg.potential':'Tiềm năng','seg.total_label':'Người mua',
     'chart.traffic_platform':'Traffic theo sàn','chart.radar':'Radar tổng hợp',
     'chart.revenue_city':'Doanh thu theo tỉnh / thành','chart.top15':'Top 15 địa phương',
     'card.recent_orders':'Đơn hàng gần đây','card.top_products':'Top sản phẩm',
