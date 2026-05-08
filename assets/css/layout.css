@@ -145,11 +145,26 @@
   align-items: center;
   padding: 0 20px;
   gap: 16px;
+  min-width: 0;
 }
-.header-title { font-weight: 700; font-size: 15px; color: var(--text-primary); margin-right: 8px; white-space: nowrap; }
+.header-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--text-primary);
+  margin-right: 8px;
+  white-space: nowrap;
+}
 
 /* Platform filter pills */
-.platform-filter { display: flex; gap: 4px; }
+.platform-filter {
+  display: flex;
+  gap: 4px;
+  min-width: 0;
+  overflow: hidden;
+}
 .page-admin-active .platform-filter,
 .page-admin-active #periodPicker {
   display: none !important;
@@ -183,6 +198,7 @@
   align-items: center;
   gap: 6px;
   flex-shrink: 0;
+  min-width: 0;
 }
 
 /* Mode toggle (Tháng / Năm) */
@@ -265,6 +281,11 @@
   min-width: 130px;
   justify-content: center;
   transition: background 0.15s;
+}
+.pp-label span:first-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .pp-label:hover { background: var(--surface); }
 .pp-caret {
@@ -428,6 +449,7 @@
 .user-menu {
   position: relative;
   flex-shrink: 0;
+  min-width: 0;
 }
 
 .user-menu-btn {
@@ -1139,10 +1161,25 @@
   #header { padding: 0 12px; gap: 8px; }
   .header-title { font-size: 13px; }
   .user-menu-meta { display: none; }
-  .user-menu-btn { padding-left: 4px; }
+  .user-menu-btn { padding: 4px 5px; gap: 4px; }
+  .user-menu-caret { display: none; }
+  .pp-label { min-width: 96px; max-width: 116px; padding: 0 9px; }
+  .pp-arrow { width: 26px; }
+  .pp-panel {
+    position: fixed;
+    top: calc(var(--header-height) + 8px);
+    right: 12px;
+    width: min(232px, calc(100vw - 24px));
+  }
   .password-modal-panel { padding: 18px; }
   .profile-avatar-section { flex-direction: column; align-items: flex-start; }
   #content { padding: 14px 12px; }
   .grid-5, .grid-4, .grid-3, .grid-2, .grid-3-1, .grid-2-1 { grid-template-columns: 1fr; }
   .col-span-2, .col-span-3 { grid-column: span 1; }
+}
+
+@media (max-width: 480px) {
+  .header-title { display: none; }
+  .period-picker { margin-left: auto; }
+  .pp-label { min-width: 82px; max-width: 96px; }
 }

@@ -416,16 +416,23 @@ function setupLogin() {
     btn.textContent = t('login.logging_in');
 
     try {
-      const data = await fetch('api/auth.php', {
+      const res = await fetch('api/auth.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           username: qs('#loginUsername').value.trim(),
           password: qs('#loginPassword').value,
         }),
-      }).then(r => r.json());
+      });
+      const raw = await res.text();
+      let data = {};
+      try {
+        data = raw ? JSON.parse(raw) : {};
+      } catch (parseError) {
+        data = { error: res.ok ? t('login.failed') : t('login.server_error') };
+      }
 
-      if (data.success) {
+      if (res.ok && data.success) {
         App.csrf = data.csrf;
         App.user = data.user || null;
         applyAuthUI();
@@ -434,7 +441,7 @@ function setupLogin() {
         await loadPeriods();
         loadPage(App.currentPage);
       } else {
-        errEl.textContent = data.error || t('login.failed');
+        errEl.textContent = data.error || (res.ok ? t('login.failed') : t('login.server_error'));
       }
     } catch (e) {
       errEl.textContent = t('login.server_error');
