@@ -1300,7 +1300,7 @@ function renderReconcileMappings(mappings) {
       <section class="reconcile-map-card">
         <div class="reconcile-map-head">
           ${platformBadge(platform)}
-          <span class="reconcile-map-title">Khớp trường</span>
+          <span class="reconcile-map-title">Quy tắc ${escHtml(reconcilePlatformName(platform))}</span>
         </div>
         <div class="table-wrapper">
           <table class="reconcile-map-table">

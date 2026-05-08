@@ -1030,9 +1030,9 @@ $initials = strtoupper(substr($user, 0, 2));
         <details class="card reconcile-disclosure">
           <summary class="reconcile-disclosure-head">
             <div>
-              <div class="reconcile-kicker">Thiết Lập Khớp</div>
-              <div class="card-title">Quy tắc quy đổi dữ liệu</div>
-              <div class="card-subtitle">Mở ra khi cần kiểm tra mapping giữa GBS và nguồn orders chung.</div>
+              <div class="reconcile-kicker">Quy Tắc Dữ Liệu</div>
+              <div class="card-title">Quy tắc đối soát theo sàn</div>
+              <div class="card-subtitle">Mở ra khi cần kiểm tra cách GBS được quy đổi và khớp với dữ liệu orders chung.</div>
             </div>
             <span class="reconcile-disclosure-label">Xem chi tiết</span>
           </summary>

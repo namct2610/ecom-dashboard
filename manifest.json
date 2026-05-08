@@ -1,7 +1,7 @@
 {
-  "version": "1.2.28",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.2.28/release/dashboard-v3-1.2.28.zip",
-  "changelog": "- Sửa responsive header, bộ chọn thời gian và menu tài khoản trên mobile/tablet\n- Cải thiện thông báo lỗi đăng nhập khi API trả phản hồi không hợp lệ\n- Sửa nhãn phân loại khách hàng để không còn hiển thị key i18n trong biểu đồ",
+  "version": "1.2.29",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.2.29/release/dashboard-v3-1.2.29.zip",
+  "changelog": "- Căn đều khoảng cách giữa các card trong trang Đối soát GBS\n- Đổi phần Thiết lập khớp thành Quy tắc dữ liệu\n- Hiển thị quy tắc từng sàn theo hàng ngang để dễ theo dõi hơn",
   "min_php": "8.1",
   "released_at": "2026-05-08"
 }
