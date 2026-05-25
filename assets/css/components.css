@@ -271,7 +271,10 @@ tbody tr:hover td { background: var(--surface-hover); }
   padding: 0 0 4px;
 }
 .plan-target-table {
-  min-width: 1600px;
+  min-width: 980px;
+}
+.plan-target-table.plan-target-monthly {
+  min-width: 1120px;
 }
 .plan-target-table thead th {
   padding-top: 14px;
