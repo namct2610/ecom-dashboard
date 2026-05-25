@@ -1059,17 +1059,46 @@ function renderPlanTargetTable(data) {
 
   const metrics = Array.isArray(data.metrics) ? data.metrics : [];
   if (!metrics.length) {
-    tbody.innerHTML = '<tr><td colspan="9" class="plan-empty-cell">Chưa có dữ liệu kế hoạch.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="21" class="plan-empty-cell">Chưa có dữ liệu kế hoạch.</td></tr>';
     return;
   }
+
+  const monthly = Array.isArray(data.monthly) ? data.monthly : [];
+  const monthlyByKey = { revenue: [], visits: [] };
+  for (let i = 0; i < 12; i++) {
+    const m = monthly[i] || {};
+    monthlyByKey.revenue.push({
+      actual: Number(m.revenue || 0),
+      target: Number(m.revenue_target || 0),
+    });
+    monthlyByKey.visits.push({
+      actual: Number(m.visits || 0),
+      target: Number(m.visits_target || 0),
+    });
+  }
+
+  const elapsed = Number(data.elapsed_months || 0);
 
   tbody.innerHTML = metrics.map(metric => {
     const isOnTrack = metric.status === 'on_track';
     const gapClass = Number(metric.gap_ytd || 0) >= 0 ? 'is-positive' : 'is-negative';
     const statusLabel = isOnTrack ? 'Đúng tiến độ' : 'Cần bù tốc độ';
+    const cells = monthlyByKey[metric.key] || [];
+    const monthCells = cells.map((cell, idx) => {
+      const monthNum = idx + 1;
+      const isPast = monthNum <= elapsed;
+      if (!isPast) {
+        return `<td class="text-right font-mono plan-month-cell is-future">—</td>`;
+      }
+      const tone = cell.target > 0
+        ? (cell.actual >= cell.target ? 'is-hit' : 'is-miss')
+        : '';
+      return `<td class="text-right font-mono plan-month-cell ${tone}" title="Mục tiêu TB: ${planMetricFormatter(metric.key, cell.target)}">${planMetricFormatter(metric.key, cell.actual)}</td>`;
+    }).join('');
+
     return `
       <tr>
-        <td>
+        <td class="plan-col-metric">
           <div class="plan-metric-name">${escHtml(metric.label || '')}</div>
           <div class="plan-metric-sub">${metric.key === 'revenue' ? 'Doanh thu đơn hoàn thành' : 'Traffic visits toàn sàn'}</div>
         </td>
@@ -1085,6 +1114,7 @@ function renderPlanTargetTable(data) {
         <td class="text-right font-mono ${gapClass}">${planMetricFormatter(metric.key, metric.gap_ytd)}</td>
         <td class="text-right font-mono">${planMetricFormatter(metric.key, metric.ytg)}</td>
         <td class="text-right font-mono">${planMetricFormatter(metric.key, metric.avg_needed_month)}</td>
+        ${monthCells}
         <td><span class="plan-status ${isOnTrack ? 'is-on' : 'is-behind'}">${statusLabel}</span></td>
       </tr>
     `;

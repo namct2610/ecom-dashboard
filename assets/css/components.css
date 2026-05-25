@@ -271,15 +271,55 @@ tbody tr:hover td { background: var(--surface-hover); }
   padding: 0 0 4px;
 }
 .plan-target-table {
-  min-width: 980px;
+  min-width: 1600px;
 }
 .plan-target-table thead th {
   padding-top: 14px;
   background: #f8fafc;
+  font-size: 11.5px;
+  white-space: nowrap;
+}
+.plan-target-table thead th.plan-col-group {
+  background: #eef2f7;
+  border-bottom: 1px solid var(--border);
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.plan-target-table thead th.plan-col-month,
+.plan-target-table tbody td.plan-month-cell {
+  min-width: 78px;
+  font-size: 11.5px;
 }
 .plan-target-table tbody td {
   padding-top: 12px;
   padding-bottom: 12px;
+}
+.plan-target-table th.plan-col-metric,
+.plan-target-table td.plan-col-metric {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  background: #fff;
+  border-right: 1px solid var(--border);
+  min-width: 200px;
+}
+.plan-target-table thead th.plan-col-metric {
+  background: #f8fafc;
+  z-index: 3;
+}
+.plan-target-table tbody td.plan-month-cell.is-hit {
+  background: #f0fdf4;
+  color: #15803d;
+}
+.plan-target-table tbody td.plan-month-cell.is-miss {
+  background: #fff7ed;
+  color: #c2410c;
+}
+.plan-target-table tbody td.plan-month-cell.is-future {
+  color: var(--text-muted);
+  background: #fafafa;
 }
 .plan-metric-name {
   color: var(--text-primary);

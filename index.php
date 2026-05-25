@@ -837,19 +837,36 @@ $initials = strtoupper(substr($user, 0, 2));
             <table class="plan-target-table">
               <thead>
                 <tr>
-                  <th>Chỉ tiêu</th>
-                  <th class="text-right">Target FY</th>
+                  <th rowspan="2" class="plan-col-metric">Chỉ tiêu</th>
+                  <th rowspan="2" class="text-right">Target FY</th>
+                  <th colspan="4" class="text-center plan-col-group">YTD</th>
+                  <th colspan="2" class="text-center plan-col-group">YTG</th>
+                  <th colspan="12" class="text-center plan-col-group">Thực đạt theo tháng</th>
+                  <th rowspan="2">Trạng thái</th>
+                </tr>
+                <tr>
                   <th class="text-right">Target YTD</th>
                   <th class="text-right">Actual YTD</th>
                   <th class="text-right">% YTD</th>
                   <th class="text-right">Gap YTD</th>
-                  <th class="text-right">YTG</th>
-                  <th class="text-right">TB/tháng còn lại</th>
-                  <th>Trạng thái</th>
+                  <th class="text-right">Còn lại</th>
+                  <th class="text-right">TB/tháng</th>
+                  <th class="text-right plan-col-month">T1</th>
+                  <th class="text-right plan-col-month">T2</th>
+                  <th class="text-right plan-col-month">T3</th>
+                  <th class="text-right plan-col-month">T4</th>
+                  <th class="text-right plan-col-month">T5</th>
+                  <th class="text-right plan-col-month">T6</th>
+                  <th class="text-right plan-col-month">T7</th>
+                  <th class="text-right plan-col-month">T8</th>
+                  <th class="text-right plan-col-month">T9</th>
+                  <th class="text-right plan-col-month">T10</th>
+                  <th class="text-right plan-col-month">T11</th>
+                  <th class="text-right plan-col-month">T12</th>
                 </tr>
               </thead>
               <tbody id="planTargetTableBody">
-                <tr><td colspan="9" class="plan-empty-cell">Đang tải kế hoạch...</td></tr>
+                <tr><td colspan="21" class="plan-empty-cell">Đang tải kế hoạch...</td></tr>
               </tbody>
             </table>
           </div>
