@@ -1834,12 +1834,12 @@ $initials = strtoupper(substr($user, 0, 2));
             </label>
             <div style="display:flex;gap:8px">
               <input type="url" id="inputManifestUrl" class="form-control"
-                     placeholder="https://example.com/dashboard-manifest.json"
+                     value="https://raw.githubusercontent.com/namct2610/ecom-dashboard/main/manifest.json"
+                     readonly
                      style="flex:1;font-size:13px">
-              <button id="btnSaveManifestUrl" class="btn btn-primary btn-sm">Lưu</button>
             </div>
             <div style="font-size:11px;color:var(--text-muted);margin-top:5px">
-              Format JSON: <code>{"version":"1.1.0","download_url":"https://...","changelog":"..."}</code>
+              Production chỉ sử dụng duy nhất manifest này. Không cần nhập URL theo tag phiên bản.
             </div>
           </div>
 

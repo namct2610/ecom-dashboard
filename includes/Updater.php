@@ -8,7 +8,7 @@ namespace Dashboard;
  * Self-update engine for Dashboard v3.
  *
  * Flow:
- *   1. User configures a Manifest URL (JSON file hosted anywhere).
+ *   1. App uses the production Manifest URL configured in api/update.php.
  *   2. App fetches manifest periodically (cached 6 h in app_settings).
  *   3. If manifest.version > current version → show badge + card in Settings.
  *   4. User clicks "Cập nhật ngay" → applyUpdate() downloads zip, swaps files,
