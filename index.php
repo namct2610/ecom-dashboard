@@ -927,15 +927,11 @@ $initials = strtoupper(substr($user, 0, 2));
             <div class="card-subtitle">Các chỉ số dưới đây tự đổi theo YTD/YTG của năm đang xem.</div>
             <div id="planRecommendationList" class="plan-recommendation-list"></div>
           </div>
-          <div class="chart-card">
-            <div class="chart-header">
-              <div class="chart-header-left">
-                <h3>Còn lại phải đạt</h3>
-                <p>YTG so với target năm</p>
-              </div>
-            </div>
-            <div class="chart-wrap" style="height:240px">
-              <canvas id="chartPlanYtg"></canvas>
+          <div class="card plan-ytg-card">
+            <div class="card-title">Còn lại phải đạt</div>
+            <div class="card-subtitle">Tiến độ chuẩn hóa theo % để so sánh giữa các chỉ tiêu có quy mô khác nhau.</div>
+            <div id="planYtgProgress" class="plan-ytg-progress">
+              <div class="plan-empty-cell">Đang tải...</div>
             </div>
           </div>
         </div>

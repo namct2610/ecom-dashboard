@@ -1014,7 +1014,7 @@ async function loadPlan() {
     renderPlanMonthlyTable(data);
     renderPlanRecommendations(data);
     Charts.renderPlanRunRate('chartPlanRunRate', data.monthly || []);
-    Charts.renderPlanYtg('chartPlanYtg', data.metrics || []);
+    renderPlanYtgProgress(data);
   } catch (e) {
     console.error('loadPlan', e);
     qs('#planTargetTableBody').innerHTML = `<tr><td colspan="9" class="plan-empty-cell">Không tải được kế hoạch: ${escHtml(e.message || 'Unknown error')}</td></tr>`;
@@ -1141,6 +1141,49 @@ function renderPlanMonthlyTable(data) {
         </td>
         ${monthCells}
       </tr>
+    `;
+  }).join('');
+}
+
+function renderPlanYtgProgress(data) {
+  const root = qs('#planYtgProgress');
+  if (!root) return;
+
+  const metrics = Array.isArray(data.metrics) ? data.metrics : [];
+  if (!metrics.length) {
+    root.innerHTML = '<div class="plan-empty-cell">Chưa có dữ liệu để so sánh.</div>';
+    return;
+  }
+
+  const remaining = Number(data.remaining_months || 0);
+
+  root.innerHTML = metrics.map(metric => {
+    const target = Number(metric.target || 0);
+    const actual = Number(metric.actual_ytd || 0);
+    const ytg = Number(metric.ytg || 0);
+    const pct = target > 0 ? Math.min(100, Math.max(0, (actual / target) * 100)) : 0;
+    const isOnTrack = metric.status === 'on_track';
+    const accentClass = metric.key === 'revenue' ? 'is-revenue' : 'is-visits';
+    const remainingText = remaining > 0
+      ? `Cần TB <strong>${planMetricFormatter(metric.key, metric.avg_needed_month)}</strong> / tháng trong ${remaining} tháng còn lại`
+      : (ytg > 0 ? 'Năm đã hết kỳ, chưa đạt mục tiêu.' : 'Đã hoàn thành mục tiêu năm.');
+
+    return `
+      <div class="plan-ytg-item ${accentClass} ${isOnTrack ? 'is-on' : 'is-behind'}">
+        <div class="plan-ytg-head">
+          <div class="plan-ytg-label">${escHtml(metric.label || '')}</div>
+          <div class="plan-ytg-pct">${pct.toFixed(1)}<span>%</span></div>
+        </div>
+        <div class="plan-ytg-bar">
+          <div class="plan-ytg-bar-fill" style="width:${pct}%"></div>
+        </div>
+        <div class="plan-ytg-stats">
+          <div><span>Đã đạt</span><strong>${planMetricFormatter(metric.key, actual)}</strong></div>
+          <div><span>Còn lại (YTG)</span><strong class="plan-ytg-remaining">${planMetricFormatter(metric.key, ytg)}</strong></div>
+          <div><span>Mục tiêu năm</span><strong>${planMetricFormatter(metric.key, target)}</strong></div>
+        </div>
+        <div class="plan-ytg-foot">${remainingText}</div>
+      </div>
     `;
   }).join('');
 }
