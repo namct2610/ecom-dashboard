@@ -386,6 +386,93 @@ tbody tr:hover td { background: var(--surface-hover); }
   text-align: center;
   font-size: 13px;
 }
+.plan-ytg-card { display: flex; flex-direction: column; }
+.plan-ytg-progress {
+  display: grid;
+  gap: 14px;
+  margin-top: 12px;
+}
+.plan-ytg-item {
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md, 10px);
+  background: #fff;
+  display: grid;
+  gap: 10px;
+}
+.plan-ytg-item.is-revenue { border-left: 3px solid #2563eb; }
+.plan-ytg-item.is-visits  { border-left: 3px solid #0f766e; }
+.plan-ytg-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+.plan-ytg-label {
+  font-weight: 800;
+  color: var(--text-primary);
+  font-size: 14px;
+}
+.plan-ytg-pct {
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--text-primary);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.plan-ytg-pct span {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-left: 2px;
+}
+.plan-ytg-item.is-behind .plan-ytg-pct { color: #c2410c; }
+.plan-ytg-item.is-on .plan-ytg-pct { color: #15803d; }
+.plan-ytg-bar {
+  height: 10px;
+  background: #e5e7eb;
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+.plan-ytg-bar-fill {
+  height: 100%;
+  border-radius: inherit;
+  transition: width 0.6s ease;
+}
+.plan-ytg-item.is-revenue .plan-ytg-bar-fill { background: linear-gradient(90deg, #3b82f6, #2563eb); }
+.plan-ytg-item.is-visits  .plan-ytg-bar-fill { background: linear-gradient(90deg, #14b8a6, #0f766e); }
+.plan-ytg-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.plan-ytg-stats > div {
+  display: grid;
+  gap: 2px;
+}
+.plan-ytg-stats span {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.plan-ytg-stats strong {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+.plan-ytg-stats strong.plan-ytg-remaining { color: #c2410c; }
+.plan-ytg-item.is-on .plan-ytg-stats strong.plan-ytg-remaining { color: #15803d; }
+.plan-ytg-foot {
+  font-size: 12px;
+  color: var(--text-muted);
+  padding-top: 6px;
+  border-top: 1px dashed var(--border);
+}
+.plan-ytg-foot strong { color: var(--text-primary); }
+@media (max-width: 640px) {
+  .plan-ytg-stats { grid-template-columns: 1fr; }
+}
 .plan-workbench {
   align-items: stretch;
 }
