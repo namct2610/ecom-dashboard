@@ -834,23 +834,39 @@ $initials = strtoupper(substr($user, 0, 2));
             <span class="plan-updated" id="planUpdatedAt">—</span>
           </div>
           <div class="table-wrapper plan-target-table-wrap">
-            <table class="plan-target-table">
+            <table class="plan-target-table plan-target-summary">
               <thead>
                 <tr>
-                  <th rowspan="2" class="plan-col-metric">Chỉ tiêu</th>
-                  <th rowspan="2" class="text-right">Target FY</th>
-                  <th colspan="4" class="text-center plan-col-group">YTD</th>
-                  <th colspan="2" class="text-center plan-col-group">YTG</th>
-                  <th colspan="12" class="text-center plan-col-group">Thực đạt theo tháng</th>
-                  <th rowspan="2">Trạng thái</th>
-                </tr>
-                <tr>
+                  <th class="plan-col-metric">Chỉ tiêu</th>
+                  <th class="text-right">Target FY</th>
                   <th class="text-right">Target YTD</th>
                   <th class="text-right">Actual YTD</th>
                   <th class="text-right">% YTD</th>
                   <th class="text-right">Gap YTD</th>
-                  <th class="text-right">Còn lại</th>
-                  <th class="text-right">TB/tháng</th>
+                  <th class="text-right">YTG</th>
+                  <th class="text-right">TB/tháng còn lại</th>
+                  <th>Trạng thái</th>
+                </tr>
+              </thead>
+              <tbody id="planTargetTableBody">
+                <tr><td colspan="9" class="plan-empty-cell">Đang tải kế hoạch...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card plan-target-card mb-4">
+          <div class="plan-card-head">
+            <div>
+              <div class="card-title">Chi tiết theo tháng</div>
+              <div class="card-subtitle">Thực đạt từng tháng so với mục tiêu trung bình tháng (Target FY ÷ 12).</div>
+            </div>
+          </div>
+          <div class="table-wrapper plan-target-table-wrap">
+            <table class="plan-target-table plan-target-monthly">
+              <thead>
+                <tr>
+                  <th class="plan-col-metric">Chỉ tiêu</th>
                   <th class="text-right plan-col-month">T1</th>
                   <th class="text-right plan-col-month">T2</th>
                   <th class="text-right plan-col-month">T3</th>
@@ -865,8 +881,8 @@ $initials = strtoupper(substr($user, 0, 2));
                   <th class="text-right plan-col-month">T12</th>
                 </tr>
               </thead>
-              <tbody id="planTargetTableBody">
-                <tr><td colspan="21" class="plan-empty-cell">Đang tải kế hoạch...</td></tr>
+              <tbody id="planMonthlyTableBody">
+                <tr><td colspan="13" class="plan-empty-cell">Đang tải dữ liệu tháng...</td></tr>
               </tbody>
             </table>
           </div>

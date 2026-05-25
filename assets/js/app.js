@@ -1011,12 +1011,15 @@ async function loadPlan() {
     qs('#planUpdatedAt').textContent = data.generated_at ? `Cập nhật ${fmtDateTime(data.generated_at)}` : '—';
 
     renderPlanTargetTable(data);
+    renderPlanMonthlyTable(data);
     renderPlanRecommendations(data);
     Charts.renderPlanRunRate('chartPlanRunRate', data.monthly || []);
     Charts.renderPlanYtg('chartPlanYtg', data.metrics || []);
   } catch (e) {
     console.error('loadPlan', e);
     qs('#planTargetTableBody').innerHTML = `<tr><td colspan="9" class="plan-empty-cell">Không tải được kế hoạch: ${escHtml(e.message || 'Unknown error')}</td></tr>`;
+    const monthlyBody = qs('#planMonthlyTableBody');
+    if (monthlyBody) monthlyBody.innerHTML = `<tr><td colspan="13" class="plan-empty-cell">—</td></tr>`;
     toast('Không thể tải dữ liệu kế hoạch.', 'error');
   }
 }
@@ -1059,7 +1062,45 @@ function renderPlanTargetTable(data) {
 
   const metrics = Array.isArray(data.metrics) ? data.metrics : [];
   if (!metrics.length) {
-    tbody.innerHTML = '<tr><td colspan="21" class="plan-empty-cell">Chưa có dữ liệu kế hoạch.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="9" class="plan-empty-cell">Chưa có dữ liệu kế hoạch.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = metrics.map(metric => {
+    const isOnTrack = metric.status === 'on_track';
+    const gapClass = Number(metric.gap_ytd || 0) >= 0 ? 'is-positive' : 'is-negative';
+    const statusLabel = isOnTrack ? 'Đúng tiến độ' : 'Cần bù tốc độ';
+    return `
+      <tr>
+        <td class="plan-col-metric">
+          <div class="plan-metric-name">${escHtml(metric.label || '')}</div>
+          <div class="plan-metric-sub">${metric.key === 'revenue' ? 'Doanh thu đơn hoàn thành' : 'Traffic visits toàn sàn'}</div>
+        </td>
+        <td class="text-right font-mono">${planMetricFormatter(metric.key, metric.target)}</td>
+        <td class="text-right font-mono">${planMetricFormatter(metric.key, metric.target_ytd)}</td>
+        <td class="text-right font-mono">${planMetricFormatter(metric.key, metric.actual_ytd)}</td>
+        <td class="text-right">
+          <div class="plan-progress-inline">
+            <strong>${Number(metric.ytd_rate || 0).toFixed(1)}%</strong>
+            <span><i style="width:${Math.min(120, Math.max(0, Number(metric.ytd_rate || 0)))}%"></i></span>
+          </div>
+        </td>
+        <td class="text-right font-mono ${gapClass}">${planMetricFormatter(metric.key, metric.gap_ytd)}</td>
+        <td class="text-right font-mono">${planMetricFormatter(metric.key, metric.ytg)}</td>
+        <td class="text-right font-mono">${planMetricFormatter(metric.key, metric.avg_needed_month)}</td>
+        <td><span class="plan-status ${isOnTrack ? 'is-on' : 'is-behind'}">${statusLabel}</span></td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function renderPlanMonthlyTable(data) {
+  const tbody = qs('#planMonthlyTableBody');
+  if (!tbody) return;
+
+  const metrics = Array.isArray(data.metrics) ? data.metrics : [];
+  if (!metrics.length) {
+    tbody.innerHTML = '<tr><td colspan="13" class="plan-empty-cell">Chưa có dữ liệu tháng.</td></tr>';
     return;
   }
 
@@ -1076,13 +1117,9 @@ function renderPlanTargetTable(data) {
       target: Number(m.visits_target || 0),
     });
   }
-
   const elapsed = Number(data.elapsed_months || 0);
 
   tbody.innerHTML = metrics.map(metric => {
-    const isOnTrack = metric.status === 'on_track';
-    const gapClass = Number(metric.gap_ytd || 0) >= 0 ? 'is-positive' : 'is-negative';
-    const statusLabel = isOnTrack ? 'Đúng tiến độ' : 'Cần bù tốc độ';
     const cells = monthlyByKey[metric.key] || [];
     const monthCells = cells.map((cell, idx) => {
       const monthNum = idx + 1;
@@ -1102,20 +1139,7 @@ function renderPlanTargetTable(data) {
           <div class="plan-metric-name">${escHtml(metric.label || '')}</div>
           <div class="plan-metric-sub">${metric.key === 'revenue' ? 'Doanh thu đơn hoàn thành' : 'Traffic visits toàn sàn'}</div>
         </td>
-        <td class="text-right font-mono">${planMetricFormatter(metric.key, metric.target)}</td>
-        <td class="text-right font-mono">${planMetricFormatter(metric.key, metric.target_ytd)}</td>
-        <td class="text-right font-mono">${planMetricFormatter(metric.key, metric.actual_ytd)}</td>
-        <td class="text-right">
-          <div class="plan-progress-inline">
-            <strong>${Number(metric.ytd_rate || 0).toFixed(1)}%</strong>
-            <span><i style="width:${Math.min(120, Math.max(0, Number(metric.ytd_rate || 0)))}%"></i></span>
-          </div>
-        </td>
-        <td class="text-right font-mono ${gapClass}">${planMetricFormatter(metric.key, metric.gap_ytd)}</td>
-        <td class="text-right font-mono">${planMetricFormatter(metric.key, metric.ytg)}</td>
-        <td class="text-right font-mono">${planMetricFormatter(metric.key, metric.avg_needed_month)}</td>
         ${monthCells}
-        <td><span class="plan-status ${isOnTrack ? 'is-on' : 'is-behind'}">${statusLabel}</span></td>
       </tr>
     `;
   }).join('');

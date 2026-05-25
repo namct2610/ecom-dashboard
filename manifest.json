@@ -1,7 +1,7 @@
 {
-  "version": "1.2.32",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.2.32/release/dashboard-v3-1.2.32.zip",
-  "changelog": "- Kế hoạch: bảng Target YTD/YTG bổ sung 12 cột thực đạt theo tháng (T1-T12)\n- Tô màu ô tháng đạt/chưa đạt so với mục tiêu trung bình tháng (FY/12)\n- Cột Chỉ tiêu sticky khi scroll ngang, header gom nhóm YTD/YTG/Theo tháng",
+  "version": "1.2.33",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.2.33/release/dashboard-v3-1.2.33.zip",
+  "changelog": "- Kế hoạch: tách thành 2 bảng riêng - Tổng năm (Target YTD/YTG) và Chi tiết theo tháng (T1-T12)\n- Dễ đọc hơn, không còn scroll ngang quá dài cho bảng tổng",
   "min_php": "8.1",
   "released_at": "2026-05-25"
 }
