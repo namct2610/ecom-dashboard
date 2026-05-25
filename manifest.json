@@ -1,7 +1,7 @@
 {
-  "version": "1.2.34",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.2.34/release/dashboard-v3-1.2.34.zip",
-  "changelog": "- Kế hoạch: thay biểu đồ Còn lại phải đạt bằng 2 thẻ tiến độ % riêng cho Doanh số và Lượt truy cập\n- Chuẩn hóa thang đo 0-100%, dễ so sánh dù quy mô chênh lệch lớn\n- Hiển thị Đã đạt / Còn lại / Mục tiêu năm và mức trung bình cần đạt mỗi tháng",
+  "version": "1.2.35",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.2.35/release/dashboard-v3-1.2.35.zip",
+  "changelog": "- Kế hoạch: đưa 'Tiến độ hiện tại' lên đầu trang, dàn 2 cột Doanh số và Lượt truy cập\n- Đổi tiêu đề từ 'Còn lại phải đạt' sang 'Tiến độ hiện tại'\n- Bỏ thẻ 'Tính toán để đạt mục tiêu năm' (thông tin đã có trong tiến độ và bảng tổng)",
   "min_php": "8.1",
   "released_at": "2026-05-25"
 }

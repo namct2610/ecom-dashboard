@@ -392,6 +392,12 @@ tbody tr:hover td { background: var(--surface-hover); }
   gap: 14px;
   margin-top: 12px;
 }
+.plan-ytg-progress-cols {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+@media (max-width: 860px) {
+  .plan-ytg-progress-cols { grid-template-columns: 1fr; }
+}
 .plan-ytg-item {
   padding: 14px 16px;
   border: 1px solid var(--border);

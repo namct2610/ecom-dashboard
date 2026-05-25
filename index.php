@@ -825,6 +825,14 @@ $initials = strtoupper(substr($user, 0, 2));
           <div class="plan-year-pill" id="planYearPill">FY —</div>
         </div>
 
+        <div class="card plan-ytg-card mb-4">
+          <div class="card-title">Tiến độ hiện tại</div>
+          <div class="card-subtitle">Tiến độ chuẩn hóa theo % để so sánh giữa các chỉ tiêu có quy mô khác nhau.</div>
+          <div id="planYtgProgress" class="plan-ytg-progress plan-ytg-progress-cols">
+            <div class="plan-empty-cell">Đang tải...</div>
+          </div>
+        </div>
+
         <div class="card plan-target-card mb-4">
           <div class="plan-card-head">
             <div>
@@ -921,20 +929,6 @@ $initials = strtoupper(substr($user, 0, 2));
           </div>
         </div>
 
-        <div class="grid-2">
-          <div class="card">
-            <div class="card-title">Tính toán để đạt mục tiêu năm</div>
-            <div class="card-subtitle">Các chỉ số dưới đây tự đổi theo YTD/YTG của năm đang xem.</div>
-            <div id="planRecommendationList" class="plan-recommendation-list"></div>
-          </div>
-          <div class="card plan-ytg-card">
-            <div class="card-title">Còn lại phải đạt</div>
-            <div class="card-subtitle">Tiến độ chuẩn hóa theo % để so sánh giữa các chỉ tiêu có quy mô khác nhau.</div>
-            <div id="planYtgProgress" class="plan-ytg-progress">
-              <div class="plan-empty-cell">Đang tải...</div>
-            </div>
-          </div>
-        </div>
       </div>
 
       <!-- ── GBS Reconciliation ───────────────────────────────────────── -->

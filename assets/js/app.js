@@ -1012,7 +1012,6 @@ async function loadPlan() {
 
     renderPlanTargetTable(data);
     renderPlanMonthlyTable(data);
-    renderPlanRecommendations(data);
     Charts.renderPlanRunRate('chartPlanRunRate', data.monthly || []);
     renderPlanYtgProgress(data);
   } catch (e) {
@@ -1183,37 +1182,6 @@ function renderPlanYtgProgress(data) {
           <div><span>Mục tiêu năm</span><strong>${planMetricFormatter(metric.key, target)}</strong></div>
         </div>
         <div class="plan-ytg-foot">${remainingText}</div>
-      </div>
-    `;
-  }).join('');
-}
-
-function renderPlanRecommendations(data) {
-  const root = qs('#planRecommendationList');
-  if (!root) return;
-
-  const metrics = Array.isArray(data.metrics) ? data.metrics : [];
-  if (!metrics.length) {
-    root.innerHTML = '<div class="plan-empty-cell">Chưa có dữ liệu để tính toán.</div>';
-    return;
-  }
-
-  root.innerHTML = metrics.map(metric => {
-    const remaining = Number(data.remaining_months || 0);
-    const targetRate = Number(metric.target_rate || 0);
-    const avg = planMetricFormatter(metric.key, metric.avg_needed_month);
-    const ytg = planMetricFormatter(metric.key, metric.ytg);
-    const message = remaining > 0
-      ? `Còn ${fmtNum(remaining)} tháng, cần trung bình ${avg}/tháng để đạt đủ FY.`
-      : (Number(metric.ytg || 0) > 0 ? 'Năm đã hết kỳ, chỉ tiêu này chưa đạt mục tiêu.' : 'Mục tiêu năm đã hoàn thành.');
-    return `
-      <div class="plan-recommendation-item">
-        <div class="plan-recommendation-top">
-          <strong>${escHtml(metric.label || '')}</strong>
-          <span>${targetRate.toFixed(1)}% FY</span>
-        </div>
-        <div class="plan-recommendation-main">${message}</div>
-        <div class="plan-recommendation-foot">YTG còn lại: <strong>${ytg}</strong></div>
       </div>
     `;
   }).join('');
