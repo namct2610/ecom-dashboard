@@ -231,6 +231,179 @@ tbody tr:hover td { background: var(--surface-hover); }
 .platform-stat-label { color: var(--text-muted); }
 .platform-stat-value { font-weight: 600; color: var(--text-primary); }
 
+/* ── Plan ──────────────────────────────────────────────────────────────── */
+.plan-page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+.plan-year-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 6px 12px;
+  border-radius: var(--radius-full);
+  background: #eef2ff;
+  color: #3730a3;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+.plan-target-card {
+  padding: 0;
+  overflow: hidden;
+}
+.plan-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid var(--border);
+}
+.plan-updated {
+  flex-shrink: 0;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+.plan-target-table-wrap {
+  padding: 0 0 4px;
+}
+.plan-target-table {
+  min-width: 980px;
+}
+.plan-target-table thead th {
+  padding-top: 14px;
+  background: #f8fafc;
+}
+.plan-target-table tbody td {
+  padding-top: 12px;
+  padding-bottom: 12px;
+}
+.plan-metric-name {
+  color: var(--text-primary);
+  font-weight: 800;
+}
+.plan-metric-sub,
+.plan-recommendation-foot {
+  color: var(--text-muted);
+  font-size: 11px;
+  margin-top: 2px;
+}
+.plan-progress-inline {
+  display: grid;
+  grid-template-columns: 48px minmax(70px, 1fr);
+  align-items: center;
+  gap: 8px;
+}
+.plan-progress-inline strong {
+  color: var(--text-primary);
+  font-size: 12px;
+}
+.plan-progress-inline span {
+  display: block;
+  height: 6px;
+  overflow: hidden;
+  border-radius: var(--radius-full);
+  background: #e2e8f0;
+}
+.plan-progress-inline i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #2563eb, #0f766e);
+}
+.plan-status {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 9px;
+  border-radius: var(--radius-full);
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.plan-status.is-on {
+  background: #dcfce7;
+  color: #166534;
+}
+.plan-status.is-behind {
+  background: #fff7ed;
+  color: #c2410c;
+}
+.plan-target-table .is-positive {
+  color: #15803d;
+}
+.plan-target-table .is-negative {
+  color: #dc2626;
+}
+.plan-empty-cell {
+  padding: 24px;
+  color: var(--text-muted);
+  text-align: center;
+  font-size: 13px;
+}
+.plan-workbench {
+  align-items: stretch;
+}
+.plan-form-card {
+  display: flex;
+  flex-direction: column;
+}
+.plan-target-form {
+  display: grid;
+  gap: 12px;
+  margin-top: 4px;
+}
+.plan-target-form label {
+  display: grid;
+  gap: 6px;
+}
+.plan-target-form label span {
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 700;
+}
+.plan-target-form input {
+  width: 100%;
+  height: 38px;
+  background: var(--surface);
+}
+.plan-target-form .btn {
+  justify-content: center;
+  margin-top: 4px;
+}
+.plan-recommendation-list {
+  display: grid;
+  gap: 10px;
+}
+.plan-recommendation-item {
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #f8fafc;
+}
+.plan-recommendation-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+.plan-recommendation-top strong {
+  color: var(--text-primary);
+  font-size: 13px;
+}
+.plan-recommendation-top span {
+  color: #1d4ed8;
+  font-size: 12px;
+  font-weight: 800;
+}
+.plan-recommendation-main {
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
 /* ── Reconcile ─────────────────────────────────────────────────────────── */
 .reconcile-page-header {
   display: flex;
@@ -1048,6 +1221,16 @@ tbody tr:hover td { background: var(--surface-hover); }
 }
 
 @media (max-width: 768px) {
+  .plan-page-header,
+  .plan-card-head {
+    flex-direction: column;
+  }
+  .plan-updated {
+    flex-shrink: 1;
+  }
+  .plan-progress-inline {
+    grid-template-columns: 1fr;
+  }
   .reconcile-page-header {
     flex-direction: column;
     align-items: flex-start;

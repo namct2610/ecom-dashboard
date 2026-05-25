@@ -1,7 +1,7 @@
 {
-  "version": "1.2.29",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.2.29/release/dashboard-v3-1.2.29.zip",
-  "changelog": "- Căn đều khoảng cách giữa các card trong trang Đối soát GBS\n- Đổi phần Thiết lập khớp thành Quy tắc dữ liệu\n- Hiển thị quy tắc từng sàn theo hàng ngang để dễ theo dõi hơn",
+  "version": "1.2.30",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.2.30/release/dashboard-v3-1.2.30.zip",
+  "changelog": "- Thêm trang Kế hoạch với bảng Target YTD / YTG\n- Cho phép lưu mục tiêu năm cho doanh số và lượt truy cập\n- Tính actual YTD, YTG và trung bình cần đạt cho các tháng còn lại\n- Bổ sung biểu đồ run-rate và phần khuyến nghị để đạt mục tiêu năm",
   "min_php": "8.1",
   "released_at": "2026-05-08"
 }
