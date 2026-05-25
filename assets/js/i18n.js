@@ -27,7 +27,7 @@ const I18n = (() => {
   // ── Inline VI fallback — always available, zero network needed ───────────
   const _vi = {
     'nav.overview':'Tổng quan','nav.orders':'Đơn hàng','nav.products':'Sản phẩm',
-    'nav.customers':'Khách hàng','nav.traffic':'Traffic','nav.comparison':'So sánh',
+    'nav.customers':'Khách hàng','nav.traffic':'Traffic','nav.comparison':'So sánh','nav.plan':'Kế hoạch',
     'nav.analytics':'Phân tích','nav.reconcile':'Đối soát GBS','nav.upload':'Upload','nav.connect':'Kết nối API',
     'nav.logs':'Nhật ký','nav.settings':'Cài đặt','nav.admin':'Quản trị','nav.collapse':'Thu gọn','nav.logout':'Đăng xuất',
     'filter.all':'Tất cả','period.month':'Tháng','period.year':'Năm',
@@ -39,6 +39,7 @@ const I18n = (() => {
     'page.customers.title':'Khách hàng','page.customers.sub':'Phân tích khách hàng theo địa lý và thanh toán',
     'page.traffic.title':'Traffic','page.traffic.sub':'Lượt xem, lượt truy cập và tỷ lệ chuyển đổi',
     'page.comparison.title':'So sánh sàn','page.comparison.sub':'Hiệu suất Shopee, Lazada và TikTok Shop',
+    'page.plan.title':'Kế hoạch','page.plan.sub':'Theo dõi Target YTD, YTG và run-rate cần đạt mục tiêu năm',
     'page.reconcile.title':'Đối soát GBS','page.reconcile.sub':'Khớp file GBS với export Shopee, Lazada và TikTok Shop theo đơn hàng',
     'page.analytics.title':'Phân tích nâng cao','page.analytics.sub':'Heatmap thời gian đặt hàng, doanh thu theo địa lý, sản phẩm và thương hiệu',
     'page.upload.title':'Upload dữ liệu','page.upload.sub':'Tải lên file Excel từ Shopee, Lazada, TikTok Shop',

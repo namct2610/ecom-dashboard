@@ -812,6 +812,146 @@ const Charts = (() => {
     }));
   }
 
+  /* ── Plan run-rate: monthly actual vs annual target pace ── */
+  function renderPlanRunRate(id, monthly) {
+    destroy(id);
+    const el = canvas(id); if (!el) return;
+    const rows = Array.isArray(monthly) ? monthly : [];
+    if (!rows.length) return renderEmpty(el, t('cl.no_data'));
+
+    const labels = rows.map(row => String(row.month || '').slice(5, 7) + '/' + String(row.month || '').slice(0, 4));
+    const revenueActual = rows.map(row => row.revenue || 0);
+    const revenueTarget = rows.map(row => row.revenue_target || 0);
+    const visitsActual = rows.map(row => row.visits || 0);
+    const visitsTarget = rows.map(row => row.visits_target || 0);
+
+    save(id, new Chart(el, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [
+          {
+            type: 'bar',
+            label: 'Doanh số actual',
+            data: revenueActual,
+            backgroundColor: 'rgba(37, 99, 235, 0.72)',
+            borderRadius: 5,
+            yAxisID: 'y',
+          },
+          {
+            type: 'line',
+            label: 'Doanh số target/tháng',
+            data: revenueTarget,
+            borderColor: '#1d4ed8',
+            borderDash: [5, 5],
+            borderWidth: 2,
+            pointRadius: 0,
+            tension: 0.2,
+            yAxisID: 'y',
+          },
+          {
+            type: 'line',
+            label: 'Visit actual',
+            data: visitsActual,
+            borderColor: '#0f766e',
+            backgroundColor: 'rgba(15, 118, 110, 0.12)',
+            borderWidth: 2,
+            pointRadius: 2,
+            tension: 0.25,
+            yAxisID: 'y1',
+          },
+          {
+            type: 'line',
+            label: 'Visit target/tháng',
+            data: visitsTarget,
+            borderColor: '#14b8a6',
+            borderDash: [4, 4],
+            borderWidth: 2,
+            pointRadius: 0,
+            tension: 0.2,
+            yAxisID: 'y1',
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { display: true, position: 'bottom', labels: { boxWidth: 10, padding: 12, font: { size: 11 } } },
+          tooltip: {
+            callbacks: {
+              label: ctx => {
+                const isRevenue = ctx.dataset.yAxisID === 'y';
+                return ` ${ctx.dataset.label}: ${isRevenue ? vndFormatter(ctx.raw) : Number(ctx.raw || 0).toLocaleString('vi-VN')}`;
+              },
+            },
+          },
+        },
+        scales: {
+          x: { grid: { display: false }, border: { display: false }, ticks: { font: { size: 11 }, color: TICK_COLOR } },
+          y: {
+            position: 'left',
+            grid: { color: GRID_COLOR, drawBorder: false },
+            border: { display: false },
+            ticks: { callback: vndFormatter, font: { size: 11 }, color: TICK_COLOR },
+          },
+          y1: {
+            position: 'right',
+            grid: { drawOnChartArea: false },
+            border: { display: false },
+            ticks: { callback: value => Number(value || 0).toLocaleString('vi-VN'), font: { size: 11 }, color: TICK_COLOR },
+          },
+        },
+      },
+    }));
+  }
+
+  /* ── Plan YTG bar ── */
+  function renderPlanYtg(id, metrics) {
+    destroy(id);
+    const el = canvas(id); if (!el) return;
+    const rows = Array.isArray(metrics) ? metrics : [];
+    if (!rows.length) return renderEmpty(el, t('cl.no_data'));
+
+    save(id, new Chart(el, {
+      type: 'bar',
+      data: {
+        labels: rows.map(row => row.label || ''),
+        datasets: [{
+          label: 'YTG',
+          data: rows.map(row => row.ytg || 0),
+          backgroundColor: rows.map(row => row.key === 'revenue' ? '#2563eb' : '#0f766e'),
+          borderRadius: 6,
+        }],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        indexAxis: 'y',
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: ctx => {
+                const metric = rows[ctx.dataIndex] || {};
+                return ` YTG: ${metric.key === 'revenue' ? vndFormatter(ctx.raw) : Number(ctx.raw || 0).toLocaleString('vi-VN')}`;
+              },
+            },
+          },
+        },
+        scales: {
+          x: {
+            grid: { color: GRID_COLOR, drawBorder: false },
+            border: { display: false },
+            ticks: { font: { size: 11 }, color: TICK_COLOR, callback: value => Number(value || 0).toLocaleString('vi-VN') },
+          },
+          y: { grid: { display: false }, border: { display: false }, ticks: { font: { size: 11 }, color: TICK_COLOR } },
+        },
+      },
+    }));
+  }
+
   /* ── Empty state helper ── */
   function renderEmpty(el, msg) {
     const parent = el.parentElement;
@@ -852,5 +992,7 @@ const Charts = (() => {
     renderRevByCity,
     renderDistrictBar,
     renderCustomerSegmentDonut,
+    renderPlanRunRate,
+    renderPlanYtg,
   };
 })();

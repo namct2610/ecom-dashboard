@@ -48,6 +48,12 @@ const BrandSettingsState = {
   rules: [],
 };
 
+const PlanState = {
+  bound: false,
+  year: null,
+  data: null,
+};
+
 // ── Helpers ──────────────────────────────────────────────────────────────
 function qs(sel, ctx = document)  { return ctx.querySelector(sel); }
 function qsa(sel, ctx = document) { return Array.from(ctx.querySelectorAll(sel)); }
@@ -774,6 +780,7 @@ function loadPage(name) {
     customers:  loadCustomers,
     traffic:    loadTraffic,
     comparison: loadComparison,
+    plan:       loadPlan,
     reconcile:  loadReconcile,
     heatmaps:   loadHeatmaps,
     upload:     loadUploadHistory,
@@ -954,6 +961,165 @@ async function loadComparison() {
     console.error('loadComparison', e);
     toast(t('toast.load_comparison'), 'error');
   }
+}
+
+function resolvePlanYear() {
+  if (PlanState.year) return PlanState.year;
+  if (App.mode === 'year' && /^\d{4}$/.test(App.period || '')) {
+    return Number(App.period);
+  }
+  if (/^\d{4}-\d{2}$/.test(App.period || '')) {
+    return Number(App.period.slice(0, 4));
+  }
+  if (hasActiveDateRange() && /^\d{4}/.test(App.dateTo || '')) {
+    return Number(App.dateTo.slice(0, 4));
+  }
+  return new Date().getFullYear();
+}
+
+function bindPlanPage() {
+  if (PlanState.bound) return;
+  PlanState.bound = true;
+
+  qs('#planTargetForm')?.addEventListener('submit', async event => {
+    event.preventDefault();
+    await savePlanTargets();
+  });
+
+  qs('#planYearInput')?.addEventListener('change', event => {
+    const year = Number(event.currentTarget.value || resolvePlanYear());
+    if (year >= 2020 && year <= 2100) {
+      PlanState.year = year;
+      loadPlan();
+    }
+  });
+}
+
+async function loadPlan() {
+  bindPlanPage();
+  const year = resolvePlanYear();
+  PlanState.year = year;
+
+  try {
+    const data = await api('plan.php', { params: { year } });
+    PlanState.data = data;
+
+    qs('#planYearPill').textContent = `FY ${data.year}`;
+    qs('#planYearInput').value = data.year;
+    qs('#planRevenueTarget').value = Math.round(Number(data.targets?.revenue || 0)) || '';
+    qs('#planVisitsTarget').value = Math.round(Number(data.targets?.visits || 0)) || '';
+    qs('#planUpdatedAt').textContent = data.generated_at ? `Cập nhật ${fmtDateTime(data.generated_at)}` : '—';
+
+    renderPlanTargetTable(data);
+    renderPlanRecommendations(data);
+    Charts.renderPlanRunRate('chartPlanRunRate', data.monthly || []);
+    Charts.renderPlanYtg('chartPlanYtg', data.metrics || []);
+  } catch (e) {
+    console.error('loadPlan', e);
+    qs('#planTargetTableBody').innerHTML = `<tr><td colspan="9" class="plan-empty-cell">Không tải được kế hoạch: ${escHtml(e.message || 'Unknown error')}</td></tr>`;
+    toast('Không thể tải dữ liệu kế hoạch.', 'error');
+  }
+}
+
+async function savePlanTargets() {
+  const year = Number(qs('#planYearInput')?.value || resolvePlanYear());
+  const revenueTarget = Number(qs('#planRevenueTarget')?.value || 0);
+  const visitsTarget = Number(qs('#planVisitsTarget')?.value || 0);
+
+  if (!year || year < 2020 || year > 2100) {
+    toast('Năm kế hoạch không hợp lệ.', 'error');
+    return;
+  }
+
+  try {
+    const res = await apiFetch('api/plan.php', {
+      method: 'POST',
+      body: JSON.stringify({
+        year,
+        revenue_target: revenueTarget,
+        visits_target: visitsTarget,
+      }),
+    });
+    if (!res.success) throw new Error(res.error || t('msg.save_failed'));
+    PlanState.year = year;
+    toast('Đã lưu mục tiêu kế hoạch.', 'success');
+    await loadPlan();
+  } catch (e) {
+    toast(e.message || 'Không thể lưu mục tiêu kế hoạch.', 'error');
+  }
+}
+
+function planMetricFormatter(key, value) {
+  return key === 'revenue' ? fmtVND(value) : fmtNum(value);
+}
+
+function renderPlanTargetTable(data) {
+  const tbody = qs('#planTargetTableBody');
+  if (!tbody) return;
+
+  const metrics = Array.isArray(data.metrics) ? data.metrics : [];
+  if (!metrics.length) {
+    tbody.innerHTML = '<tr><td colspan="9" class="plan-empty-cell">Chưa có dữ liệu kế hoạch.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = metrics.map(metric => {
+    const isOnTrack = metric.status === 'on_track';
+    const gapClass = Number(metric.gap_ytd || 0) >= 0 ? 'is-positive' : 'is-negative';
+    const statusLabel = isOnTrack ? 'Đúng tiến độ' : 'Cần bù tốc độ';
+    return `
+      <tr>
+        <td>
+          <div class="plan-metric-name">${escHtml(metric.label || '')}</div>
+          <div class="plan-metric-sub">${metric.key === 'revenue' ? 'Doanh thu đơn hoàn thành' : 'Traffic visits toàn sàn'}</div>
+        </td>
+        <td class="text-right font-mono">${planMetricFormatter(metric.key, metric.target)}</td>
+        <td class="text-right font-mono">${planMetricFormatter(metric.key, metric.target_ytd)}</td>
+        <td class="text-right font-mono">${planMetricFormatter(metric.key, metric.actual_ytd)}</td>
+        <td class="text-right">
+          <div class="plan-progress-inline">
+            <strong>${Number(metric.ytd_rate || 0).toFixed(1)}%</strong>
+            <span><i style="width:${Math.min(120, Math.max(0, Number(metric.ytd_rate || 0)))}%"></i></span>
+          </div>
+        </td>
+        <td class="text-right font-mono ${gapClass}">${planMetricFormatter(metric.key, metric.gap_ytd)}</td>
+        <td class="text-right font-mono">${planMetricFormatter(metric.key, metric.ytg)}</td>
+        <td class="text-right font-mono">${planMetricFormatter(metric.key, metric.avg_needed_month)}</td>
+        <td><span class="plan-status ${isOnTrack ? 'is-on' : 'is-behind'}">${statusLabel}</span></td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function renderPlanRecommendations(data) {
+  const root = qs('#planRecommendationList');
+  if (!root) return;
+
+  const metrics = Array.isArray(data.metrics) ? data.metrics : [];
+  if (!metrics.length) {
+    root.innerHTML = '<div class="plan-empty-cell">Chưa có dữ liệu để tính toán.</div>';
+    return;
+  }
+
+  root.innerHTML = metrics.map(metric => {
+    const remaining = Number(data.remaining_months || 0);
+    const targetRate = Number(metric.target_rate || 0);
+    const avg = planMetricFormatter(metric.key, metric.avg_needed_month);
+    const ytg = planMetricFormatter(metric.key, metric.ytg);
+    const message = remaining > 0
+      ? `Còn ${fmtNum(remaining)} tháng, cần trung bình ${avg}/tháng để đạt đủ FY.`
+      : (Number(metric.ytg || 0) > 0 ? 'Năm đã hết kỳ, chỉ tiêu này chưa đạt mục tiêu.' : 'Mục tiêu năm đã hoàn thành.');
+    return `
+      <div class="plan-recommendation-item">
+        <div class="plan-recommendation-top">
+          <strong>${escHtml(metric.label || '')}</strong>
+          <span>${targetRate.toFixed(1)}% FY</span>
+        </div>
+        <div class="plan-recommendation-main">${message}</div>
+        <div class="plan-recommendation-foot">YTG còn lại: <strong>${ytg}</strong></div>
+      </div>
+    `;
+  }).join('');
 }
 
 async function loadReconcile() {

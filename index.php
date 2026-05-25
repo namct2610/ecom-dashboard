@@ -136,6 +136,10 @@ $initials = strtoupper(substr($user, 0, 2));
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
         <span class="nav-label" data-i18n="nav.comparison">So sánh</span>
       </div>
+      <div class="nav-item" data-page="plan" data-label="Kế hoạch">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19V5"/><path d="M4 19h16"/><path d="M8 15l3-3 3 2 5-7"/><path d="M18 7h1v1"/></svg>
+        <span class="nav-label" data-i18n="nav.plan">Kế hoạch</span>
+      </div>
       <div class="nav-item" data-page="reconcile" data-label="Đối soát GBS">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h10M4 9h16M4 13h10M4 17h16"/><path d="M18 4l2 2 4-4"/><path d="M18 12l2 2 4-4"/></svg>
         <span class="nav-label" data-i18n="nav.reconcile">Đối soát GBS</span>
@@ -807,6 +811,99 @@ $initials = strtoupper(substr($user, 0, 2));
               </thead>
               <tbody id="comparisonTable"></tbody>
             </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Plan ──────────────────────────────────────────────────────── -->
+      <div class="page" id="page-plan">
+        <div class="page-header plan-page-header">
+          <div>
+            <h1 data-i18n="page.plan.title">Kế hoạch</h1>
+            <p data-i18n="page.plan.sub">Theo dõi Target YTD, YTG và run-rate cần đạt mục tiêu năm</p>
+          </div>
+          <div class="plan-year-pill" id="planYearPill">FY —</div>
+        </div>
+
+        <div class="card plan-target-card mb-4">
+          <div class="plan-card-head">
+            <div>
+              <div class="card-title">Target YTD / YTG</div>
+              <div class="card-subtitle">Bảng điều hành nhanh theo mục tiêu năm, thực đạt hiện tại và mức trung bình cần đạt cho các tháng còn lại.</div>
+            </div>
+            <span class="plan-updated" id="planUpdatedAt">—</span>
+          </div>
+          <div class="table-wrapper plan-target-table-wrap">
+            <table class="plan-target-table">
+              <thead>
+                <tr>
+                  <th>Chỉ tiêu</th>
+                  <th class="text-right">Target FY</th>
+                  <th class="text-right">Target YTD</th>
+                  <th class="text-right">Actual YTD</th>
+                  <th class="text-right">% YTD</th>
+                  <th class="text-right">Gap YTD</th>
+                  <th class="text-right">YTG</th>
+                  <th class="text-right">TB/tháng còn lại</th>
+                  <th>Trạng thái</th>
+                </tr>
+              </thead>
+              <tbody id="planTargetTableBody">
+                <tr><td colspan="9" class="plan-empty-cell">Đang tải kế hoạch...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="grid-3-1 plan-workbench">
+          <div class="chart-card">
+            <div class="chart-header">
+              <div class="chart-header-left">
+                <h3>Tiến độ theo tháng</h3>
+                <p>Actual so với đường target bình quân năm</p>
+              </div>
+            </div>
+            <div class="chart-wrap" style="height:300px">
+              <canvas id="chartPlanRunRate"></canvas>
+            </div>
+          </div>
+          <div class="card plan-form-card">
+            <div class="card-title">Mục tiêu năm</div>
+            <div class="card-subtitle">Nhập mục tiêu doanh số và lượt truy cập cho năm đang xem.</div>
+            <form id="planTargetForm" class="plan-target-form">
+              <label>
+                <span>Năm</span>
+                <input id="planYearInput" type="number" min="2020" max="2100" step="1">
+              </label>
+              <label>
+                <span>Doanh số mục tiêu</span>
+                <input id="planRevenueTarget" type="number" min="0" step="1000000" inputmode="numeric" placeholder="VD: 2500000000">
+              </label>
+              <label>
+                <span>Lượt truy cập mục tiêu</span>
+                <input id="planVisitsTarget" type="number" min="0" step="1000" inputmode="numeric" placeholder="VD: 1200000">
+              </label>
+              <button class="btn btn-primary" type="submit">Lưu mục tiêu</button>
+            </form>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-title">Tính toán để đạt mục tiêu năm</div>
+            <div class="card-subtitle">Các chỉ số dưới đây tự đổi theo YTD/YTG của năm đang xem.</div>
+            <div id="planRecommendationList" class="plan-recommendation-list"></div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-header">
+              <div class="chart-header-left">
+                <h3>Còn lại phải đạt</h3>
+                <p>YTG so với target năm</p>
+              </div>
+            </div>
+            <div class="chart-wrap" style="height:240px">
+              <canvas id="chartPlanYtg"></canvas>
+            </div>
           </div>
         </div>
       </div>
