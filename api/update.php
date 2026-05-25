@@ -12,6 +12,8 @@ require_admin();
 $pdo     = db($config);
 $updater = new Updater(__DIR__ . '/..');
 
+const PRODUCTION_MANIFEST_URL = 'https://raw.githubusercontent.com/namct2610/ecom-dashboard/main/manifest.json';
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function get_setting(PDO $pdo, string $key, string $default = ''): string
@@ -29,10 +31,22 @@ function set_setting(PDO $pdo, string $key, string $value): void
     ")->execute([$key, $value]);
 }
 
+function production_manifest_url(PDO $pdo): string
+{
+    $storedUrl = get_setting($pdo, 'update_manifest_url');
+    if ($storedUrl !== PRODUCTION_MANIFEST_URL) {
+        set_setting($pdo, 'update_manifest_url', PRODUCTION_MANIFEST_URL);
+        set_setting($pdo, 'update_last_check', '');
+        set_setting($pdo, 'update_cached_data', '');
+    }
+
+    return PRODUCTION_MANIFEST_URL;
+}
+
 // ── GET: check for updates ────────────────────────────────────────────────────
 try {
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-        $manifestUrl = get_setting($pdo, 'update_manifest_url');
+        $manifestUrl = production_manifest_url($pdo);
         $currentVer  = $updater->getCurrentVersion();
         $lastCheck   = get_setting($pdo, 'update_last_check');
         $cachedData  = get_setting($pdo, 'update_cached_data');
@@ -41,19 +55,17 @@ try {
         $manifest    = [];
         $fetchError  = null;
 
-        if ($manifestUrl) {
-            // Use cache if less than 6 hours old
-            if ($cacheAge < 21600 && $cachedData) {
-                $manifest = json_decode($cachedData, true) ?: [];
-            } else {
-                try {
-                    $manifest = $updater->fetchManifest($manifestUrl);
-                    set_setting($pdo, 'update_last_check',  (string) time());
-                    set_setting($pdo, 'update_cached_data', json_encode($manifest) ?: '');
-                } catch (\Throwable $e) {
-                    $fetchError = $e->getMessage();
-                    $manifest   = json_decode($cachedData ?: '[]', true) ?: [];
-                }
+        // Use cache if less than 6 hours old.
+        if ($cacheAge < 21600 && $cachedData) {
+            $manifest = json_decode($cachedData, true) ?: [];
+        } else {
+            try {
+                $manifest = $updater->fetchManifest($manifestUrl);
+                set_setting($pdo, 'update_last_check',  (string) time());
+                set_setting($pdo, 'update_cached_data', json_encode($manifest) ?: '');
+            } catch (\Throwable $e) {
+                $fetchError = $e->getMessage();
+                $manifest   = json_decode($cachedData ?: '[]', true) ?: [];
             }
         }
 
@@ -81,18 +93,6 @@ try {
 
     $body   = (array) json_decode(file_get_contents('php://input') ?: '{}', true);
     $action = $body['action'] ?? '';
-
-    // ── Save manifest URL ─────────────────────────────────────────────────────
-    if ($action === 'save_manifest_url') {
-        $url = trim($body['url'] ?? '');
-        if ($url !== '' && !filter_var($url, FILTER_VALIDATE_URL)) {
-            json_error('URL không hợp lệ.');
-        }
-        set_setting($pdo, 'update_manifest_url', $url);
-        set_setting($pdo, 'update_last_check',   '');
-        set_setting($pdo, 'update_cached_data',  '');
-        json_response(['success' => true]);
-    }
 
     // ── Force re-check (clear cache) ──────────────────────────────────────────
     if ($action === 'check_now') {

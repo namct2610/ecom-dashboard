@@ -185,7 +185,9 @@
   9. push tag
   10. kiểm tra public URL trả `HTTP 200`
 - Các release gần đây đã theo pattern `v1.2.x`.
-- Tag/zip được dùng trực tiếp cho updater public.
+- Production chỉ dùng một manifest cố định:
+  - `https://raw.githubusercontent.com/namct2610/ecom-dashboard/main/manifest.json`
+- Manifest có thể trỏ `download_url` tới zip theo tag release, nhưng không dùng manifest theo tag/branch version nữa.
 
 ## 9. Checklist verify hay dùng
 
@@ -202,7 +204,6 @@
   - `./build.sh <version>`
 - Verify URL public:
   - `curl -I https://raw.githubusercontent.com/namct2610/ecom-dashboard/main/manifest.json`
-  - `curl -I https://raw.githubusercontent.com/namct2610/ecom-dashboard/vX.Y.Z/manifest.json`
   - `curl -I https://raw.githubusercontent.com/namct2610/ecom-dashboard/vX.Y.Z/release/dashboard-v3-X.Y.Z.zip`
 
 ## 10. Lưu ý dễ quên
@@ -226,4 +227,3 @@
 - Mục tiêu hotfix gần nhất:
   - tự nhận diện traffic theo nội dung workbook
   - Shopee traffic chỉ import sheet `Tất cả`
-

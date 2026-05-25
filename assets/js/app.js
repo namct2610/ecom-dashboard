@@ -3211,20 +3211,6 @@ function bindSettingsPage() {
     await loadUpdateCard();
   });
 
-  qs('#btnSaveManifestUrl')?.addEventListener('click', async () => {
-    const url = (qs('#inputManifestUrl')?.value || '').trim();
-    const res = await apiFetch('api/update.php', {
-      method: 'POST',
-      body: JSON.stringify({ action: 'save_manifest_url', url }),
-    });
-    if (res.success) {
-      toast(t('toast.manifest_saved'), 'success');
-      await loadUpdateCard();
-    } else {
-      toast(res.error || t('msg.save_failed'), 'error');
-    }
-  });
-
   qs('#btnReloadBrandSettings')?.addEventListener('click', loadBrandSettings);
   qs('#btnSaveBrandSettings')?.addEventListener('click', saveBrandSettings);
   qs('#btnAddBrandRuleRow')?.addEventListener('click', addBrandRuleRow);
