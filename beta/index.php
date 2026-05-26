@@ -43,7 +43,7 @@ body{padding-top:28px !important}
   <a href="../index.php">← Trở về bản chính thức</a>
 </div>
 HTML;
-$html = str_replace('<script src="data.js"></script>', $inject . "\n" . '<script src="data.js.php"></script>', $html);
+$html = str_replace('<script src="data.js"></script>', $inject . "\n" . '<script src="data.php"></script>', $html);
 $html = str_replace('<div id="root"></div>', $banner . "\n" . '<div id="root"></div>', $html);
 
 echo $html;

@@ -16,13 +16,30 @@ if (current_user() === null) {
 header('Content-Type: application/javascript; charset=utf-8');
 header('Cache-Control: no-cache, must-revalidate');
 
+// Output a default empty shape immediately so the React UI never hangs
+// even if a query fails — we'll overwrite it on success.
+$emptyPlat = ['orders' => 0, 'completed' => 0, 'cancelled' => 0, 'revenue' => 0];
+$defaultData = [
+    'period' => date('Y-m'),
+    'summary' => [
+        'total_orders' => 0, 'completed_orders' => 0, 'cancelled_orders' => 0,
+        'shipping_orders' => 0, 'cancel_rate' => 0, 'total_revenue' => 0,
+        'avg_order_value' => 0, 'total_page_views' => 0, 'total_visitors' => 0,
+        'shopee' => $emptyPlat, 'lazada' => $emptyPlat, 'tiktok' => $emptyPlat,
+    ],
+    'revenue_series' => [], 'top_products_qty' => [], 'top_products_rev' => [],
+    'city_distribution' => [], 'heatmap' => [], 'traffic' => [], 'recent_orders' => [],
+];
+echo "window.DASHBOARD_DATA = " . json_encode($defaultData, JSON_UNESCAPED_UNICODE) . ";\n";
+
 try {
     $pdo = db($config);
 } catch (\Throwable $e) {
-    echo "window.DASHBOARD_DATA = {error:" . json_encode($e->getMessage()) . "};\n";
+    echo "console.warn('Beta data init failed:', " . json_encode($e->getMessage()) . ");\n";
     exit;
 }
 
+try {
 $period   = date('Y-m');
 $start    = $period . '-01';
 $end      = date('Y-m-t', strtotime($start));
@@ -258,3 +275,8 @@ $data = [
 ];
 
 echo "window.DASHBOARD_DATA = " . json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . ";\n";
+} catch (\Throwable $e) {
+    // Default shape already emitted at top — log the error to the JS console
+    // so the UI still renders (with empty data) instead of getting stuck on loading.
+    echo "console.warn('Beta data query failed:', " . json_encode($e->getMessage()) . ");\n";
+}
