@@ -8,6 +8,7 @@
 const App = {
   csrf: window.__CSRF__ || '',
   platform: 'all',
+  viewMode: (typeof localStorage !== 'undefined' && localStorage.getItem('viewMode')) === 'sku' ? 'sku' : 'combo',
   mode: 'month',        // 'month' | 'year'
   period: '',           // '2026-03' | '2026'
   dateFrom: '',         // 'YYYY-MM-DD' — khi dùng preset ngày (Hôm nay, 7 ngày…)
@@ -306,8 +307,8 @@ function toast(msg, type = 'info', duration = 3500) {
 // ── API client ───────────────────────────────────────────────────────────
 async function api(path, opts = {}) {
   const filterParams = hasActiveDateRange()
-    ? { date_from: App.dateFrom, date_to: App.dateTo, platform: App.platform }
-    : { mode: App.mode, period: App.period, platform: App.platform };
+    ? { date_from: App.dateFrom, date_to: App.dateTo, platform: App.platform, view_mode: App.viewMode }
+    : { mode: App.mode, period: App.period, platform: App.platform, view_mode: App.viewMode };
   const params = new URLSearchParams({
     ...filterParams,
     ...(opts.params || {}),
@@ -705,6 +706,22 @@ function setupPlatformFilter() {
       App.platform = btn.dataset.platform;
       qsa('.platform-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
+      loadPage(App.currentPage);
+    });
+  });
+}
+
+// ── View mode toggle (COMBO ↔ SKU) ────────────────────────────────────
+function setupViewModeToggle() {
+  // restore active state from App.viewMode
+  qsa('.view-mode-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.viewMode === App.viewMode);
+    btn.addEventListener('click', () => {
+      const mode = btn.dataset.viewMode === 'sku' ? 'sku' : 'combo';
+      if (App.viewMode === mode) return;
+      App.viewMode = mode;
+      try { localStorage.setItem('viewMode', mode); } catch (_) {}
+      qsa('.view-mode-btn').forEach(b => b.classList.toggle('active', b.dataset.viewMode === mode));
       loadPage(App.currentPage);
     });
   });
@@ -2948,7 +2965,7 @@ function deleteBrandRuleRow(index) {
 }
 
 function makeEmptyReconcilePriceRow() {
-  return { sku: '', product_name: '', unit_price: '' };
+  return { sku: '', product_name: '', brand: '', unit_price: '' };
 }
 
 function makeEmptyReconcileComboRow() {
@@ -3002,7 +3019,7 @@ function renderReconcilePriceRows(rows) {
   if (!tbody) return;
 
   if (!rows.length) {
-    tbody.innerHTML = '<tr><td colspan="4" class="reconcile-settings-empty">Chưa có dòng Bang_gia. Có thể nhập từ Excel hoặc thêm thủ công.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="5" class="reconcile-settings-empty">Chưa có dòng Bang_gia. Có thể nhập từ Excel hoặc thêm thủ công.</td></tr>';
     return;
   }
 
@@ -3010,6 +3027,7 @@ function renderReconcilePriceRows(rows) {
     <tr data-reconcile-row="price" data-index="${index}">
       <td><input type="text" data-field="sku" value="${escHtml(row.sku || '')}" placeholder="VD: MON055GH04VAN"></td>
       <td><input type="text" data-field="product_name" value="${escHtml(row.product_name || '')}" placeholder="Tên sản phẩm (tuỳ chọn)"></td>
+      <td><input type="text" data-field="brand" value="${escHtml(row.brand || '')}" placeholder="Thương hiệu (tuỳ chọn)"></td>
       <td><input type="number" min="0" step="0.01" data-field="unit_price" value="${escHtml(formatReconcileSettingValue(row.unit_price))}" placeholder="0"></td>
       <td><button class="btn btn-secondary btn-sm" data-action="delete-reconcile-price-row" data-index="${index}">Xoá</button></td>
     </tr>
@@ -3064,6 +3082,7 @@ function readReconcilePriceRowsFromDom() {
   return qsa('tr[data-reconcile-row="price"]', tbody).map(row => ({
     sku: qs('[data-field="sku"]', row)?.value || '',
     product_name: qs('[data-field="product_name"]', row)?.value || '',
+    brand: qs('[data-field="brand"]', row)?.value || '',
     unit_price: qs('[data-field="unit_price"]', row)?.value || '',
   }));
 }
@@ -4249,6 +4268,7 @@ function setupAppShell() {
 
   setupNav();
   setupPlatformFilter();
+  setupViewModeToggle();
   setupAnalyticsFilters();
   setupPeriodPicker();
   setupLogsPage();

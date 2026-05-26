@@ -60,9 +60,10 @@ function normalize_reconcile_prices(array $rows): array
 
         $sku = strtoupper(trim((string) ($row['sku'] ?? '')));
         $productName = trim((string) ($row['product_name'] ?? ''));
+        $brand = trim((string) ($row['brand'] ?? ''));
         $unitPrice = parse_reconcile_number($row['unit_price'] ?? null);
 
-        if ($sku === '' && $productName === '' && $unitPrice === null) {
+        if ($sku === '' && $productName === '' && $brand === '' && $unitPrice === null) {
             continue;
         }
 
@@ -82,6 +83,7 @@ function normalize_reconcile_prices(array $rows): array
         $normalized[$sku] = [
             'sku'          => $sku,
             'product_name' => $productName,
+            'brand'        => $brand,
             'unit_price'   => $unitPrice,
         ];
     }
@@ -245,6 +247,7 @@ function import_price_rows_from_file(string $path): array
     $col = resolve_import_columns($headers, [
         'sku'          => ['brand code sku', 'sku', 'sku san pham'],
         'product_name' => ['ten san pham', 'product name', 'ten sp'],
+        'brand'        => ['thuong hieu', 'brand', 'brand name'],
         'unit_price'   => ['gia tren hoa don thanh toan vat', 'gia thanh toan vat', 'don gia', 'gia'],
     ]);
 
@@ -264,6 +267,7 @@ function import_price_rows_from_file(string $path): array
         $result[] = [
             'sku'          => trim((string) ($row[$col['sku']] ?? '')),
             'product_name' => ($col['product_name'] ?? null) !== null ? trim((string) ($row[$col['product_name']] ?? '')) : '',
+            'brand'        => ($col['brand'] ?? null) !== null ? trim((string) ($row[$col['brand']] ?? '')) : '',
             'unit_price'   => $row[$col['unit_price']] ?? null,
         ];
     }

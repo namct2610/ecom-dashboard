@@ -191,6 +191,12 @@ $initials = strtoupper(substr($user, 0, 2));
         <button class="platform-btn" data-platform="tiktokshop">TikTok</button>
       </div>
 
+      <!-- View mode toggle: COMBO ↔ SKU -->
+      <div class="view-mode-toggle" title="Hiển thị sản phẩm dạng nguyên gốc từ sàn hoặc tách thành SKU đơn lẻ">
+        <button class="view-mode-btn active" data-view-mode="combo">COMBO</button>
+        <button class="view-mode-btn" data-view-mode="sku">SKU</button>
+      </div>
+
       <div class="header-spacer"></div>
 
       <!-- Period picker -->
@@ -1939,8 +1945,8 @@ $initials = strtoupper(substr($user, 0, 2));
         <div class="card mb-4" id="reconcileSettingsCard">
           <div class="reconcile-settings-head">
             <div>
-              <div class="card-title" style="margin-bottom:4px">Cài đặt đối soát GBS</div>
-              <div class="card-subtitle">Quản lý `Bang_gia` và `Combo_to_single` để đối soát NMV, quy đổi combo và chỉnh sửa trực tiếp ngay trong hệ thống.</div>
+              <div class="card-title" style="margin-bottom:4px">Quản lý SKU & Combo</div>
+              <div class="card-subtitle">Dữ liệu SKU lẻ và link COMBO ↔ SKU. Dùng chung cho đối soát GBS và chế độ hiển thị SKU đơn lẻ trên dashboard (toggle COMBO/SKU ở header).</div>
             </div>
             <div class="reconcile-settings-actions">
               <button id="btnReloadReconcileSettings" class="btn btn-secondary btn-sm">Tải lại</button>
@@ -1974,14 +1980,15 @@ $initials = strtoupper(substr($user, 0, 2));
                 <table class="reconcile-settings-table">
                   <thead>
                     <tr>
-                      <th>SKU GBS</th>
+                      <th>SKU lẻ</th>
                       <th>Tên sản phẩm</th>
+                      <th>Thương hiệu</th>
                       <th class="text-right">Đơn giá</th>
                       <th>Thao tác</th>
                     </tr>
                   </thead>
                   <tbody id="reconcilePriceTableBody">
-                    <tr><td colspan="4" class="reconcile-settings-empty">Đang tải dữ liệu...</td></tr>
+                    <tr><td colspan="5" class="reconcile-settings-empty">Đang tải dữ liệu...</td></tr>
                   </tbody>
                 </table>
               </div>
