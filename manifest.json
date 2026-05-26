@@ -1,7 +1,7 @@
 {
-  "version": "1.4.0",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.4.0/release/dashboard-v3-1.4.0.zip",
-  "changelog": "- Tái cấu trúc menu thành 6 nhóm parent/child có expand/collapse:\n  Tổng quan (Kế hoạch, So sánh) / Đơn hàng (Phân tích) / Sản phẩm (Danh sách sản phẩm, Liên kết dữ liệu sàn) / Khách hàng (Lượng truy cập) / Cài đặt (Cài đặt tài khoản, Cài đặt ngôn ngữ) / Hệ thống (Đối soát GBS, Upload, Nhật ký)\n- Tách 'Quản lý SKU & Combo' thành 2 trang con: Danh sách sản phẩm (SKU lẻ) và Liên kết dữ liệu sàn (COMBO ↔ SKU)\n- Đổi tên Traffic thành 'Lượng truy cập'\n- Cài đặt ngôn ngữ trở thành trang con riêng (tách khỏi trang Hệ thống)",
+  "version": "1.5.0",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.5.0/release/dashboard-v3-1.5.0.zip",
+  "changelog": "- Bản beta v2.0.0 UI có sẵn tại đường dẫn /beta (auth chung, database chung với production)\n- Nút 'Thử bản beta v2.0.0' ở footer sidebar để truy cập nhanh\n- /beta/data.js.php sinh dữ liệu tháng hiện tại từ database (summary, revenue series, top products, city, heatmap, traffic, recent orders)\n- Tách hoàn toàn khỏi v1.4.0 hiện tại; quay về production bằng nút trên banner",
   "min_php": "8.1",
   "released_at": "2026-05-26"
 }
