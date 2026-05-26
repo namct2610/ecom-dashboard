@@ -148,10 +148,10 @@ while ($cursor <= $endTs) {
 // ── Top products ─────────────────────────────────────────────────────
 $prodSql = function (string $orderBy) use ($start, $end, $lineRev) {
     return "
-        SELECT sku, ANY_VALUE(product_name) AS name,
+        SELECT sku, MAX(product_name) AS name,
                SUM(quantity) AS qty,
                SUM({$lineRev}) AS revenue,
-               ANY_VALUE(platform) AS platform
+               MAX(platform) AS platform
         FROM orders
         WHERE DATE(order_created_at) BETWEEN :s AND :e
           AND normalized_status IN ('completed','delivered')
@@ -241,10 +241,10 @@ $trafficRows = array_map(static fn($r) => [
 
 // ── Recent orders ─────────────────────────────────────────────────────
 $stmt = $pdo->prepare("
-    SELECT platform, order_id, order_created_at AS order_date, normalized_status AS status,
-           ANY_VALUE(product_name) AS product_name,
+    SELECT platform, order_id, MAX(order_created_at) AS order_date, MAX(normalized_status) AS status,
+           MAX(product_name) AS product_name,
            SUM(order_total) AS order_amount,
-           ANY_VALUE(shipping_city) AS city
+           MAX(shipping_city) AS city
     FROM orders
     WHERE DATE(order_created_at) BETWEEN :s AND :e
     GROUP BY platform, order_id

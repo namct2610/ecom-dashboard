@@ -1,7 +1,7 @@
 {
-  "version": "1.5.3",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.5.3/release/dashboard-v3-1.5.3.zip",
-  "changelog": "- Beta: gỡ integrity= attribute trên CDN unpkg (hash có thể bị mismatch)\n- Thêm diagnostic banner trong /beta: tự hiện thông báo lỗi cụ thể nếu React/Babel/data.php không load",
+  "version": "1.5.4",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.5.4/release/dashboard-v3-1.5.4.zip",
+  "changelog": "- Beta: thay ANY_VALUE() bằng MAX() trong data.php (ANY_VALUE chỉ có ở MySQL 5.7+, hosting đang dùng MariaDB)\n- Beta: PeakInsights an toàn khi heatmap rỗng, không crash UI nữa",
   "min_php": "8.1",
   "released_at": "2026-05-26"
 }
