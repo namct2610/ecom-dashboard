@@ -112,53 +112,103 @@ $initials = strtoupper(substr($user, 0, 2));
     </div>
 
     <div class="sidebar-nav">
-      <div class="nav-item active" data-page="overview" data-label="Tổng quan">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
-        <span class="nav-label" data-i18n="nav.overview">Tổng quan</span>
+      <!-- Group 1: Tổng quan -->
+      <div class="nav-group" data-group="overview">
+        <div class="nav-item nav-parent active" data-page="overview" data-label="Tổng quan">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+          <span class="nav-label" data-i18n="nav.overview">Tổng quan</span>
+          <span class="nav-chevron" aria-hidden="true">›</span>
+        </div>
+        <div class="nav-children">
+          <div class="nav-item nav-child" data-page="plan" data-label="Kế hoạch">
+            <span class="nav-label" data-i18n="nav.plan">Kế hoạch</span>
+          </div>
+          <div class="nav-item nav-child" data-page="comparison" data-label="So sánh">
+            <span class="nav-label" data-i18n="nav.comparison">So sánh</span>
+          </div>
+        </div>
       </div>
-      <div class="nav-item" data-page="orders" data-label="Đơn hàng">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
-        <span class="nav-label" data-i18n="nav.orders">Đơn hàng</span>
+
+      <!-- Group 2: Đơn hàng -->
+      <div class="nav-group" data-group="orders">
+        <div class="nav-item nav-parent" data-page="orders" data-label="Đơn hàng">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+          <span class="nav-label" data-i18n="nav.orders">Đơn hàng</span>
+          <span class="nav-chevron" aria-hidden="true">›</span>
+        </div>
+        <div class="nav-children">
+          <div class="nav-item nav-child" data-page="heatmaps" data-label="Phân tích">
+            <span class="nav-label" data-i18n="nav.analytics">Phân tích</span>
+          </div>
+        </div>
       </div>
-      <div class="nav-item" data-page="products" data-label="Sản phẩm">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
-        <span class="nav-label" data-i18n="nav.products">Sản phẩm</span>
+
+      <!-- Group 3: Sản phẩm -->
+      <div class="nav-group" data-group="products">
+        <div class="nav-item nav-parent" data-page="products" data-label="Sản phẩm">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+          <span class="nav-label" data-i18n="nav.products">Sản phẩm</span>
+          <span class="nav-chevron" aria-hidden="true">›</span>
+        </div>
+        <div class="nav-children">
+          <div class="nav-item nav-child" data-page="product-list" data-label="Danh sách sản phẩm">
+            <span class="nav-label" data-i18n="nav.product_list">Danh sách sản phẩm</span>
+          </div>
+          <div class="nav-item nav-child" data-page="data-link" data-label="Liên kết dữ liệu sàn">
+            <span class="nav-label" data-i18n="nav.data_link">Liên kết dữ liệu sàn</span>
+          </div>
+        </div>
       </div>
-      <div class="nav-item" data-page="sku-management" data-label="SKU & Combo">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7h18M3 12h18M3 17h12"/><circle cx="19" cy="17" r="2"/></svg>
-        <span class="nav-label" data-i18n="nav.sku_management">SKU & Combo</span>
+
+      <!-- Group 4: Khách hàng -->
+      <div class="nav-group" data-group="customers">
+        <div class="nav-item nav-parent" data-page="customers" data-label="Khách hàng">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+          <span class="nav-label" data-i18n="nav.customers">Khách hàng</span>
+          <span class="nav-chevron" aria-hidden="true">›</span>
+        </div>
+        <div class="nav-children">
+          <div class="nav-item nav-child" data-page="traffic" data-label="Lượng truy cập">
+            <span class="nav-label" data-i18n="nav.traffic">Lượng truy cập</span>
+          </div>
+        </div>
       </div>
-      <div class="nav-item" data-page="customers" data-label="Khách hàng">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
-        <span class="nav-label" data-i18n="nav.customers">Khách hàng</span>
+
+      <!-- Group 5: Cài đặt -->
+      <div class="nav-group" data-group="settings">
+        <div class="nav-item nav-parent" data-page="settings-account" data-label="Cài đặt">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          <span class="nav-label" data-i18n="nav.settings">Cài đặt</span>
+          <span class="nav-chevron" aria-hidden="true">›</span>
+        </div>
+        <div class="nav-children">
+          <div class="nav-item nav-child" data-page="settings-account" data-label="Cài đặt tài khoản">
+            <span class="nav-label" data-i18n="nav.settings_account">Cài đặt tài khoản</span>
+          </div>
+          <div class="nav-item nav-child" data-page="settings-lang" data-label="Cài đặt ngôn ngữ">
+            <span class="nav-label" data-i18n="nav.settings_lang">Cài đặt ngôn ngữ</span>
+          </div>
+        </div>
       </div>
-      <div class="nav-item" data-page="traffic" data-label="Traffic">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
-        <span class="nav-label" data-i18n="nav.traffic">Traffic</span>
-      </div>
-      <div class="nav-item" data-page="comparison" data-label="So sánh">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
-        <span class="nav-label" data-i18n="nav.comparison">So sánh</span>
-      </div>
-      <div class="nav-item" data-page="plan" data-label="Kế hoạch">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19V5"/><path d="M4 19h16"/><path d="M8 15l3-3 3 2 5-7"/><path d="M18 7h1v1"/></svg>
-        <span class="nav-label" data-i18n="nav.plan">Kế hoạch</span>
-      </div>
-      <div class="nav-item" data-page="reconcile" data-label="Đối soát GBS">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h10M4 9h16M4 13h10M4 17h16"/><path d="M18 4l2 2 4-4"/><path d="M18 12l2 2 4-4"/></svg>
-        <span class="nav-label" data-i18n="nav.reconcile">Đối soát GBS</span>
-      </div>
-      <div class="nav-item" data-page="heatmaps" data-label="Phân tích">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="4" height="4" rx="1"/><rect x="10" y="3" width="4" height="4" rx="1"/><rect x="17" y="3" width="4" height="4" rx="1"/><rect x="3" y="10" width="4" height="4" rx="1"/><rect x="10" y="10" width="4" height="4" rx="1"/><rect x="17" y="10" width="4" height="4" rx="1"/><rect x="3" y="17" width="4" height="4" rx="1"/><rect x="10" y="17" width="4" height="4" rx="1"/><rect x="17" y="17" width="4" height="4" rx="1"/></svg>
-        <span class="nav-label" data-i18n="nav.analytics">Phân tích</span>
-      </div>
-      <div class="nav-item" data-page="upload" data-label="Upload">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
-        <span class="nav-label" data-i18n="nav.upload">Upload</span>
-      </div>
-      <div class="nav-item" data-page="logs" data-label="Nhật ký">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-        <span class="nav-label" data-i18n="nav.logs">Nhật ký</span>
+
+      <!-- Group 6: Hệ thống -->
+      <div class="nav-group" data-group="system">
+        <div class="nav-item nav-parent" data-page="system" data-label="Hệ thống">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="6" rx="2"/><rect x="4" y="14" width="16" height="6" rx="2"/><line x1="8" y1="7" x2="8.01" y2="7"/><line x1="8" y1="17" x2="8.01" y2="17"/></svg>
+          <span class="nav-label" data-i18n="nav.system">Hệ thống</span>
+          <span class="nav-chevron" aria-hidden="true">›</span>
+        </div>
+        <div class="nav-children">
+          <div class="nav-item nav-child" data-page="reconcile" data-label="Đối soát GBS">
+            <span class="nav-label" data-i18n="nav.reconcile">Đối soát GBS</span>
+          </div>
+          <div class="nav-item nav-child" data-page="upload" data-label="Upload">
+            <span class="nav-label" data-i18n="nav.upload">Upload</span>
+          </div>
+          <div class="nav-item nav-child" data-page="logs" data-label="Nhật ký">
+            <span class="nav-label" data-i18n="nav.logs">Nhật ký</span>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -720,7 +770,7 @@ $initials = strtoupper(substr($user, 0, 2));
       <!-- ── Traffic ───────────────────────────────────────────────────── -->
       <div class="page" id="page-traffic">
         <div class="page-header">
-          <h1 data-i18n="page.traffic.title">Traffic</h1>
+          <h1 data-i18n="page.traffic.title">Lượng truy cập</h1>
           <p data-i18n="page.traffic.sub">Lượt xem, lượt truy cập và tỷ lệ chuyển đổi</p>
         </div>
 
@@ -941,97 +991,125 @@ $initials = strtoupper(substr($user, 0, 2));
 
       </div>
 
-      <!-- ── SKU & Combo Management ─────────────────────────────────── -->
-      <div class="page" id="page-sku-management">
+      <!-- ── Danh sách sản phẩm (SKU lẻ) ─────────────────────────────── -->
+      <div class="page" id="page-product-list">
         <div class="page-header">
           <div>
-            <h1 data-i18n="page.sku.title">Quản lý SKU & Combo</h1>
-            <p data-i18n="page.sku.sub">Danh mục SKU lẻ và liên kết COMBO ↔ SKU. Có thể thêm/sửa trực tiếp hoặc import từ Excel (chỉ chuyển sang database, không phụ thuộc file).</p>
+            <h1 data-i18n="page.product_list.title">Danh sách sản phẩm</h1>
+            <p data-i18n="page.product_list.sub">Quản lý các SKU lẻ: mã, tên, thương hiệu và giá gốc. Dùng chung cho dashboard (toggle COMBO/SKU) và đối soát GBS.</p>
           </div>
         </div>
 
         <div class="card mb-4" id="reconcileSettingsCard">
           <div class="reconcile-settings-head">
             <div>
-              <div class="card-title" style="margin-bottom:4px">Dữ liệu SKU & Combo</div>
-              <div class="card-subtitle">Toàn bộ liên kết COMBO ↔ SKU hiện đã lưu trong database. Excel chỉ dùng để nhập dữ liệu lần đầu / hàng loạt; mọi chỉnh sửa sau đó thực hiện trực tiếp ngay tại đây và được dùng chung cho dashboard (toggle COMBO/SKU ở header) lẫn đối soát GBS.</div>
+              <div class="card-title" style="margin-bottom:4px">SKU lẻ</div>
+              <div class="card-subtitle">Mã SKU đơn lẻ với tên, thương hiệu và giá gốc. Giá gốc dùng để phân bổ doanh thu khi tách combo về SKU đơn lẻ. Có thể thêm/sửa trực tiếp hoặc Import từ Excel (sau import dữ liệu nằm trong database).</div>
             </div>
             <div class="reconcile-settings-actions">
-              <button id="btnReloadReconcileSettings" class="btn btn-secondary btn-sm">Tải lại</button>
-              <button id="btnSaveReconcileSettings" class="btn btn-primary btn-sm">Lưu thay đổi</button>
+              <button class="btn btn-secondary btn-sm js-reload-reconcile">Tải lại</button>
+              <button class="btn btn-primary btn-sm js-save-reconcile">Lưu thay đổi</button>
             </div>
           </div>
 
           <div class="reconcile-settings-summary" id="reconcileSettingsSummary">
-            <span class="reconcile-settings-chip">Đang tải dữ liệu SKU & Combo...</span>
+            <span class="reconcile-settings-chip">Đang tải dữ liệu...</span>
           </div>
 
-          <div class="reconcile-settings-grid">
-            <section class="reconcile-settings-panel">
-              <div class="reconcile-settings-panel-head">
-                <div>
-                  <h3>SKU lẻ</h3>
-                  <p>Mã SKU đơn lẻ với tên sản phẩm, thương hiệu và giá gốc. Giá dùng để phân bổ doanh thu khi tách combo và đối soát GBS.</p>
-                </div>
-                <div class="reconcile-settings-panel-actions">
-                  <button id="btnImportReconcilePrices" class="btn btn-secondary btn-sm" title="Import lần đầu hoặc cập nhật hàng loạt từ Excel; dữ liệu được lưu vào database">Import Excel</button>
-                  <button id="btnAddReconcilePriceRow" class="btn btn-primary btn-sm">Thêm dòng</button>
-                </div>
+          <section class="reconcile-settings-panel">
+            <div class="reconcile-settings-panel-head">
+              <div>
+                <h3>Danh sách SKU lẻ</h3>
+                <p>Mã SKU lẻ với tên, thương hiệu và giá gốc.</p>
               </div>
-              <div class="reconcile-settings-hint">Excel cần các cột: <code>SKU</code>, <code>Tên sản phẩm</code>, <code>Thương hiệu</code> (tuỳ chọn), <code>Đơn giá</code>. Sau khi import, dữ liệu lưu vào database — bạn có thể chỉnh sửa từng dòng ngay tại bảng này.</div>
-              <div class="table-wrapper">
-                <table class="reconcile-settings-table">
-                  <thead>
-                    <tr>
-                      <th>SKU lẻ</th>
-                      <th>Tên sản phẩm</th>
-                      <th>Thương hiệu</th>
-                      <th class="text-right">Đơn giá</th>
-                      <th>Thao tác</th>
-                    </tr>
-                  </thead>
-                  <tbody id="reconcilePriceTableBody">
-                    <tr><td colspan="5" class="reconcile-settings-empty">Đang tải dữ liệu...</td></tr>
-                  </tbody>
-                </table>
+              <div class="reconcile-settings-panel-actions">
+                <button class="btn btn-secondary btn-sm js-import-prices" title="Import lần đầu hoặc cập nhật hàng loạt từ Excel; dữ liệu được lưu vào database">Import Excel</button>
+                <button class="btn btn-primary btn-sm js-add-price-row">Thêm dòng</button>
               </div>
-            </section>
-
-            <section class="reconcile-settings-panel">
-              <div class="reconcile-settings-panel-head">
-                <div>
-                  <h3>Liên kết COMBO ↔ SKU</h3>
-                  <p>Một COMBO có thể quy đổi sang nhiều SKU lẻ khác nhau. Số lượng quy đổi dùng để bóc tách qty bán ra; doanh thu phân bổ theo tỉ lệ giá gốc × qty của từng SKU thành phần.</p>
-                </div>
-                <div class="reconcile-settings-panel-actions">
-                  <button id="btnImportReconcileCombos" class="btn btn-secondary btn-sm" title="Import lần đầu hoặc cập nhật hàng loạt từ Excel; dữ liệu được lưu vào database">Import Excel</button>
-                  <button id="btnAddReconcileComboRow" class="btn btn-primary btn-sm">Thêm dòng</button>
-                </div>
-              </div>
-              <div class="reconcile-settings-hint">Excel cần các cột: <code>SKU Sản phẩm</code> (combo), kèm các cặp <code>Sản phẩm quy đổi N</code> + <code>Số lượng sản phẩm N</code>. Sau import dữ liệu nằm trong database — chỉnh sửa trực tiếp ở bảng này.</div>
-              <div class="table-wrapper">
-                <table class="reconcile-settings-table">
-                  <thead>
-                    <tr>
-                      <th>Sàn</th>
-                      <th>SKU combo</th>
-                      <th>Tên / từ khóa combo</th>
-                      <th>SKU đơn</th>
-                      <th class="text-right">SL quy đổi</th>
-                      <th>Thao tác</th>
-                    </tr>
-                  </thead>
-                  <tbody id="reconcileComboTableBody">
-                    <tr><td colspan="6" class="reconcile-settings-empty">Đang tải dữ liệu...</td></tr>
-                  </tbody>
-                </table>
-              </div>
-            </section>
-          </div>
+            </div>
+            <div class="reconcile-settings-hint">Excel cần có cột: <code>SKU</code>, <code>Tên sản phẩm</code>, <code>Thương hiệu</code> (tuỳ chọn), <code>Đơn giá</code>.</div>
+            <div class="table-wrapper">
+              <table class="reconcile-settings-table">
+                <thead>
+                  <tr>
+                    <th>SKU lẻ</th>
+                    <th>Tên sản phẩm</th>
+                    <th>Thương hiệu</th>
+                    <th class="text-right">Đơn giá</th>
+                    <th>Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody id="reconcilePriceTableBody">
+                  <tr><td colspan="5" class="reconcile-settings-empty">Đang tải dữ liệu...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
 
           <div id="reconcileSettingsResult" class="reconcile-settings-result" aria-live="polite"></div>
 
           <input type="file" id="reconcilePriceImportInput" accept=".xlsx,.xls" style="display:none">
+        </div>
+      </div>
+
+      <!-- ── Liên kết dữ liệu sàn (COMBO ↔ SKU) ─────────────────────── -->
+      <div class="page" id="page-data-link">
+        <div class="page-header">
+          <div>
+            <h1 data-i18n="page.data_link.title">Liên kết dữ liệu sàn</h1>
+            <p data-i18n="page.data_link.sub">Quy đổi SKU COMBO trên sàn về SKU lẻ thực tế. Dùng chung cho dashboard và đối soát GBS.</p>
+          </div>
+        </div>
+
+        <div class="card mb-4" id="reconcileSettingsLinkCard">
+          <div class="reconcile-settings-head">
+            <div>
+              <div class="card-title" style="margin-bottom:4px">Liên kết COMBO ↔ SKU</div>
+              <div class="card-subtitle">Một COMBO có thể quy đổi sang nhiều SKU lẻ khác nhau. Số lượng quy đổi dùng để bóc tách qty bán ra; doanh thu phân bổ theo tỉ lệ giá gốc × qty của từng SKU thành phần. Có thể thêm/sửa trực tiếp hoặc Import từ Excel.</div>
+            </div>
+            <div class="reconcile-settings-actions">
+              <button class="btn btn-secondary btn-sm js-reload-reconcile">Tải lại</button>
+              <button class="btn btn-primary btn-sm js-save-reconcile">Lưu thay đổi</button>
+            </div>
+          </div>
+
+          <div class="reconcile-settings-summary" id="reconcileSettingsLinkSummary">
+            <span class="reconcile-settings-chip">Đang tải dữ liệu...</span>
+          </div>
+
+          <section class="reconcile-settings-panel">
+            <div class="reconcile-settings-panel-head">
+              <div>
+                <h3>Liên kết COMBO ↔ SKU</h3>
+                <p>Mỗi dòng: 1 SKU combo trên sàn ⇒ 1 SKU lẻ thực tế + số lượng quy đổi.</p>
+              </div>
+              <div class="reconcile-settings-panel-actions">
+                <button class="btn btn-secondary btn-sm js-import-combos" title="Import lần đầu hoặc cập nhật hàng loạt từ Excel; dữ liệu được lưu vào database">Import Excel</button>
+                <button class="btn btn-primary btn-sm js-add-combo-row">Thêm dòng</button>
+              </div>
+            </div>
+            <div class="reconcile-settings-hint">Excel cần có cột: <code>SKU Sản phẩm</code> (combo), kèm các cặp <code>Sản phẩm quy đổi N</code> + <code>Số lượng sản phẩm N</code>.</div>
+            <div class="table-wrapper">
+              <table class="reconcile-settings-table">
+                <thead>
+                  <tr>
+                    <th>Sàn</th>
+                    <th>SKU combo</th>
+                    <th>Tên / từ khóa combo</th>
+                    <th>SKU đơn</th>
+                    <th class="text-right">SL quy đổi</th>
+                    <th>Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody id="reconcileComboTableBody">
+                  <tr><td colspan="6" class="reconcile-settings-empty">Đang tải dữ liệu...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <div id="reconcileSettingsLinkResult" class="reconcile-settings-result" aria-live="polite"></div>
+
           <input type="file" id="reconcileComboImportInput" accept=".xlsx,.xls" style="display:none">
         </div>
       </div>
@@ -1556,10 +1634,6 @@ $initials = strtoupper(substr($user, 0, 2));
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
               <span data-i18n="admin.tab.api">API & kết nối</span>
             </button>
-            <button class="admin-tab-btn" id="btnAdminTabSystem" data-admin-tab="system" type="button">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
-              <span data-i18n="admin.tab.system">Hệ thống</span>
-            </button>
           </div>
 
           <div class="admin-tab-panel active" data-admin-tab-panel="accounts">
@@ -1664,10 +1738,6 @@ $initials = strtoupper(substr($user, 0, 2));
 
           <div class="admin-tab-panel" data-admin-tab-panel="api">
             <div id="adminApiMount"></div>
-          </div>
-
-          <div class="admin-tab-panel" data-admin-tab-panel="system">
-            <div id="adminSystemMount"></div>
           </div>
         </div>
       </div>
@@ -1916,11 +1986,38 @@ $initials = strtoupper(substr($user, 0, 2));
 
       </div>
 
-      <!-- ── Cài đặt ────────────────────────────────────────────────────── -->
-      <div class="page page-admin-template" id="page-settings" aria-hidden="true">
+      <!-- ── Cài đặt ngôn ngữ (standalone page) ───────────────────────── -->
+      <div class="page" id="page-settings-lang">
         <div class="page-header">
-          <h1><span data-i18n="page.settings.title">Cài đặt hệ thống</span> <span id="currentVersionBadge" style="font-size:13px;font-weight:500;color:var(--text-muted);vertical-align:middle"></span></h1>
-          <p data-i18n="page.settings.sub">Thông tin server, database và các thao tác quản trị nâng cao</p>
+          <h1 data-i18n="page.settings_lang.title">Cài đặt ngôn ngữ</h1>
+          <p data-i18n="page.settings_lang.sub">Quản lý các bộ ngôn ngữ hiển thị của giao diện.</p>
+        </div>
+
+        <div class="card mb-4" id="langSettingsCard">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+            <div class="card-title" style="margin-bottom:0" data-i18n="lang.manage">Quản lý ngôn ngữ</div>
+            <label class="btn btn-primary btn-sm" style="cursor:pointer;display:flex;align-items:center;gap:6px">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+              <span data-i18n="lang.upload">Upload ngôn ngữ</span>
+              <input type="file" id="langFileInput" accept=".json" style="display:none">
+            </label>
+          </div>
+          <div id="langListContent">
+            <div style="text-align:center;padding:24px;color:var(--text-muted)">Đang tải...</div>
+          </div>
+          <div style="margin-top:14px;font-size:12px;color:var(--text-muted)">
+            <svg class="inline-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 15h6"/><path d="M9 18h6"/></svg>
+            <a href="assets/lang/vi.json" download="lang-template.json" style="color:var(--primary);text-decoration:none" data-i18n="lang.template">Tải file mẫu</a>
+            &nbsp;— chỉnh sửa các giá trị (không đổi key), giữ nguyên <code>_meta</code>, rồi upload.
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Hệ thống (system info, version, update, brand rules, danger zone) ─ -->
+      <div class="page" id="page-system">
+        <div class="page-header">
+          <h1><span data-i18n="page.system.title">Hệ thống</span> <span id="currentVersionBadge" style="font-size:13px;font-weight:500;color:var(--text-muted);vertical-align:middle"></span></h1>
+          <p data-i18n="page.system.sub">Thông tin server, database, cập nhật và các thao tác quản trị nâng cao.</p>
         </div>
 
         <!-- System info -->
@@ -1976,26 +2073,6 @@ $initials = strtoupper(substr($user, 0, 2));
           </div>
         </div><!-- /auto update -->
 
-        <!-- Language management -->
-        <div class="card mb-4" id="langSettingsCard">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-            <div class="card-title" style="margin-bottom:0" data-i18n="lang.manage">Quản lý ngôn ngữ</div>
-            <label class="btn btn-primary btn-sm" style="cursor:pointer;display:flex;align-items:center;gap:6px">
-              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
-              <span data-i18n="lang.upload">Upload ngôn ngữ</span>
-              <input type="file" id="langFileInput" accept=".json" style="display:none">
-            </label>
-          </div>
-          <div id="langListContent">
-            <div style="text-align:center;padding:24px;color:var(--text-muted)">Đang tải...</div>
-          </div>
-          <div style="margin-top:14px;font-size:12px;color:var(--text-muted)">
-            <svg class="inline-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 15h6"/><path d="M9 18h6"/></svg>
-            <a href="assets/lang/vi.json" download="lang-template.json" style="color:var(--primary);text-decoration:none" data-i18n="lang.template">Tải file mẫu</a>
-            &nbsp;— chỉnh sửa các giá trị (không đổi key), giữ nguyên <code>_meta</code>, rồi upload.
-          </div>
-        </div>
-
         <!-- SKU brand settings -->
         <div class="card mb-4" id="brandSettingsCard">
           <div class="reconcile-settings-head">
@@ -2038,19 +2115,6 @@ $initials = strtoupper(substr($user, 0, 2));
           </div>
 
           <div id="brandSettingsResult" class="reconcile-settings-result" aria-live="polite"></div>
-        </div>
-
-        <!-- SKU & Combo management moved to its own page (see #page-sku-management) -->
-        <div class="card mb-4">
-          <div class="reconcile-settings-head">
-            <div>
-              <div class="card-title" style="margin-bottom:4px">Quản lý SKU & Combo</div>
-              <div class="card-subtitle">Đã được chuyển thành trang riêng trên thanh menu. Mở trang để thêm/sửa SKU lẻ, liên kết COMBO ↔ SKU và import từ Excel.</div>
-            </div>
-            <div class="reconcile-settings-actions">
-              <button class="btn btn-primary btn-sm" data-nav-to="sku-management">Mở trang quản lý</button>
-            </div>
-          </div>
         </div>
 
         <!-- Danger zone -->
@@ -2122,7 +2186,7 @@ $initials = strtoupper(substr($user, 0, 2));
           <div id="resetResult" style="margin-top:16px"></div>
         </div><!-- danger zone -->
 
-      </div><!-- /#page-settings -->
+      </div><!-- /#page-system -->
 
     </div><!-- /#content -->
   </div><!-- /#main -->

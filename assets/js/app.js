@@ -760,15 +760,18 @@ function setupNav() {
 function syncHeaderControls(page) {
   document.body.classList.toggle('page-admin-active', page === 'admin');
   document.body.classList.toggle('page-reconcile-active', page === 'reconcile');
-  document.body.classList.toggle('page-sku-management-active', page === 'sku-management');
+  // Pages without date/platform filters
+  const noFilterPages = ['sku-management', 'product-list', 'data-link', 'settings-lang', 'system'];
+  document.body.classList.toggle('page-no-filter-active', noFilterPages.includes(page));
 }
 
 function loadPage(name) {
+  const navKey = name; // original key clicked in sidebar (used for active state)
   if (name === 'connect') {
     App.adminTab = 'api';
     name = 'admin';
-  } else if (name === 'settings') {
-    App.adminTab = 'system';
+  } else if (name === 'settings' || name === 'settings-account') {
+    App.adminTab = 'accounts';
     name = 'admin';
   }
 
@@ -780,10 +783,11 @@ function loadPage(name) {
   App.currentPage = name;
   syncHeaderControls(name);
 
-  // Update sidebar active
+  // Update sidebar active state + expand parent group (use navKey so e.g. settings-account stays highlighted)
   qsa('.nav-item[data-page]').forEach(item => {
-    item.classList.toggle('active', item.dataset.page === name);
+    item.classList.toggle('active', item.dataset.page === navKey);
   });
+  syncNavGroups(navKey);
 
   // Show page
   qsa('.page').forEach(p => p.classList.remove('active'));
@@ -799,7 +803,10 @@ function loadPage(name) {
     traffic:    loadTraffic,
     comparison: loadComparison,
     plan:       loadPlan,
-    'sku-management': loadReconcileSettings,
+    'product-list': loadReconcileSettings,
+    'data-link':    loadReconcileSettings,
+    'settings-lang': loadSettingsLang,
+    system:     loadSystemPage,
     reconcile:  loadReconcile,
     heatmaps:   loadHeatmaps,
     upload:     loadUploadHistory,
@@ -810,6 +817,13 @@ function loadPage(name) {
   if (App.user?.must_change_password) {
     setTimeout(() => maybeForcePasswordChange(), 0);
   }
+}
+
+function syncNavGroups(page) {
+  qsa('.nav-group').forEach(group => {
+    const matches = qs(`.nav-item[data-page="${page}"]`, group);
+    group.classList.toggle('open', Boolean(matches));
+  });
 }
 
 // ── Page Loaders ─────────────────────────────────────────────────────────
@@ -2985,21 +2999,18 @@ function formatReconcileSettingValue(value) {
 }
 
 function setReconcileSettingsResult(message = '', type = 'info') {
-  const el = qs('#reconcileSettingsResult');
-  if (!el) return;
-
-  el.className = 'reconcile-settings-result';
-  el.textContent = '';
-
-  if (!message) return;
-
-  el.classList.add('is-visible', `is-${type}`);
-  el.textContent = message;
+  qsa('#reconcileSettingsResult, #reconcileSettingsLinkResult').forEach(el => {
+    el.className = 'reconcile-settings-result';
+    el.textContent = '';
+    if (!message) return;
+    el.classList.add('is-visible', `is-${type}`);
+    el.textContent = message;
+  });
 }
 
 function renderReconcileSettingsSummary() {
-  const el = qs('#reconcileSettingsSummary');
-  if (!el) return;
+  const summaries = qsa('#reconcileSettingsSummary, #reconcileSettingsLinkSummary');
+  if (!summaries.length) return;
 
   const comboKeys = new Set(
     ReconcileSettingsState.combos
@@ -3013,7 +3024,8 @@ function renderReconcileSettingsSummary() {
     `Combo riêng: ${fmtNum(comboKeys.size || 0)} cấu hình`,
   ];
 
-  el.innerHTML = chips.map(text => `<span class="reconcile-settings-chip">${escHtml(text)}</span>`).join('');
+  const html = chips.map(text => `<span class="reconcile-settings-chip">${escHtml(text)}</span>`).join('');
+  summaries.forEach(el => { el.innerHTML = html; });
 }
 
 function renderReconcilePriceRows(rows) {
@@ -3280,12 +3292,16 @@ function deleteReconcileComboRow(index) {
   renderReconcileSettingsTables();
 }
 
-async function loadSettingsPage() {
-  bindSettingsPage();
-  await Promise.all([loadSysInfo(), loadUpdateCard(), setupLangSettings(), loadBrandSettings(), loadReconcileSettings()]);
+async function loadSystemPage() {
+  bindSystemPage();
+  await Promise.all([loadSysInfo(), loadUpdateCard(), loadBrandSettings()]);
 }
 
-function bindSettingsPage() {
+async function loadSettingsLang() {
+  await setupLangSettings();
+}
+
+function bindSystemPage() {
   if (_settingsPageBound) return;
   _settingsPageBound = true;
 
@@ -3320,25 +3336,25 @@ function bindSettingsPage() {
 let _reconcileSettingsCardBound = false;
 function bindReconcileSettingsCard() {
   if (_reconcileSettingsCardBound) return;
-  if (!qs('#reconcileSettingsCard')) return; // DOM not yet rendered
+  // Bind only when at least one of the split pages exists
+  if (!qs('#reconcileSettingsCard') && !qs('#reconcileSettingsLinkCard')) return;
   _reconcileSettingsCardBound = true;
 
-  qs('#btnReloadReconcileSettings')?.addEventListener('click', loadReconcileSettings);
-  qs('#btnSaveReconcileSettings')?.addEventListener('click', saveReconcileSettings);
-  qs('#btnAddReconcilePriceRow')?.addEventListener('click', addReconcilePriceRow);
-  qs('#btnAddReconcileComboRow')?.addEventListener('click', addReconcileComboRow);
-  qs('#btnImportReconcilePrices')?.addEventListener('click', () => qs('#reconcilePriceImportInput')?.click());
-  qs('#btnImportReconcileCombos')?.addEventListener('click', () => qs('#reconcileComboImportInput')?.click());
+  qsa('.js-reload-reconcile').forEach(b => b.addEventListener('click', loadReconcileSettings));
+  qsa('.js-save-reconcile').forEach(b => b.addEventListener('click', saveReconcileSettings));
+  qsa('.js-add-price-row').forEach(b => b.addEventListener('click', addReconcilePriceRow));
+  qsa('.js-add-combo-row').forEach(b => b.addEventListener('click', addReconcileComboRow));
+  qsa('.js-import-prices').forEach(b => b.addEventListener('click', () => qs('#reconcilePriceImportInput')?.click()));
+  qsa('.js-import-combos').forEach(b => b.addEventListener('click', () => qs('#reconcileComboImportInput')?.click()));
   qs('#reconcilePriceImportInput')?.addEventListener('change', event => handleReconcileImportInput('prices', event.currentTarget));
   qs('#reconcileComboImportInput')?.addEventListener('change', event => handleReconcileImportInput('combos', event.currentTarget));
 
-  qs('#reconcileSettingsCard')?.addEventListener('click', event => {
+  document.addEventListener('click', event => {
     const priceDeleteBtn = event.target.closest('[data-action="delete-reconcile-price-row"]');
     if (priceDeleteBtn) {
       deleteReconcilePriceRow(Number(priceDeleteBtn.dataset.index || -1));
       return;
     }
-
     const comboDeleteBtn = event.target.closest('[data-action="delete-reconcile-combo-row"]');
     if (comboDeleteBtn) {
       deleteReconcileComboRow(Number(comboDeleteBtn.dataset.index || -1));
@@ -3357,7 +3373,6 @@ function mountAdminContent() {
 
   [
     ['page-connect', 'adminApiMount'],
-    ['page-settings', 'adminSystemMount'],
   ].forEach(([sourceId, targetId]) => {
     const source = qs(`#${sourceId}`);
     const target = qs(`#${targetId}`);
@@ -3401,7 +3416,6 @@ function activateAdminTab(tab, options = {}) {
 
   if (App.adminTab === 'accounts') loadAdminUsers();
   if (App.adminTab === 'api') loadConnectPage();
-  if (App.adminTab === 'system') loadSettingsPage();
 }
 
 window.openAdminTab = function(tab = 'accounts') {
