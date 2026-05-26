@@ -115,8 +115,10 @@ final class TrafficParser extends BaseParser
             'page_views'         => ['lượt xem', 'page views', 'lượt xem trang', 'tổng lượt xem'],
             'avg_page_views'     => ['số lượt xem trung bình', 'avg page views'],
             'avg_duration'       => ['thời gian xem trung bình', 'avg session duration', 'avg duration'],
-            'bounce_rate'        => ['tỉ lệ thoát trang', 'bounce rate', 'tỷ lệ thoát', 'tỷ lệ chuyển đổi'],
-            'visits'             => ['lượt truy cập', 'visits', 'khách truy cập', 'lượt truy cập trang cửa hàng', 'lượt truy cập trang cửa hàng'],
+            'bounce_rate'        => $this->platform === 'tiktokshop'
+                ? ['tỉ lệ thoát trang', 'bounce rate', 'tỷ lệ thoát']
+                : ['tỉ lệ thoát trang', 'bounce rate', 'tỷ lệ thoát', 'tỷ lệ chuyển đổi'],
+            'visits'             => ['lượt truy cập', 'visits', 'khách truy cập', 'số khách hàng độc nhất', 'unique visitors', 'unique customers', 'lượt truy cập trang cửa hàng'],
             'new_visitors'       => ['số khách truy cập mới', 'new visitors', 'khách mới'],
             'returning_visitors' => ['số khách truy cập hiện tại', 'returning visitors', 'khách quay lại'],
             'new_followers'      => ['người theo dõi mới', 'new followers'],

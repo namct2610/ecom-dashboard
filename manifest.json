@@ -1,7 +1,7 @@
 {
-  "version": "1.2.35",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.2.35/release/dashboard-v3-1.2.35.zip",
-  "changelog": "- Kế hoạch: đưa 'Tiến độ hiện tại' lên đầu trang, dàn 2 cột Doanh số và Lượt truy cập\n- Đổi tiêu đề từ 'Còn lại phải đạt' sang 'Tiến độ hiện tại'\n- Bỏ thẻ 'Tính toán để đạt mục tiêu năm' (thông tin đã có trong tiến độ và bảng tổng)",
+  "version": "1.2.36",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.2.36/release/dashboard-v3-1.2.36.zip",
+  "changelog": "- Hỗ trợ form traffic TikTok Shop mới 'Shop Analytics - Key metrics'\n- Bổ sung mapping Khách truy cập / Số khách hàng độc nhất để form cũ và mới dùng chung bảng traffic_daily\n- Cải thiện tự nhận diện file traffic TikTok khi upload",
   "min_php": "8.1",
-  "released_at": "2026-05-25"
+  "released_at": "2026-05-26"
 }
