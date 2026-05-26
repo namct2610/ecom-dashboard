@@ -173,6 +173,10 @@
 .page-reconcile-active #periodPicker {
   display: none !important;
 }
+.page-sku-management-active .platform-filter,
+.page-sku-management-active #periodPicker {
+  display: none !important;
+}
 .platform-btn {
   padding: 5px 12px;
   border-radius: var(--radius-full);
@@ -200,7 +204,8 @@
   margin-left: 6px;
 }
 .page-admin-active .view-mode-toggle,
-.page-reconcile-active .view-mode-toggle {
+.page-reconcile-active .view-mode-toggle,
+.page-sku-management-active .view-mode-toggle {
   display: none !important;
 }
 .view-mode-btn {
