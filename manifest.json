@@ -1,7 +1,7 @@
 {
-  "version": "1.5.0",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.5.0/release/dashboard-v3-1.5.0.zip",
-  "changelog": "- Bản beta v2.0.0 UI có sẵn tại đường dẫn /beta (auth chung, database chung với production)\n- Nút 'Thử bản beta v2.0.0' ở footer sidebar để truy cập nhanh\n- /beta/data.js.php sinh dữ liệu tháng hiện tại từ database (summary, revenue series, top products, city, heatmap, traffic, recent orders)\n- Tách hoàn toàn khỏi v1.4.0 hiện tại; quay về production bằng nút trên banner",
+  "version": "1.5.1",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.5.1/release/dashboard-v3-1.5.1.zip",
+  "changelog": "- Fix: trang /beta bị redirect về login dù đã đăng nhập (đọc sai session key)\n- Beta/index.php và data.js.php giờ dùng current_user() chung với toàn hệ thống",
   "min_php": "8.1",
   "released_at": "2026-05-26"
 }

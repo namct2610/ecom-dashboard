@@ -8,8 +8,8 @@ declare(strict_types=1);
 require dirname(__DIR__) . '/includes/bootstrap.php';
 
 // Cho phép xem nếu đã đăng nhập; nếu chưa thì redirect về login chính
-$user = $_SESSION['user'] ?? null;
-if (!$user) {
+$user = current_user();
+if ($user === null) {
     header('Location: ../index.php');
     exit;
 }

@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 require dirname(__DIR__) . '/includes/bootstrap.php';
 
-if (!isset($_SESSION['user'])) {
+if (current_user() === null) {
     header('Content-Type: application/javascript; charset=utf-8');
     echo "window.DASHBOARD_DATA = {};\n";
     exit;
