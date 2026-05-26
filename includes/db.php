@@ -949,6 +949,9 @@ function detect_traffic_platform_from_file(string $filePath): string
             if (excel_probe_line_has_all($line, ['tổng quan dữ liệu', 'lượt xem trang', 'lượt truy cập trang cửa hàng'])) {
                 $scores['tiktokshop'] += 8;
             }
+            if (excel_probe_line_has_all($line, ['gmv', 'khách truy cập', 'lượt xem trang', 'lượt hiển thị sản phẩm'])) {
+                $scores['tiktokshop'] += 9;
+            }
             if (excel_probe_line_has_all($line, ['dữ liệu theo ngày'])) {
                 $scores['tiktokshop'] += 4;
             }
