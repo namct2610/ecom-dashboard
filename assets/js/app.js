@@ -760,6 +760,7 @@ function setupNav() {
 function syncHeaderControls(page) {
   document.body.classList.toggle('page-admin-active', page === 'admin');
   document.body.classList.toggle('page-reconcile-active', page === 'reconcile');
+  document.body.classList.toggle('page-sku-management-active', page === 'sku-management');
 }
 
 function loadPage(name) {
@@ -798,6 +799,7 @@ function loadPage(name) {
     traffic:    loadTraffic,
     comparison: loadComparison,
     plan:       loadPlan,
+    'sku-management': loadReconcileSettings,
     reconcile:  loadReconcile,
     heatmaps:   loadHeatmaps,
     upload:     loadUploadHistory,
@@ -3006,8 +3008,8 @@ function renderReconcileSettingsSummary() {
   );
 
   const chips = [
-    `Bang_gia: ${fmtNum(ReconcileSettingsState.prices.length || 0)} SKU`,
-    `Combo_to_single: ${fmtNum(ReconcileSettingsState.combos.length || 0)} dòng`,
+    `SKU lẻ: ${fmtNum(ReconcileSettingsState.prices.length || 0)}`,
+    `Liên kết COMBO: ${fmtNum(ReconcileSettingsState.combos.length || 0)}`,
     `Combo riêng: ${fmtNum(comboKeys.size || 0)} cấu hình`,
   ];
 
@@ -3019,7 +3021,7 @@ function renderReconcilePriceRows(rows) {
   if (!tbody) return;
 
   if (!rows.length) {
-    tbody.innerHTML = '<tr><td colspan="5" class="reconcile-settings-empty">Chưa có dòng Bang_gia. Có thể nhập từ Excel hoặc thêm thủ công.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="5" class="reconcile-settings-empty">Chưa có SKU lẻ nào. Có thể thêm thủ công bằng nút bên trên hoặc Import từ Excel (dữ liệu sẽ lưu vào database).</td></tr>';
     return;
   }
 
@@ -3039,7 +3041,7 @@ function renderReconcileComboRows(rows) {
   if (!tbody) return;
 
   if (!rows.length) {
-    tbody.innerHTML = '<tr><td colspan="6" class="reconcile-settings-empty">Chưa có dòng Combo_to_single. Có thể nhập từ Excel hoặc thêm thủ công.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="6" class="reconcile-settings-empty">Chưa có liên kết COMBO ↔ SKU. Có thể thêm thủ công bằng nút bên trên hoặc Import từ Excel (dữ liệu sẽ lưu vào database).</td></tr>';
     return;
   }
 
@@ -3135,6 +3137,7 @@ function updateReconcileSettingsUiState() {
 }
 
 async function loadReconcileSettings() {
+  bindReconcileSettingsCard();
   ReconcileSettingsState.loading = true;
   updateReconcileSettingsUiState();
   setReconcileSettingsResult('Đang tải cấu hình đối soát...', 'info');
@@ -3147,7 +3150,7 @@ async function loadReconcileSettings() {
     ReconcileSettingsState.combos = Array.isArray(data.combos) ? data.combos : [];
     renderReconcileSettingsTables();
     setReconcileSettingsResult(
-      `Đã tải ${fmtNum(ReconcileSettingsState.prices.length)} dòng Bang_gia và ${fmtNum(ReconcileSettingsState.combos.length)} dòng Combo_to_single.`,
+      `Đã tải ${fmtNum(ReconcileSettingsState.prices.length)} SKU lẻ và ${fmtNum(ReconcileSettingsState.combos.length)} liên kết COMBO.`,
       'info'
     );
   } catch (e) {
@@ -3183,7 +3186,7 @@ async function saveReconcileSettings() {
     ReconcileSettingsState.combos = Array.isArray(res.combos) ? res.combos : [];
     renderReconcileSettingsTables();
     setReconcileSettingsResult(
-      `${res.message || 'Đã lưu cài đặt đối soát.'} Bang_gia: ${fmtNum(ReconcileSettingsState.prices.length)} dòng, Combo_to_single: ${fmtNum(ReconcileSettingsState.combos.length)} dòng.`,
+      `${res.message || 'Đã lưu thay đổi.'} SKU lẻ: ${fmtNum(ReconcileSettingsState.prices.length)}, Liên kết COMBO: ${fmtNum(ReconcileSettingsState.combos.length)}.`,
       'success'
     );
     toast('Đã lưu cài đặt đối soát GBS.', 'success');
@@ -3202,7 +3205,7 @@ async function importReconcileSettings(kind, file) {
   syncReconcileSettingsStateFromDom();
   ReconcileSettingsState.importing = kind;
   updateReconcileSettingsUiState();
-  setReconcileSettingsResult(`Đang nhập ${kind === 'prices' ? 'Bang_gia' : 'Combo_to_single'} từ Excel...`, 'info');
+  setReconcileSettingsResult(`Đang nhập ${kind === 'prices' ? 'SKU lẻ' : 'liên kết COMBO'} từ Excel vào database...`, 'info');
 
   try {
     const formData = new FormData();
@@ -3231,7 +3234,7 @@ async function importReconcileSettings(kind, file) {
     renderReconcileSettingsTables();
 
     const count = kind === 'prices' ? ReconcileSettingsState.prices.length : ReconcileSettingsState.combos.length;
-    const label = kind === 'prices' ? 'Bang_gia' : 'Combo_to_single';
+    const label = kind === 'prices' ? 'SKU lẻ' : 'liên kết COMBO';
     setReconcileSettingsResult(`${data.message || 'Đã nhập dữ liệu từ Excel.'} ${label}: ${fmtNum(count)} dòng.`, 'success');
     toast(`${label}: đã nạp ${fmtNum(count)} dòng từ Excel.`, 'success');
   } catch (e) {
@@ -3310,6 +3313,15 @@ function bindSettingsPage() {
     const deleteBtn = event.target.closest('[data-action="delete-brand-rule-row"]');
     if (deleteBtn) deleteBrandRuleRow(Number(deleteBtn.dataset.index || -1));
   });
+
+  bindReconcileSettingsCard();
+}
+
+let _reconcileSettingsCardBound = false;
+function bindReconcileSettingsCard() {
+  if (_reconcileSettingsCardBound) return;
+  if (!qs('#reconcileSettingsCard')) return; // DOM not yet rendered
+  _reconcileSettingsCardBound = true;
 
   qs('#btnReloadReconcileSettings')?.addEventListener('click', loadReconcileSettings);
   qs('#btnSaveReconcileSettings')?.addEventListener('click', saveReconcileSettings);
@@ -4270,6 +4282,13 @@ function setupAppShell() {
   setupPlatformFilter();
   setupViewModeToggle();
   setupAnalyticsFilters();
+  document.addEventListener('click', event => {
+    const navBtn = event.target.closest('[data-nav-to]');
+    if (navBtn) {
+      event.preventDefault();
+      loadPage(navBtn.dataset.navTo);
+    }
+  });
   setupPeriodPicker();
   setupLogsPage();
   setupConnectPage();

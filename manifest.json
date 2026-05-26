@@ -1,7 +1,7 @@
 {
-  "version": "1.3.0",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.3.0/release/dashboard-v3-1.3.0.zip",
-  "changelog": "- Sản phẩm: thêm toggle COMBO ↔ SKU ở header. Khi chọn SKU, hệ thống quy đổi đơn COMBO về SKU đơn lẻ\n- Phân bổ doanh thu theo tỉ lệ giá gốc × số lượng SKU thành phần (giá list tự tính từ tổng các SKU)\n- Bổ sung cột Thương hiệu trên Bang_gia, đổi tên section thành 'Quản lý SKU & Combo' (dùng chung cho GBS và view SKU)\n- Phase 1: áp dụng cho trang Sản phẩm. Phase 2 sẽ mở rộng sang Orders/Customers/Overview",
+  "version": "1.3.1",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.3.1/release/dashboard-v3-1.3.1.zip",
+  "changelog": "- Tách 'Quản lý SKU & Combo' thành trang riêng trên menu (trước Đối soát GBS)\n- Toàn bộ liên kết COMBO ↔ SKU nằm trong database, chỉnh sửa trực tiếp trên web\n- Excel chỉ là kênh import (tuỳ chọn); sau import dữ liệu chuyển vào DB\n- Đổi tên các phần copy 'Bang_gia' / 'Combo_to_single' thành 'SKU lẻ' / 'Liên kết COMBO' cho dễ hiểu",
   "min_php": "8.1",
   "released_at": "2026-05-26"
 }
