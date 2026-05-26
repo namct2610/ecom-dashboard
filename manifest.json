@@ -1,7 +1,7 @@
 {
-  "version": "1.5.1",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.5.1/release/dashboard-v3-1.5.1.zip",
-  "changelog": "- Fix: trang /beta bị redirect về login dù đã đăng nhập (đọc sai session key)\n- Beta/index.php và data.js.php giờ dùng current_user() chung với toàn hệ thống",
+  "version": "1.5.2",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.5.2/release/dashboard-v3-1.5.2.zip",
+  "changelog": "- Fix: beta UI bị treo ở 'Đang tải dữ liệu' — đổi tên data.js.php → data.php\n  (một số shared hosting không xử lý file đa-extension như PHP)\n- Output skeleton DASHBOARD_DATA mặc định ngay đầu file để UI không bao giờ treo\n- Bao try/catch toàn bộ data.php để query lỗi vẫn render được khung",
   "min_php": "8.1",
   "released_at": "2026-05-26"
 }
