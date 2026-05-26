@@ -213,6 +213,10 @@ $initials = strtoupper(substr($user, 0, 2));
     </div>
 
     <div class="sidebar-footer">
+      <a href="beta/" class="btn-try-beta" title="UI mới v2.0.0 — dùng chung database">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12l5 5L20 7"/></svg>
+        <span class="nav-label">Thử bản beta v2.0.0</span>
+      </a>
       <button id="btnCollapseSidebar" class="btn-collapse-sidebar">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
         <span class="nav-label" data-i18n="nav.collapse">Thu gọn</span>
