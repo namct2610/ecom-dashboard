@@ -1,7 +1,7 @@
 {
-  "version": "1.3.1",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.3.1/release/dashboard-v3-1.3.1.zip",
-  "changelog": "- Tách 'Quản lý SKU & Combo' thành trang riêng trên menu (trước Đối soát GBS)\n- Toàn bộ liên kết COMBO ↔ SKU nằm trong database, chỉnh sửa trực tiếp trên web\n- Excel chỉ là kênh import (tuỳ chọn); sau import dữ liệu chuyển vào DB\n- Đổi tên các phần copy 'Bang_gia' / 'Combo_to_single' thành 'SKU lẻ' / 'Liên kết COMBO' cho dễ hiểu",
+  "version": "1.4.0",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.4.0/release/dashboard-v3-1.4.0.zip",
+  "changelog": "- Tái cấu trúc menu thành 6 nhóm parent/child có expand/collapse:\n  Tổng quan (Kế hoạch, So sánh) / Đơn hàng (Phân tích) / Sản phẩm (Danh sách sản phẩm, Liên kết dữ liệu sàn) / Khách hàng (Lượng truy cập) / Cài đặt (Cài đặt tài khoản, Cài đặt ngôn ngữ) / Hệ thống (Đối soát GBS, Upload, Nhật ký)\n- Tách 'Quản lý SKU & Combo' thành 2 trang con: Danh sách sản phẩm (SKU lẻ) và Liên kết dữ liệu sàn (COMBO ↔ SKU)\n- Đổi tên Traffic thành 'Lượng truy cập'\n- Cài đặt ngôn ngữ trở thành trang con riêng (tách khỏi trang Hệ thống)",
   "min_php": "8.1",
   "released_at": "2026-05-26"
 }
