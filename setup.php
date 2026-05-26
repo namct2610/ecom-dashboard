@@ -429,6 +429,7 @@ function initSchema(PDO $pdo): void
         id INT AUTO_INCREMENT PRIMARY KEY,
         sku VARCHAR(100) NOT NULL,
         product_name VARCHAR(500) NOT NULL DEFAULT '',
+        brand VARCHAR(120) NOT NULL DEFAULT '',
         unit_price DECIMAL(15,2) NOT NULL DEFAULT 0,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

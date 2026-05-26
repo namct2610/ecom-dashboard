@@ -53,6 +53,13 @@ function ensure_schema(PDO $pdo, array $config = []): void
         }
     }
 
+    if (in_array('reconcile_price_items', $tables, true)) {
+        $brandCol = $pdo->query("SHOW COLUMNS FROM reconcile_price_items LIKE 'brand'")->fetchAll();
+        if (empty($brandCol)) {
+            $pdo->exec("ALTER TABLE reconcile_price_items ADD COLUMN brand VARCHAR(120) NOT NULL DEFAULT '' AFTER product_name");
+        }
+    }
+
     if (in_array('users', $tables, true)) {
         $avatarCol = $pdo->query("SHOW COLUMNS FROM users LIKE 'avatar_path'")->fetchAll();
         if (empty($avatarCol)) {
@@ -472,7 +479,7 @@ function migrate_sku_brand_setting(PDO $pdo): void
 function fetch_reconcile_price_rows(PDO $pdo): array
 {
     $stmt = $pdo->query("
-        SELECT sku, product_name, unit_price
+        SELECT sku, product_name, brand, unit_price
         FROM reconcile_price_items
         ORDER BY sku ASC
     ");
@@ -480,6 +487,7 @@ function fetch_reconcile_price_rows(PDO $pdo): array
     return array_map(static fn(array $row): array => [
         'sku'          => (string) $row['sku'],
         'product_name' => (string) ($row['product_name'] ?? ''),
+        'brand'        => (string) ($row['brand'] ?? ''),
         'unit_price'   => (float) $row['unit_price'],
     ], $stmt->fetchAll());
 }
@@ -523,10 +531,11 @@ function replace_reconcile_price_rows(PDO $pdo, array $rows): void
     }
 
     $stmt = $pdo->prepare("
-        INSERT INTO reconcile_price_items (sku, product_name, unit_price)
-        VALUES (?, ?, ?)
+        INSERT INTO reconcile_price_items (sku, product_name, brand, unit_price)
+        VALUES (?, ?, ?, ?)
         ON DUPLICATE KEY UPDATE
             product_name = VALUES(product_name),
+            brand = VALUES(brand),
             unit_price = VALUES(unit_price)
     ");
 
@@ -537,12 +546,13 @@ function replace_reconcile_price_rows(PDO $pdo, array $rows): void
 
         $sku = strtoupper(trim((string) ($row['sku'] ?? '')));
         $productName = trim((string) ($row['product_name'] ?? ''));
+        $brand = trim((string) ($row['brand'] ?? ''));
         $unitPrice = (float) ($row['unit_price'] ?? 0);
         if ($sku === '') {
             continue;
         }
 
-        $stmt->execute([$sku, $productName, $unitPrice]);
+        $stmt->execute([$sku, $productName, $brand, $unitPrice]);
     }
 }
 

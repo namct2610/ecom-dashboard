@@ -189,6 +189,39 @@
   border-color: var(--primary);
 }
 
+/* View mode toggle (COMBO ↔ SKU) */
+.view-mode-toggle {
+  display: inline-flex;
+  gap: 0;
+  padding: 2px;
+  border-radius: var(--radius-full);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  margin-left: 6px;
+}
+.page-admin-active .view-mode-toggle,
+.page-reconcile-active .view-mode-toggle {
+  display: none !important;
+}
+.view-mode-btn {
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-full);
+  transition: all 0.15s;
+  cursor: pointer;
+}
+.view-mode-btn:hover { color: var(--text-primary); }
+.view-mode-btn.active {
+  background: var(--primary);
+  color: white;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+}
+
 .header-spacer { flex: 1; }
 
 /* ── Period Picker ─────────────────────────────────────────────────────── */
