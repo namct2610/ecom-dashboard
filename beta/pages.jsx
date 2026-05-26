@@ -453,17 +453,18 @@ function PageOrders({ data, mode }) {
 }
 
 function PeakInsights({ heatmap }) {
-  const total = heatmap.reduce((a,b)=>a+b.orders,0);
-  const sorted = [...heatmap].sort((a,b)=>b.orders-a.orders);
-  const peak = sorted[0];
-  const lowHours = heatmap.filter(h=>h.orders===0).length;
+  const rows = Array.isArray(heatmap) ? heatmap : [];
+  const total = rows.reduce((a,b)=>a+(b?.orders||0),0);
+  const sorted = [...rows].sort((a,b)=>(b?.orders||0)-(a?.orders||0));
+  const peak = sorted[0] || { weekday: 0, hour: 0, orders: 0 };
+  const lowHours = rows.filter(h=>(h?.orders||0)===0).length;
   const WD = ['Chủ nhật','Thứ 2','Thứ 3','Thứ 4','Thứ 5','Thứ 6','Thứ 7'];
   return (
     <div className="stat-grid" style={{marginTop:14, gridTemplateColumns:'repeat(3, 1fr)'}}>
       <div className="cell">
         <div className="l">Giờ vàng</div>
-        <div className="v">{WD[peak.weekday]} · {String(peak.hour).padStart(2,'0')}:00</div>
-        <div style={{fontSize:11, color:'var(--ink-3)', marginTop:4}}>{peak.orders} đơn — {(peak.orders/total*100).toFixed(1)}% tổng tháng</div>
+        <div className="v">{WD[peak.weekday] || '—'} · {String(peak.hour).padStart(2,'0')}:00</div>
+        <div style={{fontSize:11, color:'var(--ink-3)', marginTop:4}}>{peak.orders} đơn{total>0 ? ` — ${(peak.orders/total*100).toFixed(1)}% tổng tháng` : ''}</div>
       </div>
       <div className="cell">
         <div className="l">Khung giờ chết</div>
