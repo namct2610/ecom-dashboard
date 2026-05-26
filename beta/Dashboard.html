@@ -21,9 +21,20 @@ window.TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
 </script>
 
 <script src="data.js"></script>
-<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
-<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
-<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script crossorigin src="https://unpkg.com/react@18.3.1/umd/react.development.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js"></script>
+<script>
+window.addEventListener('error', function(e){
+  document.body.insertAdjacentHTML('beforeend',
+    '<div style="position:fixed;bottom:8px;left:8px;right:8px;background:#fee;color:#900;padding:10px;border-radius:6px;font:12px monospace;z-index:99999;white-space:pre-wrap">[Beta] ' + (e.message || 'unknown error') + (e.filename ? '\n@ '+e.filename+':'+e.lineno : '') + '</div>');
+});
+setTimeout(function(){
+  if (!window.React) document.body.insertAdjacentHTML('beforeend','<div style="position:fixed;bottom:8px;left:8px;right:8px;background:#fee;color:#900;padding:10px;border-radius:6px;font:12px monospace;z-index:99999">[Beta] React CDN chưa load. Kiểm tra kết nối tới unpkg.com.</div>');
+  else if (!window.Babel) document.body.insertAdjacentHTML('beforeend','<div style="position:fixed;bottom:8px;left:8px;right:8px;background:#fee;color:#900;padding:10px;border-radius:6px;font:12px monospace;z-index:99999">[Beta] Babel CDN chưa load.</div>');
+  else if (!window.DASHBOARD_DATA) document.body.insertAdjacentHTML('beforeend','<div style="position:fixed;bottom:8px;left:8px;right:8px;background:#fee;color:#900;padding:10px;border-radius:6px;font:12px monospace;z-index:99999">[Beta] data.php không trả về dữ liệu. Mở /beta/data.php trực tiếp để xem chi tiết.</div>');
+}, 4000);
+</script>
 </head>
 <body>
 <div id="root"></div>
