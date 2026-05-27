@@ -14,6 +14,10 @@ if ($user === null) {
     exit;
 }
 
+$appVersion = file_exists(dirname(__DIR__) . '/version.txt')
+    ? trim((string) file_get_contents(dirname(__DIR__) . '/version.txt'))
+    : 'beta';
+
 // Serve the React HTML inline. data.js.php sẽ tự kết nối DB qua bootstrap.
 $html = file_get_contents(__DIR__ . '/Dashboard.html');
 if ($html === false) {
@@ -26,6 +30,7 @@ if ($html === false) {
 $inject = '<script>window.__BETA__ = {username: ' . json_encode((string)($user['username'] ?? ''))
     . ', isAdmin: ' . ($user['role'] === 'admin' ? 'true' : 'false')
     . ', backUrl: "../index.php", versionLabel: "v2.0.0 Beta"};</script>';
+$productionLabel = htmlspecialchars('production v' . $appVersion, ENT_QUOTES, 'UTF-8');
 $banner = <<<'HTML'
 <style>
 .beta-top-banner{position:fixed;top:0;left:0;right:0;z-index:9999;background:linear-gradient(90deg,#7c3aed,#a855f7);color:#fff;
@@ -39,10 +44,11 @@ body{padding-top:28px !important}
 </style>
 <div class="beta-top-banner">
   <span class="beta-tag">BETA</span>
-  <span>Dashboard v2.0.0 — UI thử nghiệm, dùng chung database với production v1.4.x. Vui lòng phản hồi nếu phát hiện vấn đề.</span>
+  <span>Dashboard v2.0.0 — UI thử nghiệm, dùng chung database với __PRODUCTION_LABEL__. Vui lòng phản hồi nếu phát hiện vấn đề.</span>
   <a href="../index.php">← Trở về bản chính thức</a>
 </div>
 HTML;
+$banner = str_replace('__PRODUCTION_LABEL__', $productionLabel, $banner);
 // Forward query string (period/year/from/to) tới data.php để lọc thời gian
 $qs = $_SERVER['QUERY_STRING'] ?? '';
 $dataSrc = 'data.php' . ($qs !== '' ? '?' . htmlspecialchars($qs, ENT_QUOTES) : '');

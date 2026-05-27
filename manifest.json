@@ -1,7 +1,7 @@
 {
-  "version": "1.5.6",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.5.6/release/dashboard-v3-1.5.6.zip",
-  "changelog": "- Beta: sidebar full-height (bỏ spacer thừa làm nav bị dồn nửa màn hình)\n- Beta: User button chuyển xuống góc dưới sidebar, đồng bộ giao diện sidebar; bỏ khỏi topbar\n- Beta: bỏ màn login mockup — vào thẳng vì đã auth qua PHP gate; hiển thị đúng tên user\n- Beta: toggle biểu đồ Tổng quan hoạt động (Doanh thu/Đơn hàng/AOV, Top SP Doanh thu/Số lượng)",
+  "version": "1.5.7",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.5.7/release/dashboard-v3-1.5.7.zip",
+  "changelog": "- Beta: sửa lỗi NaN/Infinity và biểu đồ méo khi kỳ lọc không có dữ liệu\n- Beta: đồng bộ filter theo sàn cho summary, traffic, top sản phẩm và đơn gần đây\n- Beta: Kế hoạch dùng target/actual từ database, hiển thị YTD/YTG và trung bình tháng còn lại\n- Beta: cập nhật banner version và trạng thái rỗng cho bảng/biểu đồ",
   "min_php": "8.1",
-  "released_at": "2026-05-26"
+  "released_at": "2026-05-27"
 }

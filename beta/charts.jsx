@@ -3,18 +3,27 @@
 
 // ── Utilities ──────────────────────────────────────────────────────────
 
+const isNum = (n) => Number.isFinite(Number(n));
+const safeNum = (n, fallback = 0) => isNum(n) ? Number(n) : fallback;
+const safeDiv = (num, den, fallback = 0) => {
+  const d = safeNum(den);
+  return d === 0 ? fallback : safeNum(num) / d;
+};
+const safePct = (num, den, fallback = 0) => safeDiv(num, den, fallback) * 100;
+
 const fmtVnd = (n) => {
-  if (n == null) return '—';
+  if (!isNum(n)) return '—';
+  n = Number(n);
   if (n >= 1e9) return (n/1e9).toFixed(2).replace(/\.?0+$/,'') + 'B';
   if (n >= 1e6) return (n/1e6).toFixed(1).replace(/\.0$/,'') + 'M';
   if (n >= 1e3) return (n/1e3).toFixed(0) + 'K';
   return String(Math.round(n));
 };
 const fmtFull = (n) => {
-  if (n == null) return '—';
+  if (!isNum(n)) return '—';
   return new Intl.NumberFormat('vi-VN').format(Math.round(n));
 };
-const fmtPct = (n, d=1) => (n==null?'—':n.toFixed(d)+'%');
+const fmtPct = (n, d=1) => (!isNum(n) ? '—' : Number(n).toFixed(d)+'%');
 
 const PLATFORM_COLORS = {
   shopee: '#FF5722',
@@ -115,9 +124,11 @@ function AreaChart({ series, labels, height = 260, mode = 'area', stacked = true
     const cum = s.data.map((v, i) => v + (stacked ? series.slice(0, idx).reduce((a,b)=>a+b.data[i], 0) : 0));
     return { ...s, cum };
   });
-  const maxVal = stacked
-    ? Math.max(...labels.map((_, i) => series.reduce((a,b)=>a+b.data[i], 0)), 1)
-    : Math.max(...series.flatMap(s => s.data), 1);
+  const rawMaxVal = stacked
+    ? Math.max(...labels.map((_, i) => series.reduce((a,b)=>a+b.data[i], 0)), 0)
+    : Math.max(...series.flatMap(s => s.data), 0);
+  const emptyScale = rawMaxVal <= 0;
+  const maxVal = emptyScale ? 1 : rawMaxVal;
 
   const x = (i) => ML + (N === 1 ? innerW/2 : (i / (N - 1)) * innerW);
   const y = (v) => MT + innerH - (v / maxVal) * innerH;
@@ -165,7 +176,7 @@ function AreaChart({ series, labels, height = 260, mode = 'area', stacked = true
                   stroke="var(--line)" strokeDasharray="2 4" strokeWidth={1} />
             <text x={ML-8} y={y(t)+4} textAnchor="end"
                   fill="var(--ink-4)" fontSize="10.5" fontWeight="500">
-              {formatY(t)}
+              {emptyScale ? '0' : formatY(t)}
             </text>
           </g>
         ))}
@@ -250,9 +261,11 @@ function BarChart({ series, labels, height = 260, stacked = false, formatY = fmt
     ? Math.min(groupW * 0.7, 28)
     : Math.min((groupW * 0.7) / series.length, 14);
 
-  const maxVal = stacked
-    ? Math.max(...labels.map((_, i) => series.reduce((a,b)=>a+b.data[i], 0)), 1)
-    : Math.max(...series.flatMap(s => s.data), 1);
+  const rawMaxVal = stacked
+    ? Math.max(...labels.map((_, i) => series.reduce((a,b)=>a+b.data[i], 0)), 0)
+    : Math.max(...series.flatMap(s => s.data), 0);
+  const emptyScale = rawMaxVal <= 0;
+  const maxVal = emptyScale ? 1 : rawMaxVal;
   const y = (v) => MT + innerH - (v / maxVal) * innerH;
   const ticks = [0, 0.5, 1].map(t => t * maxVal);
 
@@ -263,7 +276,7 @@ function BarChart({ series, labels, height = 260, stacked = false, formatY = fmt
           <g key={i}>
             <line x1={ML} x2={ML+innerW} y1={y(t)} y2={y(t)}
                   stroke="var(--line)" strokeDasharray="2 4" />
-            <text x={ML-8} y={y(t)+4} textAnchor="end" fill="var(--ink-4)" fontSize="10.5" fontWeight="500">{formatY(t)}</text>
+            <text x={ML-8} y={y(t)+4} textAnchor="end" fill="var(--ink-4)" fontSize="10.5" fontWeight="500">{emptyScale ? '0' : formatY(t)}</text>
           </g>
         ))}
         {labels.map((lab, i) => {
@@ -320,18 +333,19 @@ function BarChart({ series, labels, height = 260, stacked = false, formatY = fmt
 
 function Donut({ data, size = 180, thickness = 22, center }) {
   // data: [{ key, name, value, color }]
-  const total = data.reduce((a,b) => a + b.value, 0) || 1;
+  const total = data.reduce((a,b) => a + safeNum(b.value), 0);
   const r = size/2 - thickness/2 - 2;
   const cx = size/2, cy = size/2;
   let a0 = -Math.PI/2;
   const segs = data.map(s => {
-    const angle = (s.value/total) * Math.PI * 2;
+    const value = safeNum(s.value);
+    const angle = total > 0 ? (value/total) * Math.PI * 2 : 0;
     const a1 = a0 + angle;
     const x0 = cx + r*Math.cos(a0), y0 = cy + r*Math.sin(a0);
     const x1 = cx + r*Math.cos(a1), y1 = cy + r*Math.sin(a1);
     const large = angle > Math.PI ? 1 : 0;
     const d = `M ${x0},${y0} A ${r},${r} 0 ${large} 1 ${x1},${y1}`;
-    const seg = { d, color: s.color, pct: s.value/total, ...s };
+    const seg = { d, color: s.color, pct: safeDiv(value, total), ...s };
     a0 = a1;
     return seg;
   });
@@ -359,7 +373,7 @@ function RankedBars({ items, valueKey = 'value', labelKey = 'name', subKey, form
   return (
     <div style={{display:'flex', flexDirection:'column', gap:10}}>
       {list.map((it, i) => {
-        const pct = (it[valueKey]/max) * 100;
+        const pct = safePct(it[valueKey], max);
         const color = colors?.[it.platform] || colors?.[i] || accent || 'var(--brand-1)';
         return (
           <div key={i} style={{display:'flex', alignItems:'center', gap:12}}>
@@ -581,9 +595,9 @@ function MiniBars({ data, color, height = 40, gap = 1.2 }) {
     <div ref={ref} style={{width:'100%', height}}>
       <svg width={w} height={height} style={{display:'block'}}>
         {data.map((v,i) => {
-          const h = (v/max) * height * 0.92;
+          const h = safeDiv(v, max) * height * 0.92;
           return <rect key={i} x={i*(bw+gap)} y={height-h} width={bw} height={h}
-                       fill={color} opacity={0.55 + 0.45*(v/max)} rx={1.5} />;
+                       fill={color} opacity={0.55 + 0.45*safeDiv(v, max)} rx={1.5} />;
         })}
       </svg>
     </div>
@@ -593,14 +607,14 @@ function MiniBars({ data, color, height = 40, gap = 1.2 }) {
 // ── Stacked horizontal bar (market share) ──────────────────────────────
 
 function StackBar({ segments, height = 12 }) {
-  const total = segments.reduce((a,b)=>a+b.value, 0) || 1;
+  const total = segments.reduce((a,b)=>a+safeNum(b.value), 0);
   return (
     <div className="stack-bar" style={{height}}>
       {segments.map((s,i) => (
         <div key={i} className="seg" style={{
-          width: (s.value/total*100) + '%',
+          width: safePct(s.value, total) + '%',
           background: s.color,
-        }} title={`${s.name}: ${(s.value/total*100).toFixed(1)}%`} />
+        }} title={`${s.name}: ${safePct(s.value, total).toFixed(1)}%`} />
       ))}
     </div>
   );
@@ -608,7 +622,7 @@ function StackBar({ segments, height = 12 }) {
 
 // Expose globally
 Object.assign(window, {
-  fmtVnd, fmtFull, fmtPct,
+  fmtVnd, fmtFull, fmtPct, safeNum, safeDiv, safePct,
   PLATFORM_COLORS, PLATFORM_COLORS_2, PLATFORM_NAME,
   Sparkline, AreaChart, BarChart, Donut, RankedBars, Heatmap, Radar, Dial, MiniBars, StackBar,
 });

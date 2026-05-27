@@ -113,8 +113,7 @@ function PageOverview({ data, mode }) {
     { key: 'tiktok', name: 'TikTok', value: s.tiktok.revenue, color: PLATFORM_COLORS.tiktok },
   ];
 
-  const aov = Math.round(s.total_revenue / s.completed_orders);
-  const conversion = (s.total_orders / s.total_visitors) * 100;
+  const aov = s.avg_order_value || Math.round(safeDiv(s.total_revenue, s.completed_orders));
 
   return (
     <div className="page" style={{display:'flex', flexDirection:'column', gap:'var(--gap-card)'}}>
@@ -126,7 +125,7 @@ function PageOverview({ data, mode }) {
         <div className="kpi-hero">
           <div className="kpi-hero-top">
             <div>
-              <div className="kpi-hero-label">Doanh thu tháng 03/2026</div>
+              <div className="kpi-hero-label">Doanh thu {data.period_label || 'kỳ hiện tại'}</div>
               <div style={{fontSize:11, opacity:0.7, marginTop:4, fontWeight:600}}>
                 Đã hoàn thành · 3 sàn thương mại điện tử
               </div>
@@ -152,17 +151,17 @@ function PageOverview({ data, mode }) {
               <div style={{display:'flex', height:8, borderRadius:99, overflow:'hidden', background:'rgba(255,255,255,0.15)'}}>
                 {platformShare.map((p,i) => (
                   <div key={i} style={{
-                    width: (p.value/s.total_revenue*100)+'%',
+                    width: safePct(p.value, s.total_revenue)+'%',
                     background: p.color,
                     transition: 'width 0.8s',
-                  }} title={`${p.name}: ${(p.value/s.total_revenue*100).toFixed(1)}%`} />
+                  }} title={`${p.name}: ${safePct(p.value, s.total_revenue).toFixed(1)}%`} />
                 ))}
               </div>
               <div style={{display:'flex', gap:14, marginTop:10, fontSize:11.5, fontWeight:600}}>
                 {platformShare.map(p => (
                   <span key={p.key} style={{display:'flex', alignItems:'center', gap:6}}>
                     <span style={{width:8, height:8, borderRadius:2, background:p.color}}/>
-                    {p.name} · {(p.value/s.total_revenue*100).toFixed(1)}%
+                    {p.name} · {safePct(p.value, s.total_revenue).toFixed(1)}%
                   </span>
                 ))}
               </div>
@@ -185,7 +184,7 @@ function PageOverview({ data, mode }) {
             <div style={{display:'flex', flexDirection:'column', gap:8, marginTop:14}}>
               {['shopee','lazada','tiktok'].map(p => {
                 const sp = s[p];
-                const share = (sp.revenue/s.total_revenue*100);
+                const share = safePct(sp.revenue, s.total_revenue);
                 return (
                   <div key={p} className={`plat-tile plat-${p}`}>
                     <div className="logo">{p === 'shopee' ? 'S' : p === 'lazada' ? 'L' : 'T'}</div>
@@ -220,7 +219,7 @@ function PageOverview({ data, mode }) {
         <KPI label="Đơn hoàn thành"
              value={fmtFull(s.completed_orders)}
              delta={9.7}
-             sub={`${((s.completed_orders/s.total_orders)*100).toFixed(1)}% trên tổng`}
+             sub={`${safePct(s.completed_orders, s.total_orders).toFixed(1)}% trên tổng`}
              accent="green"
              icon={I.check}
              spark={data.revenue_series.map(d => Math.round((d.orders_total||0)*0.85))}
@@ -239,7 +238,7 @@ function PageOverview({ data, mode }) {
              sub={`${fmtFull(s.total_page_views)} lượt xem`}
              accent="amber"
              icon={I.eye}
-             spark={data.traffic.filter(t=>t.platform==='shopee'||t.platform==='lazada').reduce((acc,t)=>{
+             spark={data.traffic.reduce((acc,t)=>{
                const day = parseInt(t.date.slice(-2));
                acc[day-1] = (acc[day-1]||0) + t.visitors;
                return acc;
@@ -293,7 +292,7 @@ function PageOverview({ data, mode }) {
               <div key={p.key} style={{display:'flex', alignItems:'center', gap:10, padding:'8px 10px', borderRadius:10, background:'var(--surface-2)'}}>
                 <span style={{width:10, height:10, borderRadius:3, background:p.color}}/>
                 <span style={{fontSize:12.5, fontWeight:600, flex:1}}>{p.name}</span>
-                <span style={{fontSize:11, color:'var(--ink-3)'}}>{(p.value/s.total_revenue*100).toFixed(1)}%</span>
+                <span style={{fontSize:11, color:'var(--ink-3)'}}>{safePct(p.value, s.total_revenue).toFixed(1)}%</span>
                 <span style={{fontSize:12.5, fontWeight:700, fontVariantNumeric:'tabular-nums', minWidth:64, textAlign:'right'}}>
                   {fmtVnd(p.value)}₫
                 </span>
@@ -394,7 +393,7 @@ function PageOrders({ data, mode }) {
       <div className="row row-4">
         <KPI label="Tổng đơn" value={fmtFull(s.total_orders)} delta={12.3} sub="tháng trước" accent="brand" icon={I.cart}
              spark={ordersByDay} sparkColor="var(--brand-1)"/>
-        <KPI label="Hoàn thành" value={fmtFull(s.completed_orders)} delta={9.7} sub={fmtPct(s.completed_orders/s.total_orders*100)+' thành công'} accent="green" icon={I.check}
+        <KPI label="Hoàn thành" value={fmtFull(s.completed_orders)} delta={9.7} sub={fmtPct(safePct(s.completed_orders, s.total_orders))+' thành công'} accent="green" icon={I.check}
              spark={data.revenue_series.map(d => Math.round(d.orders_total*0.85))} sparkColor="var(--green)"/>
         <KPI label="Đã huỷ" value={fmtFull(s.cancelled_orders)} delta={-2.1} sub="giảm so kỳ trước" accent="red" icon={I.x}
              spark={data.revenue_series.map(d => Math.round(d.orders_total*0.13))} sparkColor="var(--red)"/>
@@ -501,7 +500,7 @@ function PageProducts({ data }) {
   const totalSKUs = data.top_products_qty.length + 20; // mock
   const totalQty = data.top_products_qty.reduce((a,b)=>a+b.qty, 0);
   const totalRev = data.top_products_rev.reduce((a,b)=>a+b.revenue, 0);
-  const topProduct = data.top_products_rev[0];
+  const topProduct = data.top_products_rev[0] || { qty: 0, name: 'Chưa có dữ liệu' };
 
   return (
     <div className="page" style={{display:'flex', flexDirection:'column', gap:'var(--gap-card)'}}>
@@ -509,8 +508,8 @@ function PageProducts({ data }) {
       <div className="row row-4">
         <KPI label="Số SKU đang bán" value={fmtFull(totalSKUs)} sub="Tất cả 3 sàn" accent="brand" icon={I.pkg}/>
         <KPI label="Số lượng đã bán" value={fmtFull(totalQty)} delta={14.2} sub="tổng top 10" accent="green" icon={I.cart}/>
-        <KPI label="Doanh thu top 10" value={fmtVnd(totalRev)+'₫'} delta={11.5} sub={fmtPct(totalRev/243769463*100,0)+" tổng DT"} accent="amber" icon={I.money}/>
-        <KPI label="Sản phẩm bán chạy nhất" value={topProduct.qty + ' bán'} sub={topProduct.name.slice(0,28)+'...'} accent="shopee" icon={I.trend}/>
+        <KPI label="Doanh thu top 10" value={fmtVnd(totalRev)+'₫'} delta={11.5} sub={fmtPct(safePct(totalRev, data.summary.total_revenue),0)+" tổng DT"} accent="amber" icon={I.money}/>
+        <KPI label="Sản phẩm bán chạy nhất" value={topProduct.qty + ' bán'} sub={topProduct.name.length > 28 ? topProduct.name.slice(0,28)+'...' : topProduct.name} accent="shopee" icon={I.trend}/>
       </div>
 
       <div className="row row-2">
@@ -551,6 +550,9 @@ function PageProducts({ data }) {
 }
 
 function Treemap({ items }) {
+  if (!items.length) {
+    return <div className="empty-state">Chưa có dữ liệu sản phẩm trong kỳ này.</div>;
+  }
   // Simple squarified layout for 9 items in a 3-column grid with varying heights
   const total = items.reduce((a,b)=>a+b.revenue, 0);
   // Sort & split into rows of varying sizes
@@ -562,12 +564,12 @@ function Treemap({ items }) {
   const r2Total = r2.reduce((a,b)=>a+b.revenue,0);
   const r3Total = r3.reduce((a,b)=>a+b.revenue,0);
   const grandTotal = r1Total + r2Total + r3Total;
-  const h1 = Math.max(28, (r1Total/grandTotal)*340);
-  const h2 = Math.max(28, (r2Total/grandTotal)*340);
-  const h3 = Math.max(28, (r3Total/grandTotal)*340);
+  const h1 = Math.max(28, safeDiv(r1Total, grandTotal) * 340);
+  const h2 = Math.max(28, safeDiv(r2Total, grandTotal) * 340);
+  const h3 = Math.max(28, safeDiv(r3Total, grandTotal) * 340);
 
   const cell = (it, row, total, h) => {
-    const pct = (it.revenue/total)*100;
+    const pct = safePct(it.revenue, total);
     const color = PLATFORM_COLORS[it.platform];
     return (
       <div key={it.sku} style={{
@@ -595,7 +597,7 @@ function Treemap({ items }) {
             {fmtVnd(it.revenue)}₫
           </div>
           <div style={{fontSize: 10.5, opacity: 0.85, fontWeight: 600, marginTop:2}}>
-            {(it.revenue/grandTotal*100).toFixed(1)}% · {it.qty} sản phẩm
+            {safePct(it.revenue, grandTotal).toFixed(1)}% · {it.qty} sản phẩm
           </div>
         </div>
       </div>
@@ -619,15 +621,16 @@ function PageCustomers({ data }) {
     .filter(c => !c.city.startsWith('P*') && c.city.length > 2)
     .slice(0, 8);
   const totalCustomers = cities.reduce((a,b)=>a+b.orders, 0);
-  const aov = Math.round(s.total_revenue / s.completed_orders);
+  const aov = s.avg_order_value || Math.round(safeDiv(s.total_revenue, s.completed_orders));
+  const topCity = cities[0] || { city: 'Chưa có dữ liệu', orders: 0 };
 
   return (
     <div className="page" style={{display:'flex', flexDirection:'column', gap:'var(--gap-card)'}}>
       <div className="row row-4">
         <KPI label="Tổng khách hàng" value={fmtFull(s.total_visitors)} delta={7.1} sub="lượt mua cá nhân" accent="brand" icon={I.user}/>
-        <KPI label="Đơn TB/khách" value={(s.total_orders/totalCustomers).toFixed(2)} delta={3.2} sub="số đơn/người" accent="green" icon={I.cart}/>
+        <KPI label="Đơn TB/khách" value={safeDiv(s.total_orders, totalCustomers).toFixed(2)} delta={3.2} sub="số đơn/người" accent="green" icon={I.cart}/>
         <KPI label="AOV" value={fmtVnd(aov)+'₫'} delta={5.4} sub="Giá trị đơn TB" accent="amber" icon={I.money}/>
-        <KPI label="Thị trường chính" value="Hà Nội" delta={null} sub={`${cities[0].orders} đơn — ${(cities[0].orders/totalCustomers*100).toFixed(0)}% tổng đơn`} accent="shopee" icon={I.pin}/>
+        <KPI label="Thị trường chính" value={topCity.city} delta={null} sub={`${topCity.orders} đơn — ${safePct(topCity.orders, totalCustomers).toFixed(0)}% tổng đơn`} accent="shopee" icon={I.pin}/>
       </div>
 
       <div className="row row-2">
@@ -638,8 +641,10 @@ function PageCustomers({ data }) {
               <div className="sub">Top khu vực có nhiều đơn nhất</div>
             </div>
           </div>
-          <RankedBars items={cities} valueKey="orders" labelKey="city"
-                      accent="var(--brand-1)" format={(v)=>fmtFull(v)+' đơn'} maxItems={8}/>
+          {cities.length
+            ? <RankedBars items={cities} valueKey="orders" labelKey="city"
+                          accent="var(--brand-1)" format={(v)=>fmtFull(v)+' đơn'} maxItems={8}/>
+            : <div className="empty-state">Chưa có dữ liệu khách hàng theo tỉnh / thành trong kỳ này.</div>}
         </div>
 
         <div className="card card-lg">
@@ -688,7 +693,7 @@ function VnConcentration({ cities, totalCustomers }) {
         { name: 'TP. Hồ Chí Minh', value: hcm, color: PLATFORM_COLORS.lazada, role: 'Thị trường #2' },
         { name: 'Tỉnh khác', value: other, color: 'var(--ink-3)', role: 'Phân tán' },
       ].map(r => {
-        const pct = r.value/totalCustomers*100;
+        const pct = safePct(r.value, totalCustomers);
         return (
           <div key={r.name}>
             <div style={{display:'flex', justifyContent:'space-between', marginBottom:6}}>
@@ -726,12 +731,12 @@ function PageTraffic({ data, mode }) {
   // Shopee traffic isn't in JSON's traffic array — derive zeros if missing
   const dates = Object.keys(byDate).sort();
   const dayLabels = dates.map(d => d.slice(-2));
-  const trafficSeries = ['lazada','tiktok'].map(p => ({
+  const trafficSeries = ['shopee','lazada','tiktok'].map(p => ({
     key: p, name: PLATFORM_NAME[p], color: PLATFORM_COLORS[p],
     data: dates.map(d => byDate[d][p+'_pv'] || 0),
   }));
 
-  const conversionRate = (s.total_orders/s.total_visitors*100);
+  const conversionRate = safePct(s.total_orders, s.total_visitors);
 
   return (
     <div className="page" style={{display:'flex', flexDirection:'column', gap:'var(--gap-card)'}}>
@@ -740,7 +745,7 @@ function PageTraffic({ data, mode }) {
              spark={dates.map(d=>byDate[d].pv)} sparkColor="var(--brand-1)"/>
         <KPI label="Lượt truy cập" value={fmtFull(s.total_visitors)} delta={4.2} sub="unique visitors" accent="amber" icon={I.user}
              spark={dates.map(d=>byDate[d].vis)} sparkColor="var(--amber)"/>
-        <KPI label="PV / Visitor" value={(s.total_page_views/s.total_visitors).toFixed(2)} delta={2.1} sub="trang/khách" accent="green" icon={I.trend}/>
+        <KPI label="PV / Visitor" value={safeDiv(s.total_page_views, s.total_visitors).toFixed(2)} delta={2.1} sub="trang/khách" accent="green" icon={I.trend}/>
         <KPI label="Tỷ lệ chuyển đổi" value={fmtPct(conversionRate)} delta={1.8} sub="visitor → đơn" accent="shopee" icon={I.pct}/>
       </div>
 
@@ -748,7 +753,7 @@ function PageTraffic({ data, mode }) {
         <div className="card-head">
           <div>
             <h3>Lượt xem & lượt truy cập theo ngày</h3>
-            <div className="sub">Tháng 03/2026 · Lazada & TikTok Shop</div>
+              <div className="sub">{data.period_label || 'Kỳ hiện tại'} · Shopee, Lazada & TikTok Shop</div>
           </div>
         </div>
         <AreaChart series={trafficSeries} labels={dayLabels} mode={mode} stacked={false} formatY={fmtFull} height={280}/>
@@ -842,20 +847,20 @@ function PageComparison({ data }) {
     return { p, sp, aov, cancelRate, completionRate };
   });
 
-  const maxOrders = Math.max(...platformMetrics.map(m=>m.sp.orders));
-  const maxRev = Math.max(...platformMetrics.map(m=>m.sp.revenue));
-  const maxAov = Math.max(...platformMetrics.map(m=>m.aov));
+  const maxOrders = Math.max(...platformMetrics.map(m=>m.sp.orders), 1);
+  const maxRev = Math.max(...platformMetrics.map(m=>m.sp.revenue), 1);
+  const maxAov = Math.max(...platformMetrics.map(m=>m.aov), 1);
 
   const radarSeries = platformMetrics.map(m => ({
     name: PLATFORM_NAME[m.p],
     color: PLATFORM_COLORS[m.p],
     values: [
-      m.sp.orders / maxOrders * 100,
-      m.sp.revenue / maxRev * 100,
-      m.aov / (maxAov||1) * 100,
+      safePct(m.sp.orders, maxOrders),
+      safePct(m.sp.revenue, maxRev),
+      safePct(m.aov, maxAov),
       m.completionRate,
       Math.max(0, 100 - m.cancelRate * 4),
-      (m.sp.completed/maxOrders)*100,
+      safePct(m.sp.completed, maxOrders),
     ],
   }));
 
@@ -904,7 +909,7 @@ function PageComparison({ data }) {
                 </div>
                 <div>
                   <div style={{fontSize:15, fontWeight:800}}>{PLATFORM_NAME[p]}</div>
-                  <div style={{fontSize:11.5, color:'var(--ink-3)'}}>{sp.orders} đơn · {((sp.orders/s.total_orders)*100).toFixed(1)}% tổng</div>
+                  <div style={{fontSize:11.5, color:'var(--ink-3)'}}>{sp.orders} đơn · {safePct(sp.orders, s.total_orders).toFixed(1)}% tổng</div>
                 </div>
               </div>
               <div className="stat-grid" style={{gridTemplateColumns:'repeat(2,1fr)'}}>
@@ -918,11 +923,11 @@ function PageComparison({ data }) {
                 </div>
                 <div className="cell">
                   <div className="l">Tỷ lệ hoàn thành</div>
-                  <div className="v" style={{color:'var(--green)'}}>{((sp.completed/sp.orders)*100).toFixed(1)}%</div>
+                  <div className="v" style={{color:'var(--green)'}}>{safePct(sp.completed, sp.orders).toFixed(1)}%</div>
                 </div>
                 <div className="cell">
                   <div className="l">Tỷ lệ huỷ</div>
-                  <div className="v" style={{color:'var(--red)'}}>{((sp.cancelled||0)/sp.orders*100).toFixed(1)}%</div>
+                  <div className="v" style={{color:'var(--red)'}}>{safePct(sp.cancelled || 0, sp.orders).toFixed(1)}%</div>
                 </div>
               </div>
             </div>

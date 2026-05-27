@@ -1020,6 +1020,20 @@ body[data-theme="dark"] .login-card {
 .login-btn:hover { transform: translateY(-1px); box-shadow: 0 12px 30px var(--brand-glow); }
 .login-btn:disabled { opacity: 0.7; cursor: wait; }
 
+.empty-state {
+  display: grid;
+  place-items: center;
+  min-height: 160px;
+  padding: 22px;
+  border: 1px dashed var(--line);
+  border-radius: 14px;
+  background: var(--surface-2);
+  color: var(--ink-3);
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+}
+
 @media (max-width: 900px) {
   .login-grid { grid-template-columns: 1fr; gap: 24px; }
   .login-promo h1 { font-size: 32px !important; }
