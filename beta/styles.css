@@ -777,7 +777,27 @@ body[data-theme="dark"] .delta-down { background: rgba(239,68,68,0.2); color: #F
 
 .sidebar-bottom {
   padding-top: 8px;
+  margin-top: 8px;
   border-top: 1px solid rgba(255,255,255,0.06);
+  flex-shrink: 0;
+}
+.sidebar-userbtn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.15s;
+  color: var(--sidebar-ink);
+}
+.sidebar-userbtn:hover { background: var(--sidebar-hover); }
+.sidebar.collapsed .sidebar-userbtn { justify-content: center; padding: 8px; }
+.sidebar-user-pop {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
+  width: 220px;
 }
 
 .sidebar.collapsed {
