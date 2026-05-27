@@ -1,7 +1,7 @@
 {
-  "version": "1.5.8",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.5.8/release/dashboard-v3-1.5.8.zip",
-  "changelog": "- Beta: gộp Upload dữ liệu còn một điểm tải file duy nhất, tự nhận diện sàn và loại dữ liệu\n- Beta: thay số mock phần Khách hàng bằng dữ liệu thật, đổi Hài lòng thành Khách hàng tiềm năng\n- Beta: thêm Chi tiết khách hàng với doanh thu và số đơn theo từng khách\n- Beta: bỏ mục Chi tiết đơn, thêm Liên kết dữ liệu sàn và Danh sách sản phẩm cho GBS/Combo-SKU",
+  "version": "1.5.9",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.5.9/release/dashboard-v3-1.5.9.zip",
+  "changelog": "- Beta: bỏ ô tìm đơn hàng trên topbar và chuyển Upload dữ liệu/Nhật ký xuống Hệ thống\n- Beta: thêm kênh cập nhật riêng cho beta qua beta/manifest.json\n- Beta: Kế hoạch hiển thị bảng Target YTD/YTG và chi tiết tháng giống bản chính thức\n- Beta: Radar so sánh còn 5 chỉ số, đổi Khối lượng thành Khách hàng mới\n- Beta: Danh sách sản phẩm cho phép thêm/sửa/xoá SKU giá GBS và Combo-SKU\n- Beta: Sản phẩm đưa phân bổ doanh thu lên trước và nới khoảng cách top doanh thu/top số lượng",
   "min_php": "8.1",
   "released_at": "2026-05-27"
 }

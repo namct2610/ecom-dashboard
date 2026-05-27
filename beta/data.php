@@ -18,7 +18,7 @@ header('Cache-Control: no-cache, must-revalidate');
 
 // Output a default empty shape immediately so the React UI never hangs
 // even if a query fails — we'll overwrite it on success.
-$emptyPlat = ['orders' => 0, 'completed' => 0, 'cancelled' => 0, 'shipping' => 0, 'revenue' => 0];
+$emptyPlat = ['orders' => 0, 'completed' => 0, 'cancelled' => 0, 'shipping' => 0, 'revenue' => 0, 'new_buyers' => 0];
 $defaultData = [
     'period' => date('Y-m'),
     'period_label' => 'Tháng ' . date('m/Y'),
@@ -92,12 +92,34 @@ foreach (['shopee', 'lazada', 'tiktokshop'] as $plat) {
     ");
     $stmt->execute([':p' => $plat, ':s' => $start, ':e' => $end]);
     $row = $stmt->fetch();
+    $newBuyerStmt = $pdo->prepare("
+        SELECT COUNT(*) AS new_buyers
+        FROM (
+            SELECT COALESCE(NULLIF(MAX(buyer_username), ''), '') AS buyer_username
+            FROM orders
+            WHERE platform = :p
+              AND DATE(order_created_at) BETWEEN :s AND :e
+              AND normalized_status IN ('completed','delivered')
+            GROUP BY order_id
+            HAVING buyer_username != ''
+        ) cur
+        WHERE NOT EXISTS (
+            SELECT 1
+            FROM orders old
+            WHERE old.buyer_username = cur.buyer_username
+              AND old.normalized_status IN ('completed','delivered')
+              AND DATE(old.order_created_at) < :s2
+            LIMIT 1
+        )
+    ");
+    $newBuyerStmt->execute([':p' => $plat, ':s' => $start, ':e' => $end, ':s2' => $start]);
     $platformAgg[$plat === 'tiktokshop' ? 'tiktok' : $plat] = [
         'orders'    => (int) $row['orders'],
         'completed' => (int) $row['completed'],
         'cancelled' => (int) $row['cancelled'],
         'shipping'  => (int) $row['shipping'],
         'revenue'   => (float) $row['revenue'],
+        'new_buyers' => (int) (($newBuyerStmt->fetch() ?: [])['new_buyers'] ?? 0),
     ];
 }
 
@@ -480,6 +502,49 @@ $targetForYear = is_array($targetMap[(string) $planYear] ?? null) ? $targetMap[(
 $revenueTarget = max(0.0, (float) ($targetForYear['revenue'] ?? 0));
 $visitsTarget = max(0.0, (float) ($targetForYear['visits'] ?? 0));
 
+$planMonthly = [];
+for ($month = 1; $month <= 12; $month++) {
+    $bucket = sprintf('%04d-%02d', $planYear, $month);
+    $planMonthly[$bucket] = [
+        'month' => $bucket,
+        'revenue' => 0.0,
+        'visits' => 0,
+        'revenue_target' => $revenueTarget / 12,
+        'visits_target' => $visitsTarget / 12,
+    ];
+}
+
+if ($elapsedMonths > 0) {
+    $monthlyRevenueStmt = $pdo->prepare("
+        SELECT DATE_FORMAT(order_created_at, '%Y-%m') AS month,
+               COALESCE(SUM(order_total), 0) AS revenue
+        FROM orders
+        WHERE DATE(order_created_at) BETWEEN :s AND :e
+          AND normalized_status IN ('completed','delivered')
+        GROUP BY DATE_FORMAT(order_created_at, '%Y-%m')
+    ");
+    $monthlyRevenueStmt->execute([':s' => $planStart, ':e' => $planEnd]);
+    foreach ($monthlyRevenueStmt->fetchAll() as $row) {
+        if (isset($planMonthly[$row['month']])) {
+            $planMonthly[$row['month']]['revenue'] = (float) $row['revenue'];
+        }
+    }
+
+    $monthlyTrafficStmt = $pdo->prepare("
+        SELECT DATE_FORMAT(traffic_date, '%Y-%m') AS month,
+               COALESCE(SUM(visits), 0) AS visits
+        FROM traffic_daily
+        WHERE traffic_date BETWEEN :s AND :e AND device_type='all'
+        GROUP BY DATE_FORMAT(traffic_date, '%Y-%m')
+    ");
+    $monthlyTrafficStmt->execute([':s' => $planStart, ':e' => $planEnd]);
+    foreach ($monthlyTrafficStmt->fetchAll() as $row) {
+        if (isset($planMonthly[$row['month']])) {
+            $planMonthly[$row['month']]['visits'] = (int) $row['visits'];
+        }
+    }
+}
+
 $stmt = $pdo->prepare("
     SELECT COALESCE(SUM(order_total), 0)
     FROM orders
@@ -500,12 +565,14 @@ $planVisitsActual = (float) $stmt->fetchColumn();
 $metric = static function (string $key, string $label, float $target, float $actual) use ($elapsedMonths, $remainingMonths): array {
     $targetYtd = $target * ($elapsedMonths / 12);
     $ytg = max(0.0, $target - $actual);
+    $gapYtd = $actual - $targetYtd;
     return [
         'key' => $key,
         'label' => $label,
         'target' => $target,
         'target_ytd' => $targetYtd,
         'actual_ytd' => $actual,
+        'gap_ytd' => $gapYtd,
         'ytg' => $ytg,
         'avg_needed_month' => $remainingMonths > 0 ? $ytg / $remainingMonths : 0,
         'target_rate' => $target > 0 ? ($actual / $target) * 100 : 0,
@@ -518,6 +585,7 @@ $plan = [
     'year' => $planYear,
     'elapsed_months' => $elapsedMonths,
     'remaining_months' => $remainingMonths,
+    'monthly' => array_values($planMonthly),
     'metrics' => [
         $metric('revenue', 'Doanh số', $revenueTarget, $planRevenueActual),
         $metric('visits', 'Lượt truy cập', $visitsTarget, $planVisitsActual),
