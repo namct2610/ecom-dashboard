@@ -378,14 +378,19 @@ function PageReconcile({ data }) {
   );
 }
 
-function UploadZone({ label, accent, accept = '.xlsx,.xls,.csv' }) {
+function UploadZone({ label, accent, accept = '.xlsx,.xls,.csv', onFile, file: controlledFile }) {
   const [drag, setDrag] = React.useState(false);
-  const [file, setFile] = React.useState(null);
+  const [localFile, setLocalFile] = React.useState(null);
+  const file = controlledFile !== undefined ? controlledFile : localFile;
+  const setSelectedFile = (nextFile) => {
+    if (onFile) onFile(nextFile);
+    else setLocalFile(nextFile);
+  };
   return (
     <div
       onDragOver={(e)=>{e.preventDefault(); setDrag(true);}}
       onDragLeave={()=>setDrag(false)}
-      onDrop={(e)=>{e.preventDefault(); setDrag(false); const f = e.dataTransfer.files[0]; if(f) setFile(f);}}
+      onDrop={(e)=>{e.preventDefault(); setDrag(false); const f = e.dataTransfer.files[0]; if(f) setSelectedFile(f);}}
       onClick={(e) => e.currentTarget.querySelector('input').click()}
       style={{
         border: '2px dashed ' + (drag ? 'var(--brand-1)' : 'var(--line)'),
@@ -421,7 +426,7 @@ function UploadZone({ label, accent, accept = '.xlsx,.xls,.csv' }) {
         </>
       )}
       <input type="file" accept={accept} style={{display:'none'}}
-             onChange={(e)=>{const f = e.target.files[0]; if(f) setFile(f);}}
+             onChange={(e)=>{const f = e.target.files[0]; if(f) setSelectedFile(f);}}
              onClick={(e)=>e.stopPropagation()}/>
     </div>
   );
@@ -430,50 +435,71 @@ function UploadZone({ label, accent, accept = '.xlsx,.xls,.csv' }) {
 // ── Page: UPLOAD ───────────────────────────────────────────────────────
 
 function PageUpload({ data }) {
-  const platforms = [
-    { id: 'shopee', name: 'Shopee', color: PLATFORM_COLORS.shopee, count: 1199, last: '31/03/2026 14:30', file: 'Data_Order_Shopee_T03.xlsx' },
-    { id: 'lazada', name: 'Lazada', color: PLATFORM_COLORS.lazada, count: 7, last: '31/03/2026 14:28', file: 'Data_Order_Lazada_T03.xlsx' },
-    { id: 'tiktok', name: 'TikTok Shop', color: PLATFORM_COLORS.tiktok, count: 14, last: '31/03/2026 14:25', file: 'Data_Order_TikTok_T03.xlsx' },
-  ];
+  const [file, setFile] = React.useState(null);
+  const [busy, setBusy] = React.useState(false);
+  const [message, setMessage] = React.useState('');
+  const history = data.upload_history || [];
+  const totals = history.reduce((acc, h) => {
+    acc.files += 1;
+    acc.rows += h.rows || 0;
+    acc.imported += h.imported || 0;
+    if (h.status === 'completed') acc.completed += 1;
+    if (h.status === 'failed') acc.failed += 1;
+    return acc;
+  }, { files: 0, rows: 0, imported: 0, completed: 0, failed: 0 });
 
-  const history = [
-    { id:1, file: 'Data_Order_Shopee_T03.xlsx', platform: 'shopee', rows: 1199, status: 'success', time: '31/03/2026 14:30', user: 'admin' },
-    { id:2, file: 'Data_Order_Lazada_T03.xlsx', platform: 'lazada', rows: 7, status: 'success', time: '31/03/2026 14:28', user: 'admin' },
-    { id:3, file: 'Data_Order_TikTok_T03.xlsx', platform: 'tiktok', rows: 14, status: 'success', time: '31/03/2026 14:25', user: 'admin' },
-    { id:4, file: 'Data_Traffic_Shopee_T03.xlsx', platform: 'shopee', rows: 31, status: 'success', time: '31/03/2026 09:12', user: 'admin' },
-    { id:5, file: 'Data_Order_Shopee_T02.xlsx', platform: 'shopee', rows: 1078, status: 'success', time: '01/03/2026 11:05', user: 'staff_01' },
-    { id:6, file: 'Data_Order_TikTok_T02.xlsx', platform: 'tiktok', rows: 8, status: 'warning', time: '01/03/2026 10:55', user: 'admin' },
-    { id:7, file: 'Data_Order_Lazada_T02.xlsx', platform: 'lazada', rows: 0, status: 'error', time: '01/03/2026 10:52', user: 'staff_01' },
-  ];
+  const submit = async () => {
+    if (!file || busy) return;
+    setBusy(true);
+    setMessage('');
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      const res = await fetch('../api/upload.php', { method: 'POST', body: fd, credentials: 'same-origin' });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok || !json.success) throw new Error(json.message || json.error || 'Upload thất bại');
+      setMessage(json.message || 'Tải file thành công. Tải lại trang để cập nhật lịch sử.');
+      setFile(null);
+    } catch (err) {
+      setMessage(err.message || 'Upload thất bại');
+    } finally {
+      setBusy(false);
+    }
+  };
 
   return (
     <div className="page" style={{display:'flex', flexDirection:'column', gap:'var(--gap-card)'}}>
 
-      <div className="row row-3">
-        {platforms.map(p => (
-          <div key={p.id} className="card card-lg" style={{borderTop:`4px solid ${p.color}`}}>
-            <div style={{display:'flex', alignItems:'center', gap:12, marginBottom:14}}>
-              <div className={`plat-tile plat-${p.id}`} style={{padding:0, background:'transparent', border:'none'}}>
-                <div className="logo" style={{width:42, height:42, fontSize:16}}>{p.id==='shopee'?'S':p.id==='lazada'?'L':'T'}</div>
-              </div>
-              <div>
-                <div style={{fontSize:15, fontWeight:800}}>{p.name}</div>
-                <div style={{fontSize:11.5, color:'var(--ink-3)'}}>Đơn hàng tháng 03/2026</div>
-              </div>
-            </div>
-            <UploadZone label={`Tải đơn hàng ${p.name}`} accent={p.color}/>
-            <div style={{marginTop:12, padding:'10px 12px', background:'var(--surface-2)', borderRadius:10, display:'flex', justifyContent:'space-between', fontSize:11.5}}>
-              <div>
-                <div style={{color:'var(--ink-3)', fontWeight:600}}>Lần cuối</div>
-                <div className="mono" style={{color:'var(--ink-2)', marginTop:2, fontSize:11}}>{p.last}</div>
-              </div>
-              <div style={{textAlign:'right'}}>
-                <div style={{color:'var(--ink-3)', fontWeight:600}}>Số đơn</div>
-                <div style={{fontWeight:800, marginTop:2, fontSize:14}}>{fmtFull(p.count)}</div>
-              </div>
-            </div>
+      <div className="row row-4">
+        <KPI label="File gần đây" value={fmtFull(totals.files)} sub="20 lần tải mới nhất" accent="brand" icon={I.pkg}/>
+        <KPI label="Dòng đã đọc" value={fmtFull(totals.rows)} sub="từ lịch sử upload" accent="green" icon={I.trend}/>
+        <KPI label="Đã import" value={fmtFull(totals.imported)} sub={`${fmtFull(totals.completed)} file thành công`} accent="amber" icon={I.check}/>
+        <KPI label="Lỗi" value={fmtFull(totals.failed)} sub="file cần kiểm tra lại" accent="red" icon={I.x}/>
+      </div>
+
+      <div className="card card-lg">
+        <div className="card-head">
+          <div>
+            <h3>Tải file dữ liệu lên</h3>
+            <div className="sub">Một điểm upload duy nhất, hệ thống tự nhận diện sàn và loại dữ liệu trong file</div>
           </div>
-        ))}
+        </div>
+        <div style={{display:'grid', gridTemplateColumns:'minmax(0,1fr) 260px', gap:18, alignItems:'stretch'}}>
+          <UploadZone label="Kéo file đơn hàng hoặc traffic vào đây" accept=".xlsx,.xls"
+                      onFile={setFile} file={file} accent="var(--brand-1)"/>
+          <div style={{border:'1px solid var(--line)', borderRadius:14, padding:16, background:'var(--surface-2)', display:'flex', flexDirection:'column', justifyContent:'space-between', gap:14}}>
+            <div>
+              <div style={{fontSize:12, color:'var(--ink-3)', fontWeight:700, textTransform:'uppercase', letterSpacing:'.04em'}}>File đang chọn</div>
+              <div style={{fontSize:14, fontWeight:800, marginTop:8, wordBreak:'break-word'}}>{file ? file.name : 'Chưa chọn file'}</div>
+              <div style={{fontSize:12, color:'var(--ink-3)', marginTop:6}}>{file ? `${(file.size/1024/1024).toFixed(2)} MB` : 'Hỗ trợ Excel Shopee, Lazada, TikTok Shop và traffic'}</div>
+            </div>
+            {message && <div style={{fontSize:12, fontWeight:700, color: message.includes('thành công') ? 'var(--green)' : 'var(--red)'}}>{message}</div>}
+            <button className="btn-primary" disabled={!file || busy} onClick={submit}
+                    style={{opacity:(!file || busy) ? .55 : 1, cursor:(!file || busy) ? 'not-allowed' : 'pointer'}}>
+              {busy ? 'Đang xử lý...' : 'Tải lên'}
+            </button>
+          </div>
+        </div>
       </div>
 
       <div className="card card-lg card-flush">
@@ -483,8 +509,7 @@ function PageUpload({ data }) {
             <div className="sub" style={{fontSize:11.5, color:'var(--ink-3)', marginTop:2}}>20 lần tải gần đây</div>
           </div>
           <div style={{display:'flex', gap:8}}>
-            <button className="chip" style={{padding:'6px 12px', fontSize:11.5}}>Lọc theo sàn</button>
-            <button className="chip" style={{padding:'6px 12px', fontSize:11.5}}>Xuất CSV</button>
+            <button className="chip" style={{padding:'6px 12px', fontSize:11.5}}>Tự nhận diện file</button>
           </div>
         </div>
         <table className="table">
@@ -492,29 +517,143 @@ function PageUpload({ data }) {
             <tr>
               <th>Tên file</th>
               <th>Sàn</th>
+              <th>Loại</th>
               <th className="num">Số dòng</th>
+              <th className="num">Import</th>
               <th>Trạng thái</th>
-              <th>Người tải</th>
               <th>Thời gian</th>
             </tr>
           </thead>
           <tbody>
-            {history.map(h => (
-              <tr key={h.id}>
+            {history.length ? history.map((h, i) => (
+              <tr key={`${h.file}-${h.time}-${i}`}>
                 <td style={{fontWeight:600, fontSize:12.5}}>{h.file}</td>
                 <td><span className={`platform-tag ${h.platform}`}>{PLATFORM_NAME[h.platform]}</span></td>
+                <td style={{fontSize:12, color:'var(--ink-2)'}}>{h.data_type === 'traffic' ? 'Traffic' : 'Đơn hàng'}</td>
                 <td className="num">{fmtFull(h.rows)}</td>
+                <td className="num">{fmtFull(h.imported || 0)}</td>
                 <td>
-                  {h.status === 'success' && <span className="status status-done">Thành công</span>}
-                  {h.status === 'warning' && <span className="status status-pending">Cảnh báo</span>}
-                  {h.status === 'error' && <span className="status status-cancel">Thất bại</span>}
+                  {h.status === 'completed' && <span className="status status-done">Thành công</span>}
+                  {(h.status === 'pending' || h.status === 'processing') && <span className="status status-pending">Đang xử lý</span>}
+                  {h.status === 'failed' && <span className="status status-cancel">Thất bại</span>}
                 </td>
-                <td style={{fontSize:12, color:'var(--ink-2)'}}>@{h.user}</td>
                 <td className="mono" style={{fontSize:11, color:'var(--ink-3)'}}>{h.time}</td>
+              </tr>
+            )) : (
+              <tr><td colSpan="7"><div className="empty-state">Chưa có lịch sử upload.</div></td></tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+function PageDataLinks({ data }) {
+  const settings = data.reconcile_settings || {};
+  const prices = settings.prices || [];
+  const combos = settings.combos || [];
+  const byPlatform = ['all', 'shopee', 'lazada', 'tiktokshop'].map(p => ({
+    platform: p,
+    combos: combos.filter(c => c.platform === p).length,
+    prices: p === 'all' ? prices.length : 0,
+  }));
+
+  return (
+    <div className="page" style={{display:'flex', flexDirection:'column', gap:'var(--gap-card)'}}>
+      <div className="row row-3">
+        <KPI label="SKU giá GBS" value={fmtFull(prices.length)} sub="dùng để đối chiếu đơn giá" accent="brand" icon={I.pkg}/>
+        <KPI label="Quy đổi combo" value={fmtFull(combos.length)} sub="combo sang SKU đơn" accent="green" icon={I.check}/>
+        <KPI label="Sàn đã liên kết" value={fmtFull(byPlatform.filter(p=>p.combos || p.prices).length)} sub="all / Shopee / Lazada / TikTok" accent="amber" icon={I.trend}/>
+      </div>
+
+      <div className="card card-lg card-flush">
+        <div style={{padding:'20px 22px 14px'}}>
+          <h3>Liên kết dữ liệu theo sàn</h3>
+          <div className="sub" style={{fontSize:11.5, color:'var(--ink-3)', marginTop:2}}>Nguồn quy tắc đang dùng cho đối soát GBS và quy đổi Combo sang SKU</div>
+        </div>
+        <table className="table">
+          <thead>
+            <tr>
+              <th>Phạm vi</th>
+              <th className="num">Quy tắc combo</th>
+              <th className="num">SKU giá GBS</th>
+              <th>Ứng dụng</th>
+            </tr>
+          </thead>
+          <tbody>
+            {byPlatform.map(row => (
+              <tr key={row.platform}>
+                <td>{row.platform === 'all' ? 'Tất cả sàn' : <span className={`platform-tag ${row.platform === 'tiktokshop' ? 'tiktok' : row.platform}`}>{PLATFORM_NAME[row.platform === 'tiktokshop' ? 'tiktok' : row.platform]}</span>}</td>
+                <td className="num">{fmtFull(row.combos)}</td>
+                <td className="num">{fmtFull(row.prices)}</td>
+                <td style={{fontSize:12, color:'var(--ink-2)'}}>Đối chiếu GBS · Chuẩn hoá SKU · Tách combo</td>
               </tr>
             ))}
           </tbody>
         </table>
+      </div>
+    </div>
+  );
+}
+
+function PageProductCatalog({ data }) {
+  const settings = data.reconcile_settings || {};
+  const prices = settings.prices || [];
+  const combos = settings.combos || [];
+  const [tab, setTab] = React.useState('prices');
+  const rows = tab === 'prices' ? prices : combos;
+
+  return (
+    <div className="page" style={{display:'flex', flexDirection:'column', gap:'var(--gap-card)'}}>
+      <div className="row row-3">
+        <KPI label="SKU sản phẩm" value={fmtFull(prices.length)} sub="danh sách giá GBS" accent="brand" icon={I.pkg}/>
+        <KPI label="Combo mapping" value={fmtFull(combos.length)} sub="dòng quy đổi sang SKU" accent="green" icon={I.trend}/>
+        <KPI label="Đơn giá TB" value={fmtVnd(safeDiv(prices.reduce((s,p)=>s+(p.unit_price||0),0), prices.length))+'₫'} sub="trên SKU có giá" accent="amber" icon={I.money}/>
+      </div>
+
+      <div className="card card-lg card-flush">
+        <div style={{padding:'20px 22px 14px', display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+          <div>
+            <h3>Danh sách sản phẩm đối chiếu</h3>
+            <div className="sub" style={{fontSize:11.5, color:'var(--ink-3)', marginTop:2}}>SKU, giá GBS và cấu hình quy đổi Combo sang SKU đơn</div>
+          </div>
+          <div className="tabs">
+            <button className={'tab '+(tab==='prices'?'active':'')} onClick={()=>setTab('prices')}>SKU giá GBS</button>
+            <button className={'tab '+(tab==='combos'?'active':'')} onClick={()=>setTab('combos')}>Combo → SKU</button>
+          </div>
+        </div>
+        <div style={{maxHeight:650, overflowY:'auto'}}>
+          <table className="table">
+            <thead style={{position:'sticky', top:0}}>
+              {tab === 'prices' ? (
+                <tr><th>SKU</th><th>Tên sản phẩm</th><th>Brand</th><th className="num">Giá GBS</th></tr>
+              ) : (
+                <tr><th>Sàn</th><th>SKU combo</th><th>Tên combo / từ khoá</th><th>SKU đơn</th><th className="num">SL quy đổi</th></tr>
+              )}
+            </thead>
+            <tbody>
+              {rows.length ? rows.slice(0, 120).map((r,i) => tab === 'prices' ? (
+                <tr key={`${r.sku}-${i}`}>
+                  <td className="mono" style={{fontWeight:700, fontSize:11.5}}>{r.sku}</td>
+                  <td style={{fontSize:12.5, fontWeight:600}}>{r.product_name || '—'}</td>
+                  <td style={{fontSize:12, color:'var(--ink-2)'}}>{r.brand || '—'}</td>
+                  <td className="num">{fmtFull(r.unit_price || 0)}₫</td>
+                </tr>
+              ) : (
+                <tr key={`${r.platform}-${r.combo_sku}-${r.single_sku}-${i}`}>
+                  <td>{r.platform === 'all' ? 'Tất cả' : <span className={`platform-tag ${r.platform === 'tiktokshop' ? 'tiktok' : r.platform}`}>{PLATFORM_NAME[r.platform === 'tiktokshop' ? 'tiktok' : r.platform]}</span>}</td>
+                  <td className="mono" style={{fontWeight:700, fontSize:11.5}}>{r.combo_sku || '—'}</td>
+                  <td style={{fontSize:12.5, fontWeight:600}}>{r.combo_name || '—'}</td>
+                  <td className="mono" style={{fontWeight:700, fontSize:11.5}}>{r.single_sku}</td>
+                  <td className="num">{fmtFull(r.single_qty || 0)}</td>
+                </tr>
+              )) : (
+                <tr><td colSpan="5"><div className="empty-state">Chưa có dữ liệu cấu hình sản phẩm.</div></td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
@@ -983,77 +1122,6 @@ function AdminSystem() {
   );
 }
 
-// ── Page: ORDER DETAIL ─────────────────────────────────────────────────
-
-function PageOrderList({ data }) {
-  const [search, setSearch] = React.useState('');
-  const [statusFilter, setStatusFilter] = React.useState('all');
-  const orders = data.recent_orders.slice(0, 50);
-  const filtered = orders.filter(o => {
-    if (statusFilter !== 'all') {
-      if (statusFilter === 'done' && o.status !== 'Hoàn thành') return false;
-      if (statusFilter === 'cancel' && o.status !== 'Đã huỷ') return false;
-    }
-    if (search && !o.order_id.toLowerCase().includes(search.toLowerCase()) &&
-        !o.product_name.toLowerCase().includes(search.toLowerCase())) return false;
-    return true;
-  });
-
-  return (
-    <div className="card card-lg card-flush">
-      <div style={{padding:'20px 22px 14px', display:'flex', justifyContent:'space-between', alignItems:'center', gap:12, flexWrap:'wrap'}}>
-        <div>
-          <h3>Danh sách đơn hàng chi tiết</h3>
-          <div className="sub" style={{fontSize:11.5, color:'var(--ink-3)', marginTop:2}}>{filtered.length} / {orders.length} đơn</div>
-        </div>
-        <div style={{display:'flex', gap:10, alignItems:'center', flexWrap:'wrap'}}>
-          <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Tìm mã đơn / sản phẩm…"
-                 style={{padding:'8px 12px', fontSize:12, borderRadius:8, border:'1px solid var(--line)', background:'var(--surface-2)', color:'var(--ink)', width: 220, fontFamily:'inherit', outline:'none'}}/>
-          <div className="tabs">
-            <button className={'tab '+(statusFilter==='all'?'active':'')} onClick={()=>setStatusFilter('all')}>Tất cả</button>
-            <button className={'tab '+(statusFilter==='done'?'active':'')} onClick={()=>setStatusFilter('done')}>Hoàn thành</button>
-            <button className={'tab '+(statusFilter==='cancel'?'active':'')} onClick={()=>setStatusFilter('cancel')}>Đã huỷ</button>
-          </div>
-        </div>
-      </div>
-      <div style={{maxHeight:600, overflowY:'auto'}}>
-        <table className="table">
-          <thead style={{position:'sticky', top:0}}>
-            <tr>
-              <th>Mã đơn</th>
-              <th>Sàn</th>
-              <th>Sản phẩm</th>
-              <th>Khu vực</th>
-              <th>Trạng thái</th>
-              <th>Ngày đặt</th>
-              <th className="num">Giá trị</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map((o,i) => (
-              <tr key={i}>
-                <td className="mono" style={{fontWeight:600, fontSize:11.5}}>{o.order_id}</td>
-                <td><span className={`platform-tag ${o.platform}`}>{PLATFORM_NAME[o.platform]}</span></td>
-                <td style={{maxWidth:280, fontSize:12, fontWeight:500}}>
-                  <div style={{whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis'}}>{o.product_name}</div>
-                </td>
-                <td style={{fontSize:12, color:'var(--ink-2)'}}>{o.city}</td>
-                <td>
-                  <span className={'status '+(o.status === 'Hoàn thành' ? 'status-done' : 'status-cancel')}>
-                    {o.status}
-                  </span>
-                </td>
-                <td className="mono" style={{fontSize:11, color:'var(--ink-3)'}}>{o.order_date}</td>
-                <td className="num">{fmtFull(o.order_amount)}₫</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-}
-
 Object.assign(window, {
-  PagePlan, PageReconcile, PageUpload, PageLogs, PageSettings, PageAdmin, PageOrderList,
+  PagePlan, PageReconcile, PageUpload, PageDataLinks, PageProductCatalog, PageLogs, PageSettings, PageAdmin,
 });

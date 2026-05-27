@@ -1,6 +1,6 @@
 /* global React, ReactDOM, TweaksPanel, useTweaks, TweakSection, TweakSelect, TweakRadio, TweakColor */
 /* global PageOverview, PageOrders, PageProducts, PageCustomers, PageTraffic, PageComparison */
-/* global PagePlan, PageReconcile, PageUpload, PageLogs, PageSettings, PageAdmin, PageOrderList */
+/* global PagePlan, PageReconcile, PageUpload, PageLogs, PageSettings, PageAdmin, PageCustomerDetail, PageDataLinks, PageProductCatalog */
 /* global PLATFORM_COLORS, PLATFORM_NAME, fmtVnd */
 
 // ── Navigation ────────────────────────────────────────────────────────
@@ -18,7 +18,6 @@ const NAV_GROUPS = [
     label: 'Bán hàng',
     items: [
       { id: 'orders',      label: 'Đơn hàng',   icon: 'cart',  sub: 'Phân tích đơn hàng theo thời gian', badge: '1.2K' },
-      { id: 'orders-list', label: 'Chi tiết đơn',icon: 'list',  sub: 'Bảng đơn hàng đầy đủ với bộ lọc' },
       { id: 'products',    label: 'Sản phẩm',   icon: 'box',   sub: 'Top sản phẩm theo doanh thu và số lượng' },
     ],
   },
@@ -26,6 +25,7 @@ const NAV_GROUPS = [
     label: 'Khách hàng',
     items: [
       { id: 'customers', label: 'Khách hàng', icon: 'users', sub: 'Phân tích khách hàng theo địa lý' },
+      { id: 'customer-detail', label: 'Chi tiết khách hàng', icon: 'list', sub: 'Doanh thu và số đơn theo từng khách' },
       { id: 'traffic',   label: 'Lượng truy cập', icon: 'eye', sub: 'PV, Visitors và tỷ lệ chuyển đổi' },
     ],
   },
@@ -33,6 +33,8 @@ const NAV_GROUPS = [
     label: 'Vận hành',
     items: [
       { id: 'reconcile', label: 'Đối soát GBS', icon: 'check2', sub: 'Khớp file GBS với export từ các sàn' },
+      { id: 'data-links', label: 'Liên kết dữ liệu sàn', icon: 'target', sub: 'Quy tắc khớp dữ liệu sàn với GBS' },
+      { id: 'product-catalog', label: 'Danh sách sản phẩm', icon: 'box', sub: 'SKU, giá GBS và quy đổi Combo' },
       { id: 'upload',    label: 'Upload dữ liệu', icon: 'upload',sub: 'Tải file Excel từ Shopee, Lazada, TikTok' },
       { id: 'logs',      label: 'Nhật ký',      icon: 'log',   sub: 'Sự kiện và lỗi hệ thống' },
     ],
@@ -53,11 +55,13 @@ const PAGE_COMP = {
   plan: PagePlan,
   comparison: PageComparison,
   orders: PageOrders,
-  'orders-list': PageOrderList,
   products: PageProducts,
   customers: PageCustomers,
+  'customer-detail': PageCustomerDetail,
   traffic: PageTraffic,
   reconcile: PageReconcile,
+  'data-links': PageDataLinks,
+  'product-catalog': PageProductCatalog,
   upload: PageUpload,
   logs: PageLogs,
   settings: PageSettings,

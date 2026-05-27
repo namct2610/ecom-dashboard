@@ -617,20 +617,28 @@ function Treemap({ items }) {
 
 function PageCustomers({ data }) {
   const s = data.summary;
+  const insights = data.customer_insights || {};
   const cities = data.city_distribution
     .filter(c => !c.city.startsWith('P*') && c.city.length > 2)
     .slice(0, 8);
-  const totalCustomers = cities.reduce((a,b)=>a+b.orders, 0);
+  const totalCustomers = insights.unique_buyers || cities.reduce((a,b)=>a+b.orders, 0);
   const aov = s.avg_order_value || Math.round(safeDiv(s.total_revenue, s.completed_orders));
   const topCity = cities[0] || { city: 'Chưa có dữ liệu', orders: 0 };
+  const hasTopCity = cities.length > 0;
+  const returning = insights.returning_buyers || 0;
+  const newBuyers = insights.new_buyers || 0;
+  const potential = insights.potential_buyers || 0;
+  const returningRate = safePct(returning, totalCustomers);
+  const growthRate = insights.new_growth_rate || 0;
+  const dialMax = Math.max(totalCustomers, returning, newBuyers, potential, 1);
 
   return (
     <div className="page" style={{display:'flex', flexDirection:'column', gap:'var(--gap-card)'}}>
       <div className="row row-4">
-        <KPI label="Tổng khách hàng" value={fmtFull(s.total_visitors)} delta={7.1} sub="lượt mua cá nhân" accent="brand" icon={I.user}/>
-        <KPI label="Đơn TB/khách" value={safeDiv(s.total_orders, totalCustomers).toFixed(2)} delta={3.2} sub="số đơn/người" accent="green" icon={I.cart}/>
-        <KPI label="AOV" value={fmtVnd(aov)+'₫'} delta={5.4} sub="Giá trị đơn TB" accent="amber" icon={I.money}/>
-        <KPI label="Thị trường chính" value={topCity.city} delta={null} sub={`${topCity.orders} đơn — ${safePct(topCity.orders, totalCustomers).toFixed(0)}% tổng đơn`} accent="shopee" icon={I.pin}/>
+        <KPI label="Tổng khách hàng" value={fmtFull(totalCustomers)} delta={null} sub="người mua trong kỳ" accent="brand" icon={I.user}/>
+        <KPI label="Đơn TB/khách" value={(insights.avg_orders_per_buyer || safeDiv(s.completed_orders, totalCustomers)).toFixed(2)} delta={null} sub="số đơn/người" accent="green" icon={I.cart}/>
+        <KPI label="AOV" value={fmtVnd(aov)+'₫'} delta={null} sub="Giá trị đơn TB" accent="amber" icon={I.money}/>
+        <KPI label="Thị trường chính" value={hasTopCity ? topCity.city : '—'} delta={null} sub={hasTopCity ? `${topCity.orders} đơn — ${safePct(topCity.orders, totalCustomers).toFixed(0)}% tổng đơn` : 'Chưa có dữ liệu'} accent="shopee" icon={I.pin}/>
       </div>
 
       <div className="row row-2">
@@ -662,19 +670,22 @@ function PageCustomers({ data }) {
         <div className="card">
           <div className="card-head"><h3>Khách quay lại</h3></div>
           <div style={{display:'flex', justifyContent:'center'}}>
-            <Dial value={34.2} max={100} color="var(--green)" label="trên tổng khách hàng"/>
+            <Dial value={returningRate} max={100} color="var(--green)" label={`${fmtFull(returning)} khách`}
+                  format={(v)=>v.toFixed(1)+'%'}/>
           </div>
         </div>
         <div className="card">
           <div className="card-head"><h3>Tăng trưởng khách mới</h3></div>
           <div style={{display:'flex', justifyContent:'center'}}>
-            <Dial value={28.7} max={50} color="var(--brand-1)" label="vs tháng trước"/>
+            <Dial value={newBuyers} max={dialMax} color="var(--brand-1)" label={`${growthRate >= 0 ? '+' : ''}${growthRate.toFixed(1)}% vs tháng trước`}
+                  format={(v)=>fmtFull(v)}/>
           </div>
         </div>
         <div className="card">
-          <div className="card-head"><h3>Hài lòng</h3></div>
+          <div className="card-head"><h3>Khách hàng tiềm năng</h3></div>
           <div style={{display:'flex', justifyContent:'center'}}>
-            <Dial value={86.4} max={100} color="var(--accent)" label="dự đoán NPS" format={(v)=>v.toFixed(1)+'%'}/>
+            <Dial value={potential} max={Math.max(potential + totalCustomers, 1)} color="var(--accent)" label="đã mua trước kỳ này"
+                  format={(v)=>fmtFull(v)}/>
           </div>
         </div>
       </div>
@@ -712,6 +723,71 @@ function VnConcentration({ cities, totalCustomers }) {
           </div>
         );
       })}
+    </div>
+  );
+}
+
+function PageCustomerDetail({ data }) {
+  const [search, setSearch] = React.useState('');
+  const customers = data.customer_list || [];
+  const filtered = customers.filter(c => {
+    const q = search.trim().toLowerCase();
+    if (!q) return true;
+    return [c.buyer_name, c.buyer_username, c.city, c.customer_key]
+      .some(v => String(v || '').toLowerCase().includes(q));
+  });
+  const totalRevenue = filtered.reduce((sum, c) => sum + (c.revenue || 0), 0);
+  const totalOrders = filtered.reduce((sum, c) => sum + (c.order_count || 0), 0);
+
+  return (
+    <div className="page" style={{display:'flex', flexDirection:'column', gap:'var(--gap-card)'}}>
+      <div className="row row-3">
+        <KPI label="Khách trong bảng" value={fmtFull(filtered.length)} sub={`${fmtFull(customers.length)} khách top doanh thu`} accent="brand" icon={I.user}/>
+        <KPI label="Doanh thu" value={fmtVnd(totalRevenue)+'₫'} sub="theo khách đang lọc" accent="green" icon={I.money}/>
+        <KPI label="Số đơn" value={fmtFull(totalOrders)} sub="đơn hoàn thành / đã giao" accent="amber" icon={I.cart}/>
+      </div>
+
+      <div className="card card-lg card-flush">
+        <div style={{padding:'20px 22px 14px', display:'flex', justifyContent:'space-between', alignItems:'center', gap:12, flexWrap:'wrap'}}>
+          <div>
+            <h3>Chi tiết khách hàng</h3>
+            <div className="sub" style={{fontSize:11.5, color:'var(--ink-3)', marginTop:2}}>Doanh thu, số đơn và thời điểm mua gần nhất của từng khách</div>
+          </div>
+          <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Tìm tên, username, khu vực..."
+                 style={{padding:'9px 12px', fontSize:12, borderRadius:10, border:'1px solid var(--line)', background:'var(--surface-2)', color:'var(--ink)', width:260, fontFamily:'inherit', outline:'none'}}/>
+        </div>
+        <div style={{maxHeight:620, overflowY:'auto'}}>
+          <table className="table">
+            <thead style={{position:'sticky', top:0}}>
+              <tr>
+                <th>Khách hàng</th>
+                <th>Khu vực</th>
+                <th className="num">Số đơn</th>
+                <th className="num">Sản phẩm</th>
+                <th className="num">Doanh thu</th>
+                <th>Mua gần nhất</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.length ? filtered.map((c,i) => (
+                <tr key={c.customer_key || i}>
+                  <td>
+                    <div style={{fontWeight:700, fontSize:12.5}}>{c.buyer_name || c.buyer_username || 'Khách chưa đặt tên'}</div>
+                    <div className="mono" style={{fontSize:11, color:'var(--ink-3)', marginTop:2}}>{c.buyer_username || c.customer_key}</div>
+                  </td>
+                  <td style={{fontSize:12, color:'var(--ink-2)'}}>{c.city || '—'}</td>
+                  <td className="num">{fmtFull(c.order_count || 0)}</td>
+                  <td className="num">{fmtFull(c.item_qty || 0)}</td>
+                  <td className="num" style={{fontWeight:800}}>{fmtFull(c.revenue || 0)}₫</td>
+                  <td className="mono" style={{fontSize:11, color:'var(--ink-3)'}}>{String(c.last_order_at || '').slice(0, 10) || '—'}</td>
+                </tr>
+              )) : (
+                <tr><td colSpan="6"><div className="empty-state">Chưa có khách hàng phù hợp với bộ lọc.</div></td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
 }
@@ -1006,6 +1082,6 @@ function PageComparison({ data }) {
 
 // Expose
 Object.assign(window, {
-  PageOverview, PageOrders, PageProducts, PageCustomers, PageTraffic, PageComparison,
+  PageOverview, PageOrders, PageProducts, PageCustomers, PageCustomerDetail, PageTraffic, PageComparison,
   PageHeader, KPI, I,
 });

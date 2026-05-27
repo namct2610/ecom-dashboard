@@ -31,6 +31,8 @@ $defaultData = [
     'plan' => null,
     'revenue_series' => [], 'top_products_qty' => [], 'top_products_rev' => [],
     'city_distribution' => [], 'heatmap' => [], 'traffic' => [], 'recent_orders' => [],
+    'customer_insights' => null, 'customer_list' => [],
+    'upload_history' => [], 'reconcile_settings' => ['prices' => [], 'combos' => []],
 ];
 echo "window.DASHBOARD_DATA = " . json_encode($defaultData, JSON_UNESCAPED_UNICODE) . ";\n";
 
@@ -226,6 +228,161 @@ $stmt = $pdo->prepare("
 $stmt->execute([':s' => $start, ':e' => $end]);
 $cities = array_map(static fn($r) => ['city' => (string) $r['city'], 'orders' => (int) $r['orders']], $stmt->fetchAll());
 
+// ── Customer insights and buyer detail list ───────────────────────────
+$customerInsights = [
+    'unique_buyers' => 0,
+    'returning_buyers' => 0,
+    'new_buyers' => 0,
+    'potential_buyers' => 0,
+    'new_growth_rate' => 0,
+    'avg_orders_per_buyer' => 0,
+];
+$customerList = [];
+try {
+    $pdo->exec("DROP TEMPORARY TABLE IF EXISTS tmp_beta_customer_orders");
+    $tmpStmt = $pdo->prepare("
+        CREATE TEMPORARY TABLE tmp_beta_customer_orders AS
+        SELECT
+            platform,
+            order_id,
+            COALESCE(NULLIF(MAX(buyer_username), ''), NULLIF(MAX(buyer_name), ''), CONCAT(platform, ':', order_id)) AS customer_key,
+            COALESCE(NULLIF(MAX(buyer_name), ''), NULLIF(MAX(buyer_username), ''), 'Khách chưa đặt tên') AS customer_name,
+            COALESCE(NULLIF(MAX(buyer_username), ''), '') AS buyer_username,
+            COALESCE(NULLIF(MAX(shipping_city), ''), '') AS city,
+            MIN(order_created_at) AS order_created_at,
+            COALESCE(SUM(quantity), 0) AS item_qty,
+            COALESCE(MAX(order_total), 0) AS order_revenue
+        FROM orders
+        WHERE DATE(order_created_at) BETWEEN :s AND :e
+          AND normalized_status IN ('completed','delivered')
+        GROUP BY platform, order_id
+    ");
+    $tmpStmt->execute([':s' => $start, ':e' => $end]);
+    $pdo->exec("CREATE INDEX idx_tmp_beta_customer_key ON tmp_beta_customer_orders (customer_key(191))");
+
+    $summaryRow = $pdo->query("
+        SELECT COUNT(DISTINCT customer_key) AS unique_buyers,
+               COUNT(*) AS order_count,
+               COALESCE(SUM(order_revenue), 0) AS revenue
+        FROM tmp_beta_customer_orders
+    ")->fetch() ?: [];
+
+    $returningRow = $pdo->query("
+        SELECT COUNT(*) AS returning_buyers
+        FROM (
+            SELECT c.customer_key,
+                   COUNT(*) AS period_orders,
+                   SUM(CASE WHEN o.id IS NULL THEN 0 ELSE 1 END) AS prior_rows
+            FROM tmp_beta_customer_orders c
+            LEFT JOIN orders o
+              ON c.buyer_username != ''
+             AND o.buyer_username = c.buyer_username
+             AND o.normalized_status IN ('completed','delivered')
+             AND DATE(o.order_created_at) < " . $pdo->quote($start) . "
+            GROUP BY c.customer_key
+            HAVING period_orders >= 2 OR prior_rows > 0
+        ) returning_customers
+    ")->fetch() ?: [];
+
+    $newRow = $pdo->query("
+        SELECT COUNT(*) AS new_buyers
+        FROM (
+            SELECT c.customer_key,
+                   SUM(CASE WHEN o.id IS NULL THEN 0 ELSE 1 END) AS prior_rows
+            FROM tmp_beta_customer_orders c
+            LEFT JOIN orders o
+              ON c.buyer_username != ''
+             AND o.buyer_username = c.buyer_username
+             AND o.normalized_status IN ('completed','delivered')
+             AND DATE(o.order_created_at) < " . $pdo->quote($start) . "
+            GROUP BY c.customer_key
+            HAVING prior_rows = 0
+        ) new_customers
+    ")->fetch() ?: [];
+
+    $prevStart = date('Y-m-d', strtotime($start . ' -1 month'));
+    $prevEnd = date('Y-m-t', strtotime($prevStart));
+    $prevStmt = $pdo->prepare("
+        SELECT COUNT(*) AS previous_new_buyers
+        FROM (
+            SELECT COALESCE(NULLIF(MAX(cur.buyer_username), ''), NULLIF(MAX(cur.buyer_name), ''), CONCAT(cur.platform, ':', cur.order_id)) AS customer_key,
+                   COALESCE(NULLIF(MAX(cur.buyer_username), ''), '') AS buyer_username
+            FROM orders cur
+            WHERE DATE(cur.order_created_at) BETWEEN :ps AND :pe
+              AND cur.normalized_status IN ('completed','delivered')
+            GROUP BY cur.platform, cur.order_id
+        ) c
+        LEFT JOIN orders old
+          ON c.buyer_username != ''
+         AND old.buyer_username = c.buyer_username
+         AND old.normalized_status IN ('completed','delivered')
+         AND DATE(old.order_created_at) < :ps2
+        GROUP BY c.customer_key
+        HAVING SUM(CASE WHEN old.id IS NULL THEN 0 ELSE 1 END) = 0
+    ");
+    $prevStmt->execute([':ps' => $prevStart, ':pe' => $prevEnd, ':ps2' => $prevStart]);
+    $previousNewBuyers = count($prevStmt->fetchAll());
+
+    $potentialStmt = $pdo->prepare("
+        SELECT COUNT(*) AS potential_buyers
+        FROM (
+            SELECT customer_key
+            FROM (
+                SELECT COALESCE(NULLIF(MAX(buyer_username), ''), NULLIF(MAX(buyer_name), ''), CONCAT(platform, ':', order_id)) AS customer_key
+                FROM orders
+                WHERE DATE(order_created_at) < :s
+                  AND normalized_status IN ('completed','delivered')
+                GROUP BY platform, order_id
+            ) lifetime_orders
+            GROUP BY customer_key
+        ) old_customers
+        LEFT JOIN tmp_beta_customer_orders cur ON cur.customer_key = old_customers.customer_key
+        WHERE cur.customer_key IS NULL
+    ");
+    $potentialStmt->execute([':s' => $start]);
+    $potentialRow = $potentialStmt->fetch() ?: [];
+
+    $uniqueBuyers = (int) ($summaryRow['unique_buyers'] ?? 0);
+    $newBuyers = (int) ($newRow['new_buyers'] ?? 0);
+    $customerInsights = [
+        'unique_buyers' => $uniqueBuyers,
+        'returning_buyers' => (int) ($returningRow['returning_buyers'] ?? 0),
+        'new_buyers' => $newBuyers,
+        'potential_buyers' => (int) ($potentialRow['potential_buyers'] ?? 0),
+        'new_growth_rate' => $previousNewBuyers > 0 ? round((($newBuyers - $previousNewBuyers) / $previousNewBuyers) * 100, 1) : ($newBuyers > 0 ? 100 : 0),
+        'avg_orders_per_buyer' => $uniqueBuyers > 0 ? round(((int) ($summaryRow['order_count'] ?? 0)) / $uniqueBuyers, 2) : 0,
+    ];
+
+    $customerRows = $pdo->query("
+        SELECT customer_key,
+               MAX(customer_name) AS customer_name,
+               MAX(buyer_username) AS buyer_username,
+               MAX(city) AS city,
+               COUNT(*) AS order_count,
+               COALESCE(SUM(item_qty), 0) AS item_qty,
+               COALESCE(SUM(order_revenue), 0) AS revenue,
+               MIN(order_created_at) AS first_order_at,
+               MAX(order_created_at) AS last_order_at
+        FROM tmp_beta_customer_orders
+        GROUP BY customer_key
+        ORDER BY revenue DESC, order_count DESC, last_order_at DESC
+        LIMIT 50
+    ")->fetchAll();
+    $customerList = array_map(static fn(array $r): array => [
+        'customer_key' => (string) $r['customer_key'],
+        'buyer_name' => (string) ($r['customer_name'] ?? ''),
+        'buyer_username' => (string) ($r['buyer_username'] ?? ''),
+        'city' => (string) ($r['city'] ?? ''),
+        'order_count' => (int) ($r['order_count'] ?? 0),
+        'item_qty' => (int) ($r['item_qty'] ?? 0),
+        'revenue' => (float) ($r['revenue'] ?? 0),
+        'first_order_at' => (string) ($r['first_order_at'] ?? ''),
+        'last_order_at' => (string) ($r['last_order_at'] ?? ''),
+    ], $customerRows);
+} catch (\Throwable $e) {
+    echo "console.warn('Beta customer data failed:', " . json_encode($e->getMessage()) . ");\n";
+}
+
 // ── Heatmap weekday × hour ───────────────────────────────────────────
 $stmt = $pdo->prepare("
     SELECT
@@ -270,6 +427,41 @@ $trafficRows = array_map(static fn($r) => [
     'page_views' => (int) $r['page_views'],
     'visitors' => (int) $r['visitors'],
 ], $stmt->fetchAll());
+
+// ── Upload history and reconciliation dictionaries ───────────────────
+$uploadHistory = [];
+try {
+    $uploadRows = $pdo->query("
+        SELECT platform, data_type, original_filename, total_rows, imported_rows, skipped_rows, status, uploaded_at, processed_at, error_message
+        FROM upload_history
+        ORDER BY uploaded_at DESC, id DESC
+        LIMIT 20
+    ")->fetchAll();
+    $uploadHistory = array_map(static fn(array $r): array => [
+        'platform' => $r['platform'] === 'tiktokshop' ? 'tiktok' : (string) $r['platform'],
+        'data_type' => (string) ($r['data_type'] ?? 'orders'),
+        'file' => (string) ($r['original_filename'] ?? ''),
+        'rows' => (int) ($r['total_rows'] ?? 0),
+        'imported' => (int) ($r['imported_rows'] ?? 0),
+        'skipped' => (int) ($r['skipped_rows'] ?? 0),
+        'status' => (string) ($r['status'] ?? 'pending'),
+        'time' => (string) ($r['uploaded_at'] ?? ''),
+        'processed_at' => (string) ($r['processed_at'] ?? ''),
+        'error' => (string) ($r['error_message'] ?? ''),
+    ], $uploadRows);
+} catch (\Throwable $e) {
+    echo "console.warn('Beta upload history failed:', " . json_encode($e->getMessage()) . ");\n";
+}
+
+$reconcileSettings = ['prices' => [], 'combos' => []];
+try {
+    $reconcileSettings = [
+        'prices' => function_exists('fetch_reconcile_price_rows') ? fetch_reconcile_price_rows($pdo) : [],
+        'combos' => function_exists('fetch_reconcile_combo_rows') ? fetch_reconcile_combo_rows($pdo) : [],
+    ];
+} catch (\Throwable $e) {
+    echo "console.warn('Beta reconcile settings failed:', " . json_encode($e->getMessage()) . ");\n";
+}
 
 // ── Plan targets (same app_settings key as production Plan page) ─────
 $planYear = (int) substr($start, 0, 4);
@@ -368,6 +560,10 @@ $data = [
     'heatmap'         => $heatmap,
     'traffic'         => $trafficRows,
     'recent_orders'   => $recent,
+    'customer_insights' => $customerInsights,
+    'customer_list'   => $customerList,
+    'upload_history'  => $uploadHistory,
+    'reconcile_settings' => $reconcileSettings,
 ];
 
 echo "window.DASHBOARD_DATA = " . json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . ";\n";
