@@ -666,24 +666,24 @@ function PageCustomers({ data }) {
         </div>
       </div>
 
-      <div className="row row-3">
-        <div className="card">
+      <div className="row row-3 customer-dial-grid">
+        <div className="card customer-dial-card">
           <div className="card-head"><h3>Khách quay lại</h3></div>
-          <div style={{display:'flex', justifyContent:'center'}}>
+          <div className="customer-dial-body">
             <Dial value={returningRate} max={100} color="var(--green)" label={`${fmtFull(returning)} khách`}
                   format={(v)=>v.toFixed(1)+'%'}/>
           </div>
         </div>
-        <div className="card">
+        <div className="card customer-dial-card">
           <div className="card-head"><h3>Tăng trưởng khách mới</h3></div>
-          <div style={{display:'flex', justifyContent:'center'}}>
+          <div className="customer-dial-body">
             <Dial value={newBuyers} max={dialMax} color="var(--brand-1)" label={`${growthRate >= 0 ? '+' : ''}${growthRate.toFixed(1)}% vs tháng trước`}
                   format={(v)=>fmtFull(v)}/>
           </div>
         </div>
-        <div className="card">
+        <div className="card customer-dial-card">
           <div className="card-head"><h3>Khách hàng tiềm năng</h3></div>
-          <div style={{display:'flex', justifyContent:'center'}}>
+          <div className="customer-dial-body">
             <Dial value={potential} max={Math.max(potential + totalCustomers, 1)} color="var(--accent)" label="đã mua trước kỳ này"
                   format={(v)=>fmtFull(v)}/>
           </div>
@@ -936,7 +936,6 @@ function PageComparison({ data }) {
       safePct(m.sp.revenue, maxRev),
       safePct(m.aov, maxAov),
       m.completionRate,
-      Math.max(0, 100 - m.cancelRate * 4),
       safePct(m.sp.new_buyers || 0, maxNewBuyers),
     ],
   }));
@@ -946,7 +945,6 @@ function PageComparison({ data }) {
     { name: 'Doanh thu', max: 100 },
     { name: 'AOV', max: 100 },
     { name: 'Hoàn thành', max: 100 },
-    { name: 'Tin cậy', max: 100 },
     { name: 'Khách hàng mới', max: 100 },
   ];
 

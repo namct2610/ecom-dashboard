@@ -199,6 +199,9 @@ function PeriodPicker({ value, onChange }) {
   const [open, setOpen] = React.useState(false);
   const [mode, setMode] = React.useState('month');
   const [gridYear, setGridYear] = React.useState(initYear);
+  const [rangeFrom, setRangeFrom] = React.useState(data.from || `${initYear}-${String(initMonth+1).padStart(2,'0')}-01`);
+  const [rangeTo, setRangeTo] = React.useState(data.to || `${initYear}-${String(initMonth+1).padStart(2,'0')}-${String(new Date(initYear, initMonth+1, 0).getDate()).padStart(2,'0')}`);
+  const [yearValue, setYearValue] = React.useState(String(initYear));
   const ref = React.useRef(null);
 
   React.useEffect(() => {
@@ -223,8 +226,8 @@ function PeriodPicker({ value, onChange }) {
     const now = new Date(); const y = now.getFullYear(); const m = now.getMonth();
     if (id === 'this-month') go(`?period=${y}-${String(m+1).padStart(2,'0')}`);
     else if (id === 'last-month') { const d = new Date(y, m-1, 1); go(`?period=${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`); }
-    else if (id === 'this-quarter') { const qStart = Math.floor(m/3)*3; go(`?from=${y}-${String(qStart+1).padStart(2,'0')}-01&to=${ymd(new Date(y, qStart+3, 0))}`); }
     else if (id === 'this-year') go(`?year=${y}`);
+    else if (id === 'last-year') go(`?year=${y-1}`);
   };
 
   const presets = [
@@ -236,8 +239,8 @@ function PeriodPicker({ value, onChange }) {
   const ranges = [
     { id:'this-month', label:'Tháng này' },
     { id:'last-month', label:'Tháng trước' },
-    { id:'this-quarter', label:'Quý này' },
     { id:'this-year', label:'Năm nay' },
+    { id:'last-year', label:'Năm trước' },
   ];
 
   return (
@@ -266,37 +269,60 @@ function PeriodPicker({ value, onChange }) {
           </div>
 
           <div style={{padding:14}}>
-            <div style={{fontSize:10.5, color:'var(--ink-3)', textTransform:'uppercase', letterSpacing:'0.08em', fontWeight:700, marginBottom:8}}>Khoảng nhanh</div>
+            <div style={{fontSize:10.5, color:'var(--ink-3)', textTransform:'uppercase', letterSpacing:'0.08em', fontWeight:700, marginBottom:8}}>Chọn nhanh</div>
             <div style={{display:'flex', gap:6, flexWrap:'wrap', marginBottom:14}}>
               {presets.map(p => (
                 <button key={p.id} className="chip" onClick={()=>applyPreset(p.id)} style={{padding:'5px 12px', fontSize:11.5, background:'var(--surface-2)', cursor:'pointer'}}>{p.label}</button>
               ))}
             </div>
-            <div style={{fontSize:10.5, color:'var(--ink-3)', textTransform:'uppercase', letterSpacing:'0.08em', fontWeight:700, marginBottom:8}}>Kỳ định sẵn</div>
+            <div style={{fontSize:10.5, color:'var(--ink-3)', textTransform:'uppercase', letterSpacing:'0.08em', fontWeight:700, marginBottom:8}}>Chọn theo kỳ</div>
             <div style={{display:'flex', gap:6, flexWrap:'wrap', marginBottom:14}}>
               {ranges.map(p => (
                 <button key={p.id} className="chip" onClick={()=>applyRange(p.id)} style={{padding:'5px 12px', fontSize:11.5, background:'var(--surface-2)', cursor:'pointer'}}>{p.label}</button>
               ))}
             </div>
-            <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:8}}>
-              <button onClick={()=>setGridYear(gridYear-1)} style={{background:'transparent', border:'none', cursor:'pointer', color:'var(--ink-3)', fontSize:14, padding:4}}>‹</button>
-              <div style={{fontWeight:800, fontSize:14}}>{gridYear}</div>
-              <button onClick={()=>setGridYear(gridYear+1)} style={{background:'transparent', border:'none', cursor:'pointer', color:'var(--ink-3)', fontSize:14, padding:4}}>›</button>
-            </div>
-            <div style={{display:'grid', gridTemplateColumns:'repeat(4, 1fr)', gap:6}}>
-              {Array.from({length:12}).map((_,i) => {
-                const sel = (gridYear===initYear && i===initMonth);
-                return (
-                <button key={i} className="chip"
-                  onClick={()=>go(`?period=${gridYear}-${String(i+1).padStart(2,'0')}`)}
-                  style={{
-                  padding:'10px 4px', fontSize:12, cursor:'pointer',
-                  background: sel ? 'var(--brand-1)' : 'var(--surface-2)',
-                  color: sel ? '#fff' : 'var(--ink-2)',
-                  border:'none',
-                }}>T{i+1}</button>
-              );})}
-            </div>
+            {mode === 'month' && (
+              <>
+                <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:8}}>
+                  <button onClick={()=>setGridYear(gridYear-1)} style={{background:'transparent', border:'none', cursor:'pointer', color:'var(--ink-3)', fontSize:14, padding:4}}>‹</button>
+                  <div style={{fontWeight:800, fontSize:14}}>{gridYear}</div>
+                  <button onClick={()=>setGridYear(gridYear+1)} style={{background:'transparent', border:'none', cursor:'pointer', color:'var(--ink-3)', fontSize:14, padding:4}}>›</button>
+                </div>
+                <div style={{display:'grid', gridTemplateColumns:'repeat(4, 1fr)', gap:6}}>
+                  {Array.from({length:12}).map((_,i) => {
+                    const sel = (gridYear===initYear && i===initMonth);
+                    return (
+                    <button key={i} className="chip"
+                      onClick={()=>go(`?period=${gridYear}-${String(i+1).padStart(2,'0')}`)}
+                      style={{
+                      padding:'10px 4px', fontSize:12, cursor:'pointer',
+                      background: sel ? 'var(--brand-1)' : 'var(--surface-2)',
+                      color: sel ? '#fff' : 'var(--ink-2)',
+                      border:'none',
+                    }}>T{i+1}</button>
+                  );})}
+                </div>
+              </>
+            )}
+            {mode === 'range' && (
+              <div style={{display:'grid', gridTemplateColumns:'1fr 1fr auto', gap:8, alignItems:'end'}}>
+                <label style={{display:'grid', gap:6, fontSize:11, color:'var(--ink-3)', fontWeight:700}}>Từ ngày
+                  <input type="date" value={rangeFrom} onChange={e=>setRangeFrom(e.target.value)} style={{height:36, border:'1px solid var(--line)', borderRadius:8, padding:'0 10px', fontFamily:'inherit', color:'var(--ink)', background:'var(--surface)'}}/>
+                </label>
+                <label style={{display:'grid', gap:6, fontSize:11, color:'var(--ink-3)', fontWeight:700}}>Đến ngày
+                  <input type="date" value={rangeTo} onChange={e=>setRangeTo(e.target.value)} style={{height:36, border:'1px solid var(--line)', borderRadius:8, padding:'0 10px', fontFamily:'inherit', color:'var(--ink)', background:'var(--surface)'}}/>
+                </label>
+                <button className="chip active" onClick={()=>rangeFrom && rangeTo && go(`?from=${rangeFrom}&to=${rangeTo}`)} style={{height:36, justifyContent:'center'}}>Áp dụng</button>
+              </div>
+            )}
+            {mode === 'year' && (
+              <div style={{display:'grid', gridTemplateColumns:'1fr auto', gap:8, alignItems:'end'}}>
+                <label style={{display:'grid', gap:6, fontSize:11, color:'var(--ink-3)', fontWeight:700}}>Năm
+                  <input type="number" min="2020" max="2100" value={yearValue} onChange={e=>setYearValue(e.target.value)} style={{height:36, border:'1px solid var(--line)', borderRadius:8, padding:'0 10px', fontFamily:'inherit', color:'var(--ink)', background:'var(--surface)'}}/>
+                </label>
+                <button className="chip active" onClick={()=>yearValue && go(`?year=${yearValue}`)} style={{height:36, justifyContent:'center'}}>Áp dụng</button>
+              </div>
+            )}
           </div>
         </div>
       )}

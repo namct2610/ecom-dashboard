@@ -1,7 +1,7 @@
 {
-  "version": "1.5.9",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.5.9/release/dashboard-v3-1.5.9.zip",
-  "changelog": "- Beta: bỏ ô tìm đơn hàng trên topbar và chuyển Upload dữ liệu/Nhật ký xuống Hệ thống\n- Beta: thêm kênh cập nhật riêng cho beta qua beta/manifest.json\n- Beta: Kế hoạch hiển thị bảng Target YTD/YTG và chi tiết tháng giống bản chính thức\n- Beta: Radar so sánh còn 5 chỉ số, đổi Khối lượng thành Khách hàng mới\n- Beta: Danh sách sản phẩm cho phép thêm/sửa/xoá SKU giá GBS và Combo-SKU\n- Beta: Sản phẩm đưa phân bổ doanh thu lên trước và nới khoảng cách top doanh thu/top số lượng",
+  "version": "1.5.10",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.5.10/release/dashboard-v3-1.5.10.zip",
+  "changelog": "- Beta: tô màu chi tiết kế hoạch theo tỷ lệ đạt target và bỏ mục tiêu theo từng sàn\n- Beta: Radar so sánh còn đúng 5 chỉ số, bỏ Tin cậy và hiển thị ngũ giác\n- Beta: đổi màu nhận diện TikTok thành đen\n- Beta: đồng bộ chiều cao cụm chọn sàn, thời gian, thông báo và COMBO/SKU\n- Beta: làm lại date picker theo tháng/phạm vi/năm, Chọn nhanh và Chọn theo kỳ\n- Beta: sửa lỗi hiển thị gauge khách hàng",
   "min_php": "8.1",
   "released_at": "2026-05-27"
 }
