@@ -12,15 +12,16 @@ function PagePlan({ data }) {
   const achievement = safePct(ytdActual, yearTarget);
   const runRateNeeded = safeNum(revenueMetric.avg_needed_month);
   const onTrack = revenueMetric.status === 'on_track';
+  const planMetrics = plan.metrics || [];
+  const monthly = plan.monthly || [];
 
   // Build 12-month series (target line vs actual)
   const months = ['T1','T2','T3','T4','T5','T6','T7','T8','T9','T10','T11','T12'];
   const targetCum = months.map((_, i) => (yearTarget / 12) * (i+1));
+  let runningActual = 0;
   const actualCum = months.map((_, i) => {
-    if (i < monthsCompleted) {
-      return ytdActual * safeDiv(i+1, monthsCompleted);
-    }
-    return null;
+    runningActual += safeNum(monthly[i]?.revenue);
+    return i < monthsCompleted ? runningActual : null;
   });
   const forecastCum = months.map((_, i) => {
     if (i < monthsCompleted) return null;
@@ -107,6 +108,88 @@ function PagePlan({ data }) {
             <div style={{fontSize:12, color:'var(--ink-3)', marginTop:4, fontWeight:600}}>Actual của kỳ đang xem</div>
           </div>
         </div>
+      </div>
+
+      <div className="card card-lg card-flush">
+        <div style={{padding:'20px 22px 14px', display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:12}}>
+          <div>
+            <h3>Target YTD / YTG</h3>
+            <div className="sub" style={{fontSize:11.5, color:'var(--ink-3)', marginTop:2}}>Bảng thông số theo mục tiêu năm, thực đạt hiện tại và trung bình cần đạt cho các tháng còn lại</div>
+          </div>
+          <span className="status status-pending">FY {plan.year || new Date().getFullYear()}</span>
+        </div>
+        <table className="table">
+          <thead>
+            <tr>
+              <th>Chỉ tiêu</th>
+              <th className="num">Target FY</th>
+              <th className="num">Target YTD</th>
+              <th className="num">Actual YTD</th>
+              <th className="num">% YTD</th>
+              <th className="num">Gap YTD</th>
+              <th className="num">YTG</th>
+              <th className="num">TB/tháng còn lại</th>
+              <th>Trạng thái</th>
+            </tr>
+          </thead>
+          <tbody>
+            {planMetrics.length ? planMetrics.map(m => {
+              const money = m.key === 'revenue';
+              const fmtMetric = (v) => money ? fmtFull(v) + '₫' : fmtFull(v);
+              const gap = safeNum(m.gap_ytd);
+              return (
+                <tr key={m.key}>
+                  <td style={{fontWeight:800}}>{m.label}</td>
+                  <td className="num">{fmtMetric(m.target)}</td>
+                  <td className="num">{fmtMetric(m.target_ytd)}</td>
+                  <td className="num">{fmtMetric(m.actual_ytd)}</td>
+                  <td className="num">{fmtPct(safeNum(m.ytd_rate))}</td>
+                  <td className="num" style={{color: gap >= 0 ? 'var(--green)' : 'var(--red)', fontWeight:800}}>{gap >= 0 ? '+' : ''}{fmtMetric(gap)}</td>
+                  <td className="num">{fmtMetric(m.ytg)}</td>
+                  <td className="num">{fmtMetric(m.avg_needed_month)}</td>
+                  <td>{m.status === 'on_track' ? <span className="status status-done">Đúng tiến độ</span> : <span className="status status-pending">Cần bù</span>}</td>
+                </tr>
+              );
+            }) : (
+              <tr><td colSpan="9"><div className="empty-state">Chưa có dữ liệu kế hoạch.</div></td></tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="card card-lg card-flush">
+        <div style={{padding:'20px 22px 14px'}}>
+          <h3>Chi tiết theo tháng</h3>
+          <div className="sub" style={{fontSize:11.5, color:'var(--ink-3)', marginTop:2}}>Thực đạt từng tháng so với mục tiêu trung bình tháng</div>
+        </div>
+        <table className="table">
+          <thead>
+            <tr>
+              <th>Chỉ tiêu</th>
+              {months.map(m => <th key={m} className="num">{m}</th>)}
+            </tr>
+          </thead>
+          <tbody>
+            {[
+              { label: 'Doanh số', key: 'revenue', targetKey: 'revenue_target', money: true },
+              { label: 'Lượt truy cập', key: 'visits', targetKey: 'visits_target', money: false },
+            ].map(row => (
+              <tr key={row.key}>
+                <td style={{fontWeight:800}}>{row.label}</td>
+                {months.map((m, i) => {
+                  const value = safeNum(monthly[i]?.[row.key]);
+                  const target = safeNum(monthly[i]?.[row.targetKey]);
+                  return (
+                    <td key={m} className="num">
+                      <div style={{fontWeight:800}}>{row.money ? fmtVnd(value)+'₫' : fmtFull(value)}</div>
+                      <div style={{fontSize:10.5, color:'var(--ink-3)', marginTop:2}}>Target {row.money ? fmtVnd(target)+'₫' : fmtFull(target)}</div>
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
 
       {/* Target vs Actual chart */}
@@ -599,10 +682,46 @@ function PageDataLinks({ data }) {
 
 function PageProductCatalog({ data }) {
   const settings = data.reconcile_settings || {};
-  const prices = settings.prices || [];
-  const combos = settings.combos || [];
+  const [prices, setPrices] = React.useState(settings.prices || []);
+  const [combos, setCombos] = React.useState(settings.combos || []);
   const [tab, setTab] = React.useState('prices');
+  const [saving, setSaving] = React.useState(false);
+  const [message, setMessage] = React.useState('');
   const rows = tab === 'prices' ? prices : combos;
+  const inputStyle = {width:'100%', minWidth:90, padding:'7px 8px', border:'1px solid var(--line)', borderRadius:8, background:'var(--surface)', color:'var(--ink)', font:'inherit', fontSize:12};
+  const updatePrice = (idx, key, value) => setPrices(prices.map((r,i)=>i===idx ? {...r, [key]: key === 'unit_price' ? safeNum(value) : value} : r));
+  const updateCombo = (idx, key, value) => setCombos(combos.map((r,i)=>i===idx ? {...r, [key]: key === 'single_qty' ? safeNum(value) : value} : r));
+  const addRow = () => {
+    if (tab === 'prices') setPrices([{sku:'', product_name:'', brand:'', unit_price:0}, ...prices]);
+    else setCombos([{platform:'all', combo_sku:'', combo_name:'', single_sku:'', single_qty:1}, ...combos]);
+  };
+  const removeRow = (idx) => {
+    if (tab === 'prices') setPrices(prices.filter((_, i) => i !== idx));
+    else setCombos(combos.filter((_, i) => i !== idx));
+  };
+  const saveRows = async () => {
+    setSaving(true);
+    setMessage('');
+    try {
+      const cleanPrices = prices.filter(r => String(r.sku || '').trim() || String(r.product_name || '').trim() || String(r.brand || '').trim() || safeNum(r.unit_price) > 0);
+      const cleanCombos = combos.filter(r => String(r.combo_sku || '').trim() || String(r.combo_name || '').trim() || String(r.single_sku || '').trim());
+      const res = await fetch('../api/reconcile-settings.php', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: {'Content-Type':'application/json', 'X-CSRF-Token': window.__BETA__?.csrf || ''},
+        body: JSON.stringify({action:'save', prices: cleanPrices, combos: cleanCombos}),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok || !json.success) throw new Error(json.message || json.error || 'Không thể lưu danh sách sản phẩm');
+      setPrices(json.prices || prices);
+      setCombos(json.combos || combos);
+      setMessage(json.message || 'Đã lưu danh sách sản phẩm.');
+    } catch (err) {
+      setMessage(err.message || 'Không thể lưu danh sách sản phẩm');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <div className="page" style={{display:'flex', flexDirection:'column', gap:'var(--gap-card)'}}>
@@ -613,43 +732,57 @@ function PageProductCatalog({ data }) {
       </div>
 
       <div className="card card-lg card-flush">
-        <div style={{padding:'20px 22px 14px', display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+        <div style={{padding:'20px 22px 14px', display:'flex', justifyContent:'space-between', alignItems:'center', gap:12, flexWrap:'wrap'}}>
           <div>
             <h3>Danh sách sản phẩm đối chiếu</h3>
             <div className="sub" style={{fontSize:11.5, color:'var(--ink-3)', marginTop:2}}>SKU, giá GBS và cấu hình quy đổi Combo sang SKU đơn</div>
           </div>
-          <div className="tabs">
-            <button className={'tab '+(tab==='prices'?'active':'')} onClick={()=>setTab('prices')}>SKU giá GBS</button>
-            <button className={'tab '+(tab==='combos'?'active':'')} onClick={()=>setTab('combos')}>Combo → SKU</button>
+          <div style={{display:'flex', gap:8, alignItems:'center', flexWrap:'wrap'}}>
+            {message && <span style={{fontSize:11.5, fontWeight:700, color: message.includes('lưu') || message.includes('Đã') ? 'var(--green)' : 'var(--red)'}}>{message}</span>}
+            <button className="chip" onClick={addRow}>+ Thêm dòng</button>
+            <button className="btn-primary" onClick={saveRows} disabled={saving} style={{boxShadow:'none', opacity:saving ? .65 : 1}}>{saving ? 'Đang lưu...' : 'Lưu'}</button>
+            <div className="tabs">
+              <button className={'tab '+(tab==='prices'?'active':'')} onClick={()=>setTab('prices')}>SKU giá GBS</button>
+              <button className={'tab '+(tab==='combos'?'active':'')} onClick={()=>setTab('combos')}>Combo → SKU</button>
+            </div>
           </div>
         </div>
         <div style={{maxHeight:650, overflowY:'auto'}}>
           <table className="table">
             <thead style={{position:'sticky', top:0}}>
               {tab === 'prices' ? (
-                <tr><th>SKU</th><th>Tên sản phẩm</th><th>Brand</th><th className="num">Giá GBS</th></tr>
+                <tr><th>SKU</th><th>Tên sản phẩm</th><th>Brand</th><th className="num">Giá GBS</th><th></th></tr>
               ) : (
-                <tr><th>Sàn</th><th>SKU combo</th><th>Tên combo / từ khoá</th><th>SKU đơn</th><th className="num">SL quy đổi</th></tr>
+                <tr><th>Sàn</th><th>SKU combo</th><th>Tên combo / từ khoá</th><th>SKU đơn</th><th className="num">SL quy đổi</th><th></th></tr>
               )}
             </thead>
             <tbody>
               {rows.length ? rows.slice(0, 120).map((r,i) => tab === 'prices' ? (
                 <tr key={`${r.sku}-${i}`}>
-                  <td className="mono" style={{fontWeight:700, fontSize:11.5}}>{r.sku}</td>
-                  <td style={{fontSize:12.5, fontWeight:600}}>{r.product_name || '—'}</td>
-                  <td style={{fontSize:12, color:'var(--ink-2)'}}>{r.brand || '—'}</td>
-                  <td className="num">{fmtFull(r.unit_price || 0)}₫</td>
+                  <td><input style={{...inputStyle, fontFamily:'JetBrains Mono, monospace', fontWeight:700}} value={r.sku || ''} onChange={e=>updatePrice(i, 'sku', e.target.value)}/></td>
+                  <td><input style={inputStyle} value={r.product_name || ''} onChange={e=>updatePrice(i, 'product_name', e.target.value)}/></td>
+                  <td><input style={inputStyle} value={r.brand || ''} onChange={e=>updatePrice(i, 'brand', e.target.value)}/></td>
+                  <td className="num"><input style={{...inputStyle, textAlign:'right'}} type="number" min="0" value={r.unit_price || 0} onChange={e=>updatePrice(i, 'unit_price', e.target.value)}/></td>
+                  <td className="num"><button className="chip" onClick={()=>removeRow(i)}>Xoá</button></td>
                 </tr>
               ) : (
                 <tr key={`${r.platform}-${r.combo_sku}-${r.single_sku}-${i}`}>
-                  <td>{r.platform === 'all' ? 'Tất cả' : <span className={`platform-tag ${r.platform === 'tiktokshop' ? 'tiktok' : r.platform}`}>{PLATFORM_NAME[r.platform === 'tiktokshop' ? 'tiktok' : r.platform]}</span>}</td>
-                  <td className="mono" style={{fontWeight:700, fontSize:11.5}}>{r.combo_sku || '—'}</td>
-                  <td style={{fontSize:12.5, fontWeight:600}}>{r.combo_name || '—'}</td>
-                  <td className="mono" style={{fontWeight:700, fontSize:11.5}}>{r.single_sku}</td>
-                  <td className="num">{fmtFull(r.single_qty || 0)}</td>
+                  <td>
+                    <select style={inputStyle} value={r.platform || 'all'} onChange={e=>updateCombo(i, 'platform', e.target.value)}>
+                      <option value="all">Tất cả</option>
+                      <option value="shopee">Shopee</option>
+                      <option value="lazada">Lazada</option>
+                      <option value="tiktokshop">TikTok Shop</option>
+                    </select>
+                  </td>
+                  <td><input style={{...inputStyle, fontFamily:'JetBrains Mono, monospace', fontWeight:700}} value={r.combo_sku || ''} onChange={e=>updateCombo(i, 'combo_sku', e.target.value)}/></td>
+                  <td><input style={inputStyle} value={r.combo_name || ''} onChange={e=>updateCombo(i, 'combo_name', e.target.value)}/></td>
+                  <td><input style={{...inputStyle, fontFamily:'JetBrains Mono, monospace', fontWeight:700}} value={r.single_sku || ''} onChange={e=>updateCombo(i, 'single_sku', e.target.value)}/></td>
+                  <td className="num"><input style={{...inputStyle, textAlign:'right'}} type="number" min="0" step="0.0001" value={r.single_qty || 0} onChange={e=>updateCombo(i, 'single_qty', e.target.value)}/></td>
+                  <td className="num"><button className="chip" onClick={()=>removeRow(i)}>Xoá</button></td>
                 </tr>
               )) : (
-                <tr><td colSpan="5"><div className="empty-state">Chưa có dữ liệu cấu hình sản phẩm.</div></td></tr>
+                <tr><td colSpan="6"><div className="empty-state">Chưa có dữ liệu cấu hình sản phẩm.</div></td></tr>
               )}
             </tbody>
           </table>
@@ -757,6 +890,7 @@ function PageSettings() {
           <button className={'tab '+(tab==='language'?'active':'')} onClick={()=>setTab('language')}>Ngôn ngữ</button>
           <button className={'tab '+(tab==='notifications'?'active':'')} onClick={()=>setTab('notifications')}>Thông báo</button>
           <button className={'tab '+(tab==='brand'?'active':'')} onClick={()=>setTab('brand')}>Thương hiệu</button>
+          <button className={'tab '+(tab==='beta-update'?'active':'')} onClick={()=>setTab('beta-update')}>Cập nhật beta</button>
         </div>
 
         {tab === 'profile' && <SettingsProfile/>}
@@ -764,6 +898,81 @@ function PageSettings() {
         {tab === 'language' && <SettingsLanguage/>}
         {tab === 'notifications' && <SettingsNotifications/>}
         {tab === 'brand' && <SettingsBrand/>}
+        {tab === 'beta-update' && <SettingsBetaUpdate/>}
+      </div>
+    </div>
+  );
+}
+
+function SettingsBetaUpdate() {
+  const [info, setInfo] = React.useState(null);
+  const [busy, setBusy] = React.useState(false);
+  const [message, setMessage] = React.useState('');
+  const load = async (force=false) => {
+    setBusy(true);
+    setMessage('');
+    try {
+      if (force) {
+        await fetch('../api/beta-update.php', {
+          method:'POST',
+          credentials:'same-origin',
+          headers:{'Content-Type':'application/json', 'X-CSRF-Token': window.__BETA__?.csrf || ''},
+          body: JSON.stringify({action:'check_now'}),
+        });
+      }
+      const res = await fetch('../api/beta-update.php', {credentials:'same-origin'});
+      const json = await res.json();
+      if (!res.ok || !json.success) throw new Error(json.message || 'Không thể kiểm tra cập nhật beta');
+      setInfo(json);
+    } catch (err) {
+      setMessage(err.message || 'Không thể kiểm tra cập nhật beta');
+    } finally {
+      setBusy(false);
+    }
+  };
+  const apply = async () => {
+    if (!info?.has_update) return;
+    setBusy(true);
+    setMessage('');
+    try {
+      const res = await fetch('../api/beta-update.php', {
+        method:'POST',
+        credentials:'same-origin',
+        headers:{'Content-Type':'application/json', 'X-CSRF-Token': window.__BETA__?.csrf || ''},
+        body: JSON.stringify({action:'apply', version: info.latest, download_url: info.download_url}),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok || !json.success) throw new Error(json.message || 'Cập nhật beta thất bại');
+      setMessage(json.message || 'Đã cập nhật beta.');
+    } catch (err) {
+      setMessage(err.message || 'Cập nhật beta thất bại');
+    } finally {
+      setBusy(false);
+    }
+  };
+  React.useEffect(() => { load(false); }, []);
+  return (
+    <div style={{maxWidth:760}}>
+      <div className="card" style={{padding:18, background:'var(--surface-2)', boxShadow:'none'}}>
+        <div style={{display:'flex', justifyContent:'space-between', gap:16, alignItems:'flex-start'}}>
+          <div>
+            <div style={{fontSize:18, fontWeight:800}}>Kênh cập nhật Beta</div>
+            <div style={{fontSize:12, color:'var(--ink-3)', marginTop:4}}>Beta dùng manifest riêng, tách khỏi manifest production.</div>
+          </div>
+          {info?.has_update ? <span className="status status-pending">Có bản mới</span> : <span className="status status-done">Đang mới nhất</span>}
+        </div>
+        <div className="row row-3" style={{marginTop:18}}>
+          <KPI label="Hiện tại" value={info?.current || '—'} sub="version.txt" accent="brand" icon={I.pkg}/>
+          <KPI label="Beta mới nhất" value={info?.latest || '—'} sub={info?.released_at || 'manifest beta'} accent="green" icon={I.trend}/>
+          <KPI label="Kiểm tra" value={info?.last_checked || '—'} sub="cache riêng beta" accent="amber" icon={I.clock}/>
+        </div>
+        {info?.changelog && <div style={{whiteSpace:'pre-line', fontSize:12.5, color:'var(--ink-2)', marginTop:16, lineHeight:1.7}}>{info.changelog}</div>}
+        {info?.manifest_url && <div className="mono" style={{fontSize:11, color:'var(--ink-3)', marginTop:12, wordBreak:'break-all'}}>{info.manifest_url}</div>}
+        {message && <div style={{fontSize:12, fontWeight:700, color: message.includes('thất bại') || message.includes('Không thể') ? 'var(--red)' : 'var(--green)', marginTop:12}}>{message}</div>}
+        <div style={{display:'flex', gap:10, marginTop:18}}>
+          <button className="chip" onClick={()=>load(true)} disabled={busy}>{busy ? 'Đang kiểm tra...' : 'Kiểm tra lại'}</button>
+          <button className="btn-primary" onClick={apply} disabled={busy || !info?.has_update} style={{opacity: busy || !info?.has_update ? .55 : 1}}>Cập nhật beta</button>
+        </div>
       </div>
     </div>
   );

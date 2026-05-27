@@ -35,13 +35,13 @@ const NAV_GROUPS = [
       { id: 'reconcile', label: 'Đối soát GBS', icon: 'check2', sub: 'Khớp file GBS với export từ các sàn' },
       { id: 'data-links', label: 'Liên kết dữ liệu sàn', icon: 'target', sub: 'Quy tắc khớp dữ liệu sàn với GBS' },
       { id: 'product-catalog', label: 'Danh sách sản phẩm', icon: 'box', sub: 'SKU, giá GBS và quy đổi Combo' },
-      { id: 'upload',    label: 'Upload dữ liệu', icon: 'upload',sub: 'Tải file Excel từ Shopee, Lazada, TikTok' },
-      { id: 'logs',      label: 'Nhật ký',      icon: 'log',   sub: 'Sự kiện và lỗi hệ thống' },
     ],
   },
   {
     label: 'Hệ thống',
     items: [
+      { id: 'upload',    label: 'Upload dữ liệu', icon: 'upload',sub: 'Tải file Excel từ Shopee, Lazada, TikTok' },
+      { id: 'logs',      label: 'Nhật ký',      icon: 'log',   sub: 'Sự kiện và lỗi hệ thống' },
       { id: 'settings', label: 'Cài đặt',  icon: 'gear', sub: 'Hồ sơ, ngôn ngữ, thông báo' },
       { id: 'admin',    label: 'Quản trị', icon: 'shield', sub: 'Tài khoản, API kết nối, hệ thống', admin: true },
     ],
@@ -455,14 +455,6 @@ function Topbar({ page, onNav, platform, onPlatform, viewMode, onViewMode, onLog
         <div className="page-sub">{pageDef.sub}</div>
       </div>
       <div className="spacer" />
-
-      <div className="search-bar">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-        </svg>
-        <input placeholder="Tìm đơn hàng, SKU, khách hàng…"/>
-        <kbd>⌘K</kbd>
-      </div>
 
       <div className="platform-chips">
         {[

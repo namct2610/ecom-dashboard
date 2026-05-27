@@ -497,7 +497,7 @@ function PeakInsights({ heatmap }) {
 // ── Page: PRODUCTS ─────────────────────────────────────────────────────
 
 function PageProducts({ data }) {
-  const totalSKUs = data.top_products_qty.length + 20; // mock
+  const totalSKUs = data.reconcile_settings?.prices?.length || new Set([...data.top_products_qty, ...data.top_products_rev].map(p => p.sku)).size;
   const totalQty = data.top_products_qty.reduce((a,b)=>a+b.qty, 0);
   const totalRev = data.top_products_rev.reduce((a,b)=>a+b.revenue, 0);
   const topProduct = data.top_products_rev[0] || { qty: 0, name: 'Chưa có dữ liệu' };
@@ -512,7 +512,18 @@ function PageProducts({ data }) {
         <KPI label="Sản phẩm bán chạy nhất" value={topProduct.qty + ' bán'} sub={topProduct.name.length > 28 ? topProduct.name.slice(0,28)+'...' : topProduct.name} accent="shopee" icon={I.trend}/>
       </div>
 
-      <div className="row row-2">
+      {/* Treemap-style block */}
+      <div className="card card-lg">
+        <div className="card-head">
+          <div>
+            <h3>Phân bố doanh thu theo sản phẩm</h3>
+            <div className="sub">Kích thước thể hiện tỷ trọng doanh thu</div>
+          </div>
+        </div>
+        <Treemap items={data.top_products_rev.slice(0, 9)} />
+      </div>
+
+      <div className="row row-2" style={{gap:'calc(var(--gap-card) * 1.55)', alignItems:'stretch'}}>
         <div className="card card-lg">
           <div className="card-head">
             <div>
@@ -533,17 +544,6 @@ function PageProducts({ data }) {
           <RankedBars items={data.top_products_qty} valueKey="qty" labelKey="name"
                       colors={PLATFORM_COLORS} format={(v)=>fmtFull(v)+' sp'} maxItems={10}/>
         </div>
-      </div>
-
-      {/* Treemap-style block */}
-      <div className="card card-lg">
-        <div className="card-head">
-          <div>
-            <h3>Phân bố doanh thu theo sản phẩm</h3>
-            <div className="sub">Kích thước thể hiện tỷ trọng doanh thu</div>
-          </div>
-        </div>
-        <Treemap items={data.top_products_rev.slice(0, 9)} />
       </div>
     </div>
   );
@@ -926,6 +926,7 @@ function PageComparison({ data }) {
   const maxOrders = Math.max(...platformMetrics.map(m=>m.sp.orders), 1);
   const maxRev = Math.max(...platformMetrics.map(m=>m.sp.revenue), 1);
   const maxAov = Math.max(...platformMetrics.map(m=>m.aov), 1);
+  const maxNewBuyers = Math.max(...platformMetrics.map(m=>m.sp.new_buyers || 0), 1);
 
   const radarSeries = platformMetrics.map(m => ({
     name: PLATFORM_NAME[m.p],
@@ -936,7 +937,7 @@ function PageComparison({ data }) {
       safePct(m.aov, maxAov),
       m.completionRate,
       Math.max(0, 100 - m.cancelRate * 4),
-      safePct(m.sp.completed, maxOrders),
+      safePct(m.sp.new_buyers || 0, maxNewBuyers),
     ],
   }));
 
@@ -946,7 +947,7 @@ function PageComparison({ data }) {
     { name: 'AOV', max: 100 },
     { name: 'Hoàn thành', max: 100 },
     { name: 'Tin cậy', max: 100 },
-    { name: 'Khối lượng', max: 100 },
+    { name: 'Khách hàng mới', max: 100 },
   ];
 
   // Grouped bar: revenue
@@ -1015,7 +1016,7 @@ function PageComparison({ data }) {
         <div className="card card-lg" style={{display:'flex', flexDirection:'column'}}>
           <div className="card-head">
             <div>
-              <h3>Radar 6 chỉ số</h3>
+              <h3>Radar 5 chỉ số</h3>
               <div className="sub">So sánh đa chiều giữa 3 sàn</div>
             </div>
           </div>

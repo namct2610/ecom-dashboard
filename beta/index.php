@@ -29,6 +29,7 @@ if ($html === false) {
 // Inject auth context (username, isAdmin) + đổi script src data.js → data.js.php
 $inject = '<script>window.__BETA__ = {username: ' . json_encode((string)($user['username'] ?? ''))
     . ', isAdmin: ' . ($user['role'] === 'admin' ? 'true' : 'false')
+    . ', csrf: ' . json_encode(generate_csrf())
     . ', backUrl: "../index.php", versionLabel: "v2.0.0 Beta"};</script>';
 $productionLabel = htmlspecialchars('production v' . $appVersion, ENT_QUOTES, 'UTF-8');
 $banner = <<<'HTML'
