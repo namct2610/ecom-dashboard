@@ -28,12 +28,12 @@ const fmtPct = (n, d=1) => (!isNum(n) ? '—' : Number(n).toFixed(d)+'%');
 const PLATFORM_COLORS = {
   shopee: '#FF5722',
   lazada: '#4F46E5',
-  tiktok: '#FF2D6F',
+  tiktok: '#111827',
 };
 const PLATFORM_COLORS_2 = {
   shopee: '#FF8A65',
   lazada: '#818CF8',
-  tiktok: '#25F4EE',
+  tiktok: '#374151',
 };
 const PLATFORM_NAME = { shopee: 'Shopee', lazada: 'Lazada', tiktok: 'TikTok Shop' };
 
@@ -556,17 +556,17 @@ function Radar({ series, axes, size = 280, max }) {
 
 // ── Half dial gauge ────────────────────────────────────────────────────
 
-function Dial({ value, max = 100, label, color, size = 160, format = (v) => v + '%' }) {
+function Dial({ value, max = 100, label, color, size = 176, format = (v) => v + '%' }) {
   const pct = Math.max(0, Math.min(1, value/max));
-  const cx = size/2, cy = size*0.7;
+  const cx = size/2, cy = size*0.68;
   const r = size*0.42;
   const a0 = Math.PI, a1 = 0;
   const ac = a0 + (a1-a0) * pct;
   const arc = (a) => [cx + r*Math.cos(a), cy + r*Math.sin(a)];
   const start = arc(a0), endTrack = arc(a1), endVal = arc(ac);
   return (
-    <div style={{position:'relative', width:size, height:size*0.78}}>
-      <svg width={size} height={size*0.78}>
+    <div style={{position:'relative', width:size, height:size*0.74}}>
+      <svg width={size} height={size*0.74} style={{display:'block'}}>
         <path d={`M ${start[0]},${start[1]} A ${r},${r} 0 0 1 ${endTrack[0]},${endTrack[1]}`}
               fill="none" stroke="var(--surface-3)" strokeWidth="14" strokeLinecap="round" />
         <path d={`M ${start[0]},${start[1]} A ${r},${r} 0 0 1 ${endVal[0]},${endVal[1]}`}
@@ -575,7 +575,7 @@ function Dial({ value, max = 100, label, color, size = 160, format = (v) => v + 
       <div style={{
         position:'absolute', inset:0, display:'flex',
         flexDirection:'column', alignItems:'center', justifyContent:'flex-end',
-        paddingBottom: 4, textAlign:'center',
+        paddingBottom: 2, textAlign:'center',
       }}>
         <div style={{fontSize:24, fontWeight:800, letterSpacing:'-0.02em'}}>{format(value)}</div>
         <div style={{fontSize:11, color:'var(--ink-3)', fontWeight:600}}>{label}</div>

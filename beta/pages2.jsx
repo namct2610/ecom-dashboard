@@ -28,13 +28,6 @@ function PagePlan({ data }) {
     return ytdActual + runRateNeeded * (i+1 - monthsCompleted);
   });
 
-  const platforms = ['shopee','lazada','tiktok'];
-  const platformTargets = {
-    shopee: { target: 2_800_000_000, actual: data.summary.shopee.revenue * 2.7 + data.summary.shopee.revenue },
-    lazada: { target: 240_000_000, actual: data.summary.lazada.revenue * 2.3 + data.summary.lazada.revenue },
-    tiktok: { target: 160_000_000, actual: data.summary.tiktok.revenue * 2.1 + data.summary.tiktok.revenue },
-  };
-
   return (
     <div className="page" style={{display:'flex', flexDirection:'column', gap:'var(--gap-card)'}}>
 
@@ -162,34 +155,39 @@ function PagePlan({ data }) {
           <h3>Chi tiết theo tháng</h3>
           <div className="sub" style={{fontSize:11.5, color:'var(--ink-3)', marginTop:2}}>Thực đạt từng tháng so với mục tiêu trung bình tháng</div>
         </div>
-        <table className="table">
-          <thead>
-            <tr>
-              <th>Chỉ tiêu</th>
-              {months.map(m => <th key={m} className="num">{m}</th>)}
-            </tr>
-          </thead>
-          <tbody>
-            {[
-              { label: 'Doanh số', key: 'revenue', targetKey: 'revenue_target', money: true },
-              { label: 'Lượt truy cập', key: 'visits', targetKey: 'visits_target', money: false },
-            ].map(row => (
-              <tr key={row.key}>
-                <td style={{fontWeight:800}}>{row.label}</td>
-                {months.map((m, i) => {
-                  const value = safeNum(monthly[i]?.[row.key]);
-                  const target = safeNum(monthly[i]?.[row.targetKey]);
-                  return (
-                    <td key={m} className="num">
-                      <div style={{fontWeight:800}}>{row.money ? fmtVnd(value)+'₫' : fmtFull(value)}</div>
-                      <div style={{fontSize:10.5, color:'var(--ink-3)', marginTop:2}}>Target {row.money ? fmtVnd(target)+'₫' : fmtFull(target)}</div>
-                    </td>
-                  );
-                })}
+        <div className="plan-month-scroll">
+          <table className="table plan-month-table">
+            <thead>
+              <tr>
+                <th>Chỉ tiêu</th>
+                {months.map(m => <th key={m} className="num">{m}</th>)}
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {[
+                { label: 'Doanh số', key: 'revenue', targetKey: 'revenue_target', money: true },
+                { label: 'Lượt truy cập', key: 'visits', targetKey: 'visits_target', money: false },
+              ].map(row => (
+                <tr key={row.key}>
+                  <td style={{fontWeight:800}}>{row.label}</td>
+                  {months.map((m, i) => {
+                    const value = safeNum(monthly[i]?.[row.key]);
+                    const target = safeNum(monthly[i]?.[row.targetKey]);
+                    const rate = target > 0 ? safePct(value, target) : 0;
+                    const tone = target <= 0 ? 'neutral' : rate >= 90 ? 'good' : rate >= 80 ? 'warn' : 'bad';
+                    return (
+                      <td key={m} className={`num plan-month-cell plan-month-${tone}`}>
+                        <div style={{fontWeight:800}}>{row.money ? fmtVnd(value)+'₫' : fmtFull(value)}</div>
+                        <div style={{fontSize:10.5, marginTop:2}}>Target {row.money ? fmtVnd(target)+'₫' : fmtFull(target)}</div>
+                        <div style={{fontSize:10, marginTop:2, fontWeight:800}}>{target > 0 ? fmtPct(rate) : '—'}</div>
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* Target vs Actual chart */}
@@ -208,57 +206,6 @@ function PagePlan({ data }) {
         <PlanChart months={months} target={targetCum} actual={actualCum} forecast={forecastCum} />
       </div>
 
-      {/* Per-platform target */}
-      <div className="card card-lg">
-        <div className="card-head">
-          <div>
-            <h3>Mục tiêu theo từng sàn</h3>
-            <div className="sub">Phân bổ và tiến độ thực hiện</div>
-          </div>
-        </div>
-        <div style={{display:'flex', flexDirection:'column', gap:18}}>
-          {platforms.map(p => {
-            const t = platformTargets[p];
-            const pct = Math.min(100, safePct(t.actual, t.target));
-            const color = PLATFORM_COLORS[p];
-            return (
-              <div key={p}>
-                <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-end', marginBottom:8}}>
-                  <div style={{display:'flex', alignItems:'center', gap:12}}>
-                    <div className={`plat-tile plat-${p}`} style={{padding:0, background:'transparent', border:'none'}}>
-                      <div className="logo" style={{width:32, height:32, fontSize:13}}>
-                        {p==='shopee'?'S':p==='lazada'?'L':'T'}
-                      </div>
-                    </div>
-                    <div>
-                      <div style={{fontWeight:700, fontSize:14}}>{PLATFORM_NAME[p]}</div>
-                      <div style={{fontSize:11.5, color:'var(--ink-3)'}}>
-                        {fmtVnd(t.actual)}₫ / {fmtVnd(t.target)}₫
-                      </div>
-                    </div>
-                  </div>
-                  <div style={{textAlign:'right'}}>
-                    <div style={{fontSize:22, fontWeight:800, color, fontVariantNumeric:'tabular-nums', letterSpacing:'-0.02em'}}>{pct.toFixed(1)}%</div>
-                    <div style={{fontSize:11, color:'var(--ink-3)', fontWeight:600}}>đạt mục tiêu</div>
-                  </div>
-                </div>
-                <div style={{height:10, borderRadius:99, background:'var(--surface-3)', overflow:'hidden', position:'relative'}}>
-                  <div style={{
-                    height:'100%', width: pct+'%',
-                    background: `linear-gradient(90deg, ${color}, ${color}99)`,
-                    borderRadius:99, transition: 'width 0.8s',
-                  }}/>
-                  <div style={{
-                    position:'absolute', top:-3, bottom:-3,
-                    left: safePct(monthsCompleted, 12)+'%',
-                    width:2, background:'var(--ink)', opacity:0.6,
-                  }}/>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
     </div>
   );
 }
