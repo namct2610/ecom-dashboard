@@ -1,7 +1,7 @@
 {
-  "version": "1.5.5",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.5.5/release/dashboard-v3-1.5.5.zip",
-  "changelog": "- Beta: bộ lọc thời gian hoạt động thật (tháng / phạm vi / năm + preset nhanh + mũi tên tháng trước/sau)\n- data.php nhận ?period=YYYY-MM, ?year=YYYY, ?from=&to= và lọc DB theo đó\n- Nhãn period hiển thị đúng kỳ đang xem; index.php forward query string sang data.php",
+  "version": "1.5.6",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.5.6/release/dashboard-v3-1.5.6.zip",
+  "changelog": "- Beta: sidebar full-height (bỏ spacer thừa làm nav bị dồn nửa màn hình)\n- Beta: User button chuyển xuống góc dưới sidebar, đồng bộ giao diện sidebar; bỏ khỏi topbar\n- Beta: bỏ màn login mockup — vào thẳng vì đã auth qua PHP gate; hiển thị đúng tên user\n- Beta: toggle biểu đồ Tổng quan hoạt động (Doanh thu/Đơn hàng/AOV, Top SP Doanh thu/Số lượng)",
   "min_php": "8.1",
   "released_at": "2026-05-26"
 }

@@ -83,7 +83,16 @@ const NAV_ICONS = {
 
 // ── Sidebar ──────────────────────────────────────────────────────────
 
-function Sidebar({ active, onNav, collapsed, onCollapse, userRole }) {
+function Sidebar({ active, onNav, collapsed, onCollapse, userRole, user, onLogout }) {
+  const [userOpen, setUserOpen] = React.useState(false);
+  const uref = React.useRef(null);
+  React.useEffect(() => {
+    if (!userOpen) return;
+    const onDoc = (e) => { if (uref.current && !uref.current.contains(e.target)) setUserOpen(false); };
+    document.addEventListener('mousedown', onDoc);
+    return () => document.removeEventListener('mousedown', onDoc);
+  }, [userOpen]);
+  const initials = (user?.name || 'AD').split(' ').map(w=>w[0]).slice(-2).join('').toUpperCase();
   return (
     <aside className={'sidebar' + (collapsed ? ' collapsed' : '')}>
       <div className="brand">
@@ -120,9 +129,34 @@ function Sidebar({ active, onNav, collapsed, onCollapse, userRole }) {
       ))}
       </div>
 
-      <div className="sidebar-spacer" />
       <div className="sidebar-bottom">
-        <div className="nav-item" onClick={onCollapse} style={{justifyContent: collapsed ? 'center' : 'flex-start'}}>
+        {/* User button — góc dưới sidebar */}
+        <div ref={uref} style={{position:'relative'}}>
+          {userOpen && !collapsed && (
+            <div className="popover sidebar-user-pop">
+              <div style={{padding:6}}>
+                <SidebarUserItem icon="user" label="Hồ sơ tài khoản" onClick={()=>{setUserOpen(false); onNav('settings');}}/>
+                <SidebarUserItem icon="shield" label="Quản trị hệ thống" onClick={()=>{setUserOpen(false); onNav('admin');}}/>
+              </div>
+              <div style={{padding:6, borderTop:'1px solid var(--line-2)'}}>
+                <SidebarUserItem icon="logout" label="Đăng xuất" danger onClick={onLogout}/>
+              </div>
+            </div>
+          )}
+          <div className="sidebar-userbtn" onClick={()=> collapsed ? onNav('settings') : setUserOpen(!userOpen)}
+               title={collapsed ? (user?.name || 'Tài khoản') : ''}>
+            <div className="user-avatar" style={{width:32, height:32, fontSize:11, flexShrink:0}}>{initials}</div>
+            {!collapsed && (
+              <div style={{flex:1, minWidth:0, textAlign:'left'}}>
+                <div className="user-name" style={{whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis'}}>{user?.name || 'Admin'}</div>
+                <div className="user-role">{user?.role === 'admin' ? 'Quản trị viên' : 'Nhân viên'}</div>
+              </div>
+            )}
+            {!collapsed && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="6 9 12 15 18 9"/></svg>}
+          </div>
+        </div>
+
+        <div className="nav-item" onClick={onCollapse} style={{justifyContent: collapsed ? 'center' : 'flex-start', marginTop:4}}>
           <span style={{display:'inline-flex', transform: collapsed ? 'rotate(0deg)' : 'rotate(180deg)', transition:'transform 0.2s'}}>
             {NAV_ICONS.chevron}
           </span>
@@ -130,6 +164,22 @@ function Sidebar({ active, onNav, collapsed, onCollapse, userRole }) {
         </div>
       </div>
     </aside>
+  );
+}
+
+function SidebarUserItem({ icon, label, onClick, danger }) {
+  const icons = {
+    user: <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 11a4 4 0 100-8 4 4 0 000 8z"/>,
+    shield: <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>,
+    logout: <><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></>,
+  };
+  return (
+    <div onClick={onClick} style={{display:'flex', alignItems:'center', gap:10, padding:'9px 12px', borderRadius:8, cursor:'pointer', fontSize:13, fontWeight:500, color: danger ? 'var(--red)' : 'var(--ink)', transition:'background 0.15s'}}
+      onMouseEnter={(e)=>e.currentTarget.style.background='var(--surface-2)'}
+      onMouseLeave={(e)=>e.currentTarget.style.background='transparent'}>
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">{icons[icon]}</svg>
+      <span>{label}</span>
+    </div>
   );
 }
 
@@ -432,7 +482,6 @@ function Topbar({ page, onNav, platform, onPlatform, viewMode, onViewMode, onLog
 
       <PeriodPicker/>
       <NotificationsBtn/>
-      <UserMenu onNav={onNav} onLogout={onLogout}/>
     </header>
   );
 }
@@ -532,7 +581,10 @@ function App() {
   const [platform, setPlatform] = React.useState('all');
   const [viewMode, setViewMode] = React.useState('combo');
   const [collapsed, setCollapsed] = React.useState(false);
-  const [loggedIn, setLoggedIn] = React.useState(false);
+  // Auth đã được xử lý bởi PHP gate (beta/index.php) → vào thẳng, không hiện login mockup
+  const beta = window.__BETA__ || {};
+  const currentUser = { name: beta.username || 'Admin', role: beta.isAdmin ? 'admin' : 'staff' };
+  const [loggedIn, setLoggedIn] = React.useState(true);
 
   React.useEffect(() => {
     document.body.dataset.palette = tweaks.palette;
@@ -579,12 +631,13 @@ function App() {
     <div className={'shell' + (collapsed ? ' shell-collapsed' : '')}>
       <Sidebar active={page} onNav={setPage} collapsed={collapsed}
                onCollapse={()=>setCollapsed(!collapsed)}
-               userRole="admin"/>
+               userRole={currentUser.role} user={currentUser}
+               onLogout={()=>{ window.location.href = beta.backUrl || '../index.php'; }}/>
       <main className="main">
         <Topbar page={page} onNav={setPage}
                 platform={platform} onPlatform={setPlatform}
                 viewMode={viewMode} onViewMode={setViewMode}
-                onLogout={()=>setLoggedIn(false)} />
+                onLogout={()=>{ window.location.href = beta.backUrl || '../index.php'; }} />
         <div className="content">
           <PageComp data={filteredData} mode={tweaks.chartStyle} key={page+platform}/>
         </div>

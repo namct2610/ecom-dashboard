@@ -86,11 +86,26 @@ const I = {
 
 function PageOverview({ data, mode }) {
   const s = data.summary;
+  const [trendMetric, setTrendMetric] = React.useState('revenue'); // revenue|orders|aov
+  const [topMetric, setTopMetric] = React.useState('revenue');     // revenue|qty
   const dates = data.revenue_series.map(d => d.date);
   const dayLabels = getDayLabels(data.revenue_series);
-  const platformSeries = buildPlatformSeries(data.revenue_series);
   const totalSeries = data.revenue_series.map(d => d.total);
   const ordersSeries = data.revenue_series.map(d => d.orders_total);
+
+  // Trend series theo metric đang chọn
+  const platformSeries = trendMetric === 'orders'
+    ? buildPlatformSeries(data.revenue_series, 'orders')
+    : trendMetric === 'aov'
+      ? [{ key:'aov', name:'AOV', color: PLATFORM_COLORS.shopee,
+           data: data.revenue_series.map(d => (d.orders_total>0 ? Math.round(d.total/d.orders_total) : 0)) }]
+      : buildPlatformSeries(data.revenue_series);
+  const trendStacked = trendMetric !== 'aov';
+  const trendSub = trendMetric === 'orders' ? 'Số đơn theo ngày · 3 sàn'
+    : trendMetric === 'aov' ? 'Giá trị đơn trung bình theo ngày'
+    : (data.period_label || 'Kỳ hiện tại') + ' · Phân theo 3 sàn';
+
+  const topItems = topMetric === 'qty' ? data.top_products_qty : data.top_products_rev;
 
   const platformShare = [
     { key: 'shopee', name: 'Shopee', value: s.shopee.revenue, color: PLATFORM_COLORS.shopee },
@@ -238,20 +253,20 @@ function PageOverview({ data, mode }) {
           <div className="card-head">
             <div>
               <h3>Doanh thu theo thời gian</h3>
-              <div className="sub">Tháng 03/2026 · Phân theo 3 sàn</div>
+              <div className="sub">{trendSub}</div>
             </div>
             <div className="tabs">
-              <button className={mode === 'area' ? 'tab active' : 'tab'}>Doanh thu</button>
-              <button className="tab">Đơn hàng</button>
-              <button className="tab">AOV</button>
+              <button className={trendMetric==='revenue' ? 'tab active' : 'tab'} onClick={()=>setTrendMetric('revenue')}>Doanh thu</button>
+              <button className={trendMetric==='orders' ? 'tab active' : 'tab'} onClick={()=>setTrendMetric('orders')}>Đơn hàng</button>
+              <button className={trendMetric==='aov' ? 'tab active' : 'tab'} onClick={()=>setTrendMetric('aov')}>AOV</button>
             </div>
           </div>
-          <AreaChart series={platformSeries} labels={dayLabels} mode={mode} stacked={true} height={280} />
+          <AreaChart series={platformSeries} labels={dayLabels} mode={mode} stacked={trendStacked} height={280} />
           <div className="legend" style={{marginTop:12, justifyContent:'center'}}>
             {platformSeries.map(p => (
               <div key={p.key} className="legend-item">
                 <span className="legend-swatch" style={{background:p.color}}/>
-                {p.name} · {fmtVnd(p.data.reduce((a,b)=>a+b,0))}₫
+                {p.name} · {trendMetric==='orders' ? fmtFull(p.data.reduce((a,b)=>a+b,0))+' đơn' : fmtVnd(p.data.reduce((a,b)=>a+b,0))+'₫'}
               </div>
             ))}
           </div>
@@ -294,19 +309,19 @@ function PageOverview({ data, mode }) {
           <div className="card-head">
             <div>
               <h3>Top 10 sản phẩm bán chạy</h3>
-              <div className="sub">Theo doanh thu tháng này</div>
+              <div className="sub">{topMetric==='qty' ? 'Theo số lượng bán' : 'Theo doanh thu'}</div>
             </div>
             <div className="tabs">
-              <button className="tab active">Doanh thu</button>
-              <button className="tab">Số lượng</button>
+              <button className={topMetric==='revenue'?'tab active':'tab'} onClick={()=>setTopMetric('revenue')}>Doanh thu</button>
+              <button className={topMetric==='qty'?'tab active':'tab'} onClick={()=>setTopMetric('qty')}>Số lượng</button>
             </div>
           </div>
           <RankedBars
-            items={data.top_products_rev}
-            valueKey="revenue"
+            items={topItems}
+            valueKey={topMetric==='qty' ? 'qty' : 'revenue'}
             labelKey="name"
             colors={PLATFORM_COLORS}
-            format={(v) => fmtVnd(v) + '₫'} />
+            format={(v) => topMetric==='qty' ? fmtFull(v) : fmtVnd(v) + '₫'} />
         </div>
 
         <div className="card card-lg">
