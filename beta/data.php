@@ -18,7 +18,7 @@ header('Cache-Control: no-cache, must-revalidate');
 
 // Output a default empty shape immediately so the React UI never hangs
 // even if a query fails — we'll overwrite it on success.
-$emptyPlat = ['orders' => 0, 'completed' => 0, 'cancelled' => 0, 'revenue' => 0];
+$emptyPlat = ['orders' => 0, 'completed' => 0, 'cancelled' => 0, 'shipping' => 0, 'revenue' => 0];
 $defaultData = [
     'period' => date('Y-m'),
     'period_label' => 'Tháng ' . date('m/Y'),
@@ -28,6 +28,7 @@ $defaultData = [
         'avg_order_value' => 0, 'total_page_views' => 0, 'total_visitors' => 0,
         'shopee' => $emptyPlat, 'lazada' => $emptyPlat, 'tiktok' => $emptyPlat,
     ],
+    'plan' => null,
     'revenue_series' => [], 'top_products_qty' => [], 'top_products_rev' => [],
     'city_distribution' => [], 'heatmap' => [], 'traffic' => [], 'recent_orders' => [],
 ];
@@ -82,6 +83,7 @@ foreach (['shopee', 'lazada', 'tiktokshop'] as $plat) {
             COUNT(DISTINCT order_id) AS orders,
             COUNT(DISTINCT CASE WHEN normalized_status IN ('completed','delivered') THEN order_id END) AS completed,
             COUNT(DISTINCT CASE WHEN normalized_status = 'cancelled' THEN order_id END) AS cancelled,
+            COUNT(DISTINCT CASE WHEN normalized_status NOT IN ('completed','delivered','cancelled') THEN order_id END) AS shipping,
             COALESCE(SUM(CASE WHEN normalized_status IN ('completed','delivered') THEN order_total ELSE 0 END), 0) AS revenue
         FROM orders
         WHERE platform = :p AND DATE(order_created_at) BETWEEN :s AND :e
@@ -92,6 +94,7 @@ foreach (['shopee', 'lazada', 'tiktokshop'] as $plat) {
         'orders'    => (int) $row['orders'],
         'completed' => (int) $row['completed'],
         'cancelled' => (int) $row['cancelled'],
+        'shipping'  => (int) $row['shipping'],
         'revenue'   => (float) $row['revenue'],
     ];
 }
@@ -268,6 +271,67 @@ $trafficRows = array_map(static fn($r) => [
     'visitors' => (int) $r['visitors'],
 ], $stmt->fetchAll());
 
+// ── Plan targets (same app_settings key as production Plan page) ─────
+$planYear = (int) substr($start, 0, 4);
+$nowYear = (int) date('Y');
+$elapsedMonths = $planYear < $nowYear ? 12 : ($planYear > $nowYear ? 0 : (int) date('n'));
+$remainingMonths = max(0, 12 - $elapsedMonths);
+$planStart = sprintf('%04d-01-01', $planYear);
+$planEnd = $elapsedMonths > 0
+    ? date('Y-m-t', strtotime(sprintf('%04d-%02d-01', $planYear, $elapsedMonths)))
+    : sprintf('%04d-01-01', $planYear);
+
+$rawTargets = (string) ($pdo->query("SELECT setting_value FROM app_settings WHERE setting_key='plan_targets_by_year'")->fetchColumn() ?: '');
+$targetMap = json_decode($rawTargets, true);
+$targetMap = is_array($targetMap) ? $targetMap : [];
+$targetForYear = is_array($targetMap[(string) $planYear] ?? null) ? $targetMap[(string) $planYear] : [];
+$revenueTarget = max(0.0, (float) ($targetForYear['revenue'] ?? 0));
+$visitsTarget = max(0.0, (float) ($targetForYear['visits'] ?? 0));
+
+$stmt = $pdo->prepare("
+    SELECT COALESCE(SUM(order_total), 0)
+    FROM orders
+    WHERE order_created_at BETWEEN :s AND :e
+      AND normalized_status IN ('completed','delivered')
+");
+$stmt->execute([':s' => $planStart . ' 00:00:00', ':e' => $planEnd . ' 23:59:59']);
+$planRevenueActual = (float) $stmt->fetchColumn();
+
+$stmt = $pdo->prepare("
+    SELECT COALESCE(SUM(visits), 0)
+    FROM traffic_daily
+    WHERE traffic_date BETWEEN :s AND :e AND device_type='all'
+");
+$stmt->execute([':s' => $planStart, ':e' => $planEnd]);
+$planVisitsActual = (float) $stmt->fetchColumn();
+
+$metric = static function (string $key, string $label, float $target, float $actual) use ($elapsedMonths, $remainingMonths): array {
+    $targetYtd = $target * ($elapsedMonths / 12);
+    $ytg = max(0.0, $target - $actual);
+    return [
+        'key' => $key,
+        'label' => $label,
+        'target' => $target,
+        'target_ytd' => $targetYtd,
+        'actual_ytd' => $actual,
+        'ytg' => $ytg,
+        'avg_needed_month' => $remainingMonths > 0 ? $ytg / $remainingMonths : 0,
+        'target_rate' => $target > 0 ? ($actual / $target) * 100 : 0,
+        'ytd_rate' => $targetYtd > 0 ? ($actual / $targetYtd) * 100 : 0,
+        'status' => $target > 0 && $actual >= $targetYtd ? 'on_track' : 'behind',
+    ];
+};
+
+$plan = [
+    'year' => $planYear,
+    'elapsed_months' => $elapsedMonths,
+    'remaining_months' => $remainingMonths,
+    'metrics' => [
+        $metric('revenue', 'Doanh số', $revenueTarget, $planRevenueActual),
+        $metric('visits', 'Lượt truy cập', $visitsTarget, $planVisitsActual),
+    ],
+];
+
 // ── Recent orders ─────────────────────────────────────────────────────
 $stmt = $pdo->prepare("
     SELECT platform, order_id, MAX(order_created_at) AS order_date, MAX(normalized_status) AS status,
@@ -296,6 +360,7 @@ $data = [
     'period_label'    => $label,
     'range'           => ['start' => $start, 'end' => $end],
     'summary'         => $summary,
+    'plan'            => $plan,
     'revenue_series'  => $revenueSeries,
     'top_products_qty'=> $topQty,
     'top_products_rev'=> $topRev,

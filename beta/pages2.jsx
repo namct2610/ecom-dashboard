@@ -3,20 +3,22 @@
 // ── Page: KẾ HOẠCH (Sales Target) ───────────────────────────────────────
 
 function PagePlan({ data }) {
-  // Year target (mocked, realistic scale)
-  const yearTarget = 3_200_000_000; // 3.2B VND
-  const monthsCompleted = 3;
-  const ytdActual = data.summary.total_revenue * 2.6 + data.summary.total_revenue; // mock cumulative
-  const achievement = (ytdActual / yearTarget) * 100;
-  const runRateNeeded = (yearTarget - ytdActual) / (12 - monthsCompleted);
-  const onTrack = ytdActual >= (yearTarget / 12) * monthsCompleted * 0.95;
+  const plan = data.plan || {};
+  const revenueMetric = (plan.metrics || []).find(m => m.key === 'revenue') || {};
+  const yearTarget = safeNum(revenueMetric.target);
+  const monthsCompleted = safeNum(plan.elapsed_months, new Date().getMonth() + 1);
+  const monthsRemaining = safeNum(plan.remaining_months, Math.max(0, 12 - monthsCompleted));
+  const ytdActual = safeNum(revenueMetric.actual_ytd);
+  const achievement = safePct(ytdActual, yearTarget);
+  const runRateNeeded = safeNum(revenueMetric.avg_needed_month);
+  const onTrack = revenueMetric.status === 'on_track';
 
   // Build 12-month series (target line vs actual)
   const months = ['T1','T2','T3','T4','T5','T6','T7','T8','T9','T10','T11','T12'];
   const targetCum = months.map((_, i) => (yearTarget / 12) * (i+1));
   const actualCum = months.map((_, i) => {
     if (i < monthsCompleted) {
-      return ytdActual * ((i+1)/monthsCompleted);
+      return ytdActual * safeDiv(i+1, monthsCompleted);
     }
     return null;
   });
@@ -40,7 +42,7 @@ function PagePlan({ data }) {
         <div className="kpi-hero" style={{minHeight: 260}}>
           <div className="kpi-hero-top">
             <div>
-              <div className="kpi-hero-label">Mục tiêu năm 2026</div>
+              <div className="kpi-hero-label">Mục tiêu năm {plan.year || new Date().getFullYear()}</div>
               <div style={{fontSize:11.5, opacity:0.7, marginTop:4, fontWeight:600}}>
                 Tiến độ YTD · {monthsCompleted}/12 tháng
               </div>
@@ -60,7 +62,7 @@ function PagePlan({ data }) {
             <div style={{flex:1, minWidth:0}}>
               <div style={{display:'flex', justifyContent:'space-between', fontSize:11, fontWeight:600, marginBottom:6, opacity:0.85}}>
                 <span>Tiến độ đạt mục tiêu</span>
-                <span>Còn {fmtVnd(yearTarget - ytdActual)}₫</span>
+                <span>Còn {fmtVnd(Math.max(0, yearTarget - ytdActual))}₫</span>
               </div>
               <div style={{height:12, borderRadius:99, background:'rgba(255,255,255,0.18)', overflow:'hidden', position:'relative'}}>
                 <div style={{
@@ -73,7 +75,7 @@ function PagePlan({ data }) {
                 {/* Pace marker */}
                 <div style={{
                   position:'absolute', top:-4, bottom:-4,
-                  left: ((monthsCompleted/12)*100)+'%',
+                  left: safePct(monthsCompleted, 12)+'%',
                   width: 2, background: 'rgba(255,255,255,0.95)',
                   boxShadow:'0 0 8px rgba(255,255,255,0.6)',
                 }} />
@@ -85,7 +87,7 @@ function PagePlan({ data }) {
                 </span>
                 <span style={{display:'flex', alignItems:'center', gap:6, opacity:0.8}}>
                   <span style={{width:2, height:10, background:'#fff'}}/>
-                  Mốc {monthsCompleted}/12 tháng ({((monthsCompleted/12)*100).toFixed(0)}%)
+                  Mốc {monthsCompleted}/12 tháng ({safePct(monthsCompleted, 12).toFixed(0)}%)
                 </span>
               </div>
             </div>
@@ -97,12 +99,12 @@ function PagePlan({ data }) {
           <div className="card" style={{padding: 18}}>
             <div style={{fontSize:11.5, color:'var(--ink-3)', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.06em'}}>Run-rate cần đạt</div>
             <div style={{fontSize:28, fontWeight:800, marginTop:6, letterSpacing:'-0.02em'}}>{fmtVnd(runRateNeeded)}₫</div>
-            <div style={{fontSize:12, color:'var(--ink-3)', marginTop:4}}>mỗi tháng còn lại · {12-monthsCompleted} tháng</div>
+            <div style={{fontSize:12, color:'var(--ink-3)', marginTop:4}}>mỗi tháng còn lại · {monthsRemaining} tháng</div>
           </div>
           <div className="card" style={{padding: 18}}>
             <div style={{fontSize:11.5, color:'var(--ink-3)', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.06em'}}>Tháng hiện tại</div>
             <div style={{fontSize:28, fontWeight:800, marginTop:6, letterSpacing:'-0.02em'}}>{fmtVnd(data.summary.total_revenue)}₫</div>
-            <div style={{fontSize:12, color:'var(--green)', marginTop:4, fontWeight:600}}>↑ vượt 24.3% target tháng</div>
+            <div style={{fontSize:12, color:'var(--ink-3)', marginTop:4, fontWeight:600}}>Actual của kỳ đang xem</div>
           </div>
         </div>
       </div>
@@ -134,7 +136,7 @@ function PagePlan({ data }) {
         <div style={{display:'flex', flexDirection:'column', gap:18}}>
           {platforms.map(p => {
             const t = platformTargets[p];
-            const pct = Math.min(100, t.actual/t.target*100);
+            const pct = Math.min(100, safePct(t.actual, t.target));
             const color = PLATFORM_COLORS[p];
             return (
               <div key={p}>
@@ -165,7 +167,7 @@ function PagePlan({ data }) {
                   }}/>
                   <div style={{
                     position:'absolute', top:-3, bottom:-3,
-                    left: ((monthsCompleted/12)*100)+'%',
+                    left: safePct(monthsCompleted, 12)+'%',
                     width:2, background:'var(--ink)', opacity:0.6,
                   }}/>
                 </div>
@@ -185,7 +187,7 @@ function PlanChart({ months, target, actual, forecast }) {
   })();
   const H = 300, ML=56, MR=20, MT=20, MB=30;
   const innerW = w-ML-MR, innerH = H-MT-MB;
-  const maxV = Math.max(...target, ...actual.filter(v=>v!=null), ...forecast.filter(v=>v!=null)) * 1.05;
+  const maxV = Math.max(...target, ...actual.filter(v=>v!=null), ...forecast.filter(v=>v!=null), 1) * 1.05;
   const x = i => ML + (i/(months.length-1))*innerW;
   const y = v => MT + innerH - (v/maxV)*innerH;
   const ticks = [0, 0.25, 0.5, 0.75, 1].map(t=>t*maxV);
@@ -269,7 +271,7 @@ function PageReconcile({ data }) {
 
       <div className="row row-4">
         <KPI label="Tổng đơn cần đối soát" value={fmtFull(totalOrders)} sub="Tháng 03/2026" accent="brand" icon={I.cart}/>
-        <KPI label="Đã khớp" value={fmtFull(matched)} sub={fmtPct(matched/totalOrders*100)} accent="green" icon={I.check}/>
+        <KPI label="Đã khớp" value={fmtFull(matched)} sub={fmtPct(safePct(matched, totalOrders))} accent="green" icon={I.check}/>
         <KPI label="Sai lệch" value={fmtFull(discrepancy)} sub="cần xem xét" accent="amber" icon={I.pct}/>
         <KPI label="Chưa khớp" value={fmtFull(missing)} sub="thiếu trong GBS" accent="red" icon={I.x}/>
       </div>

@@ -104,7 +104,7 @@ function Sidebar({ active, onNav, collapsed, onCollapse, userRole, user, onLogou
         {!collapsed && (
           <div>
             <div className="brand-name">Insight</div>
-            <div className="brand-meta">v4.0 · TMĐT Suite</div>
+            <div className="brand-meta">{(window.__BETA__?.versionLabel || 'Beta')} · TMĐT Suite</div>
           </div>
         )}
       </div>
@@ -514,7 +514,7 @@ function LoginScreen({ onLogin }) {
             </div>
             <div style={{color:'#fff'}}>
               <div style={{fontSize:22, fontWeight:800, letterSpacing:'-0.02em'}}>Insight</div>
-              <div style={{fontSize:12, opacity:0.7}}>TMĐT Suite · v4.0</div>
+              <div style={{fontSize:12, opacity:0.7}}>TMĐT Suite · {(window.__BETA__?.versionLabel || 'Beta')}</div>
             </div>
           </div>
           <h1 style={{color:'#fff', fontSize:42, fontWeight:800, letterSpacing:'-0.03em', marginTop:48, lineHeight:1.1}}>
@@ -601,20 +601,32 @@ function App() {
     const fd = JSON.parse(JSON.stringify(data));
     fd.revenue_series = data.revenue_series.map(d => ({
       ...d,
-      total: d[platform],
-      orders_total: d['orders_'+platform],
+      total: d[platform] || 0,
+      orders_total: d['orders_'+platform] || 0,
       ...['shopee','lazada','tiktok'].filter(p=>p!==platform).reduce((acc,p)=>{
         acc[p] = 0; acc['orders_'+p] = 0; return acc;
       }, {}),
     }));
     const sp = data.summary[platform];
+    const traffic = data.traffic.filter(t => t.platform === platform);
+    const totalPageViews = traffic.reduce((sum, t) => sum + (t.page_views || 0), 0);
+    const totalVisitors = traffic.reduce((sum, t) => sum + (t.visitors || 0), 0);
     fd.summary = {
       ...fd.summary,
-      total_orders: sp.orders,
-      completed_orders: sp.completed,
+      total_orders: sp.orders || 0,
+      completed_orders: sp.completed || 0,
       cancelled_orders: sp.cancelled || 0,
-      total_revenue: sp.revenue,
+      shipping_orders: sp.shipping || 0,
+      cancel_rate: sp.orders ? ((sp.cancelled || 0) / sp.orders * 100) : 0,
+      total_revenue: sp.revenue || 0,
+      avg_order_value: sp.completed ? Math.round((sp.revenue || 0) / sp.completed) : 0,
+      total_page_views: totalPageViews,
+      total_visitors: totalVisitors,
     };
+    fd.traffic = traffic;
+    fd.top_products_qty = data.top_products_qty.filter(t => t.platform === platform);
+    fd.top_products_rev = data.top_products_rev.filter(t => t.platform === platform);
+    fd.recent_orders = data.recent_orders.filter(o => o.platform === platform);
     return fd;
   }, [platform, data]);
 
