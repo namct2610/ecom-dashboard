@@ -43,7 +43,10 @@ body{padding-top:28px !important}
   <a href="../index.php">← Trở về bản chính thức</a>
 </div>
 HTML;
-$html = str_replace('<script src="data.js"></script>', $inject . "\n" . '<script src="data.php"></script>', $html);
+// Forward query string (period/year/from/to) tới data.php để lọc thời gian
+$qs = $_SERVER['QUERY_STRING'] ?? '';
+$dataSrc = 'data.php' . ($qs !== '' ? '?' . htmlspecialchars($qs, ENT_QUOTES) : '');
+$html = str_replace('<script src="data.js"></script>', $inject . "\n" . '<script src="' . $dataSrc . '"></script>', $html);
 $html = str_replace('<div id="root"></div>', $banner . "\n" . '<div id="root"></div>', $html);
 
 echo $html;

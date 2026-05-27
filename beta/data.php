@@ -21,6 +21,7 @@ header('Cache-Control: no-cache, must-revalidate');
 $emptyPlat = ['orders' => 0, 'completed' => 0, 'cancelled' => 0, 'revenue' => 0];
 $defaultData = [
     'period' => date('Y-m'),
+    'period_label' => 'Tháng ' . date('m/Y'),
     'summary' => [
         'total_orders' => 0, 'completed_orders' => 0, 'cancelled_orders' => 0,
         'shipping_orders' => 0, 'cancel_rate' => 0, 'total_revenue' => 0,
@@ -40,9 +41,37 @@ try {
 }
 
 try {
-$period   = date('Y-m');
-$start    = $period . '-01';
-$end      = date('Y-m-t', strtotime($start));
+// ── Resolve khoảng thời gian từ query params ─────────────────────────
+// Hỗ trợ: ?period=YYYY-MM (tháng) | ?year=YYYY (năm) | ?from=YYYY-MM-DD&to=YYYY-MM-DD (phạm vi)
+$period = date('Y-m');
+$start  = $period . '-01';
+$end    = date('Y-m-t', strtotime($start));
+$label  = 'Tháng ' . date('m/Y', strtotime($start));
+
+$reqFrom = isset($_GET['from']) ? trim((string) $_GET['from']) : '';
+$reqTo   = isset($_GET['to']) ? trim((string) $_GET['to']) : '';
+$reqYear = isset($_GET['year']) ? (int) $_GET['year'] : 0;
+$reqPeriod = isset($_GET['period']) ? trim((string) $_GET['period']) : '';
+
+$isDate = static fn(string $d): bool => (bool) preg_match('/^\d{4}-\d{2}-\d{2}$/', $d) && strtotime($d) !== false;
+
+if ($isDate($reqFrom) && $isDate($reqTo)) {
+    $start = min($reqFrom, $reqTo);
+    $end   = max($reqFrom, $reqTo);
+    $period = substr($start, 0, 7);
+    $label = date('d/m/Y', strtotime($start)) . ' – ' . date('d/m/Y', strtotime($end));
+} elseif ($reqYear >= 2020 && $reqYear <= 2100) {
+    $start = sprintf('%04d-01-01', $reqYear);
+    $end   = sprintf('%04d-12-31', $reqYear);
+    $period = (string) $reqYear;
+    $label = 'Năm ' . $reqYear;
+} elseif (preg_match('/^\d{4}-\d{2}$/', $reqPeriod)) {
+    $period = $reqPeriod;
+    $start  = $period . '-01';
+    $end    = date('Y-m-t', strtotime($start));
+    $label  = 'Tháng ' . date('m/Y', strtotime($start));
+}
+
 $lineRev  = "COALESCE(subtotal_after_discount, 0)";
 
 // ── Summary per platform ─────────────────────────────────────────────
@@ -264,6 +293,8 @@ $recent = array_map(static fn($r) => [
 
 $data = [
     'period'          => $period,
+    'period_label'    => $label,
+    'range'           => ['start' => $start, 'end' => $end],
     'summary'         => $summary,
     'revenue_series'  => $revenueSeries,
     'top_products_qty'=> $topQty,

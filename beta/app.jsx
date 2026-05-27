@@ -136,9 +136,15 @@ function Sidebar({ active, onNav, collapsed, onCollapse, userRole }) {
 // ── Period picker (dropdown) ─────────────────────────────────────────
 
 function PeriodPicker({ value, onChange }) {
+  const data = window.DASHBOARD_DATA || {};
+  const curPeriod = data.period || '';                       // '2026-03' | '2026' | 'YYYY-MM'
+  const curLabel = data.period_label || 'Tháng này';
+  const initYear = /^\d{4}/.test(curPeriod) ? parseInt(curPeriod.slice(0,4),10) : new Date().getFullYear();
+  const initMonth = /^\d{4}-\d{2}$/.test(curPeriod) ? parseInt(curPeriod.slice(5,7),10) - 1 : new Date().getMonth();
+
   const [open, setOpen] = React.useState(false);
   const [mode, setMode] = React.useState('month');
-  const [gridYear, setGridYear] = React.useState(2026);
+  const [gridYear, setGridYear] = React.useState(initYear);
   const ref = React.useRef(null);
 
   React.useEffect(() => {
@@ -147,6 +153,25 @@ function PeriodPicker({ value, onChange }) {
     document.addEventListener('mousedown', onDoc);
     return () => document.removeEventListener('mousedown', onDoc);
   }, [open]);
+
+  // Điều hướng = reload trang với query param để data.php lọc lại
+  const go = (qs) => { window.location.search = qs; };
+  const ymd = (d) => d.toISOString().slice(0,10);
+  const applyPreset = (id) => {
+    const today = new Date(); let from = new Date(); let to = new Date();
+    if (id === 'today') { /* from=to=today */ }
+    else if (id === 'yesterday') { from.setDate(today.getDate()-1); to.setDate(today.getDate()-1); }
+    else if (id === '7days') { from.setDate(today.getDate()-6); }
+    else if (id === '30days') { from.setDate(today.getDate()-29); }
+    go(`?from=${ymd(from)}&to=${ymd(to)}`);
+  };
+  const applyRange = (id) => {
+    const now = new Date(); const y = now.getFullYear(); const m = now.getMonth();
+    if (id === 'this-month') go(`?period=${y}-${String(m+1).padStart(2,'0')}`);
+    else if (id === 'last-month') { const d = new Date(y, m-1, 1); go(`?period=${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`); }
+    else if (id === 'this-quarter') { const qStart = Math.floor(m/3)*3; go(`?from=${y}-${String(qStart+1).padStart(2,'0')}-01&to=${ymd(new Date(y, qStart+3, 0))}`); }
+    else if (id === 'this-year') go(`?year=${y}`);
+  };
 
   const presets = [
     { id:'today', label:'Hôm nay' },
@@ -164,16 +189,16 @@ function PeriodPicker({ value, onChange }) {
   return (
     <div className="period-picker" ref={ref}>
       <div className="period">
-        <button>‹</button>
+        <button onClick={()=>{ const d=new Date(initYear, initMonth-1, 1); go(`?period=${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`); }} title="Tháng trước">‹</button>
         <button className="period-label" onClick={() => setOpen(!open)}
                 style={{padding:'7px 12px', fontSize:12.5, fontWeight:700, display:'flex', alignItems:'center', gap:6}}>
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
           </svg>
-          Tháng 03/2026
+          {curLabel}
           <span style={{fontSize:9, opacity:0.6, marginLeft:2}}>▼</span>
         </button>
-        <button>›</button>
+        <button onClick={()=>{ const d=new Date(initYear, initMonth+1, 1); go(`?period=${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`); }} title="Tháng sau">›</button>
       </div>
 
       {open && (
@@ -190,13 +215,13 @@ function PeriodPicker({ value, onChange }) {
             <div style={{fontSize:10.5, color:'var(--ink-3)', textTransform:'uppercase', letterSpacing:'0.08em', fontWeight:700, marginBottom:8}}>Khoảng nhanh</div>
             <div style={{display:'flex', gap:6, flexWrap:'wrap', marginBottom:14}}>
               {presets.map(p => (
-                <button key={p.id} className="chip" style={{padding:'5px 12px', fontSize:11.5, background:'var(--surface-2)'}}>{p.label}</button>
+                <button key={p.id} className="chip" onClick={()=>applyPreset(p.id)} style={{padding:'5px 12px', fontSize:11.5, background:'var(--surface-2)', cursor:'pointer'}}>{p.label}</button>
               ))}
             </div>
             <div style={{fontSize:10.5, color:'var(--ink-3)', textTransform:'uppercase', letterSpacing:'0.08em', fontWeight:700, marginBottom:8}}>Kỳ định sẵn</div>
             <div style={{display:'flex', gap:6, flexWrap:'wrap', marginBottom:14}}>
               {ranges.map(p => (
-                <button key={p.id} className="chip" style={{padding:'5px 12px', fontSize:11.5, background:'var(--surface-2)'}}>{p.label}</button>
+                <button key={p.id} className="chip" onClick={()=>applyRange(p.id)} style={{padding:'5px 12px', fontSize:11.5, background:'var(--surface-2)', cursor:'pointer'}}>{p.label}</button>
               ))}
             </div>
             <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:8}}>
@@ -205,14 +230,18 @@ function PeriodPicker({ value, onChange }) {
               <button onClick={()=>setGridYear(gridYear+1)} style={{background:'transparent', border:'none', cursor:'pointer', color:'var(--ink-3)', fontSize:14, padding:4}}>›</button>
             </div>
             <div style={{display:'grid', gridTemplateColumns:'repeat(4, 1fr)', gap:6}}>
-              {Array.from({length:12}).map((_,i) => (
-                <button key={i} className="chip" style={{
-                  padding:'10px 4px', fontSize:12,
-                  background: (gridYear===2026 && i===2) ? 'var(--brand-1)' : 'var(--surface-2)',
-                  color: (gridYear===2026 && i===2) ? '#fff' : 'var(--ink-2)',
+              {Array.from({length:12}).map((_,i) => {
+                const sel = (gridYear===initYear && i===initMonth);
+                return (
+                <button key={i} className="chip"
+                  onClick={()=>go(`?period=${gridYear}-${String(i+1).padStart(2,'0')}`)}
+                  style={{
+                  padding:'10px 4px', fontSize:12, cursor:'pointer',
+                  background: sel ? 'var(--brand-1)' : 'var(--surface-2)',
+                  color: sel ? '#fff' : 'var(--ink-2)',
                   border:'none',
                 }}>T{i+1}</button>
-              ))}
+              );})}
             </div>
           </div>
         </div>
