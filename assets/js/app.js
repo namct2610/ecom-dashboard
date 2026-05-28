@@ -324,6 +324,73 @@ async function api(path, opts = {}) {
   return data;
 }
 
+function previousFilterParams() {
+  const platform = App.platform;
+  const viewMode = App.viewMode;
+
+  if (hasActiveDateRange()) {
+    const from = new Date(`${App.dateFrom}T00:00:00`);
+    const to = new Date(`${App.dateTo}T00:00:00`);
+    if (Number.isNaN(from.getTime()) || Number.isNaN(to.getTime())) return null;
+    const days = Math.max(1, Math.round((to - from) / 86400000) + 1);
+    const prevTo = new Date(from);
+    prevTo.setDate(prevTo.getDate() - 1);
+    const prevFrom = new Date(prevTo);
+    prevFrom.setDate(prevFrom.getDate() - days + 1);
+    return {
+      date_from: _isoDate(prevFrom),
+      date_to: _isoDate(prevTo),
+      platform,
+      view_mode: viewMode,
+    };
+  }
+
+  if (App.mode === 'year' && /^\d{4}$/.test(App.period || '')) {
+    return { mode: 'year', period: String(Number(App.period) - 1), platform, view_mode: viewMode };
+  }
+
+  if (App.mode === 'month' && /^\d{4}-\d{2}$/.test(App.period || '')) {
+    const [year, month] = App.period.split('-').map(Number);
+    const prev = new Date(year, month - 2, 1);
+    return {
+      mode: 'month',
+      period: `${prev.getFullYear()}-${String(prev.getMonth() + 1).padStart(2, '0')}`,
+      platform,
+      view_mode: viewMode,
+    };
+  }
+
+  return null;
+}
+
+function compareKpi(current, previous, lowerIsBetter = false) {
+  const cur = Number(current || 0);
+  const prev = Number(previous || 0);
+  if (!Number.isFinite(cur) || !Number.isFinite(prev) || prev <= 0) {
+    return { pct: null, cls: 'is-flat', arrow: '•' };
+  }
+  const diff = ((cur - prev) / prev) * 100;
+  const good = lowerIsBetter ? diff < 0 : diff > 0;
+  const cls = Math.abs(diff) < 0.05 ? 'is-flat' : (good ? 'is-up' : 'is-down');
+  return { pct: diff, cls, arrow: diff > 0 ? '▲' : diff < 0 ? '▼' : '•' };
+}
+
+function setKpiCompare(valueSelector, current, previous, lowerIsBetter = false) {
+  const valueEl = qs(valueSelector);
+  if (!valueEl) return;
+  let el = valueEl.parentElement?.querySelector('.kpi-compare');
+  if (!el) {
+    el = document.createElement('div');
+    el.className = 'kpi-compare';
+    valueEl.insertAdjacentElement('afterend', el);
+  }
+  const info = compareKpi(current, previous, lowerIsBetter);
+  el.className = `kpi-compare ${info.cls}`;
+  el.textContent = info.pct === null
+    ? t('kpi.compare.no_previous')
+    : `${info.arrow} ${Math.abs(info.pct).toFixed(1)}% ${t('kpi.compare.previous')}`;
+}
+
 // Generic fetch with CSRF (for endpoints that don't need dashboard filter params)
 async function apiFetch(url, opts = {}) {
   const res = await fetch(url, {
@@ -830,11 +897,15 @@ function syncNavGroups(page) {
 
 async function loadOverview() {
   try {
-    const [rev, orders, traffic, products] = await Promise.all([
+    const prevParams = previousFilterParams();
+    const [rev, orders, traffic, products, prevRev, prevOrders, prevTraffic] = await Promise.all([
       api('revenue.php'),
       api('orders.php'),
       api('traffic.php'),
       api('products.php', { params: { limit: 6 } }),
+      prevParams ? api('revenue.php', { params: prevParams }) : Promise.resolve(null),
+      prevParams ? api('orders.php', { params: prevParams }) : Promise.resolve(null),
+      prevParams ? api('traffic.php', { params: prevParams }) : Promise.resolve(null),
     ]);
 
     // KPIs
@@ -843,6 +914,10 @@ async function loadOverview() {
     qs('#kpi-completed').textContent = fmtNum(orders.summary.completed);
     qs('#kpi-views').textContent   = fmtNum(traffic.summary.total_views);
     qs('#kpi-visitors').textContent= fmtNum(traffic.summary.total_visits);
+    setKpiCompare('#kpi-revenue', rev.summary.total_revenue, prevRev?.summary?.total_revenue);
+    setKpiCompare('#kpi-orders', orders.summary.total, prevOrders?.summary?.total);
+    setKpiCompare('#kpi-completed', orders.summary.completed, prevOrders?.summary?.completed);
+    setKpiCompare('#kpi-views', traffic.summary.total_views, prevTraffic?.summary?.total_views);
 
     // Charts
     Charts.renderRevenueTrend('chartRevenueTrend', rev.timeseries, rev.granularity);
@@ -860,12 +935,20 @@ async function loadOverview() {
 
 async function loadOrders() {
   try {
-    const data = await api('orders.php');
+    const prevParams = previousFilterParams();
+    const [data, prev] = await Promise.all([
+      api('orders.php'),
+      prevParams ? api('orders.php', { params: prevParams }) : Promise.resolve(null),
+    ]);
 
     qs('#ord-total').textContent     = fmtNum(data.summary.total);
     qs('#ord-completed').textContent = fmtNum(data.summary.completed);
     qs('#ord-cancelled').textContent = fmtNum(data.summary.cancelled);
     qs('#ord-cancel-rate').textContent = data.summary.cancel_rate + '%';
+    setKpiCompare('#ord-total', data.summary.total, prev?.summary?.total);
+    setKpiCompare('#ord-completed', data.summary.completed, prev?.summary?.completed);
+    setKpiCompare('#ord-cancelled', data.summary.cancelled, prev?.summary?.cancelled, true);
+    setKpiCompare('#ord-cancel-rate', data.summary.cancel_rate, prev?.summary?.cancel_rate, true);
 
     Charts.renderOrdersTrend('chartOrdersTrend', data.timeseries, data.granularity);
     Charts.renderStatusDonut('chartOrdersStatus', data.summary);
@@ -884,12 +967,20 @@ async function loadOrders() {
 
 async function loadProducts() {
   try {
-    const data = await api('products.php');
+    const prevParams = previousFilterParams();
+    const [data, prev] = await Promise.all([
+      api('products.php'),
+      prevParams ? api('products.php', { params: prevParams }) : Promise.resolve(null),
+    ]);
 
     qs('#total-skus').textContent      = fmtNum(data.total_skus);
     qs('#prod-qty-all').textContent    = fmtNum(data.total_qty_all);
     qs('#prod-qty-delivered').textContent = fmtNum(data.total_qty_delivered);
     qs('#prod-avg-qty').textContent    = data.avg_qty_per_order.toFixed(2);
+    setKpiCompare('#total-skus', data.total_skus, prev?.total_skus);
+    setKpiCompare('#prod-qty-all', data.total_qty_all, prev?.total_qty_all);
+    setKpiCompare('#prod-qty-delivered', data.total_qty_delivered, prev?.total_qty_delivered);
+    setKpiCompare('#prod-avg-qty', data.avg_qty_per_order, prev?.avg_qty_per_order);
 
     Charts.renderTopQtyBar('chartTopQty', data.top_qty);
     Charts.renderTopRevBar('chartTopRev', data.top_revenue);
@@ -908,15 +999,23 @@ async function loadProducts() {
 
 async function loadCustomers() {
   try {
-    const data = await api('customers.php');
+    const prevParams = previousFilterParams();
+    const [data, prev] = await Promise.all([
+      api('customers.php'),
+      prevParams ? api('customers.php', { params: prevParams }) : Promise.resolve(null),
+    ]);
 
     qs('#cust-total').textContent  = fmtNum(data.summary.total_orders);
     qs('#cust-aov').textContent    = fmtVND(data.summary.avg_order_value);
     qs('#cust-buyers').textContent = fmtNum(data.summary.unique_buyers || 0);
+    setKpiCompare('#cust-total', data.summary.total_orders, prev?.summary?.total_orders);
+    setKpiCompare('#cust-aov', data.summary.avg_order_value, prev?.summary?.avg_order_value);
+    setKpiCompare('#cust-buyers', data.summary.unique_buyers, prev?.summary?.unique_buyers);
 
     // Conversion rate KPI
     const conv = data.summary.conv_rate || 0;
     qs('#cust-conv').textContent = conv > 0 ? conv.toFixed(2) + '%' : '—';
+    setKpiCompare('#cust-conv', conv, prev?.summary?.conv_rate);
     const convEl = qs('#cust-conv');
     if (convEl) {
       const sub = convEl.nextElementSibling;
@@ -964,7 +1063,11 @@ async function loadCustomers() {
 
 async function loadTraffic() {
   try {
-    const data = await api('traffic.php');
+    const prevParams = previousFilterParams();
+    const [data, prev] = await Promise.all([
+      api('traffic.php'),
+      prevParams ? api('traffic.php', { params: prevParams }) : Promise.resolve(null),
+    ]);
 
     qs('#tr-views').textContent  = fmtNum(data.summary.total_views);
     qs('#tr-visits').textContent = fmtNum(data.summary.total_visits);
@@ -972,6 +1075,9 @@ async function loadTraffic() {
       ? ((parseInt(data.orders_by_date ? Object.values(data.orders_by_date).reduce((a,b)=>a+(+b),0) : 0) / data.summary.total_visits) * 100).toFixed(1)
       : 0;
     qs('#tr-bounce').textContent = data.summary.avg_bounce_rate + '%';
+    setKpiCompare('#tr-views', data.summary.total_views, prev?.summary?.total_views);
+    setKpiCompare('#tr-visits', data.summary.total_visits, prev?.summary?.total_visits);
+    setKpiCompare('#tr-bounce', data.summary.avg_bounce_rate, prev?.summary?.avg_bounce_rate, true);
 
     Charts.renderTrafficTrend('chartTrafficTrend', data.timeseries, data.granularity, data.orders_by_date);
     Charts.renderTrafficPlatform('chartTrafficPlatform', data.by_platform);
@@ -1062,7 +1168,7 @@ async function savePlanTargets() {
   const visitsTarget = Number(qs('#planVisitsTarget')?.value || 0);
 
   if (!year || year < 2020 || year > 2100) {
-    toast('Năm kế hoạch không hợp lệ.', 'error');
+    toast(t('plan.error.invalid_year'), 'error');
     return;
   }
 
@@ -1077,10 +1183,10 @@ async function savePlanTargets() {
     });
     if (!res.success) throw new Error(res.error || t('msg.save_failed'));
     PlanState.year = year;
-    toast('Đã lưu mục tiêu kế hoạch.', 'success');
+    toast(t('plan.toast.saved'), 'success');
     await loadPlan();
   } catch (e) {
-    toast(e.message || 'Không thể lưu mục tiêu kế hoạch.', 'error');
+    toast(e.message || t('plan.error.save_failed'), 'error');
   }
 }
 
@@ -1094,19 +1200,19 @@ function renderPlanTargetTable(data) {
 
   const metrics = Array.isArray(data.metrics) ? data.metrics : [];
   if (!metrics.length) {
-    tbody.innerHTML = '<tr><td colspan="9" class="plan-empty-cell">Chưa có dữ liệu kế hoạch.</td></tr>';
+    tbody.innerHTML = `<tr><td colspan="9" class="plan-empty-cell">${escHtml(t('plan.empty'))}</td></tr>`;
     return;
   }
 
   tbody.innerHTML = metrics.map(metric => {
     const isOnTrack = metric.status === 'on_track';
     const gapClass = Number(metric.gap_ytd || 0) >= 0 ? 'is-positive' : 'is-negative';
-    const statusLabel = isOnTrack ? 'Đúng tiến độ' : 'Cần bù tốc độ';
+    const statusLabel = isOnTrack ? t('plan.status.on_track') : t('plan.status.behind');
     return `
       <tr>
         <td class="plan-col-metric">
           <div class="plan-metric-name">${escHtml(metric.label || '')}</div>
-          <div class="plan-metric-sub">${metric.key === 'revenue' ? 'Doanh thu đơn hoàn thành' : 'Traffic visits toàn sàn'}</div>
+          <div class="plan-metric-sub">${metric.key === 'revenue' ? t('plan.metric.revenue_sub') : t('plan.metric.visits_sub')}</div>
         </td>
         <td class="text-right font-mono">${planMetricFormatter(metric.key, metric.target)}</td>
         <td class="text-right font-mono">${planMetricFormatter(metric.key, metric.target_ytd)}</td>
@@ -1132,7 +1238,7 @@ function renderPlanMonthlyTable(data) {
 
   const metrics = Array.isArray(data.metrics) ? data.metrics : [];
   if (!metrics.length) {
-    tbody.innerHTML = '<tr><td colspan="13" class="plan-empty-cell">Chưa có dữ liệu tháng.</td></tr>';
+    tbody.innerHTML = `<tr><td colspan="13" class="plan-empty-cell">${escHtml(t('plan.monthly.empty'))}</td></tr>`;
     return;
   }
 
@@ -1162,14 +1268,14 @@ function renderPlanMonthlyTable(data) {
       const tone = cell.target > 0
         ? (cell.actual >= cell.target ? 'is-hit' : 'is-miss')
         : '';
-      return `<td class="text-right font-mono plan-month-cell ${tone}" title="Mục tiêu TB: ${planMetricFormatter(metric.key, cell.target)}">${planMetricFormatter(metric.key, cell.actual)}</td>`;
+      return `<td class="text-right font-mono plan-month-cell ${tone}" title="${escHtml(t('plan.monthly.target_title'))}: ${planMetricFormatter(metric.key, cell.target)}">${planMetricFormatter(metric.key, cell.actual)}</td>`;
     }).join('');
 
     return `
       <tr>
         <td class="plan-col-metric">
           <div class="plan-metric-name">${escHtml(metric.label || '')}</div>
-          <div class="plan-metric-sub">${metric.key === 'revenue' ? 'Doanh thu đơn hoàn thành' : 'Traffic visits toàn sàn'}</div>
+          <div class="plan-metric-sub">${metric.key === 'revenue' ? t('plan.metric.revenue_sub') : t('plan.metric.visits_sub')}</div>
         </td>
         ${monthCells}
       </tr>
@@ -1183,7 +1289,7 @@ function renderPlanYtgProgress(data) {
 
   const metrics = Array.isArray(data.metrics) ? data.metrics : [];
   if (!metrics.length) {
-    root.innerHTML = '<div class="plan-empty-cell">Chưa có dữ liệu để so sánh.</div>';
+    root.innerHTML = `<div class="plan-empty-cell">${escHtml(t('plan.progress.empty'))}</div>`;
     return;
   }
 
@@ -1197,8 +1303,11 @@ function renderPlanYtgProgress(data) {
     const isOnTrack = metric.status === 'on_track';
     const accentClass = metric.key === 'revenue' ? 'is-revenue' : 'is-visits';
     const remainingText = remaining > 0
-      ? `Cần TB <strong>${planMetricFormatter(metric.key, metric.avg_needed_month)}</strong> / tháng trong ${remaining} tháng còn lại`
-      : (ytg > 0 ? 'Năm đã hết kỳ, chưa đạt mục tiêu.' : 'Đã hoàn thành mục tiêu năm.');
+      ? reconcileText('plan.progress.need_avg', {
+        value: `<strong>${planMetricFormatter(metric.key, metric.avg_needed_month)}</strong>`,
+        months: fmtNum(remaining),
+      })
+      : (ytg > 0 ? t('plan.progress.year_done_behind') : t('plan.progress.completed_year'));
 
     return `
       <div class="plan-ytg-item ${accentClass} ${isOnTrack ? 'is-on' : 'is-behind'}">
@@ -1210,9 +1319,9 @@ function renderPlanYtgProgress(data) {
           <div class="plan-ytg-bar-fill" style="width:${pct}%"></div>
         </div>
         <div class="plan-ytg-stats">
-          <div><span>Đã đạt</span><strong>${planMetricFormatter(metric.key, actual)}</strong></div>
-          <div><span>Còn lại (YTG)</span><strong class="plan-ytg-remaining">${planMetricFormatter(metric.key, ytg)}</strong></div>
-          <div><span>Mục tiêu năm</span><strong>${planMetricFormatter(metric.key, target)}</strong></div>
+          <div><span>${t('plan.progress.actual')}</span><strong>${planMetricFormatter(metric.key, actual)}</strong></div>
+          <div><span>${t('plan.progress.ytg')}</span><strong class="plan-ytg-remaining">${planMetricFormatter(metric.key, ytg)}</strong></div>
+          <div><span>${t('plan.progress.target_year')}</span><strong>${planMetricFormatter(metric.key, target)}</strong></div>
         </div>
         <div class="plan-ytg-foot">${remainingText}</div>
       </div>

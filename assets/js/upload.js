@@ -58,7 +58,7 @@ const Upload = (() => {
     files.forEach(f => {
       const ext = f.name.slice(f.name.lastIndexOf('.')).toLowerCase();
       if (!allowed.includes(ext)) {
-        toast(`"${f.name}" không phải file Excel (.xlsx/.xls)`, 'error');
+        toast(tFormat('upload.error.not_excel', { filename: f.name }), 'error');
         return;
       }
       // avoid duplicate filenames already in queue
@@ -86,7 +86,7 @@ const Upload = (() => {
           ${item.status === 'uploading' ? '<div class="file-progress"><div class="file-progress-fill" id="prog-' + item.id + '" style="width:0%"></div></div>' : ''}
         </div>
         <span class="file-item-status ${item.status}">${statusLabel(item.status)}</span>
-        ${item.status === 'pending' ? `<button class="file-item-remove" onclick="Upload.remove(${item.id})" title="Xoá">
+        ${item.status === 'pending' ? `<button class="file-item-remove" onclick="Upload.remove(${item.id})" title="${escHtml(t('lang.delete'))}">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>` : '<span style="width:22px;flex-shrink:0"></span>'}
       </div>
@@ -94,7 +94,12 @@ const Upload = (() => {
   }
 
   function statusLabel(s) {
-    return { pending: 'Chờ', uploading: 'Đang xử lý…', success: 'Thành công', error: 'Lỗi' }[s] || s;
+    return {
+      pending: t('status.waiting'),
+      uploading: t('status.processing'),
+      success: t('msg.success'),
+      error: t('msg.error'),
+    }[s] || s;
   }
 
   /* ── Remove a file from queue ── */
@@ -121,7 +126,9 @@ const Upload = (() => {
 
     const hasPending = queue.some(q => q.status === 'pending');
     btnUpload.disabled = !hasPending || uploading;
-    btnUpload.textContent = uploading ? 'Đang tải…' : `Tải lên (${queue.filter(q=>q.status==='pending').length} file)`;
+    btnUpload.textContent = uploading
+      ? t('upload.uploading')
+      : tFormat('upload.btn_upload_count', { count: queue.filter(q=>q.status==='pending').length });
     if (btnClear) btnClear.disabled = uploading;
   }
 
@@ -147,7 +154,7 @@ const Upload = (() => {
         allResults.push({ ...result, filename: item.file.name, ok: true });
       } catch (err) {
         item.status = 'error';
-        item.message = err.message || 'Lỗi không xác định';
+        item.message = err.message || t('msg.unknown_error');
         allResults.push({ filename: item.file.name, ok: false, error: item.message });
       }
 
@@ -190,24 +197,24 @@ const Upload = (() => {
         if (bar) bar.style.width = '100%';
 
         if (xhr.status === 401) {
-          reject(new Error('Phiên đăng nhập hết hạn'));
+          reject(new Error(t('auth.session_expired')));
           if (typeof App !== 'undefined') App.showAuth();
           return;
         }
         try {
           const data = JSON.parse(xhr.responseText);
-          if (!data.success && !data.results) { reject(new Error(data.error || 'Lỗi server')); return; }
+          if (!data.success && !data.results) { reject(new Error(data.error || t('msg.server_error'))); return; }
           // data.results is array per file; we sent 1 file
           const r = (data.results || [])[0] || {};
           if (r.error && !r.success) { reject(new Error(r.error)); return; }
           resolve(r);
         } catch (e) {
-          reject(new Error('Phản hồi không hợp lệ từ server'));
+          reject(new Error(t('msg.invalid_response')));
         }
       });
 
-      xhr.addEventListener('error', () => reject(new Error('Lỗi kết nối')));
-      xhr.addEventListener('timeout', () => reject(new Error('Hết thời gian chờ')));
+      xhr.addEventListener('error', () => reject(new Error(t('msg.conn_error'))));
+      xhr.addEventListener('timeout', () => reject(new Error(t('msg.timeout'))));
       xhr.timeout = 120000;
 
       xhr.send(formData);
@@ -222,10 +229,10 @@ const Upload = (() => {
     } else if (r.platform) {
       parts.push(platformLabel(r.platform));
     }
-    if (r.imported > 0) parts.push(`${r.imported} dòng`);
-    if (r.skipped  > 0) parts.push(`${r.skipped} bỏ qua`);
-    if (r.errors   > 0) parts.push(`${r.errors} lỗi`);
-    return parts.join(', ') || 'Không có dữ liệu mới';
+    if (r.imported > 0) parts.push(tFormat('upload.summary.imported', { count: r.imported }));
+    if (r.skipped  > 0) parts.push(tFormat('upload.summary.skipped', { count: r.skipped }));
+    if (r.errors   > 0) parts.push(tFormat('upload.summary.errors', { count: r.errors }));
+    return parts.join(', ') || t('upload.no_new_data');
   }
 
   /* ── Render result cards ── */
@@ -244,7 +251,7 @@ const Upload = (() => {
         </div>
         <div class="upload-result-content">
           <div class="upload-result-filename">${escHtml(r.filename)}</div>
-          <div class="upload-result-detail">${r.ok ? escHtml(buildSummary(r)) : escHtml(r.error || 'Lỗi không xác định')}</div>
+          <div class="upload-result-detail">${r.ok ? escHtml(buildSummary(r)) : escHtml(r.error || t('msg.unknown_error'))}</div>
         </div>
       </div>
     `).join('');
@@ -266,7 +273,7 @@ const Upload = (() => {
   }
 
   function platformLabel(platform) {
-    return { shopee: 'Shopee', lazada: 'Lazada', tiktokshop: 'TikTok Shop' }[platform] || platform || 'Không xác định';
+    return { shopee: 'Shopee', lazada: 'Lazada', tiktokshop: 'TikTok Shop' }[platform] || platform || t('msg.unknown');
   }
 
   function toast(msg, type = 'info', duration = 3000) {

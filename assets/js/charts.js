@@ -393,7 +393,7 @@ const Charts = (() => {
       const restQtyShare = rest.reduce((sum, row) => sum + Number(row.qty_share || 0), 0);
       const restRevenueShare = rest.reduce((sum, row) => sum + Number(row.revenue_share || 0), 0);
       chartRows.push({
-        brand_name: 'Khác',
+        brand_name: t('cl.other'),
         total_qty: restQty,
         total_revenue: restRevenue,
         qty_share: restQtyShare,
@@ -832,7 +832,7 @@ const Charts = (() => {
         datasets: [
           {
             type: 'bar',
-            label: 'Doanh số actual',
+            label: t('plan.chart.revenue_actual'),
             data: revenueActual,
             backgroundColor: 'rgba(37, 99, 235, 0.72)',
             borderRadius: 5,
@@ -840,7 +840,7 @@ const Charts = (() => {
           },
           {
             type: 'line',
-            label: 'Doanh số target/tháng',
+            label: t('plan.chart.revenue_target_month'),
             data: revenueTarget,
             borderColor: '#1d4ed8',
             borderDash: [5, 5],
@@ -851,7 +851,7 @@ const Charts = (() => {
           },
           {
             type: 'line',
-            label: 'Visit actual',
+            label: t('plan.chart.visits_actual'),
             data: visitsActual,
             borderColor: '#0f766e',
             backgroundColor: 'rgba(15, 118, 110, 0.12)',
@@ -862,7 +862,7 @@ const Charts = (() => {
           },
           {
             type: 'line',
-            label: 'Visit target/tháng',
+            label: t('plan.chart.visits_target_month'),
             data: visitsTarget,
             borderColor: '#14b8a6',
             borderDash: [4, 4],

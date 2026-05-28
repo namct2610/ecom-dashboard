@@ -1,7 +1,7 @@
 {
-  "version": "1.5.13",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.5.13/release/dashboard-v3-1.5.13.zip",
-  "changelog": "- Bổ sung đầy đủ key tiếng Anh còn thiếu cho các mục mới: Kế hoạch, Danh sách sản phẩm, Liên kết dữ liệu sàn, Cài đặt ngôn ngữ và Hệ thống\n- Chuyển các nhãn, thông báo và nút của phần SKU lẻ / COMBO ↔ SKU sang hệ thống i18n để đổi ngôn ngữ đồng bộ\n- Bổ sung dịch title/placeholder và tooltip trong runtime i18n",
+  "version": "1.5.14",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.5.14/release/dashboard-v3-1.5.14.zip",
+  "changelog": "- Bản chính: bổ sung tiếng Anh cho các phần hardcode trong KPI, kế hoạch, sản phẩm, traffic, upload và một số nhãn chính\n- Sửa So sánh sàn: Tổng đơn, Hoàn thành, Huỷ cùng dùng đơn distinct thay vì lẫn dòng SKU\n- Bổ sung % so với kỳ trước cho các KPI chính theo tháng trước, năm trước hoặc khoảng ngày liền trước",
   "min_php": "8.1",
   "released_at": "2026-05-28"
 }
