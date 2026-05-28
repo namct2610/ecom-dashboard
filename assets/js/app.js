@@ -3077,33 +3077,52 @@ function renderReconcileComboRows(rows) {
     ['lazada', 'Lazada'],
     ['tiktokshop', 'TikTok Shop'],
   ];
+  const groups = [];
+  const byKey = new Map();
 
-  tbody.innerHTML = rows.map((row, index) => `
-    <tr data-reconcile-row="combo" data-index="${index}">
-      <td>
-        <select data-field="platform">
-          ${platformOptions.map(([value, label]) => `
-            <option value="${value}"${(row.platform || 'all') === value ? ' selected' : ''}>${label}</option>
-          `).join('')}
-        </select>
-      </td>
-      <td><input type="text" data-field="combo_sku" value="${escHtml(row.combo_sku || '')}" placeholder="SKU combo"></td>
-      <td><input type="text" data-field="combo_name" value="${escHtml(row.combo_name || '')}" placeholder="Tên hoặc từ khóa combo"></td>
-      <td>
-        <input type="text" data-field="single_sku" list="reconcileProductSkuOptions" value="${escHtml(row.single_sku || '')}" placeholder="Chọn SKU trong danh sách">
-        ${row.single_sku && !ReconcileSettingsState.prices.some(price => String(price.sku || '').trim().toUpperCase() === String(row.single_sku || '').trim().toUpperCase())
-          ? '<div class="reconcile-settings-warning">SKU này chưa có trong danh sách giá GBS.</div>'
-          : ''}
-      </td>
-      <td><input type="number" min="0.0001" step="0.0001" data-field="single_qty" value="${escHtml(formatReconcileSettingValue(row.single_qty))}" placeholder="1"></td>
-      <td>
-        <div class="reconcile-settings-row-actions">
-          <button class="btn btn-secondary btn-sm" data-action="add-reconcile-combo-child-row" data-index="${index}">+ SKU con</button>
-          <button class="btn btn-secondary btn-sm" data-action="delete-reconcile-combo-row" data-index="${index}">Xoá</button>
-        </div>
-      </td>
-    </tr>
-  `).join('');
+  rows.forEach((row, index) => {
+    const key = [
+      String(row.platform || 'all').toLowerCase(),
+      String(row.combo_sku || '').trim().toUpperCase(),
+      String(row.combo_name || '').trim().toLowerCase(),
+    ].join('|');
+    if (!byKey.has(key)) {
+      byKey.set(key, { rows: [], indices: [] });
+      groups.push(byKey.get(key));
+    }
+    byKey.get(key).rows.push(row);
+    byKey.get(key).indices.push(index);
+  });
+
+  tbody.innerHTML = groups.map(group => group.rows.map((row, childIndex) => {
+    const index = group.indices[childIndex];
+    const rowSpan = group.rows.length;
+    const skuMissing = row.single_sku && !ReconcileSettingsState.prices.some(price => String(price.sku || '').trim().toUpperCase() === String(row.single_sku || '').trim().toUpperCase());
+    return `
+      <tr data-reconcile-row="combo" data-index="${index}">
+        ${childIndex === 0 ? `
+          <td rowspan="${rowSpan}">
+            <select data-field="platform" data-combo-group="${escHtml(group.indices.join(','))}">
+              ${platformOptions.map(([value, label]) => `
+                <option value="${value}"${(row.platform || 'all') === value ? ' selected' : ''}>${label}</option>
+              `).join('')}
+            </select>
+          </td>
+          <td rowspan="${rowSpan}"><input type="text" data-field="combo_sku" data-combo-group="${escHtml(group.indices.join(','))}" value="${escHtml(row.combo_sku || '')}" placeholder="SKU combo"></td>
+          <td rowspan="${rowSpan}">
+            <input type="text" data-field="combo_name" data-combo-group="${escHtml(group.indices.join(','))}" value="${escHtml(row.combo_name || '')}" placeholder="Tên hoặc từ khóa combo">
+            <button class="btn btn-secondary btn-sm reconcile-settings-add-child" data-action="add-reconcile-combo-child-row" data-index="${index}">+ SKU con</button>
+          </td>
+        ` : ''}
+        <td>
+          <input type="text" data-field="single_sku" list="reconcileProductSkuOptions" value="${escHtml(row.single_sku || '')}" placeholder="Chọn SKU trong danh sách">
+          ${skuMissing ? '<div class="reconcile-settings-warning">SKU này chưa có trong danh sách giá GBS.</div>' : ''}
+        </td>
+        <td><input type="number" min="0.0001" step="0.0001" data-field="single_qty" value="${escHtml(formatReconcileSettingValue(row.single_qty))}" placeholder="1"></td>
+        <td><button class="btn btn-secondary btn-sm" data-action="delete-reconcile-combo-row" data-index="${index}">Xoá SKU</button></td>
+      </tr>
+    `;
+  }).join('')).join('');
 }
 
 function renderReconcileSettingsTables() {
@@ -3130,13 +3149,19 @@ function readReconcileComboRowsFromDom() {
   const tbody = qs('#reconcileComboTableBody');
   if (!tbody) return [];
 
-  return qsa('tr[data-reconcile-row="combo"]', tbody).map(row => ({
-    platform: qs('[data-field="platform"]', row)?.value || 'all',
-    combo_sku: qs('[data-field="combo_sku"]', row)?.value || '',
-    combo_name: qs('[data-field="combo_name"]', row)?.value || '',
-    single_sku: qs('[data-field="single_sku"]', row)?.value || '',
-    single_qty: qs('[data-field="single_qty"]', row)?.value || '',
-  }));
+  let current = { platform: 'all', combo_sku: '', combo_name: '' };
+  return qsa('tr[data-reconcile-row="combo"]', tbody).map(row => {
+    current = {
+      platform: qs('[data-field="platform"]', row)?.value || current.platform || 'all',
+      combo_sku: qs('[data-field="combo_sku"]', row)?.value || current.combo_sku || '',
+      combo_name: qs('[data-field="combo_name"]', row)?.value || current.combo_name || '',
+    };
+    return {
+      ...current,
+      single_sku: qs('[data-field="single_sku"]', row)?.value || '',
+      single_qty: qs('[data-field="single_qty"]', row)?.value || '',
+    };
+  });
 }
 
 function updateReconcileSettingsUiState() {
