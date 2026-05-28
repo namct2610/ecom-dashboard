@@ -1071,7 +1071,9 @@ async function loadCustomers() {
         </div>`).join('');
     }
 
-    _citiesAll  = data.city_distribution || [];
+    _citiesAll         = data.city_distribution || [];
+    _cityOthersPct     = data.city_others_pct || 0;
+    _cityOthersOrders  = data.city_others_orders || 0;
     _citiesPage = 1;
     renderCityListPage('cityList', 'cityListPager');
     renderCustomerStatsTable('customerStatsTable', data.buyer_stats || []);
@@ -2060,7 +2062,7 @@ async function loadUploadHistory() {
 const PER_PAGE = 10;
 let _ordersAll = [], _ordersPage = 1;
 let _productsAll = [], _productsPage = 1;
-let _citiesAll = [], _citiesPage = 1;
+let _citiesAll = [], _citiesPage = 1, _cityOthersPct = 0, _cityOthersOrders = 0;
 
 function renderPager(pagerId, page, total, perPage, navFn) {
   const el = qs(`#${pagerId}`); if (!el) return;
@@ -2190,8 +2192,8 @@ function renderCityListPage(listId, pagerId) {
     return;
   }
 
-  const maxO = Math.max(...list.map(c => c.orders || 0), 1);
-  el.innerHTML = `<div class="location-grid">${list.map((city, index) => {
+  const maxO = Math.max(...list.map(c => c.orders || 0), _cityOthersOrders, 1);
+  let cards = list.map((city, index) => {
     const barWidth = Math.max(12, Math.round(((city.orders || 0) / maxO) * 100));
     return `
       <article class="location-card">
@@ -2207,7 +2209,27 @@ function renderCityListPage(listId, pagerId) {
           <strong>${fmtVND(city.revenue || 0)}</strong>
         </div>
       </article>`;
-  }).join('')}</div>`;
+  });
+
+  // Append "Others" card when there are remaining provinces beyond the top list
+  if (_cityOthersPct > 0) {
+    const barWidth = Math.max(12, Math.round((_cityOthersOrders / maxO) * 100));
+    cards.push(`
+      <article class="location-card location-card-others">
+        <div class="location-card-top">
+          <span class="location-rank">…</span>
+          <span class="location-share">${_cityOthersPct}%</span>
+        </div>
+        <div class="location-city">${t('cl.other_provinces')}</div>
+        <div class="location-orders">${fmtNum(_cityOthersOrders)} ${t('cl.orders')}</div>
+        <div class="location-bar"><span class="location-bar-fill location-bar-muted" style="width:${barWidth}%"></span></div>
+        <div class="location-footer">
+          <span>${t('cl.lazada_excluded')}</span>
+        </div>
+      </article>`);
+  }
+
+  el.innerHTML = `<div class="location-grid">${cards.join('')}</div>`;
 
   if (pager) pager.innerHTML = '';
 }

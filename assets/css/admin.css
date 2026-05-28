@@ -842,6 +842,24 @@
   color: #0f172a;
 }
 
+/* "Others" card — visually distinct, muted style */
+.location-card-others {
+  background: linear-gradient(180deg, rgba(248, 250, 252, 0.9), rgba(241, 245, 249, 0.9));
+  border-style: dashed;
+  opacity: 0.85;
+}
+.location-card-others .location-rank {
+  background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%);
+  color: #64748b;
+  font-size: 16px;
+  font-weight: 400;
+}
+.location-card-others .location-share { color: #64748b; }
+.location-card-others .location-city  { color: #64748b; font-weight: 600; font-size: 13px; }
+.location-bar-muted {
+  background: linear-gradient(90deg, #94a3b8 0%, #cbd5e1 100%) !important;
+}
+
 .customer-history-list {
   display: flex;
   flex-direction: column;
