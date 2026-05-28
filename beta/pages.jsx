@@ -43,6 +43,7 @@ function PageHeader({ title, sub, right }) {
 // ── KPI card (standard) ────────────────────────────────────────────────
 
 function KPI({ label, value, delta, sub, accent='brand', spark, sparkColor, format = fmtFull, icon }) {
+  const t = useT();
   return (
     <div className={`kpi kpi-accent-${accent}`}>
       <div className="kpi-label">
@@ -52,11 +53,11 @@ function KPI({ label, value, delta, sub, accent='brand', spark, sparkColor, form
       <div className="kpi-value">{value}</div>
       <div className="kpi-foot">
         {delta != null && (
-          <span className={delta > 0 ? 'delta delta-up' : delta < 0 ? 'delta delta-down' : 'delta delta-flat'}>
+          <span className={`delta ${delta > 0 ? 'delta-up' : delta < 0 ? 'delta-down' : 'delta-flat'}`}>
             {delta > 0 ? '↑' : delta < 0 ? '↓' : '→'} {Math.abs(delta).toFixed(1)}%
           </span>
         )}
-        {sub && <span>{sub}</span>}
+        {sub && <span className="kpi-foot-sub">{sub}</span>}
       </div>
       {spark && (
         <div className="kpi-spark">
@@ -85,7 +86,15 @@ const I = {
 // ── Page: OVERVIEW ─────────────────────────────────────────────────────
 
 function PageOverview({ data, mode }) {
+  const t = useT();
   const s = data.summary;
+  const ps = data.prev_summary;
+  const calcDelta = (curr, prev) => {
+    if (ps == null || prev == null || !isNum(prev)) return null;
+    if (prev === 0) return curr > 0 ? 100 : null;
+    return Math.round(((curr - prev) / Math.abs(prev)) * 1000) / 10;
+  };
+  const statusT = (st) => t('status.' + st, st);
   const [trendMetric, setTrendMetric] = React.useState('revenue'); // revenue|orders|aov
   const [topMetric, setTopMetric] = React.useState('revenue');     // revenue|qty
   const dates = data.revenue_series.map(d => d.date);
@@ -101,9 +110,9 @@ function PageOverview({ data, mode }) {
            data: data.revenue_series.map(d => (d.orders_total>0 ? Math.round(d.total/d.orders_total) : 0)) }]
       : buildPlatformSeries(data.revenue_series);
   const trendStacked = trendMetric !== 'aov';
-  const trendSub = trendMetric === 'orders' ? 'Số đơn theo ngày · 3 sàn'
-    : trendMetric === 'aov' ? 'Giá trị đơn trung bình theo ngày'
-    : (data.period_label || 'Kỳ hiện tại') + ' · Phân theo 3 sàn';
+  const trendSub = trendMetric === 'orders' ? t('chart.orders_by_day')
+    : trendMetric === 'aov' ? t('chart.aov_by_day')
+    : (data.period_label || t('overview.current_period')) + ' · ' + t('chart.by_3platforms');
 
   const topItems = topMetric === 'qty' ? data.top_products_qty : data.top_products_rev;
 
@@ -125,27 +134,31 @@ function PageOverview({ data, mode }) {
         <div className="kpi-hero">
           <div className="kpi-hero-top">
             <div>
-              <div className="kpi-hero-label">Doanh thu {data.period_label || 'kỳ hiện tại'}</div>
+              <div className="kpi-hero-label">{t('overview.hero.label')} {data.period_label || t('overview.current_period')}</div>
               <div style={{fontSize:11, opacity:0.7, marginTop:4, fontWeight:600}}>
-                Đã hoàn thành · 3 sàn thương mại điện tử
+                {t('overview.hero.sub')}
               </div>
             </div>
-            <span className="delta delta-up">↑ 18.4%</span>
+            {calcDelta(s.total_revenue, ps?.total_revenue) != null && (
+              <span className={`delta ${calcDelta(s.total_revenue, ps.total_revenue) >= 0 ? 'delta-up' : 'delta-down'}`}>
+                {calcDelta(s.total_revenue, ps.total_revenue) >= 0 ? '↑' : '↓'} {Math.abs(calcDelta(s.total_revenue, ps.total_revenue)).toFixed(1)}%
+              </span>
+            )}
           </div>
 
           <div className="kpi-hero-value">{fmtFull(s.total_revenue)} <span style={{fontSize:'0.4em', opacity:0.7, fontWeight:600}}>₫</span></div>
 
           <div className="kpi-hero-sub">
-            <span>≈ {fmtVnd(aov)}₫ / đơn TB</span>
+            <span>≈ {fmtVnd(aov)}₫ {t('overview.aov_per_order')}</span>
             <span style={{opacity:0.5}}>·</span>
-            <span>{fmtFull(s.completed_orders)} đơn hoàn thành</span>
+            <span>{fmtFull(s.completed_orders)} {t('overview.completed_orders')}</span>
           </div>
 
           {/* Market share stacked bar */}
           <div className="kpi-hero-foot">
             <div style={{flex:1, minWidth:0}}>
               <div style={{display:'flex', justifyContent:'space-between', fontSize:11, fontWeight:600, marginBottom:6, opacity:0.85}}>
-                <span>Phân chia theo sàn</span>
+                <span>{t('overview.by_platform')}</span>
                 <span>{fmtFull(s.total_revenue/1e6)}M ₫</span>
               </div>
               <div style={{display:'flex', height:8, borderRadius:99, overflow:'hidden', background:'rgba(255,255,255,0.15)'}}>
@@ -178,8 +191,8 @@ function PageOverview({ data, mode }) {
         <div style={{display:'flex', flexDirection:'column', gap:'var(--gap-card)'}}>
           <div className="card" style={{padding:18, paddingBottom: 14}}>
             <div style={{display:'flex', justifyContent:'space-between', alignItems:'baseline'}}>
-              <h3>Hiệu suất từng sàn</h3>
-              <span className="muted" style={{fontSize:11}}>Doanh thu tháng</span>
+              <h3>{t('overview.platform_perf')}</h3>
+              <span className="muted" style={{fontSize:11}}>{t('overview.monthly_revenue')}</span>
             </div>
             <div style={{display:'flex', flexDirection:'column', gap:8, marginTop:14}}>
               {['shopee','lazada','tiktok'].map(p => {
@@ -190,7 +203,7 @@ function PageOverview({ data, mode }) {
                     <div className="logo">{p === 'shopee' ? 'S' : p === 'lazada' ? 'L' : 'T'}</div>
                     <div className="info">
                       <div className="name">{PLATFORM_NAME[p]}</div>
-                      <div className="meta">{fmtFull(sp.orders)} đơn · {share.toFixed(1)}% thị phần</div>
+                      <div className="meta">{fmtFull(sp.orders)} {t('unit.orders')} · {share.toFixed(1)}% {t('overview.market_share')}</div>
                     </div>
                     <div style={{textAlign:'right'}}>
                       <div className="val">{fmtVnd(sp.revenue)}₫</div>
@@ -208,41 +221,30 @@ function PageOverview({ data, mode }) {
 
       {/* ─── KPI row ─── */}
       <div className="row row-4">
-        <KPI label="Tổng đơn hàng"
+        <KPI label={t('kpi.total_orders')}
              value={fmtFull(s.total_orders)}
-             delta={12.3}
-             sub="so với tháng trước"
-             accent="brand"
-             icon={I.cart}
-             spark={ordersSeries}
-             sparkColor="var(--brand-1)" />
-        <KPI label="Đơn hoàn thành"
+             delta={calcDelta(s.total_orders, ps?.total_orders)}
+             sub={`${safePct(s.completed_orders, s.total_orders).toFixed(1)}% ${t('kpi.pct_of_total')}`}
+             accent="brand" icon={I.cart} spark={ordersSeries} sparkColor="var(--brand-1)" />
+        <KPI label={t('kpi.completed')}
              value={fmtFull(s.completed_orders)}
-             delta={9.7}
-             sub={`${safePct(s.completed_orders, s.total_orders).toFixed(1)}% trên tổng`}
-             accent="green"
-             icon={I.check}
+             delta={calcDelta(s.completed_orders, ps?.completed_orders)}
+             sub={`${safePct(s.completed_orders, s.total_orders).toFixed(1)}% ${t('kpi.pct_of_total')}`}
+             accent="green" icon={I.check}
              spark={data.revenue_series.map(d => Math.round((d.orders_total||0)*0.85))}
              sparkColor="var(--green)" />
-        <KPI label="Tỷ lệ huỷ đơn"
+        <KPI label={t('kpi.cancel_rate')}
              value={fmtPct(s.cancel_rate)}
-             delta={-2.1}
-             sub={`${s.cancelled_orders} đơn bị huỷ`}
-             accent="red"
-             icon={I.x}
-             spark={[14, 12, 16, 11, 15, 13, 9, 12]}
-             sparkColor="var(--red)" />
-        <KPI label="Lượt truy cập"
+             delta={ps ? calcDelta(s.cancel_rate, ps.cancel_rate) : null}
+             sub={`${s.cancelled_orders} ${t('kpi.orders_cancelled')}`}
+             accent="red" icon={I.x}
+             spark={[14,12,16,11,15,13,9,12]} sparkColor="var(--red)" />
+        <KPI label={t('kpi.visitors')}
              value={fmtFull(s.total_visitors)}
-             delta={6.8}
-             sub={`${fmtFull(s.total_page_views)} lượt xem`}
-             accent="amber"
-             icon={I.eye}
-             spark={data.traffic.reduce((acc,t)=>{
-               const day = parseInt(t.date.slice(-2));
-               acc[day-1] = (acc[day-1]||0) + t.visitors;
-               return acc;
-             }, [])}
+             delta={calcDelta(s.total_visitors, ps?.total_visitors)}
+             sub={`${fmtFull(s.total_page_views)} ${t('kpi.page_views')}`}
+             accent="amber" icon={I.eye}
+             spark={data.traffic.reduce((acc,t_)=>{const day=parseInt(t_.date.slice(-2));acc[day-1]=(acc[day-1]||0)+t_.visitors;return acc;},[])}
              sparkColor="var(--amber)" />
       </div>
 
@@ -251,13 +253,13 @@ function PageOverview({ data, mode }) {
         <div className="card card-lg">
           <div className="card-head">
             <div>
-              <h3>Doanh thu theo thời gian</h3>
+              <h3>{t('chart.revenue_trend')}</h3>
               <div className="sub">{trendSub}</div>
             </div>
             <div className="tabs">
-              <button className={trendMetric==='revenue' ? 'tab active' : 'tab'} onClick={()=>setTrendMetric('revenue')}>Doanh thu</button>
-              <button className={trendMetric==='orders' ? 'tab active' : 'tab'} onClick={()=>setTrendMetric('orders')}>Đơn hàng</button>
-              <button className={trendMetric==='aov' ? 'tab active' : 'tab'} onClick={()=>setTrendMetric('aov')}>AOV</button>
+              <button className={trendMetric==='revenue' ? 'tab active' : 'tab'} onClick={()=>setTrendMetric('revenue')}>{t('tab.revenue')}</button>
+              <button className={trendMetric==='orders' ? 'tab active' : 'tab'} onClick={()=>setTrendMetric('orders')}>{t('tab.orders')}</button>
+              <button className={trendMetric==='aov' ? 'tab active' : 'tab'} onClick={()=>setTrendMetric('aov')}>{t('tab.aov')}</button>
             </div>
           </div>
           <AreaChart series={platformSeries} labels={dayLabels} mode={mode} stacked={trendStacked} height={280} />
@@ -265,7 +267,7 @@ function PageOverview({ data, mode }) {
             {platformSeries.map(p => (
               <div key={p.key} className="legend-item">
                 <span className="legend-swatch" style={{background:p.color}}/>
-                {p.name} · {trendMetric==='orders' ? fmtFull(p.data.reduce((a,b)=>a+b,0))+' đơn' : fmtVnd(p.data.reduce((a,b)=>a+b,0))+'₫'}
+                {p.name} · {trendMetric==='orders' ? fmtFull(p.data.reduce((a,b)=>a+b,0))+' '+t('unit.orders') : fmtVnd(p.data.reduce((a,b)=>a+b,0))+'₫'}
               </div>
             ))}
           </div>
@@ -274,15 +276,15 @@ function PageOverview({ data, mode }) {
         <div className="card card-lg" style={{display:'flex', flexDirection:'column'}}>
           <div className="card-head">
             <div>
-              <h3>Thị phần doanh thu</h3>
-              <div className="sub">3 sàn TMĐT</div>
+              <h3>{t('chart.market_share')}</h3>
+              <div className="sub">{t('chart.3platforms')}</div>
             </div>
           </div>
           <div style={{display:'flex', justifyContent:'center', padding: '8px 0 4px'}}>
             <Donut data={platformShare} size={200} thickness={28}
               center={
                 <div>
-                  <div style={{fontSize: 11, color:'var(--ink-3)', fontWeight:600, textTransform:'uppercase', letterSpacing:'0.06em'}}>Tổng</div>
+                  <div style={{fontSize: 11, color:'var(--ink-3)', fontWeight:600, textTransform:'uppercase', letterSpacing:'0.06em'}}>{t('overview.total_label')}</div>
                   <div style={{fontSize: 22, fontWeight: 800, letterSpacing:'-0.02em', marginTop: 2}}>{fmtVnd(s.total_revenue)}₫</div>
                 </div>
               } />
@@ -307,12 +309,12 @@ function PageOverview({ data, mode }) {
         <div className="card card-lg">
           <div className="card-head">
             <div>
-              <h3>Top 10 sản phẩm bán chạy</h3>
-              <div className="sub">{topMetric==='qty' ? 'Theo số lượng bán' : 'Theo doanh thu'}</div>
+              <h3>{t('chart.top10')}</h3>
+              <div className="sub">{topMetric==='qty' ? t('tab.by_qty') : t('tab.by_revenue')}</div>
             </div>
             <div className="tabs">
-              <button className={topMetric==='revenue'?'tab active':'tab'} onClick={()=>setTopMetric('revenue')}>Doanh thu</button>
-              <button className={topMetric==='qty'?'tab active':'tab'} onClick={()=>setTopMetric('qty')}>Số lượng</button>
+              <button className={topMetric==='revenue'?'tab active':'tab'} onClick={()=>setTopMetric('revenue')}>{t('tab.by_revenue')}</button>
+              <button className={topMetric==='qty'?'tab active':'tab'} onClick={()=>setTopMetric('qty')}>{t('tab.by_qty')}</button>
             </div>
           </div>
           <RankedBars
@@ -326,19 +328,19 @@ function PageOverview({ data, mode }) {
         <div className="card card-lg">
           <div className="card-head">
             <div>
-              <h3>Đơn hàng gần đây</h3>
-              <div className="sub">Cập nhật mới nhất</div>
+              <h3>{t('chart.recent_orders')}</h3>
+              <div className="sub">{t('chart.latest_update')}</div>
             </div>
-            <button className="chip" style={{padding:'4px 10px', fontSize:11}}>Xem tất cả →</button>
+            <button className="chip" style={{padding:'4px 10px', fontSize:11}}>{t('chart.view_all')}</button>
           </div>
           <div style={{margin: '-4px -4px 0', maxHeight: 380, overflowY:'auto'}}>
             <table className="table">
               <thead>
                 <tr>
-                  <th>Mã đơn</th>
-                  <th>Sàn</th>
-                  <th>Trạng thái</th>
-                  <th className="num">Giá trị</th>
+                  <th>{t('th.order_id')}</th>
+                  <th>{t('th.platform')}</th>
+                  <th>{t('th.status')}</th>
+                  <th className="num">{t('th.amount')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -349,12 +351,12 @@ function PageOverview({ data, mode }) {
                     </td>
                     <td>
                       <span className={`platform-tag ${o.platform}`}>
-                        {o.platform === 'shopee' ? 'Shopee' : o.platform === 'lazada' ? 'Lazada' : 'TikTok'}
+                        {PLATFORM_NAME[o.platform] || o.platform}
                       </span>
                     </td>
                     <td>
-                      <span className={`status ${o.status === 'Hoàn thành' ? 'status-done' : 'status-cancel'}`}>
-                        {o.status}
+                      <span className={`status ${o.status === 'completed' || o.status === 'delivered' ? 'status-done' : 'status-cancel'}`}>
+                        {statusT(o.status)}
                       </span>
                     </td>
                     <td className="num">{fmtVnd(o.order_amount)}₫</td>
@@ -373,7 +375,14 @@ function PageOverview({ data, mode }) {
 // ── Page: ORDERS ───────────────────────────────────────────────────────
 
 function PageOrders({ data, mode }) {
+  const t = useT();
   const s = data.summary;
+  const ps = data.prev_summary;
+  const calcDelta = (curr, prev) => {
+    if (ps == null || prev == null || !isNum(prev)) return null;
+    if (prev === 0) return curr > 0 ? 100 : null;
+    return Math.round(((curr - prev) / Math.abs(prev)) * 1000) / 10;
+  };
   const dayLabels = getDayLabels(data.revenue_series);
   const ordersByDay = data.revenue_series.map(d => d.orders_total);
   const orderSeries = ['shopee','lazada','tiktok'].map(p => ({
@@ -383,34 +392,34 @@ function PageOrders({ data, mode }) {
 
   // Status breakdown
   const statusData = [
-    { key:'completed', name:'Hoàn thành', value: s.completed_orders, color: 'var(--green)' },
-    { key:'cancelled', name:'Đã huỷ', value: s.cancelled_orders, color: 'var(--red)' },
-    { key:'shipping', name:'Đang giao', value: s.shipping_orders, color: 'var(--blue)' },
+    { key:'completed', name: t('status.completed'), value: s.completed_orders, color: 'var(--green)' },
+    { key:'cancelled', name: t('status.cancelled'), value: s.cancelled_orders, color: 'var(--red)' },
+    { key:'shipping', name: t('status.shipping'), value: s.shipping_orders, color: 'var(--blue)' },
   ];
 
   return (
     <div className="page" style={{display:'flex', flexDirection:'column', gap:'var(--gap-card)'}}>
       <div className="row row-4">
-        <KPI label="Tổng đơn" value={fmtFull(s.total_orders)} delta={12.3} sub="tháng trước" accent="brand" icon={I.cart}
+        <KPI label={t('orders.kpi.total')} value={fmtFull(s.total_orders)} delta={calcDelta(s.total_orders, ps?.total_orders)} sub={t('kpi.vs_prev')} accent="brand" icon={I.cart}
              spark={ordersByDay} sparkColor="var(--brand-1)"/>
-        <KPI label="Hoàn thành" value={fmtFull(s.completed_orders)} delta={9.7} sub={fmtPct(safePct(s.completed_orders, s.total_orders))+' thành công'} accent="green" icon={I.check}
+        <KPI label={t('orders.kpi.completed')} value={fmtFull(s.completed_orders)} delta={calcDelta(s.completed_orders, ps?.completed_orders)} sub={`${fmtPct(safePct(s.completed_orders, s.total_orders))} ${t('orders.kpi.completed_sub')}`} accent="green" icon={I.check}
              spark={data.revenue_series.map(d => Math.round(d.orders_total*0.85))} sparkColor="var(--green)"/>
-        <KPI label="Đã huỷ" value={fmtFull(s.cancelled_orders)} delta={-2.1} sub="giảm so kỳ trước" accent="red" icon={I.x}
+        <KPI label={t('orders.kpi.cancelled')} value={fmtFull(s.cancelled_orders)} delta={calcDelta(s.cancelled_orders, ps?.cancelled_orders)} sub={t('kpi.vs_prev')} accent="red" icon={I.x}
              spark={data.revenue_series.map(d => Math.round(d.orders_total*0.13))} sparkColor="var(--red)"/>
-        <KPI label="Tỷ lệ huỷ" value={fmtPct(s.cancel_rate)} delta={-1.4} sub="mục tiêu < 15%" accent="amber" icon={I.pct} />
+        <KPI label={t('orders.kpi.cancel_rate')} value={fmtPct(s.cancel_rate)} delta={ps ? calcDelta(s.cancel_rate, ps.cancel_rate) : null} sub={t('orders.kpi.target_sub')} accent="amber" icon={I.pct} />
       </div>
 
       <div className="row row-3-1">
         <div className="card card-lg">
           <div className="card-head">
             <div>
-              <h3>Xu hướng đơn hàng</h3>
-              <div className="sub">Số đơn theo ngày, phân theo sàn</div>
+              <h3>{t('orders.chart.title')}</h3>
+              <div className="sub">{t('orders.chart.sub')}</div>
             </div>
             <div className="tabs">
-              <button className="tab active">Tất cả</button>
-              <button className="tab">Hoàn thành</button>
-              <button className="tab">Huỷ</button>
+              <button className="tab active">{t('tab.all')}</button>
+              <button className="tab">{t('tab.completed')}</button>
+              <button className="tab">{t('tab.cancelled')}</button>
             </div>
           </div>
           {mode === 'bar' ?
@@ -419,11 +428,11 @@ function PageOrders({ data, mode }) {
         </div>
 
         <div className="card card-lg">
-          <div className="card-head"><h3>Trạng thái đơn hàng</h3></div>
+          <div className="card-head"><h3>{t('orders.donut.title')}</h3></div>
           <div style={{display:'flex', justifyContent:'center'}}>
             <Donut data={statusData} size={200} thickness={26}
               center={<div>
-                <div style={{fontSize:11, color:'var(--ink-3)', fontWeight:600}}>Tổng đơn</div>
+                <div style={{fontSize:11, color:'var(--ink-3)', fontWeight:600}}>{t('orders.donut.total')}</div>
                 <div style={{fontSize:24, fontWeight:800}}>{fmtFull(s.total_orders)}</div>
               </div>} />
           </div>
@@ -443,18 +452,19 @@ function PageOrders({ data, mode }) {
       <div className="card card-lg">
         <div className="card-head">
           <div>
-            <h3>Khung giờ đặt hàng cao điểm</h3>
-            <div className="sub">Heatmap đơn hàng theo thứ trong tuần × giờ trong ngày</div>
+            <h3>{t('orders.heatmap.title')}</h3>
+            <div className="sub">{t('orders.heatmap.sub')}</div>
           </div>
           <div className="legend">
             <div className="legend-item">
-              <span className="legend-swatch" style={{background:'var(--surface-3)'}}/>Thấp
+              <span className="legend-swatch" style={{background:'var(--surface-3)'}}/>{t('orders.heatmap.low')}
             </div>
             <div className="legend-item">
-              <span className="legend-swatch" style={{background:'color-mix(in oklab, var(--brand-1) 50%, var(--surface-3))'}}/>TB
+              <span className="legend-swatch" style={{background:'color-mix(in oklab, var(--brand-1) 50%, var(--surface-3))'}}/>
+              {t('orders.heatmap.mid')}
             </div>
             <div className="legend-item">
-              <span className="legend-swatch" style={{background:'var(--brand-1)'}}/>Cao
+              <span className="legend-swatch" style={{background:'var(--brand-1)'}}/>{t('orders.heatmap.high')}
             </div>
           </div>
         </div>
@@ -467,28 +477,29 @@ function PageOrders({ data, mode }) {
 }
 
 function PeakInsights({ heatmap }) {
+  const t = useT();
   const rows = Array.isArray(heatmap) ? heatmap : [];
   const total = rows.reduce((a,b)=>a+(b?.orders||0),0);
   const sorted = [...rows].sort((a,b)=>(b?.orders||0)-(a?.orders||0));
   const peak = sorted[0] || { weekday: 0, hour: 0, orders: 0 };
   const lowHours = rows.filter(h=>(h?.orders||0)===0).length;
-  const WD = ['Chủ nhật','Thứ 2','Thứ 3','Thứ 4','Thứ 5','Thứ 6','Thứ 7'];
+  const WD = [0,1,2,3,4,5,6].map(i => t('wd.'+i));
   return (
     <div className="stat-grid" style={{marginTop:14, gridTemplateColumns:'repeat(3, 1fr)'}}>
       <div className="cell">
-        <div className="l">Giờ vàng</div>
+        <div className="l">{t('peak.golden')}</div>
         <div className="v">{WD[peak.weekday] || '—'} · {String(peak.hour).padStart(2,'0')}:00</div>
-        <div style={{fontSize:11, color:'var(--ink-3)', marginTop:4}}>{peak.orders} đơn{total>0 ? ` — ${(peak.orders/total*100).toFixed(1)}% tổng tháng` : ''}</div>
+        <div style={{fontSize:11, color:'var(--ink-3)', marginTop:4}}>{peak.orders} {t('peak.orders_suffix')}{total>0 ? ` — ${(peak.orders/total*100).toFixed(1)}% ${t('peak.total_month')}` : ''}</div>
       </div>
       <div className="cell">
-        <div className="l">Khung giờ chết</div>
-        <div className="v">{lowHours} giờ / tuần</div>
-        <div style={{fontSize:11, color:'var(--ink-3)', marginTop:4}}>Không có đơn nào — chủ yếu 02–05h sáng</div>
+        <div className="l">{t('peak.dead')}</div>
+        <div className="v">{lowHours} {t('peak.dead_suffix')}</div>
+        <div style={{fontSize:11, color:'var(--ink-3)', marginTop:4}}>{t('peak.dead_desc')}</div>
       </div>
       <div className="cell">
-        <div className="l">Trung bình giờ</div>
-        <div className="v">{(total/168).toFixed(1)} đơn</div>
-        <div style={{fontSize:11, color:'var(--ink-3)', marginTop:4}}>Trên 7×24 = 168 khung giờ</div>
+        <div className="l">{t('peak.avg')}</div>
+        <div className="v">{(total/168).toFixed(1)} {t('peak.orders_suffix')}</div>
+        <div style={{fontSize:11, color:'var(--ink-3)', marginTop:4}}>{t('peak.avg_desc')}</div>
       </div>
     </div>
   );
@@ -497,27 +508,28 @@ function PeakInsights({ heatmap }) {
 // ── Page: PRODUCTS ─────────────────────────────────────────────────────
 
 function PageProducts({ data }) {
+  const t = useT();
   const totalSKUs = data.reconcile_settings?.prices?.length || new Set([...data.top_products_qty, ...data.top_products_rev].map(p => p.sku)).size;
   const totalQty = data.top_products_qty.reduce((a,b)=>a+b.qty, 0);
   const totalRev = data.top_products_rev.reduce((a,b)=>a+b.revenue, 0);
-  const topProduct = data.top_products_rev[0] || { qty: 0, name: 'Chưa có dữ liệu' };
+  const topProduct = data.top_products_rev[0] || { qty: 0, name: t('products.no_data') };
 
   return (
     <div className="page" style={{display:'flex', flexDirection:'column', gap:'var(--gap-card)'}}>
 
       <div className="row row-4">
-        <KPI label="Số SKU đang bán" value={fmtFull(totalSKUs)} sub="Tất cả 3 sàn" accent="brand" icon={I.pkg}/>
-        <KPI label="Số lượng đã bán" value={fmtFull(totalQty)} delta={14.2} sub="tổng top 10" accent="green" icon={I.cart}/>
-        <KPI label="Doanh thu top 10" value={fmtVnd(totalRev)+'₫'} delta={11.5} sub={fmtPct(safePct(totalRev, data.summary.total_revenue),0)+" tổng DT"} accent="amber" icon={I.money}/>
-        <KPI label="Sản phẩm bán chạy nhất" value={topProduct.qty + ' bán'} sub={topProduct.name.length > 28 ? topProduct.name.slice(0,28)+'...' : topProduct.name} accent="shopee" icon={I.trend}/>
+        <KPI label={t('products.kpi.sku_count')} value={fmtFull(totalSKUs)} sub={t('products.kpi.sku_sub')} accent="brand" icon={I.pkg}/>
+        <KPI label={t('products.kpi.qty_sold')} value={fmtFull(totalQty)} sub={t('tab.by_qty')} accent="green" icon={I.cart}/>
+        <KPI label={t('products.kpi.top10_rev')} value={fmtVnd(totalRev)+'₫'} sub={fmtPct(safePct(totalRev, data.summary.total_revenue),0)+' '+t('products.kpi.total_dt')} accent="amber" icon={I.money}/>
+        <KPI label={t('products.kpi.bestseller')} value={topProduct.qty + ' ' + t('products.kpi.sold')} sub={topProduct.name.length > 28 ? topProduct.name.slice(0,28)+'...' : topProduct.name} accent="shopee" icon={I.trend}/>
       </div>
 
       {/* Treemap-style block */}
       <div className="card card-lg">
         <div className="card-head">
           <div>
-            <h3>Phân bố doanh thu theo sản phẩm</h3>
-            <div className="sub">Kích thước thể hiện tỷ trọng doanh thu</div>
+            <h3>{t('products.chart.treemap')}</h3>
+            <div className="sub">{t('products.chart.treemap_sub')}</div>
           </div>
         </div>
         <Treemap items={data.top_products_rev.slice(0, 9)} />
@@ -527,8 +539,8 @@ function PageProducts({ data }) {
         <div className="card card-lg">
           <div className="card-head">
             <div>
-              <h3>Top theo doanh thu</h3>
-              <div className="sub">10 sản phẩm doanh thu cao nhất</div>
+              <h3>{t('products.top_rev')}</h3>
+              <div className="sub">{t('products.top_rev_sub')}</div>
             </div>
           </div>
           <RankedBars items={data.top_products_rev} valueKey="revenue" labelKey="name"
@@ -537,12 +549,12 @@ function PageProducts({ data }) {
         <div className="card card-lg">
           <div className="card-head">
             <div>
-              <h3>Top theo số lượng</h3>
-              <div className="sub">10 sản phẩm bán nhiều nhất</div>
+              <h3>{t('products.top_qty')}</h3>
+              <div className="sub">{t('products.top_qty_sub')}</div>
             </div>
           </div>
           <RankedBars items={data.top_products_qty} valueKey="qty" labelKey="name"
-                      colors={PLATFORM_COLORS} format={(v)=>fmtFull(v)+' sp'} maxItems={10}/>
+                      colors={PLATFORM_COLORS} format={(v)=>fmtFull(v)+' '+t('unit.products')} maxItems={10}/>
         </div>
       </div>
     </div>
@@ -550,8 +562,9 @@ function PageProducts({ data }) {
 }
 
 function Treemap({ items }) {
+  const t = useT();
   if (!items.length) {
-    return <div className="empty-state">Chưa có dữ liệu sản phẩm trong kỳ này.</div>;
+    return <div className="empty-state">{t('products.no_data')}</div>;
   }
   // Simple squarified layout for 9 items in a 3-column grid with varying heights
   const total = items.reduce((a,b)=>a+b.revenue, 0);
@@ -597,7 +610,7 @@ function Treemap({ items }) {
             {fmtVnd(it.revenue)}₫
           </div>
           <div style={{fontSize: 10.5, opacity: 0.85, fontWeight: 600, marginTop:2}}>
-            {safePct(it.revenue, grandTotal).toFixed(1)}% · {it.qty} sản phẩm
+            {safePct(it.revenue, grandTotal).toFixed(1)}% · {it.qty} {t('unit.products')}
           </div>
         </div>
       </div>
@@ -616,6 +629,7 @@ function Treemap({ items }) {
 // ── Page: CUSTOMERS ────────────────────────────────────────────────────
 
 function PageCustomers({ data }) {
+  const t = useT();
   const s = data.summary;
   const insights = data.customer_insights || {};
   const cities = data.city_distribution
@@ -623,7 +637,7 @@ function PageCustomers({ data }) {
     .slice(0, 8);
   const totalCustomers = insights.unique_buyers || cities.reduce((a,b)=>a+b.orders, 0);
   const aov = s.avg_order_value || Math.round(safeDiv(s.total_revenue, s.completed_orders));
-  const topCity = cities[0] || { city: 'Chưa có dữ liệu', orders: 0 };
+  const topCity = cities[0] || { city: '—', orders: 0 };
   const hasTopCity = cities.length > 0;
   const returning = insights.returning_buyers || 0;
   const newBuyers = insights.new_buyers || 0;
@@ -635,31 +649,31 @@ function PageCustomers({ data }) {
   return (
     <div className="page" style={{display:'flex', flexDirection:'column', gap:'var(--gap-card)'}}>
       <div className="row row-4">
-        <KPI label="Tổng khách hàng" value={fmtFull(totalCustomers)} delta={null} sub="người mua trong kỳ" accent="brand" icon={I.user}/>
-        <KPI label="Đơn TB/khách" value={(insights.avg_orders_per_buyer || safeDiv(s.completed_orders, totalCustomers)).toFixed(2)} delta={null} sub="số đơn/người" accent="green" icon={I.cart}/>
-        <KPI label="AOV" value={fmtVnd(aov)+'₫'} delta={null} sub="Giá trị đơn TB" accent="amber" icon={I.money}/>
-        <KPI label="Thị trường chính" value={hasTopCity ? topCity.city : '—'} delta={null} sub={hasTopCity ? `${topCity.orders} đơn — ${safePct(topCity.orders, totalCustomers).toFixed(0)}% tổng đơn` : 'Chưa có dữ liệu'} accent="shopee" icon={I.pin}/>
+        <KPI label={t('customers.kpi.total')} value={fmtFull(totalCustomers)} delta={null} sub={t('customers.kpi.total_sub')} accent="brand" icon={I.user}/>
+        <KPI label={t('customers.kpi.avg_orders')} value={(insights.avg_orders_per_buyer || safeDiv(s.completed_orders, totalCustomers)).toFixed(2)} delta={null} sub={t('customers.kpi.avg_orders_sub')} accent="green" icon={I.cart}/>
+        <KPI label={t('customers.kpi.aov')} value={fmtVnd(aov)+'₫'} delta={null} sub={t('customers.kpi.aov_sub')} accent="amber" icon={I.money}/>
+        <KPI label={t('customers.kpi.top_market')} value={hasTopCity ? topCity.city : '—'} delta={null} sub={hasTopCity ? `${topCity.orders} ${t('unit.orders')} — ${safePct(topCity.orders, totalCustomers).toFixed(0)}% ${t('kpi.pct_of_total')}` : t('customers.no_city_data')} accent="shopee" icon={I.pin}/>
       </div>
 
       <div className="row row-2">
         <div className="card card-lg">
           <div className="card-head">
             <div>
-              <h3>Phân bố khách theo tỉnh / thành phố</h3>
-              <div className="sub">Top khu vực có nhiều đơn nhất</div>
+              <h3>{t('customers.chart.by_city')}</h3>
+              <div className="sub">{t('customers.chart.by_city_sub')}</div>
             </div>
           </div>
           {cities.length
             ? <RankedBars items={cities} valueKey="orders" labelKey="city"
-                          accent="var(--brand-1)" format={(v)=>fmtFull(v)+' đơn'} maxItems={8}/>
-            : <div className="empty-state">Chưa có dữ liệu khách hàng theo tỉnh / thành trong kỳ này.</div>}
+                          accent="var(--brand-1)" format={(v)=>fmtFull(v)+' '+t('unit.orders')} maxItems={8}/>
+            : <div className="empty-state">{t('customers.no_city_data')}</div>}
         </div>
 
         <div className="card card-lg">
           <div className="card-head">
             <div>
-              <h3>Tập trung địa lý</h3>
-              <div className="sub">Hà Nội & TP.HCM dẫn dắt doanh số</div>
+              <h3>{t('customers.chart.geo')}</h3>
+              <div className="sub">{t('customers.chart.geo_sub')}</div>
             </div>
           </div>
           <VnConcentration cities={cities} totalCustomers={totalCustomers}/>
@@ -668,23 +682,23 @@ function PageCustomers({ data }) {
 
       <div className="row row-3 customer-dial-grid">
         <div className="card customer-dial-card">
-          <div className="card-head"><h3>Khách quay lại</h3></div>
+          <div className="card-head"><h3>{t('customers.returning')}</h3></div>
           <div className="customer-dial-body">
-            <Dial value={returningRate} max={100} color="var(--green)" label={`${fmtFull(returning)} khách`}
+            <Dial value={returningRate} max={100} color="var(--green)" label={`${fmtFull(returning)} ${t('customers.kpi.total_sub')}`}
                   format={(v)=>v.toFixed(1)+'%'}/>
           </div>
         </div>
         <div className="card customer-dial-card">
-          <div className="card-head"><h3>Tăng trưởng khách mới</h3></div>
+          <div className="card-head"><h3>{t('customers.new_growth')}</h3></div>
           <div className="customer-dial-body">
-            <Dial value={newBuyers} max={dialMax} color="var(--brand-1)" label={`${growthRate >= 0 ? '+' : ''}${growthRate.toFixed(1)}% vs tháng trước`}
+            <Dial value={newBuyers} max={dialMax} color="var(--brand-1)" label={`${growthRate >= 0 ? '+' : ''}${growthRate.toFixed(1)}% ${t('kpi.vs_prev')}`}
                   format={(v)=>fmtFull(v)}/>
           </div>
         </div>
         <div className="card customer-dial-card">
-          <div className="card-head"><h3>Khách hàng tiềm năng</h3></div>
+          <div className="card-head"><h3>{t('customers.potential')}</h3></div>
           <div className="customer-dial-body">
-            <Dial value={potential} max={Math.max(potential + totalCustomers, 1)} color="var(--accent)" label="đã mua trước kỳ này"
+            <Dial value={potential} max={Math.max(potential + totalCustomers, 1)} color="var(--accent)" label={t('customers.potential_sub')}
                   format={(v)=>fmtFull(v)}/>
           </div>
         </div>
@@ -728,6 +742,7 @@ function VnConcentration({ cities, totalCustomers }) {
 }
 
 function PageCustomerDetail({ data }) {
+  const t = useT();
   const [search, setSearch] = React.useState('');
   const customers = data.customer_list || [];
   const filtered = customers.filter(c => {
@@ -742,37 +757,37 @@ function PageCustomerDetail({ data }) {
   return (
     <div className="page" style={{display:'flex', flexDirection:'column', gap:'var(--gap-card)'}}>
       <div className="row row-3">
-        <KPI label="Khách trong bảng" value={fmtFull(filtered.length)} sub={`${fmtFull(customers.length)} khách top doanh thu`} accent="brand" icon={I.user}/>
-        <KPI label="Doanh thu" value={fmtVnd(totalRevenue)+'₫'} sub="theo khách đang lọc" accent="green" icon={I.money}/>
-        <KPI label="Số đơn" value={fmtFull(totalOrders)} sub="đơn hoàn thành / đã giao" accent="amber" icon={I.cart}/>
+        <KPI label={t('customers.kpi.in_table')} value={fmtFull(filtered.length)} sub={`${fmtFull(customers.length)} ${t('customers.kpi.total_sub')}`} accent="brand" icon={I.user}/>
+        <KPI label={t('customers.kpi.revenue')} value={fmtVnd(totalRevenue)+'₫'} sub={t('customers.kpi.rev_sub')} accent="green" icon={I.money}/>
+        <KPI label={t('customers.kpi.order_count')} value={fmtFull(totalOrders)} sub={t('customers.kpi.orders_sub')} accent="amber" icon={I.cart}/>
       </div>
 
       <div className="card card-lg card-flush">
         <div style={{padding:'20px 22px 14px', display:'flex', justifyContent:'space-between', alignItems:'center', gap:12, flexWrap:'wrap'}}>
           <div>
-            <h3>Chi tiết khách hàng</h3>
-            <div className="sub" style={{fontSize:11.5, color:'var(--ink-3)', marginTop:2}}>Doanh thu, số đơn và thời điểm mua gần nhất của từng khách</div>
+            <h3>{t('customers.detail.title')}</h3>
+            <div className="sub" style={{fontSize:11.5, color:'var(--ink-3)', marginTop:2}}>{t('customers.detail.sub')}</div>
           </div>
-          <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Tìm tên, username, khu vực..."
+          <input value={search} onChange={e=>setSearch(e.target.value)} placeholder={t('customers.search_placeholder')}
                  style={{padding:'9px 12px', fontSize:12, borderRadius:10, border:'1px solid var(--line)', background:'var(--surface-2)', color:'var(--ink)', width:260, fontFamily:'inherit', outline:'none'}}/>
         </div>
         <div style={{maxHeight:620, overflowY:'auto'}}>
           <table className="table">
             <thead style={{position:'sticky', top:0}}>
               <tr>
-                <th>Khách hàng</th>
-                <th>Khu vực</th>
-                <th className="num">Số đơn</th>
-                <th className="num">Sản phẩm</th>
-                <th className="num">Doanh thu</th>
-                <th>Mua gần nhất</th>
+                <th>{t('customers.th.customer')}</th>
+                <th>{t('customers.th.area')}</th>
+                <th className="num">{t('customers.th.orders')}</th>
+                <th className="num">{t('customers.th.products')}</th>
+                <th className="num">{t('customers.th.revenue')}</th>
+                <th>{t('customers.th.last_purchase')}</th>
               </tr>
             </thead>
             <tbody>
               {filtered.length ? filtered.map((c,i) => (
                 <tr key={c.customer_key || i}>
                   <td>
-                    <div style={{fontWeight:700, fontSize:12.5}}>{c.buyer_name || c.buyer_username || 'Khách chưa đặt tên'}</div>
+                    <div style={{fontWeight:700, fontSize:12.5}}>{c.buyer_name || c.buyer_username || t('customers.unknown_name')}</div>
                     <div className="mono" style={{fontSize:11, color:'var(--ink-3)', marginTop:2}}>{c.buyer_username || c.customer_key}</div>
                   </td>
                   <td style={{fontSize:12, color:'var(--ink-2)'}}>{c.city || '—'}</td>
@@ -782,7 +797,7 @@ function PageCustomerDetail({ data }) {
                   <td className="mono" style={{fontSize:11, color:'var(--ink-3)'}}>{String(c.last_order_at || '').slice(0, 10) || '—'}</td>
                 </tr>
               )) : (
-                <tr><td colSpan="6"><div className="empty-state">Chưa có khách hàng phù hợp với bộ lọc.</div></td></tr>
+                <tr><td colSpan="6"><div className="empty-state">{t('customers.no_match')}</div></td></tr>
               )}
             </tbody>
           </table>
@@ -795,14 +810,21 @@ function PageCustomerDetail({ data }) {
 // ── Page: TRAFFIC ──────────────────────────────────────────────────────
 
 function PageTraffic({ data, mode }) {
+  const t = useT();
   const s = data.summary;
+  const ps = data.prev_summary;
+  const calcDelta = (curr, prev) => {
+    if (ps == null || prev == null || !isNum(prev)) return null;
+    if (prev === 0) return curr > 0 ? 100 : null;
+    return Math.round(((curr - prev) / Math.abs(prev)) * 1000) / 10;
+  };
   // Aggregate traffic by date across platforms
   const byDate = {};
-  for (const t of data.traffic) {
-    if (!byDate[t.date]) byDate[t.date] = { date: t.date, pv: 0, vis: 0, shopee_pv: 0, lazada_pv: 0, tiktok_pv: 0 };
-    byDate[t.date].pv += t.page_views;
-    byDate[t.date].vis += t.visitors;
-    byDate[t.date][t.platform+'_pv'] = t.page_views;
+  for (const tr of data.traffic) {
+    if (!byDate[tr.date]) byDate[tr.date] = { date: tr.date, pv: 0, vis: 0, shopee_pv: 0, lazada_pv: 0, tiktok_pv: 0 };
+    byDate[tr.date].pv += tr.page_views;
+    byDate[tr.date].vis += tr.visitors;
+    byDate[tr.date][tr.platform+'_pv'] = tr.page_views;
   }
   // Shopee traffic isn't in JSON's traffic array — derive zeros if missing
   const dates = Object.keys(byDate).sort();
@@ -817,19 +839,19 @@ function PageTraffic({ data, mode }) {
   return (
     <div className="page" style={{display:'flex', flexDirection:'column', gap:'var(--gap-card)'}}>
       <div className="row row-4">
-        <KPI label="Tổng lượt xem" value={fmtFull(s.total_page_views)} delta={6.8} sub="page views" accent="brand" icon={I.eye}
+        <KPI label={t('traffic.kpi.views')} value={fmtFull(s.total_page_views)} delta={calcDelta(s.total_page_views, ps?.total_page_views)} sub={t('traffic.kpi.views_sub')} accent="brand" icon={I.eye}
              spark={dates.map(d=>byDate[d].pv)} sparkColor="var(--brand-1)"/>
-        <KPI label="Lượt truy cập" value={fmtFull(s.total_visitors)} delta={4.2} sub="unique visitors" accent="amber" icon={I.user}
+        <KPI label={t('traffic.kpi.visitors')} value={fmtFull(s.total_visitors)} delta={calcDelta(s.total_visitors, ps?.total_visitors)} sub={t('traffic.kpi.vis_sub')} accent="amber" icon={I.user}
              spark={dates.map(d=>byDate[d].vis)} sparkColor="var(--amber)"/>
-        <KPI label="PV / Visitor" value={safeDiv(s.total_page_views, s.total_visitors).toFixed(2)} delta={2.1} sub="trang/khách" accent="green" icon={I.trend}/>
-        <KPI label="Tỷ lệ chuyển đổi" value={fmtPct(conversionRate)} delta={1.8} sub="visitor → đơn" accent="shopee" icon={I.pct}/>
+        <KPI label={t('traffic.kpi.pv_per_vis')} value={safeDiv(s.total_page_views, s.total_visitors).toFixed(2)} delta={null} sub={t('traffic.kpi.pv_unit')} accent="green" icon={I.trend}/>
+        <KPI label={t('traffic.kpi.conv')} value={fmtPct(conversionRate)} delta={null} sub={t('traffic.kpi.conv_sub')} accent="shopee" icon={I.pct}/>
       </div>
 
       <div className="card card-lg">
         <div className="card-head">
           <div>
-            <h3>Lượt xem & lượt truy cập theo ngày</h3>
-              <div className="sub">{data.period_label || 'Kỳ hiện tại'} · Shopee, Lazada & TikTok Shop</div>
+            <h3>{t('traffic.chart.title')}</h3>
+              <div className="sub">{data.period_label || t('overview.current_period')} · Shopee, Lazada & TikTok Shop</div>
           </div>
         </div>
         <AreaChart series={trafficSeries} labels={dayLabels} mode={mode} stacked={false} formatY={fmtFull} height={280}/>
@@ -839,8 +861,8 @@ function PageTraffic({ data, mode }) {
         <div className="card card-lg">
           <div className="card-head">
             <div>
-              <h3>Doanh thu vs Lượt xem</h3>
-              <div className="sub">Mối tương quan PV → conversion</div>
+              <h3>{t('traffic.rev_vs_views')}</h3>
+              <div className="sub">{t('traffic.rev_vs_views_sub')}</div>
             </div>
           </div>
           <DualAxis dates={dates} byDate={byDate} revenue={data.revenue_series}/>
@@ -848,8 +870,8 @@ function PageTraffic({ data, mode }) {
         <div className="card card-lg">
           <div className="card-head">
             <div>
-              <h3>Hiệu suất theo sàn</h3>
-              <div className="sub">PV, Visitors, Đơn hàng, Conversion</div>
+              <h3>{t('traffic.plat_perf')}</h3>
+              <div className="sub">{t('traffic.plat_perf_sub')}</div>
             </div>
           </div>
           <PlatformPerformanceTable byDate={byDate} dates={dates} data={data}/>
@@ -860,19 +882,21 @@ function PageTraffic({ data, mode }) {
 }
 
 function DualAxis({ dates, byDate, revenue }) {
+  const t = useT();
   // Simpler: side-by-side bar (revenue) + line (PV)
   const dayLabels = dates.map(d=>d.slice(-2));
   const series = [
-    { key: 'rev', name: 'Doanh thu', color: 'var(--brand-1)', data: revenue.map(r=>r.total) },
+    { key: 'rev', name: t('tab.revenue'), color: 'var(--brand-1)', data: revenue.map(r=>r.total) },
   ];
   return <BarChart series={series} labels={dayLabels} formatY={fmtVnd} height={260}/>;
 }
 
 function PlatformPerformanceTable({ byDate, dates, data }) {
+  const t = useT();
   const platforms = ['shopee','lazada','tiktok'];
   const rows = platforms.map(p => {
     const pv = dates.reduce((a,d)=>a + (byDate[d][p+'_pv']||0), 0);
-    const vis = data.traffic.filter(t=>t.platform===p).reduce((a,t)=>a+t.visitors, 0);
+    const vis = data.traffic.filter(tr=>tr.platform===p).reduce((a,tr)=>a+tr.visitors, 0);
     const orders = data.summary[p].orders;
     const conv = vis ? (orders/vis*100) : 0;
     return { p, pv, vis, orders, conv };
@@ -881,11 +905,11 @@ function PlatformPerformanceTable({ byDate, dates, data }) {
     <table className="table" style={{margin:'-4px'}}>
       <thead>
         <tr>
-          <th>Sàn</th>
-          <th className="num">Lượt xem</th>
-          <th className="num">Visitors</th>
-          <th className="num">Đơn</th>
-          <th className="num">Conversion</th>
+          <th>{t('th.platform')}</th>
+          <th className="num">{t('traffic.th.views')}</th>
+          <th className="num">{t('traffic.th.visitors')}</th>
+          <th className="num">{t('traffic.th.orders')}</th>
+          <th className="num">{t('traffic.th.conv')}</th>
         </tr>
       </thead>
       <tbody>
@@ -911,6 +935,7 @@ function PlatformPerformanceTable({ byDate, dates, data }) {
 // ── Page: COMPARISON ───────────────────────────────────────────────────
 
 function PageComparison({ data }) {
+  const t = useT();
   const s = data.summary;
   const platforms = ['shopee','lazada','tiktok'];
 
@@ -941,25 +966,25 @@ function PageComparison({ data }) {
   }));
 
   const radarAxes = [
-    { name: 'Số đơn', max: 100 },
-    { name: 'Doanh thu', max: 100 },
-    { name: 'AOV', max: 100 },
-    { name: 'Hoàn thành', max: 100 },
-    { name: 'Khách hàng mới', max: 100 },
+    { name: t('comparison.radar.orders'), max: 100 },
+    { name: t('comparison.radar.revenue'), max: 100 },
+    { name: t('comparison.radar.aov'), max: 100 },
+    { name: t('comparison.radar.completed'), max: 100 },
+    { name: t('comparison.radar.new_buyers'), max: 100 },
   ];
 
   // Grouped bar: revenue
   const groupedRev = {
     series: [{
-      key: 'rev', name: 'Doanh thu', color: 'var(--brand-1)',
+      key: 'rev', name: t('tab.revenue'), color: 'var(--brand-1)',
       data: platforms.map(p => s[p].revenue),
     }],
     labels: platforms.map(p => PLATFORM_NAME[p]),
   };
   const groupedOrders = {
     series: [
-      { key:'completed', name:'Hoàn thành', color:'var(--green)', data: platforms.map(p=>s[p].completed) },
-      { key:'cancelled', name:'Đã huỷ', color:'var(--red)', data: platforms.map(p=>s[p].cancelled||0) },
+      { key:'completed', name: t('status.completed'), color:'var(--green)', data: platforms.map(p=>s[p].completed) },
+      { key:'cancelled', name: t('status.cancelled'), color:'var(--red)', data: platforms.map(p=>s[p].cancelled||0) },
     ],
     labels: platforms.map(p => PLATFORM_NAME[p]),
   };
@@ -984,24 +1009,24 @@ function PageComparison({ data }) {
                 </div>
                 <div>
                   <div style={{fontSize:15, fontWeight:800}}>{PLATFORM_NAME[p]}</div>
-                  <div style={{fontSize:11.5, color:'var(--ink-3)'}}>{sp.orders} đơn · {safePct(sp.orders, s.total_orders).toFixed(1)}% tổng</div>
+                  <div style={{fontSize:11.5, color:'var(--ink-3)'}}>{sp.orders} {t('unit.orders')} · {safePct(sp.orders, s.total_orders).toFixed(1)}% {t('kpi.pct_of_total')}</div>
                 </div>
               </div>
               <div className="stat-grid" style={{gridTemplateColumns:'repeat(2,1fr)'}}>
                 <div className="cell">
-                  <div className="l">Doanh thu</div>
+                  <div className="l">{t('tab.revenue')}</div>
                   <div className="v">{fmtVnd(sp.revenue)}₫</div>
                 </div>
                 <div className="cell">
-                  <div className="l">AOV</div>
+                  <div className="l">{t('comparison.radar.aov')}</div>
                   <div className="v">{fmtVnd(aov)}₫</div>
                 </div>
                 <div className="cell">
-                  <div className="l">Tỷ lệ hoàn thành</div>
+                  <div className="l">{t('comparison.completion_rate')}</div>
                   <div className="v" style={{color:'var(--green)'}}>{safePct(sp.completed, sp.orders).toFixed(1)}%</div>
                 </div>
                 <div className="cell">
-                  <div className="l">Tỷ lệ huỷ</div>
+                  <div className="l">{t('comparison.cancel_rate')}</div>
                   <div className="v" style={{color:'var(--red)'}}>{safePct(sp.cancelled || 0, sp.orders).toFixed(1)}%</div>
                 </div>
               </div>
@@ -1014,8 +1039,8 @@ function PageComparison({ data }) {
         <div className="card card-lg" style={{display:'flex', flexDirection:'column'}}>
           <div className="card-head">
             <div>
-              <h3>Radar 5 chỉ số</h3>
-              <div className="sub">So sánh đa chiều giữa 3 sàn</div>
+              <h3>{t('comparison.radar.title')}</h3>
+              <div className="sub">{t('comparison.radar.sub')}</div>
             </div>
           </div>
           <div style={{display:'flex', justifyContent:'center', alignItems:'center', flex:1}}>
@@ -1033,8 +1058,8 @@ function PageComparison({ data }) {
         <div className="card card-lg">
           <div className="card-head">
             <div>
-              <h3>Hoàn thành vs Đã huỷ</h3>
-              <div className="sub">Số đơn theo trạng thái, mỗi sàn</div>
+              <h3>{t('comparison.completed_vs')}</h3>
+              <div className="sub">{t('comparison.completed_vs_sub')}</div>
             </div>
           </div>
           <BarChart series={groupedOrders.series} labels={groupedOrders.labels} stacked={false} formatY={fmtFull} height={300}/>
@@ -1044,13 +1069,13 @@ function PageComparison({ data }) {
       <div className="card card-lg">
         <div className="card-head">
           <div>
-            <h3>Sản phẩm bán chạy theo sàn</h3>
-            <div className="sub">Top 3 SKU mỗi sàn theo doanh thu</div>
+            <h3>{t('comparison.top_products')}</h3>
+            <div className="sub">{t('comparison.top_products_sub')}</div>
           </div>
         </div>
         <div className="row row-3">
           {platforms.map(p => {
-            const top = data.top_products_rev.filter(t=>t.platform===p).slice(0,3);
+            const top = data.top_products_rev.filter(tp=>tp.platform===p).slice(0,3);
             return (
               <div key={p} style={{
                 background:'var(--surface-2)', borderRadius:14, padding:16,
@@ -1059,17 +1084,17 @@ function PageComparison({ data }) {
                 <div style={{fontSize:12, color:'var(--ink-3)', fontWeight:700, marginBottom:10, textTransform:'uppercase', letterSpacing:'0.06em'}}>
                   {PLATFORM_NAME[p]}
                 </div>
-                {top.length ? top.map((t,i) => (
+                {top.length ? top.map((tp,i) => (
                   <div key={i} style={{padding:'8px 0', borderBottom:i<top.length-1?'1px solid var(--line-2)':'none'}}>
                     <div style={{fontSize:12.5, fontWeight:600, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis'}}>
-                      {t.name}
+                      {tp.name}
                     </div>
                     <div style={{display:'flex', justifyContent:'space-between', marginTop:4, fontSize:11.5, color:'var(--ink-3)'}}>
-                      <span>{t.qty} đã bán</span>
-                      <span style={{fontWeight:700, color:'var(--ink)', fontVariantNumeric:'tabular-nums'}}>{fmtVnd(t.revenue)}₫</span>
+                      <span>{tp.qty} {t('comparison.sold')}</span>
+                      <span style={{fontWeight:700, color:'var(--ink)', fontVariantNumeric:'tabular-nums'}}>{fmtVnd(tp.revenue)}₫</span>
                     </div>
                   </div>
-                )) : <div style={{color:'var(--ink-3)', fontSize:12, fontStyle:'italic'}}>Chưa có dữ liệu</div>}
+                )) : <div style={{color:'var(--ink-3)', fontSize:12, fontStyle:'italic'}}>{t('comparison.no_data')}</div>}
               </div>
             );
           })}

@@ -3,6 +3,7 @@
 // ── Page: KẾ HOẠCH (Sales Target) ───────────────────────────────────────
 
 function PagePlan({ data }) {
+  const t = useT();
   const plan = data.plan || {};
   const revenueMetric = (plan.metrics || []).find(m => m.key === 'revenue') || {};
   const yearTarget = safeNum(revenueMetric.target);
@@ -36,13 +37,13 @@ function PagePlan({ data }) {
         <div className="kpi-hero" style={{minHeight: 260}}>
           <div className="kpi-hero-top">
             <div>
-              <div className="kpi-hero-label">Mục tiêu năm {plan.year || new Date().getFullYear()}</div>
+              <div className="kpi-hero-label">{t('plan.hero.label')} {plan.year || new Date().getFullYear()}</div>
               <div style={{fontSize:11.5, opacity:0.7, marginTop:4, fontWeight:600}}>
-                Tiến độ YTD · {monthsCompleted}/12 tháng
+                {t('plan.ytd_progress')} · {monthsCompleted}/12 {t('plan.months_of_12')}
               </div>
             </div>
             <span className={onTrack ? 'delta delta-up' : 'delta delta-down'}>
-              {onTrack ? '↑ Đúng tiến độ' : '↓ Chậm tiến độ'}
+              {onTrack ? t('plan.on_track') : t('plan.behind')}
             </span>
           </div>
           <div className="kpi-hero-value" style={{fontSize:'clamp(36px, 6vw, 64px)'}}>
@@ -55,8 +56,8 @@ function PagePlan({ data }) {
           <div className="kpi-hero-foot">
             <div style={{flex:1, minWidth:0}}>
               <div style={{display:'flex', justifyContent:'space-between', fontSize:11, fontWeight:600, marginBottom:6, opacity:0.85}}>
-                <span>Tiến độ đạt mục tiêu</span>
-                <span>Còn {fmtVnd(Math.max(0, yearTarget - ytdActual))}₫</span>
+                <span>{t('plan.progress_label')}</span>
+                <span>{t('plan.remaining')} {fmtVnd(Math.max(0, yearTarget - ytdActual))}₫</span>
               </div>
               <div style={{height:12, borderRadius:99, background:'rgba(255,255,255,0.18)', overflow:'hidden', position:'relative'}}>
                 <div style={{
@@ -77,11 +78,11 @@ function PagePlan({ data }) {
               <div style={{display:'flex', gap:14, marginTop:10, fontSize:11.5, fontWeight:600}}>
                 <span style={{display:'flex', alignItems:'center', gap:6}}>
                   <span style={{width:8, height:8, borderRadius:2, background:'#fff'}}/>
-                  Đã đạt
+                  {t('plan.achieved')}
                 </span>
                 <span style={{display:'flex', alignItems:'center', gap:6, opacity:0.8}}>
                   <span style={{width:2, height:10, background:'#fff'}}/>
-                  Mốc {monthsCompleted}/12 tháng ({safePct(monthsCompleted, 12).toFixed(0)}%)
+                  {t('plan.pace_marker')} {monthsCompleted}/12 {t('plan.months')} ({safePct(monthsCompleted, 12).toFixed(0)}%)
                 </span>
               </div>
             </div>
@@ -91,12 +92,12 @@ function PagePlan({ data }) {
         {/* Right column: quick KPIs */}
         <div style={{display:'flex', flexDirection:'column', gap:'var(--gap-card)'}}>
           <div className="card" style={{padding: 18}}>
-            <div style={{fontSize:11.5, color:'var(--ink-3)', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.06em'}}>Run-rate cần đạt</div>
+            <div style={{fontSize:11.5, color:'var(--ink-3)', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.06em'}}>{t('plan.runrate_label')}</div>
             <div style={{fontSize:28, fontWeight:800, marginTop:6, letterSpacing:'-0.02em'}}>{fmtVnd(runRateNeeded)}₫</div>
-            <div style={{fontSize:12, color:'var(--ink-3)', marginTop:4}}>mỗi tháng còn lại · {monthsRemaining} tháng</div>
+            <div style={{fontSize:12, color:'var(--ink-3)', marginTop:4}}>{t('plan.runrate_sub')} · {monthsRemaining} {t('plan.months')}</div>
           </div>
           <div className="card" style={{padding: 18}}>
-            <div style={{fontSize:11.5, color:'var(--ink-3)', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.06em'}}>Tháng hiện tại</div>
+            <div style={{fontSize:11.5, color:'var(--ink-3)', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.06em'}}>{t('plan.current_month')}</div>
             <div style={{fontSize:28, fontWeight:800, marginTop:6, letterSpacing:'-0.02em'}}>{fmtVnd(data.summary.total_revenue)}₫</div>
             <div style={{fontSize:12, color:'var(--ink-3)', marginTop:4, fontWeight:600}}>Actual của kỳ đang xem</div>
           </div>
