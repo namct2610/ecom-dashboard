@@ -1,7 +1,7 @@
 {
-  "version": "1.5.19",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.5.19/release/dashboard-v3-1.5.19.zip",
-  "changelog": "- Sửa Top Location: % tính trên đơn có địa chỉ (không tính Lazada) thay vì toàn bộ đơn\n- Hiển thị thêm card 'Tỉnh / TP khác' với % còn lại để tổng rõ ràng hơn\n- API trả về city_total, city_others_orders, city_others_pct",
+  "version": "1.5.20",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.5.20/release/dashboard-v3-1.5.20.zip",
+  "changelog": "- Hotfix: khôi phục $totalOrders trong customers.php (bị xoá nhầm ở 1.5.19) — sửa lỗi tổng đơn = 0 và tỉ lệ chuyển đổi = 0 trang Khách hàng\n- Thêm ghi chú rõ ràng trên card Top Địa Phương: 'Chỉ tính Shopee & TikTok Shop — Lazada không có địa chỉ'\n- Tất cả chuỗi mới đều dùng t() để đồng bộ ngôn ngữ",
   "min_php": "8.1",
   "released_at": "2026-05-28"
 }

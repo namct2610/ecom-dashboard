@@ -321,7 +321,8 @@
   "cl.no_data":     "No data",
   "cl.other":            "Other",
   "cl.other_provinces":  "Other provinces / cities",
-  "cl.lazada_excluded":  "% of orders with address data (Lazada excluded)",
+  "cl.lazada_excluded":  "Remaining provinces",
+  "cl.location_note":    "Shopee & TikTok Shop only — Lazada has no address data",
   "cl.orders_unit": "orders",
   "cl.cancelled":   "Cancelled",
 
