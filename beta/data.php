@@ -29,6 +29,7 @@ $defaultData = [
         'shopee' => $emptyPlat, 'lazada' => $emptyPlat, 'tiktok' => $emptyPlat,
     ],
     'plan' => null,
+    'prev_summary' => null,
     'revenue_series' => [], 'top_products_qty' => [], 'top_products_rev' => [],
     'city_distribution' => [], 'heatmap' => [], 'traffic' => [], 'recent_orders' => [],
     'customer_insights' => null, 'customer_list' => [],
@@ -158,6 +159,46 @@ $summary = [
     'shopee'            => $platformAgg['shopee'],
     'lazada'            => $platformAgg['lazada'],
     'tiktok'            => $platformAgg['tiktok'],
+];
+
+// ── Previous period summary (for KPI deltas) ─────────────────────────
+// Previous period = same-length window immediately before current period
+$periodDays = max(1, (int) round((strtotime($end) - strtotime($start)) / 86400) + 1);
+$prevEnd   = date('Y-m-d', strtotime($start . ' -1 day'));
+$prevStart = date('Y-m-d', strtotime($prevEnd . ' -' . ($periodDays - 1) . ' days'));
+
+$prevOrders = 0; $prevCompleted = 0; $prevCancelled = 0; $prevRevenue = 0.0;
+foreach (['shopee', 'lazada', 'tiktokshop'] as $plat) {
+    $pstmt = $pdo->prepare("
+        SELECT
+            COUNT(DISTINCT order_id) AS orders,
+            COUNT(DISTINCT CASE WHEN normalized_status IN ('completed','delivered') THEN order_id END) AS completed,
+            COUNT(DISTINCT CASE WHEN normalized_status = 'cancelled' THEN order_id END) AS cancelled,
+            COALESCE(SUM(CASE WHEN normalized_status IN ('completed','delivered') THEN order_total ELSE 0 END), 0) AS revenue
+        FROM orders
+        WHERE platform = :p AND DATE(order_created_at) BETWEEN :s AND :e
+    ");
+    $pstmt->execute([':p' => $plat, ':s' => $prevStart, ':e' => $prevEnd]);
+    $prow = $pstmt->fetch();
+    $prevOrders    += (int)   ($prow['orders']    ?? 0);
+    $prevCompleted += (int)   ($prow['completed'] ?? 0);
+    $prevCancelled += (int)   ($prow['cancelled'] ?? 0);
+    $prevRevenue   += (float) ($prow['revenue']   ?? 0);
+}
+$prevTrafStmt = $pdo->prepare("SELECT COALESCE(SUM(page_views),0) AS views, COALESCE(SUM(visits),0) AS visits FROM traffic_daily WHERE traffic_date BETWEEN :s AND :e AND device_type='all'");
+$prevTrafStmt->execute([':s' => $prevStart, ':e' => $prevEnd]);
+$prevTraf = $prevTrafStmt->fetch();
+$prevSummary = [
+    'total_orders'     => $prevOrders,
+    'completed_orders' => $prevCompleted,
+    'cancelled_orders' => $prevCancelled,
+    'cancel_rate'      => $prevOrders > 0 ? round($prevCancelled / $prevOrders * 100, 1) : 0,
+    'total_revenue'    => $prevRevenue,
+    'avg_order_value'  => $prevCompleted > 0 ? round($prevRevenue / $prevCompleted) : 0,
+    'total_page_views' => (int) ($prevTraf['views']  ?? 0),
+    'total_visitors'   => (int) ($prevTraf['visits'] ?? 0),
+    'period_start'     => $prevStart,
+    'period_end'       => $prevEnd,
 ];
 
 // ── Revenue daily series ─────────────────────────────────────────────
@@ -620,6 +661,7 @@ $data = [
     'period_label'    => $label,
     'range'           => ['start' => $start, 'end' => $end],
     'summary'         => $summary,
+    'prev_summary'    => $prevSummary,
     'plan'            => $plan,
     'revenue_series'  => $revenueSeries,
     'top_products_qty'=> $topQty,

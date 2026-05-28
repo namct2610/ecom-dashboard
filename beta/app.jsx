@@ -5,50 +5,50 @@
 
 // ── Navigation ────────────────────────────────────────────────────────
 
-const NAV_GROUPS = [
-  {
-    label: 'Phân tích',
-    items: [
-      { id: 'overview',   label: 'Tổng quan',  icon: 'home', sub: 'Doanh thu, đơn hàng và traffic tổng hợp' },
-      { id: 'plan',       label: 'Kế hoạch',   icon: 'target', sub: 'Mục tiêu năm và run-rate cần đạt', tag: 'Mới' },
-      { id: 'comparison', label: 'So sánh sàn',icon: 'bars',  sub: 'Đối chiếu Shopee, Lazada, TikTok' },
-    ],
-  },
-  {
-    label: 'Bán hàng',
-    items: [
-      { id: 'orders',      label: 'Đơn hàng',   icon: 'cart',  sub: 'Phân tích đơn hàng theo thời gian', badge: '1.2K' },
-      { id: 'products',    label: 'Sản phẩm',   icon: 'box',   sub: 'Top sản phẩm theo doanh thu và số lượng' },
-    ],
-  },
-  {
-    label: 'Khách hàng',
-    items: [
-      { id: 'customers', label: 'Khách hàng', icon: 'users', sub: 'Phân tích khách hàng theo địa lý' },
-      { id: 'customer-detail', label: 'Chi tiết khách hàng', icon: 'list', sub: 'Doanh thu và số đơn theo từng khách' },
-      { id: 'traffic',   label: 'Lượng truy cập', icon: 'eye', sub: 'PV, Visitors và tỷ lệ chuyển đổi' },
-    ],
-  },
-  {
-    label: 'Vận hành',
-    items: [
-      { id: 'reconcile', label: 'Đối soát GBS', icon: 'check2', sub: 'Khớp file GBS với export từ các sàn' },
-      { id: 'data-links', label: 'Liên kết dữ liệu sàn', icon: 'target', sub: 'Quy tắc khớp dữ liệu sàn với GBS' },
-      { id: 'product-catalog', label: 'Danh sách sản phẩm', icon: 'box', sub: 'SKU, giá GBS và quy đổi Combo' },
-    ],
-  },
-  {
-    label: 'Hệ thống',
-    items: [
-      { id: 'upload',    label: 'Upload dữ liệu', icon: 'upload',sub: 'Tải file Excel từ Shopee, Lazada, TikTok' },
-      { id: 'logs',      label: 'Nhật ký',      icon: 'log',   sub: 'Sự kiện và lỗi hệ thống' },
-      { id: 'settings', label: 'Cài đặt',  icon: 'gear', sub: 'Hồ sơ, ngôn ngữ, thông báo' },
-      { id: 'admin',    label: 'Quản trị', icon: 'shield', sub: 'Tài khoản, API kết nối, hệ thống', admin: true },
-    ],
-  },
-];
-
-const ALL_PAGES = Object.fromEntries(NAV_GROUPS.flatMap(g => g.items).map(p => [p.id, p]));
+function getNavGroups(t) {
+  return [
+    {
+      label: t('grp.analytics'),
+      items: [
+        { id: 'overview',   label: t('nav.overview'),   icon: 'home',   sub: t('nav.overview.sub') },
+        { id: 'plan',       label: t('nav.plan'),       icon: 'target', sub: t('nav.plan.sub'), tag: 'Mới' },
+        { id: 'comparison', label: t('nav.comparison'), icon: 'bars',   sub: t('nav.comparison.sub') },
+      ],
+    },
+    {
+      label: t('grp.sales'),
+      items: [
+        { id: 'orders',   label: t('nav.orders'),   icon: 'cart', sub: t('nav.orders.sub'), badge: '1.2K' },
+        { id: 'products', label: t('nav.products'), icon: 'box',  sub: t('nav.products.sub') },
+      ],
+    },
+    {
+      label: t('grp.customers'),
+      items: [
+        { id: 'customers',       label: t('nav.customers'),       icon: 'users', sub: t('nav.customers.sub') },
+        { id: 'customer-detail', label: t('nav.customer_detail'), icon: 'list',  sub: t('nav.customer_detail.sub') },
+        { id: 'traffic',         label: t('nav.traffic'),         icon: 'eye',   sub: t('nav.traffic.sub') },
+      ],
+    },
+    {
+      label: t('grp.operations'),
+      items: [
+        { id: 'reconcile',       label: t('nav.reconcile'),       icon: 'check2', sub: t('nav.reconcile.sub') },
+        { id: 'data-links',      label: t('nav.data_links'),      icon: 'target', sub: t('nav.data_links.sub') },
+        { id: 'product-catalog', label: t('nav.product_catalog'), icon: 'box',    sub: t('nav.product_catalog.sub') },
+      ],
+    },
+    {
+      label: t('grp.system'),
+      items: [
+        { id: 'upload',   label: t('nav.upload'),   icon: 'upload', sub: t('nav.upload.sub') },
+        { id: 'logs',     label: t('nav.logs'),     icon: 'log',    sub: t('nav.logs.sub') },
+        { id: 'settings', label: t('nav.settings'), icon: 'gear',   sub: t('nav.settings.sub') },
+        { id: 'admin',    label: t('nav.admin'),    icon: 'shield', sub: t('nav.admin.sub'), admin: true },
+      ],
+    },
+  ];
+}
 
 const PAGE_COMP = {
   overview: PageOverview,
@@ -88,6 +88,7 @@ const NAV_ICONS = {
 // ── Sidebar ──────────────────────────────────────────────────────────
 
 function Sidebar({ active, onNav, collapsed, onCollapse, userRole, user, onLogout }) {
+  const t = useT();
   const [userOpen, setUserOpen] = React.useState(false);
   const uref = React.useRef(null);
   React.useEffect(() => {
@@ -108,13 +109,13 @@ function Sidebar({ active, onNav, collapsed, onCollapse, userRole, user, onLogou
         {!collapsed && (
           <div>
             <div className="brand-name">Insight</div>
-            <div className="brand-meta">{(window.__BETA__?.versionLabel || 'Beta')} · TMĐT Suite</div>
+            <div className="brand-meta">{(window.__BETA__?.versionLabel || 'Beta')} · {t('brand.sub')}</div>
           </div>
         )}
       </div>
 
       <div className="sidebar-scroll">
-      {NAV_GROUPS.map(g => (
+      {getNavGroups(t).map(g => (
         <React.Fragment key={g.label}>
           {!collapsed && <div className="nav-section">{g.label}</div>}
           {g.items.map(p => {
@@ -139,11 +140,11 @@ function Sidebar({ active, onNav, collapsed, onCollapse, userRole, user, onLogou
           {userOpen && !collapsed && (
             <div className="popover sidebar-user-pop">
               <div style={{padding:6}}>
-                <SidebarUserItem icon="user" label="Hồ sơ tài khoản" onClick={()=>{setUserOpen(false); onNav('settings');}}/>
-                <SidebarUserItem icon="shield" label="Quản trị hệ thống" onClick={()=>{setUserOpen(false); onNav('admin');}}/>
+                <SidebarUserItem icon="user" label={t('sidebar.profile')} onClick={()=>{setUserOpen(false); onNav('settings');}}/>
+                <SidebarUserItem icon="shield" label={t('sidebar.admin_panel')} onClick={()=>{setUserOpen(false); onNav('admin');}}/>
               </div>
               <div style={{padding:6, borderTop:'1px solid var(--line-2)'}}>
-                <SidebarUserItem icon="logout" label="Đăng xuất" danger onClick={onLogout}/>
+                <SidebarUserItem icon="logout" label={t('sidebar.logout')} danger onClick={onLogout}/>
               </div>
             </div>
           )}
@@ -153,7 +154,7 @@ function Sidebar({ active, onNav, collapsed, onCollapse, userRole, user, onLogou
             {!collapsed && (
               <div style={{flex:1, minWidth:0, textAlign:'left'}}>
                 <div className="user-name" style={{whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis'}}>{user?.name || 'Admin'}</div>
-                <div className="user-role">{user?.role === 'admin' ? 'Quản trị viên' : 'Nhân viên'}</div>
+                <div className="user-role">{user?.role === 'admin' ? t('user.admin') : t('user.staff')}</div>
               </div>
             )}
             {!collapsed && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="6 9 12 15 18 9"/></svg>}
@@ -164,7 +165,7 @@ function Sidebar({ active, onNav, collapsed, onCollapse, userRole, user, onLogou
           <span style={{display:'inline-flex', transform: collapsed ? 'rotate(0deg)' : 'rotate(180deg)', transition:'transform 0.2s'}}>
             {NAV_ICONS.chevron}
           </span>
-          {!collapsed && <span>Thu gọn</span>}
+          {!collapsed && <span>{t('sidebar.collapse')}</span>}
         </div>
       </div>
     </aside>
@@ -190,6 +191,7 @@ function SidebarUserItem({ icon, label, onClick, danger }) {
 // ── Period picker (dropdown) ─────────────────────────────────────────
 
 function PeriodPicker({ value, onChange }) {
+  const t = useT();
   const data = window.DASHBOARD_DATA || {};
   const curPeriod = data.period || '';                       // '2026-03' | '2026' | 'YYYY-MM'
   const curLabel = data.period_label || 'Tháng này';
@@ -231,16 +233,16 @@ function PeriodPicker({ value, onChange }) {
   };
 
   const presets = [
-    { id:'today', label:'Hôm nay' },
-    { id:'yesterday', label:'Hôm qua' },
-    { id:'7days', label:'7 ngày' },
-    { id:'30days', label:'30 ngày' },
+    { id:'today', label: t('period.today') },
+    { id:'yesterday', label: t('period.yesterday') },
+    { id:'7days', label: t('period.7days') },
+    { id:'30days', label: t('period.30days') },
   ];
   const ranges = [
-    { id:'this-month', label:'Tháng này' },
-    { id:'last-month', label:'Tháng trước' },
-    { id:'this-year', label:'Năm nay' },
-    { id:'last-year', label:'Năm trước' },
+    { id:'this-month', label: t('period.this_month') },
+    { id:'last-month', label: t('period.last_month') },
+    { id:'this-year', label: t('period.this_year') },
+    { id:'last-year', label: t('period.last_year') },
   ];
 
   return (
@@ -262,20 +264,20 @@ function PeriodPicker({ value, onChange }) {
         <div className="period-panel">
           <div style={{padding:'12px 14px', borderBottom:'1px solid var(--line-2)'}}>
             <div style={{display:'flex', gap:6, marginBottom:10}}>
-              <button className={'tab '+(mode==='month'?'active':'')} onClick={()=>setMode('month')}>Theo tháng</button>
-              <button className={'tab '+(mode==='range'?'active':'')} onClick={()=>setMode('range')}>Theo phạm vi</button>
-              <button className={'tab '+(mode==='year'?'active':'')} onClick={()=>setMode('year')}>Theo năm</button>
+              <button className={'tab '+(mode==='month'?'active':'')} onClick={()=>setMode('month')}>{t('period.by_month')}</button>
+              <button className={'tab '+(mode==='range'?'active':'')} onClick={()=>setMode('range')}>{t('period.by_range')}</button>
+              <button className={'tab '+(mode==='year'?'active':'')} onClick={()=>setMode('year')}>{t('period.by_year')}</button>
             </div>
           </div>
 
           <div style={{padding:14}}>
-            <div style={{fontSize:10.5, color:'var(--ink-3)', textTransform:'uppercase', letterSpacing:'0.08em', fontWeight:700, marginBottom:8}}>Chọn nhanh</div>
+            <div style={{fontSize:10.5, color:'var(--ink-3)', textTransform:'uppercase', letterSpacing:'0.08em', fontWeight:700, marginBottom:8}}>{t('period.quick_pick')}</div>
             <div style={{display:'flex', gap:6, flexWrap:'wrap', marginBottom:14}}>
               {presets.map(p => (
                 <button key={p.id} className="chip" onClick={()=>applyPreset(p.id)} style={{padding:'5px 12px', fontSize:11.5, background:'var(--surface-2)', cursor:'pointer'}}>{p.label}</button>
               ))}
             </div>
-            <div style={{fontSize:10.5, color:'var(--ink-3)', textTransform:'uppercase', letterSpacing:'0.08em', fontWeight:700, marginBottom:8}}>Chọn theo kỳ</div>
+            <div style={{fontSize:10.5, color:'var(--ink-3)', textTransform:'uppercase', letterSpacing:'0.08em', fontWeight:700, marginBottom:8}}>{t('period.by_period')}</div>
             <div style={{display:'flex', gap:6, flexWrap:'wrap', marginBottom:14}}>
               {ranges.map(p => (
                 <button key={p.id} className="chip" onClick={()=>applyRange(p.id)} style={{padding:'5px 12px', fontSize:11.5, background:'var(--surface-2)', cursor:'pointer'}}>{p.label}</button>
@@ -306,21 +308,21 @@ function PeriodPicker({ value, onChange }) {
             )}
             {mode === 'range' && (
               <div style={{display:'grid', gridTemplateColumns:'1fr 1fr auto', gap:8, alignItems:'end'}}>
-                <label style={{display:'grid', gap:6, fontSize:11, color:'var(--ink-3)', fontWeight:700}}>Từ ngày
+                <label style={{display:'grid', gap:6, fontSize:11, color:'var(--ink-3)', fontWeight:700}}>{t('period.from')}
                   <input type="date" value={rangeFrom} onChange={e=>setRangeFrom(e.target.value)} style={{height:36, border:'1px solid var(--line)', borderRadius:8, padding:'0 10px', fontFamily:'inherit', color:'var(--ink)', background:'var(--surface)'}}/>
                 </label>
-                <label style={{display:'grid', gap:6, fontSize:11, color:'var(--ink-3)', fontWeight:700}}>Đến ngày
+                <label style={{display:'grid', gap:6, fontSize:11, color:'var(--ink-3)', fontWeight:700}}>{t('period.to')}
                   <input type="date" value={rangeTo} onChange={e=>setRangeTo(e.target.value)} style={{height:36, border:'1px solid var(--line)', borderRadius:8, padding:'0 10px', fontFamily:'inherit', color:'var(--ink)', background:'var(--surface)'}}/>
                 </label>
-                <button className="chip active" onClick={()=>rangeFrom && rangeTo && go(`?from=${rangeFrom}&to=${rangeTo}`)} style={{height:36, justifyContent:'center'}}>Áp dụng</button>
+                <button className="chip active" onClick={()=>rangeFrom && rangeTo && go(`?from=${rangeFrom}&to=${rangeTo}`)} style={{height:36, justifyContent:'center'}}>{t('period.apply')}</button>
               </div>
             )}
             {mode === 'year' && (
               <div style={{display:'grid', gridTemplateColumns:'1fr auto', gap:8, alignItems:'end'}}>
-                <label style={{display:'grid', gap:6, fontSize:11, color:'var(--ink-3)', fontWeight:700}}>Năm
+                <label style={{display:'grid', gap:6, fontSize:11, color:'var(--ink-3)', fontWeight:700}}>{t('period.year_label')}
                   <input type="number" min="2020" max="2100" value={yearValue} onChange={e=>setYearValue(e.target.value)} style={{height:36, border:'1px solid var(--line)', borderRadius:8, padding:'0 10px', fontFamily:'inherit', color:'var(--ink)', background:'var(--surface)'}}/>
                 </label>
-                <button className="chip active" onClick={()=>yearValue && go(`?year=${yearValue}`)} style={{height:36, justifyContent:'center'}}>Áp dụng</button>
+                <button className="chip active" onClick={()=>yearValue && go(`?year=${yearValue}`)} style={{height:36, justifyContent:'center'}}>{t('period.apply')}</button>
               </div>
             )}
           </div>
@@ -333,6 +335,7 @@ function PeriodPicker({ value, onChange }) {
 // ── Notifications dropdown ────────────────────────────────────────────
 
 function NotificationsBtn() {
+  const t = useT();
   const [open, setOpen] = React.useState(false);
   const ref = React.useRef(null);
   React.useEffect(() => {
@@ -361,8 +364,8 @@ function NotificationsBtn() {
       {open && (
         <div className="popover" style={{width: 340, padding:0}}>
           <div style={{padding:'14px 16px', display:'flex', justifyContent:'space-between', alignItems:'center', borderBottom:'1px solid var(--line-2)'}}>
-            <div style={{fontWeight:800, fontSize:14}}>Thông báo</div>
-            <button style={{background:'transparent', border:'none', cursor:'pointer', color:'var(--brand-1)', fontSize:12, fontWeight:600, fontFamily:'inherit'}}>Đánh dấu đã đọc</button>
+            <div style={{fontWeight:800, fontSize:14}}>{t('notif.title')}</div>
+            <button style={{background:'transparent', border:'none', cursor:'pointer', color:'var(--brand-1)', fontSize:12, fontWeight:600, fontFamily:'inherit'}}>{t('notif.mark_read')}</button>
           </div>
           <div style={{maxHeight:380, overflowY:'auto'}}>
             {notifs.map((n,i) => (
@@ -388,7 +391,7 @@ function NotificationsBtn() {
             ))}
           </div>
           <div style={{padding:'10px 16px', textAlign:'center', borderTop:'1px solid var(--line-2)'}}>
-            <button style={{background:'transparent', border:'none', cursor:'pointer', color:'var(--brand-1)', fontSize:12, fontWeight:700, fontFamily:'inherit'}}>Xem tất cả thông báo →</button>
+            <button style={{background:'transparent', border:'none', cursor:'pointer', color:'var(--brand-1)', fontSize:12, fontWeight:700, fontFamily:'inherit'}}>{t('notif.view_all')}</button>
           </div>
         </div>
       )}
@@ -399,6 +402,7 @@ function NotificationsBtn() {
 // ── User menu ─────────────────────────────────────────────────────────
 
 function UserMenu({ onNav, onLogout }) {
+  const t = useT();
   const [open, setOpen] = React.useState(false);
   const ref = React.useRef(null);
   React.useEffect(() => {
@@ -414,7 +418,7 @@ function UserMenu({ onNav, onLogout }) {
         <div className="user-avatar" style={{width:32, height:32, fontSize:11}}>AD</div>
         <div style={{textAlign:'left'}}>
           <div style={{fontSize:12.5, fontWeight:700}}>Admin</div>
-          <div style={{fontSize:10.5, color:'var(--ink-3)', fontWeight:600}}>Quản trị viên</div>
+          <div style={{fontSize:10.5, color:'var(--ink-3)', fontWeight:600}}>{t('user.admin')}</div>
         </div>
         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="6 9 12 15 18 9"/></svg>
       </button>
@@ -425,17 +429,17 @@ function UserMenu({ onNav, onLogout }) {
             <div className="user-avatar" style={{width:44, height:44, fontSize:14}}>AD</div>
             <div style={{flex:1, minWidth:0}}>
               <div style={{fontSize:14, fontWeight:800}}>Nguyễn Quản Trị</div>
-              <div style={{fontSize:11.5, color:'var(--ink-3)'}}>@admin · Quản trị viên</div>
+              <div style={{fontSize:11.5, color:'var(--ink-3)'}}>@admin · {t('user.admin')}</div>
             </div>
           </div>
           <div style={{padding:6}}>
-            <MenuItem icon="user" label="Hồ sơ tài khoản" onClick={()=>{setOpen(false); onNav('settings');}}/>
-            <MenuItem icon="lock" label="Đổi mật khẩu" onClick={()=>{setOpen(false); onNav('settings');}}/>
-            <MenuItem icon="lang" label="Ngôn ngữ" sub="Tiếng Việt" onClick={()=>{setOpen(false); onNav('settings');}}/>
-            <MenuItem icon="shield" label="Quản trị hệ thống" onClick={()=>{setOpen(false); onNav('admin');}}/>
+            <MenuItem icon="user" label={t('usermenu.profile')} onClick={()=>{setOpen(false); onNav('settings');}}/>
+            <MenuItem icon="lock" label={t('usermenu.password')} onClick={()=>{setOpen(false); onNav('settings');}}/>
+            <MenuItem icon="lang" label={t('usermenu.lang')} sub="Tiếng Việt" onClick={()=>{setOpen(false); onNav('settings');}}/>
+            <MenuItem icon="shield" label={t('usermenu.admin')} onClick={()=>{setOpen(false); onNav('admin');}}/>
           </div>
           <div style={{padding:6, borderTop:'1px solid var(--line-2)'}}>
-            <MenuItem icon="logout" label="Đăng xuất" danger onClick={onLogout}/>
+            <MenuItem icon="logout" label={t('usermenu.logout')} danger onClick={onLogout}/>
           </div>
         </div>
       )}
@@ -472,8 +476,21 @@ function MenuItem({ icon, label, sub, onClick, danger }) {
 
 // ── Topbar ───────────────────────────────────────────────────────────
 
+function LangToggle() {
+  const { lang, setLang } = React.useContext(LangCtx);
+  return (
+    <button onClick={() => setLang(lang === 'vi' ? 'en' : 'vi')}
+            className="chip" title="Switch language"
+            style={{padding:'5px 10px', fontSize:11.5, gap:4, fontWeight:700}}>
+      {lang === 'vi' ? '🇻🇳 VI' : '🇬🇧 EN'}
+    </button>
+  );
+}
+
 function Topbar({ page, onNav, platform, onPlatform, viewMode, onViewMode, onLogout }) {
-  const pageDef = ALL_PAGES[page];
+  const t = useT();
+  const navGroups = getNavGroups(t);
+  const pageDef = navGroups.flatMap(g => g.items).find(p => p.id === page) || { label: page, sub: '' };
   return (
     <header className="topbar">
       <div>
@@ -484,7 +501,7 @@ function Topbar({ page, onNav, platform, onPlatform, viewMode, onViewMode, onLog
 
       <div className="platform-chips">
         {[
-          { id:'all', name:'Tất cả', color: 'var(--ink-3)' },
+          { id:'all', name: t('filter.all'), color: 'var(--ink-3)' },
           { id:'shopee', name:'Shopee', color: PLATFORM_COLORS.shopee },
           { id:'lazada', name:'Lazada', color: PLATFORM_COLORS.lazada },
           { id:'tiktok', name:'TikTok', color: PLATFORM_COLORS.tiktok },
@@ -497,12 +514,13 @@ function Topbar({ page, onNav, platform, onPlatform, viewMode, onViewMode, onLog
         ))}
       </div>
 
-      <div className="vmode" title="COMBO: nguyên gốc từ sàn · SKU: tách thành sản phẩm đơn lẻ">
+      <div className="vmode" title={t('topbar.combo_tip')}>
         <button className={'chip '+(viewMode==='combo'?'active':'')} onClick={()=>onViewMode('combo')}>COMBO</button>
         <button className={'chip '+(viewMode==='sku'?'active':'')} onClick={()=>onViewMode('sku')}>SKU</button>
       </div>
 
       <PeriodPicker/>
+      <LangToggle/>
       <NotificationsBtn/>
     </header>
   );
@@ -603,6 +621,8 @@ function App() {
   const [platform, setPlatform] = React.useState('all');
   const [viewMode, setViewMode] = React.useState('combo');
   const [collapsed, setCollapsed] = React.useState(false);
+  const [lang, setLang] = React.useState(() => localStorage.getItem('beta_lang') || 'vi');
+  const handleSetLang = (l) => { setLang(l); localStorage.setItem('beta_lang', l); };
   // Auth đã được xử lý bởi PHP gate (beta/index.php) → vào thẳng, không hiện login mockup
   const beta = window.__BETA__ || {};
   const currentUser = { name: beta.username || 'Admin', role: beta.isAdmin ? 'admin' : 'staff' };
@@ -615,7 +635,11 @@ function App() {
   }, [tweaks.palette, tweaks.theme, tweaks.density]);
 
   const data = window.DASHBOARD_DATA;
-  if (!data) return <div className="loading">Đang tải dữ liệu…</div>;
+  if (!data) return (
+    <LangCtx.Provider value={{lang, setLang: handleSetLang}}>
+      <div className="loading">{BETA_I18N[lang]?.['app.loading'] || 'Loading…'}</div>
+    </LangCtx.Provider>
+  );
 
   // Filter data by platform
   const filteredData = React.useMemo(() => {
@@ -653,31 +677,35 @@ function App() {
   }, [platform, data]);
 
   if (!loggedIn) {
-    return <>
-      <LoginScreen onLogin={() => setLoggedIn(true)}/>
-      {renderTweaks(tweaks, setTweak)}
-    </>;
+    return (
+      <LangCtx.Provider value={{lang, setLang: handleSetLang}}>
+        <LoginScreen onLogin={() => setLoggedIn(true)}/>
+        {renderTweaks(tweaks, setTweak)}
+      </LangCtx.Provider>
+    );
   }
 
   const PageComp = PAGE_COMP[page];
 
   return (
-    <div className={'shell' + (collapsed ? ' shell-collapsed' : '')}>
-      <Sidebar active={page} onNav={setPage} collapsed={collapsed}
-               onCollapse={()=>setCollapsed(!collapsed)}
-               userRole={currentUser.role} user={currentUser}
-               onLogout={()=>{ window.location.href = beta.backUrl || '../index.php'; }}/>
-      <main className="main">
-        <Topbar page={page} onNav={setPage}
-                platform={platform} onPlatform={setPlatform}
-                viewMode={viewMode} onViewMode={setViewMode}
-                onLogout={()=>{ window.location.href = beta.backUrl || '../index.php'; }} />
-        <div className="content">
-          <PageComp data={filteredData} mode={tweaks.chartStyle} key={page+platform}/>
-        </div>
-      </main>
-      {renderTweaks(tweaks, setTweak)}
-    </div>
+    <LangCtx.Provider value={{lang, setLang: handleSetLang}}>
+      <div className={'shell' + (collapsed ? ' shell-collapsed' : '')}>
+        <Sidebar active={page} onNav={setPage} collapsed={collapsed}
+                 onCollapse={()=>setCollapsed(!collapsed)}
+                 userRole={currentUser.role} user={currentUser}
+                 onLogout={()=>{ window.location.href = beta.backUrl || '../index.php'; }}/>
+        <main className="main">
+          <Topbar page={page} onNav={setPage}
+                  platform={platform} onPlatform={setPlatform}
+                  viewMode={viewMode} onViewMode={setViewMode}
+                  onLogout={()=>{ window.location.href = beta.backUrl || '../index.php'; }} />
+          <div className="content">
+            <PageComp data={filteredData} mode={tweaks.chartStyle} key={page+platform}/>
+          </div>
+        </main>
+        {renderTweaks(tweaks, setTweak)}
+      </div>
+    </LangCtx.Provider>
   );
 }
 

@@ -37,6 +37,317 @@ const PLATFORM_COLORS_2 = {
 };
 const PLATFORM_NAME = { shopee: 'Shopee', lazada: 'Lazada', tiktok: 'TikTok Shop' };
 
+// ── i18n ───────────────────────────────────────────────────────────────
+const BETA_I18N = {
+  vi: {
+    // Groups
+    'grp.analytics':'Phân tích','grp.sales':'Bán hàng','grp.customers':'Khách hàng',
+    'grp.operations':'Vận hành','grp.system':'Hệ thống',
+    // Nav items + subs
+    'nav.overview':'Tổng quan','nav.overview.sub':'Doanh thu, đơn hàng và traffic tổng hợp',
+    'nav.plan':'Kế hoạch','nav.plan.sub':'Mục tiêu năm và run-rate cần đạt',
+    'nav.comparison':'So sánh sàn','nav.comparison.sub':'Đối chiếu Shopee, Lazada, TikTok',
+    'nav.orders':'Đơn hàng','nav.orders.sub':'Phân tích đơn hàng theo thời gian',
+    'nav.products':'Sản phẩm','nav.products.sub':'Top sản phẩm theo doanh thu và số lượng',
+    'nav.customers':'Khách hàng','nav.customers.sub':'Phân tích khách hàng theo địa lý',
+    'nav.customer_detail':'Chi tiết khách hàng','nav.customer_detail.sub':'Doanh thu và số đơn theo từng khách',
+    'nav.traffic':'Lượng truy cập','nav.traffic.sub':'PV, Visitors và tỷ lệ chuyển đổi',
+    'nav.reconcile':'Đối soát GBS','nav.reconcile.sub':'Khớp file GBS với export từ các sàn',
+    'nav.data_links':'Liên kết dữ liệu sàn','nav.data_links.sub':'Quy tắc khớp dữ liệu sàn với GBS',
+    'nav.product_catalog':'Danh sách sản phẩm','nav.product_catalog.sub':'SKU, giá GBS và quy đổi Combo',
+    'nav.upload':'Upload dữ liệu','nav.upload.sub':'Tải file Excel từ Shopee, Lazada, TikTok',
+    'nav.logs':'Nhật ký','nav.logs.sub':'Sự kiện và lỗi hệ thống',
+    'nav.settings':'Cài đặt','nav.settings.sub':'Hồ sơ, ngôn ngữ, thông báo',
+    'nav.admin':'Quản trị','nav.admin.sub':'Tài khoản, API kết nối, hệ thống',
+    // Topbar / sidebar
+    'filter.all':'Tất cả','user.admin':'Quản trị viên','user.staff':'Nhân viên',
+    'sidebar.collapse':'Thu gọn','sidebar.profile':'Hồ sơ tài khoản',
+    'sidebar.admin_panel':'Quản trị hệ thống','sidebar.logout':'Đăng xuất',
+    'topbar.combo_tip':'COMBO: nguyên gốc từ sàn · SKU: tách thành sản phẩm đơn lẻ',
+    // Period picker
+    'period.by_month':'Theo tháng','period.by_range':'Theo phạm vi','period.by_year':'Theo năm',
+    'period.quick_pick':'Chọn nhanh','period.by_period':'Chọn theo kỳ',
+    'period.today':'Hôm nay','period.yesterday':'Hôm qua',
+    'period.7days':'7 ngày','period.30days':'30 ngày',
+    'period.this_month':'Tháng này','period.last_month':'Tháng trước',
+    'period.this_year':'Năm nay','period.last_year':'Năm trước',
+    'period.from':'Từ ngày','period.to':'Đến ngày','period.apply':'Áp dụng','period.year_label':'Năm',
+    // KPI
+    'kpi.total_orders':'Tổng đơn hàng','kpi.completed':'Đơn hoàn thành',
+    'kpi.cancel_rate':'Tỷ lệ huỷ đơn','kpi.visitors':'Lượt truy cập',
+    'kpi.vs_prev':'so với kỳ trước','kpi.pct_of_total':'% trên tổng',
+    'kpi.page_views':'lượt xem','kpi.orders_cancelled':'đơn bị huỷ',
+    'kpi.goal_target':'mục tiêu < 15%',
+    // Overview
+    'overview.hero.label':'Doanh thu','overview.current_period':'kỳ hiện tại',
+    'overview.hero.sub':'Đã hoàn thành · 3 sàn thương mại điện tử',
+    'overview.aov_per_order':'/ đơn TB','overview.completed_orders':'đơn hoàn thành',
+    'overview.by_platform':'Phân chia theo sàn','overview.platform_perf':'Hiệu suất từng sàn',
+    'overview.monthly_revenue':'Doanh thu tháng',
+    'overview.total_label':'Tổng','overview.market_share':'thị phần',
+    // Charts
+    'chart.revenue_trend':'Doanh thu theo thời gian','chart.market_share':'Thị phần doanh thu',
+    'chart.top10':'Top 10 sản phẩm bán chạy','chart.recent_orders':'Đơn hàng gần đây',
+    'chart.latest_update':'Cập nhật mới nhất','chart.view_all':'Xem tất cả →',
+    'chart.3platforms':'3 sàn TMĐT',
+    'chart.orders_by_day':'Số đơn theo ngày · 3 sàn',
+    'chart.aov_by_day':'Giá trị đơn trung bình theo ngày',
+    'chart.by_3platforms':'Phân theo 3 sàn',
+    // Tabs
+    'tab.revenue':'Doanh thu','tab.orders':'Đơn hàng','tab.aov':'AOV',
+    'tab.by_revenue':'Doanh thu','tab.by_qty':'Số lượng',
+    'tab.all':'Tất cả','tab.completed':'Hoàn thành','tab.cancelled':'Huỷ',
+    // Table headers
+    'th.order_id':'Mã đơn','th.platform':'Sàn','th.status':'Trạng thái','th.amount':'Giá trị',
+    // Status
+    'status.completed':'Hoàn thành','status.delivered':'Hoàn thành',
+    'status.cancelled':'Đã huỷ','status.shipping':'Đang giao',
+    // Orders page
+    'orders.kpi.total':'Tổng đơn','orders.kpi.completed':'Hoàn thành',
+    'orders.kpi.cancelled':'Đã huỷ','orders.kpi.cancel_rate':'Tỷ lệ huỷ',
+    'orders.kpi.completed_sub':'thành công','orders.kpi.target_sub':'mục tiêu < 15%',
+    'orders.chart.title':'Xu hướng đơn hàng','orders.chart.sub':'Số đơn theo ngày, phân theo sàn',
+    'orders.donut.title':'Trạng thái đơn hàng',
+    'orders.donut.total':'Tổng đơn',
+    'orders.heatmap.title':'Khung giờ đặt hàng cao điểm',
+    'orders.heatmap.sub':'Heatmap đơn hàng theo thứ trong tuần × giờ trong ngày',
+    'orders.heatmap.low':'Thấp','orders.heatmap.mid':'TB','orders.heatmap.high':'Cao',
+    // Peak insights
+    'peak.golden':'Giờ vàng','peak.dead':'Khung giờ chết','peak.avg':'Trung bình giờ',
+    'peak.dead_desc':'Không có đơn nào — chủ yếu 02–05h sáng','peak.avg_desc':'Trên 7×24 = 168 khung giờ',
+    'peak.orders_suffix':'đơn','peak.total_month':'% tổng tháng',
+    'peak.dead_suffix':'giờ / tuần',
+    'wd.0':'Chủ nhật','wd.1':'Thứ 2','wd.2':'Thứ 3','wd.3':'Thứ 4',
+    'wd.4':'Thứ 5','wd.5':'Thứ 6','wd.6':'Thứ 7',
+    // Products page
+    'products.kpi.sku_count':'Số SKU đang bán','products.kpi.sku_sub':'Tất cả 3 sàn',
+    'products.kpi.qty_sold':'Số lượng đã bán','products.kpi.top10_rev':'Doanh thu top 10',
+    'products.kpi.bestseller':'Sản phẩm bán chạy nhất','products.kpi.sold':'bán',
+    'products.kpi.total_dt':'tổng DT',
+    'products.chart.treemap':'Phân bố doanh thu theo sản phẩm',
+    'products.chart.treemap_sub':'Kích thước thể hiện tỷ trọng doanh thu',
+    'products.top_rev':'Top theo doanh thu','products.top_rev_sub':'10 sản phẩm doanh thu cao nhất',
+    'products.top_qty':'Top theo số lượng','products.top_qty_sub':'10 sản phẩm bán nhiều nhất',
+    'products.no_data':'Chưa có dữ liệu sản phẩm trong kỳ này.',
+    'unit.orders':'đơn','unit.products':'sp',
+    // Traffic page
+    'traffic.kpi.views':'Tổng lượt xem','traffic.kpi.views_sub':'page views',
+    'traffic.kpi.visitors':'Lượt truy cập','traffic.kpi.vis_sub':'unique visitors',
+    'traffic.kpi.pv_per_vis':'PV / Visitor','traffic.kpi.pv_unit':'trang/khách',
+    'traffic.kpi.conv':'Tỷ lệ chuyển đổi','traffic.kpi.conv_sub':'visitor → đơn',
+    'traffic.chart.title':'Lượt xem & lượt truy cập theo ngày',
+    'traffic.rev_vs_views':'Doanh thu vs Lượt xem','traffic.rev_vs_views_sub':'Mối tương quan PV → conversion',
+    'traffic.plat_perf':'Hiệu suất theo sàn','traffic.plat_perf_sub':'PV, Visitors, Đơn hàng, Conversion',
+    'traffic.th.views':'Lượt xem','traffic.th.visitors':'Visitors',
+    'traffic.th.orders':'Đơn','traffic.th.conv':'Conversion',
+    // Customers
+    'customers.kpi.total':'Tổng khách hàng','customers.kpi.total_sub':'người mua trong kỳ',
+    'customers.kpi.avg_orders':'Đơn TB/khách','customers.kpi.avg_orders_sub':'số đơn/người',
+    'customers.kpi.aov':'AOV','customers.kpi.aov_sub':'Giá trị đơn TB',
+    'customers.kpi.top_market':'Thị trường chính',
+    'customers.chart.by_city':'Phân bố khách theo tỉnh / thành phố',
+    'customers.chart.by_city_sub':'Top khu vực có nhiều đơn nhất',
+    'customers.chart.geo':'Tập trung địa lý','customers.chart.geo_sub':'Hà Nội & TP.HCM dẫn dắt doanh số',
+    'customers.returning':'Khách quay lại','customers.new_growth':'Tăng trưởng khách mới',
+    'customers.potential':'Khách hàng tiềm năng','customers.potential_sub':'đã mua trước kỳ này',
+    'customers.no_city_data':'Chưa có dữ liệu khách hàng theo tỉnh / thành trong kỳ này.',
+    'customers.detail.title':'Chi tiết khách hàng',
+    'customers.detail.sub':'Doanh thu, số đơn và thời điểm mua gần nhất của từng khách',
+    'customers.search_placeholder':'Tìm tên, username, khu vực...',
+    'customers.kpi.in_table':'Khách trong bảng','customers.kpi.revenue':'Doanh thu',
+    'customers.kpi.order_count':'Số đơn','customers.kpi.rev_sub':'theo khách đang lọc',
+    'customers.kpi.orders_sub':'đơn hoàn thành / đã giao',
+    'customers.th.customer':'Khách hàng','customers.th.area':'Khu vực',
+    'customers.th.orders':'Số đơn','customers.th.products':'Sản phẩm',
+    'customers.th.revenue':'Doanh thu','customers.th.last_purchase':'Mua gần nhất',
+    'customers.no_match':'Chưa có khách hàng phù hợp với bộ lọc.',
+    'customers.unknown_name':'Khách chưa đặt tên',
+    // Comparison page
+    'comparison.orders_share':'đơn · {pct}% tổng',
+    'comparison.completion_rate':'Tỷ lệ hoàn thành','comparison.cancel_rate':'Tỷ lệ huỷ',
+    'comparison.radar.title':'Radar 5 chỉ số','comparison.radar.sub':'So sánh đa chiều giữa 3 sàn',
+    'comparison.completed_vs':'Hoàn thành vs Đã huỷ','comparison.completed_vs_sub':'Số đơn theo trạng thái, mỗi sàn',
+    'comparison.top_products':'Sản phẩm bán chạy theo sàn','comparison.top_products_sub':'Top 3 SKU mỗi sàn theo doanh thu',
+    'comparison.sold':'đã bán','comparison.no_data':'Chưa có dữ liệu',
+    'comparison.radar.orders':'Số đơn','comparison.radar.revenue':'Doanh thu',
+    'comparison.radar.aov':'AOV','comparison.radar.completed':'Hoàn thành','comparison.radar.new_buyers':'Khách hàng mới',
+    // Plan page
+    'plan.hero.label':'Mục tiêu năm','plan.ytd_progress':'Tiến độ YTD',
+    'plan.months_of_12':'tháng','plan.on_track':'↑ Đúng tiến độ','plan.behind':'↓ Chậm tiến độ',
+    'plan.progress_label':'Tiến độ đạt mục tiêu','plan.remaining':'Còn',
+    'plan.achieved':'Đã đạt','plan.pace_marker':'Mốc','plan.months':'tháng',
+    'plan.runrate_label':'Run-rate cần đạt','plan.runrate_sub':'mỗi tháng còn lại',
+    'plan.current_month':'Tháng hiện tại',
+    // App
+    'app.loading':'Đang tải dữ liệu…','brand.sub':'TMĐT Suite',
+    // Notifications
+    'notif.title':'Thông báo','notif.mark_read':'Đánh dấu đã đọc','notif.view_all':'Xem tất cả thông báo →',
+    // User menu
+    'usermenu.profile':'Hồ sơ tài khoản','usermenu.password':'Đổi mật khẩu',
+    'usermenu.lang':'Ngôn ngữ','usermenu.admin':'Quản trị hệ thống','usermenu.logout':'Đăng xuất',
+    // Previous period label suffix
+    'period.prev_label':'kỳ trước',
+  },
+  en: {
+    // Groups
+    'grp.analytics':'Analytics','grp.sales':'Sales','grp.customers':'Customers',
+    'grp.operations':'Operations','grp.system':'System',
+    // Nav items + subs
+    'nav.overview':'Overview','nav.overview.sub':'Revenue, orders and traffic summary',
+    'nav.plan':'Plan','nav.plan.sub':'Annual targets and run-rate needed',
+    'nav.comparison':'Comparison','nav.comparison.sub':'Compare Shopee, Lazada, TikTok',
+    'nav.orders':'Orders','nav.orders.sub':'Order analysis over time',
+    'nav.products':'Products','nav.products.sub':'Top products by revenue and quantity',
+    'nav.customers':'Customers','nav.customers.sub':'Customer analysis by geography',
+    'nav.customer_detail':'Customer Detail','nav.customer_detail.sub':'Revenue and orders per customer',
+    'nav.traffic':'Traffic','nav.traffic.sub':'PV, Visitors and conversion rate',
+    'nav.reconcile':'GBS Reconcile','nav.reconcile.sub':'Match GBS file against platform exports',
+    'nav.data_links':'Platform Data Links','nav.data_links.sub':'Platform data mapping rules for GBS',
+    'nav.product_catalog':'Product List','nav.product_catalog.sub':'SKUs, GBS prices and Combo conversions',
+    'nav.upload':'Upload Data','nav.upload.sub':'Upload Excel files from Shopee, Lazada, TikTok',
+    'nav.logs':'Logs','nav.logs.sub':'System events and errors',
+    'nav.settings':'Settings','nav.settings.sub':'Profile, language, notifications',
+    'nav.admin':'Admin','nav.admin.sub':'Accounts, API connections, system',
+    // Topbar / sidebar
+    'filter.all':'All','user.admin':'Administrator','user.staff':'Staff',
+    'sidebar.collapse':'Collapse','sidebar.profile':'Account Profile',
+    'sidebar.admin_panel':'Admin Panel','sidebar.logout':'Sign out',
+    'topbar.combo_tip':'COMBO: original platform item · SKU: split into individual products',
+    // Period picker
+    'period.by_month':'By Month','period.by_range':'By Range','period.by_year':'By Year',
+    'period.quick_pick':'Quick Pick','period.by_period':'By Period',
+    'period.today':'Today','period.yesterday':'Yesterday',
+    'period.7days':'7 days','period.30days':'30 days',
+    'period.this_month':'This month','period.last_month':'Last month',
+    'period.this_year':'This year','period.last_year':'Last year',
+    'period.from':'From','period.to':'To','period.apply':'Apply','period.year_label':'Year',
+    // KPI
+    'kpi.total_orders':'Total Orders','kpi.completed':'Completed',
+    'kpi.cancel_rate':'Cancel Rate','kpi.visitors':'Visitors',
+    'kpi.vs_prev':'vs. prior period','kpi.pct_of_total':'% of total',
+    'kpi.page_views':'page views','kpi.orders_cancelled':'cancelled',
+    'kpi.goal_target':'target < 15%',
+    // Overview
+    'overview.hero.label':'Revenue','overview.current_period':'current period',
+    'overview.hero.sub':'Completed orders · 3 e-commerce platforms',
+    'overview.aov_per_order':'/ avg. order','overview.completed_orders':'completed orders',
+    'overview.by_platform':'By platform','overview.platform_perf':'Platform Performance',
+    'overview.monthly_revenue':'Monthly revenue',
+    'overview.total_label':'Total','overview.market_share':'market share',
+    // Charts
+    'chart.revenue_trend':'Revenue Over Time','chart.market_share':'Revenue Market Share',
+    'chart.top10':'Top 10 Best-Selling Products','chart.recent_orders':'Recent Orders',
+    'chart.latest_update':'Latest updates','chart.view_all':'View all →',
+    'chart.3platforms':'3 Platforms',
+    'chart.orders_by_day':'Daily orders · 3 platforms',
+    'chart.aov_by_day':'Average order value per day',
+    'chart.by_3platforms':'By 3 platforms',
+    // Tabs
+    'tab.revenue':'Revenue','tab.orders':'Orders','tab.aov':'AOV',
+    'tab.by_revenue':'Revenue','tab.by_qty':'Quantity',
+    'tab.all':'All','tab.completed':'Completed','tab.cancelled':'Cancelled',
+    // Table headers
+    'th.order_id':'Order ID','th.platform':'Platform','th.status':'Status','th.amount':'Amount',
+    // Status
+    'status.completed':'Completed','status.delivered':'Completed',
+    'status.cancelled':'Cancelled','status.shipping':'Shipping',
+    // Orders page
+    'orders.kpi.total':'Total Orders','orders.kpi.completed':'Completed',
+    'orders.kpi.cancelled':'Cancelled','orders.kpi.cancel_rate':'Cancel Rate',
+    'orders.kpi.completed_sub':'success rate','orders.kpi.target_sub':'target < 15%',
+    'orders.chart.title':'Order Trends','orders.chart.sub':'Orders per day, by platform',
+    'orders.donut.title':'Order Status','orders.donut.total':'Total Orders',
+    'orders.heatmap.title':'Peak Order Times',
+    'orders.heatmap.sub':'Order heatmap by day of week × hour',
+    'orders.heatmap.low':'Low','orders.heatmap.mid':'Mid','orders.heatmap.high':'High',
+    // Peak insights
+    'peak.golden':'Peak Hour','peak.dead':'Dead Hours','peak.avg':'Avg / Hour',
+    'peak.dead_desc':'No orders — mainly 2–5 AM','peak.avg_desc':'Over 7×24 = 168 slots',
+    'peak.orders_suffix':'orders','peak.total_month':'% of month',
+    'peak.dead_suffix':'hrs / week',
+    'wd.0':'Sun','wd.1':'Mon','wd.2':'Tue','wd.3':'Wed',
+    'wd.4':'Thu','wd.5':'Fri','wd.6':'Sat',
+    // Products page
+    'products.kpi.sku_count':'Active SKUs','products.kpi.sku_sub':'All 3 platforms',
+    'products.kpi.qty_sold':'Quantity Sold','products.kpi.top10_rev':'Top 10 Revenue',
+    'products.kpi.bestseller':'Best Seller','products.kpi.sold':'sold',
+    'products.kpi.total_dt':'of total rev',
+    'products.chart.treemap':'Revenue Distribution by Product',
+    'products.chart.treemap_sub':'Size represents revenue share',
+    'products.top_rev':'Top by Revenue','products.top_rev_sub':'Top 10 by revenue',
+    'products.top_qty':'Top by Quantity','products.top_qty_sub':'Top 10 units sold',
+    'products.no_data':'No product data for this period.',
+    'unit.orders':'orders','unit.products':'items',
+    // Traffic page
+    'traffic.kpi.views':'Total Page Views','traffic.kpi.views_sub':'page views',
+    'traffic.kpi.visitors':'Visitors','traffic.kpi.vis_sub':'unique visitors',
+    'traffic.kpi.pv_per_vis':'PV / Visitor','traffic.kpi.pv_unit':'pages/visitor',
+    'traffic.kpi.conv':'Conversion Rate','traffic.kpi.conv_sub':'visitor → order',
+    'traffic.chart.title':'Page Views & Visitors by Day',
+    'traffic.rev_vs_views':'Revenue vs Page Views','traffic.rev_vs_views_sub':'PV → conversion correlation',
+    'traffic.plat_perf':'Platform Performance','traffic.plat_perf_sub':'PV, Visitors, Orders, Conversion',
+    'traffic.th.views':'Views','traffic.th.visitors':'Visitors',
+    'traffic.th.orders':'Orders','traffic.th.conv':'Conversion',
+    // Customers
+    'customers.kpi.total':'Total Customers','customers.kpi.total_sub':'buyers this period',
+    'customers.kpi.avg_orders':'Orders / Customer','customers.kpi.avg_orders_sub':'orders per buyer',
+    'customers.kpi.aov':'AOV','customers.kpi.aov_sub':'Avg. order value',
+    'customers.kpi.top_market':'Top Market',
+    'customers.chart.by_city':'Customers by Province / City',
+    'customers.chart.by_city_sub':'Top regions by orders',
+    'customers.chart.geo':'Geographic Concentration','customers.chart.geo_sub':'Hanoi & HCMC lead sales',
+    'customers.returning':'Returning Customers','customers.new_growth':'New Customer Growth',
+    'customers.potential':'Potential Customers','customers.potential_sub':'purchased before this period',
+    'customers.no_city_data':'No customer data by city for this period.',
+    'customers.detail.title':'Customer Detail',
+    'customers.detail.sub':'Revenue, orders, and last purchase date per customer',
+    'customers.search_placeholder':'Search name, username, area...',
+    'customers.kpi.in_table':'Customers in Table','customers.kpi.revenue':'Revenue',
+    'customers.kpi.order_count':'Orders','customers.kpi.rev_sub':'filtered customers',
+    'customers.kpi.orders_sub':'completed / delivered orders',
+    'customers.th.customer':'Customer','customers.th.area':'Area',
+    'customers.th.orders':'Orders','customers.th.products':'Items',
+    'customers.th.revenue':'Revenue','customers.th.last_purchase':'Last Purchase',
+    'customers.no_match':'No customers match the filter.',
+    'customers.unknown_name':'Unknown Customer',
+    // Comparison page
+    'comparison.orders_share':'orders · {pct}% share',
+    'comparison.completion_rate':'Completion Rate','comparison.cancel_rate':'Cancel Rate',
+    'comparison.radar.title':'5-Metric Radar','comparison.radar.sub':'Multi-dimensional comparison across 3 platforms',
+    'comparison.completed_vs':'Completed vs Cancelled','comparison.completed_vs_sub':'Orders by status per platform',
+    'comparison.top_products':'Top Products by Platform','comparison.top_products_sub':'Top 3 SKUs per platform by revenue',
+    'comparison.sold':'sold','comparison.no_data':'No data yet',
+    'comparison.radar.orders':'Orders','comparison.radar.revenue':'Revenue',
+    'comparison.radar.aov':'AOV','comparison.radar.completed':'Completion','comparison.radar.new_buyers':'New Buyers',
+    // Plan page
+    'plan.hero.label':'Annual Target','plan.ytd_progress':'YTD Progress',
+    'plan.months_of_12':'months','plan.on_track':'↑ On Track','plan.behind':'↓ Behind',
+    'plan.progress_label':'Progress toward target','plan.remaining':'Remaining',
+    'plan.achieved':'Achieved','plan.pace_marker':'Milestone','plan.months':'months',
+    'plan.runrate_label':'Run-rate needed','plan.runrate_sub':'per remaining month',
+    'plan.current_month':'Current Month',
+    // App
+    'app.loading':'Loading data…','brand.sub':'E-Commerce Suite',
+    // Notifications
+    'notif.title':'Notifications','notif.mark_read':'Mark all read','notif.view_all':'View all notifications →',
+    // User menu
+    'usermenu.profile':'Account Profile','usermenu.password':'Change Password',
+    'usermenu.lang':'Language','usermenu.admin':'Admin Panel','usermenu.logout':'Sign out',
+    // Previous period label suffix
+    'period.prev_label':'prior period',
+  },
+};
+
+const LangCtx = React.createContext({ lang: 'vi', setLang: () => {} });
+
+function useT() {
+  const { lang } = React.useContext(LangCtx);
+  return (key, fallback) => {
+    const dict = BETA_I18N[lang] || BETA_I18N.vi;
+    return dict[key] ?? fallback ?? key;
+  };
+}
+
 // Build a smooth (Catmull-Rom → bezier) path
 function smoothPath(points) {
   if (!points.length) return '';

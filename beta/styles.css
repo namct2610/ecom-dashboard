@@ -459,7 +459,7 @@ body[data-density="spacious"] {
   display: inline-flex; align-items: center; gap: 4px;
   padding: 3px 9px;
   border-radius: 999px;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
@@ -507,6 +507,13 @@ body[data-theme="dark"] .delta-down { background: rgba(239,68,68,0.2); color: #F
   display: flex; align-items: center; gap: 8px;
   font-size: 11.5px; color: var(--ink-3); font-weight: 500;
   margin-top: auto;
+}
+.kpi-foot-sub {
+  font-size: 10.5px;
+  color: var(--ink-3);
+  font-weight: 500;
+  opacity: 0.85;
+  flex-shrink: 0;
 }
 .kpi-spark {
   position: absolute;
