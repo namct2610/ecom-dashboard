@@ -1389,7 +1389,7 @@ $initials = strtoupper(substr($user, 0, 2));
                 <option value="">Tất cả thương hiệu</option>
               </select>
             </label>
-            <div class="analytics-filter-summary" id="analyticsFilterSummary">Đang tải danh sách lọc...</div>
+            <div class="analytics-filter-summary" id="analyticsFilterSummary" data-i18n="msg.loading">Đang tải...</div>
           </div>
         </div>
 
@@ -1503,18 +1503,18 @@ $initials = strtoupper(substr($user, 0, 2));
 
         <!-- Upload history -->
         <div class="card" style="margin-top:16px">
-          <div class="card-title">Lịch sử upload</div>
+          <div class="card-title" data-i18n="upload.history.title">Lịch sử upload</div>
           <div class="table-wrapper" style="margin-top:10px">
             <table>
               <thead>
                 <tr>
-                  <th>Thời gian</th>
-                  <th>Sàn</th>
-                  <th>Loại</th>
-                  <th>File</th>
-                  <th class="text-right">Đã import</th>
-                  <th class="text-right">Bỏ qua</th>
-                  <th>Trạng thái</th>
+                  <th data-i18n="th.time">Thời gian</th>
+                  <th data-i18n="th.platform">Sàn</th>
+                  <th data-i18n="th.type">Loại</th>
+                  <th data-i18n="th.file">File</th>
+                  <th class="text-right" data-i18n="th.imported">Đã import</th>
+                  <th class="text-right" data-i18n="th.skipped">Bỏ qua</th>
+                  <th data-i18n="th.status">Trạng thái</th>
                 </tr>
               </thead>
               <tbody id="uploadHistoryTable"></tbody>
@@ -1581,7 +1581,7 @@ $initials = strtoupper(substr($user, 0, 2));
                 </tr>
               </thead>
               <tbody id="logsTableBody">
-                <tr><td colspan="6" style="text-align:center;padding:32px;color:var(--text-muted)">Đang tải...</td></tr>
+                <tr><td colspan="6" style="text-align:center;padding:32px;color:var(--text-muted)" data-i18n="msg.loading">Đang tải...</td></tr>
               </tbody>
             </table>
           </div>
@@ -1807,15 +1807,15 @@ $initials = strtoupper(substr($user, 0, 2));
                   <tr>
                     <th>Shop</th>
                     <th style="width:90px">Shop ID</th>
-                    <th style="width:100px">Trạng thái</th>
-                    <th style="width:140px">Token hết hạn</th>
-                    <th style="width:140px">Đồng bộ lần cuối</th>
-                    <th style="width:110px">Từ ngày</th>
-                    <th style="width:120px">Thao tác</th>
+                    <th style="width:100px" data-i18n="th.status">Trạng thái</th>
+                    <th style="width:140px" data-i18n="th.token_expires">Token hết hạn</th>
+                    <th style="width:140px" data-i18n="th.last_synced">Đồng bộ lần cuối</th>
+                    <th style="width:110px" data-i18n="th.from_date">Từ ngày</th>
+                    <th style="width:120px" data-i18n="th.actions">Thao tác</th>
                   </tr>
                 </thead>
                 <tbody id="shopeeShopsTableBody">
-                  <tr><td colspan="7" style="text-align:center;padding:32px;color:var(--text-muted)">Đang tải...</td></tr>
+                  <tr><td colspan="7" style="text-align:center;padding:32px;color:var(--text-muted)" data-i18n="msg.loading">Đang tải...</td></tr>
                 </tbody>
               </table>
             </div>
@@ -1824,7 +1824,7 @@ $initials = strtoupper(substr($user, 0, 2));
 
           <!-- How to guide -->
           <div class="card mt-4" style="background:var(--bg-base)">
-            <div class="card-title">Hướng dẫn kết nối Shopee</div>
+            <div class="card-title" data-i18n="connect.guide.shopee">Hướng dẫn kết nối Shopee</div>
             <ol style="color:var(--text-secondary);font-size:13px;line-height:2;padding-left:20px">
               <li>Đăng nhập <strong>open.shopee.com</strong> → <strong>My Apps → Create App</strong></li>
               <li>Trong App Settings, thêm Redirect URL: <code id="shopeeOauthRedirectUri">—</code></li>
@@ -1882,16 +1882,16 @@ $initials = strtoupper(substr($user, 0, 2));
                   <thead>
                     <tr>
                       <th>Shop</th>
-                      <th style="width:80px">Khu vực</th>
-                      <th style="width:100px">Trạng thái</th>
-                      <th style="width:140px">Token hết hạn</th>
-                      <th style="width:140px">Đồng bộ lần cuối</th>
-                      <th style="width:110px">Từ ngày</th>
-                      <th style="width:120px">Thao tác</th>
+                      <th style="width:80px" data-i18n="th.region">Khu vực</th>
+                      <th style="width:100px" data-i18n="th.status">Trạng thái</th>
+                      <th style="width:140px" data-i18n="th.token_expires">Token hết hạn</th>
+                      <th style="width:140px" data-i18n="th.last_synced">Đồng bộ lần cuối</th>
+                      <th style="width:110px" data-i18n="th.from_date">Từ ngày</th>
+                      <th style="width:120px" data-i18n="th.actions">Thao tác</th>
                     </tr>
                   </thead>
                   <tbody id="shopsTableBody">
-                    <tr><td colspan="7" style="text-align:center;padding:32px;color:var(--text-muted)">Đang tải...</td></tr>
+                    <tr><td colspan="7" style="text-align:center;padding:32px;color:var(--text-muted)" data-i18n="msg.loading">Đang tải...</td></tr>
                   </tbody>
                 </table>
               </div>
@@ -1901,7 +1901,7 @@ $initials = strtoupper(substr($user, 0, 2));
 
           <!-- How to guide TikTok -->
           <div class="card mt-4" style="background:var(--bg-base)">
-            <div class="card-title">Hướng dẫn kết nối TikTok Shop</div>
+            <div class="card-title" data-i18n="connect.guide.tiktok">Hướng dẫn kết nối TikTok Shop</div>
             <ol style="color:var(--text-secondary);font-size:13px;line-height:2;padding-left:20px">
               <li>Đăng ký tài khoản <strong>TikTok Shop Partner Center</strong> tại <code>partner.tiktokshop.com</code></li>
               <li>Vào <strong>App &amp; Service → Create app &amp; service</strong>, tạo Custom App</li>
@@ -1958,17 +1958,17 @@ $initials = strtoupper(substr($user, 0, 2));
               <table id="lazadaAccountsTable">
                 <thead>
                   <tr>
-                    <th>Tài khoản</th>
-                    <th style="width:80px">Quốc gia</th>
-                    <th style="width:100px">Trạng thái</th>
-                    <th style="width:140px">Token hết hạn</th>
-                    <th style="width:140px">Đồng bộ lần cuối</th>
-                    <th style="width:110px">Từ ngày</th>
-                    <th style="width:120px">Thao tác</th>
+                    <th data-i18n="th.account">Tài khoản</th>
+                    <th style="width:80px" data-i18n="th.country">Quốc gia</th>
+                    <th style="width:100px" data-i18n="th.status">Trạng thái</th>
+                    <th style="width:140px" data-i18n="th.token_expires">Token hết hạn</th>
+                    <th style="width:140px" data-i18n="th.last_synced">Đồng bộ lần cuối</th>
+                    <th style="width:110px" data-i18n="th.from_date">Từ ngày</th>
+                    <th style="width:120px" data-i18n="th.actions">Thao tác</th>
                   </tr>
                 </thead>
                 <tbody id="lazadaAccountsTableBody">
-                  <tr><td colspan="7" style="text-align:center;padding:32px;color:var(--text-muted)">Đang tải...</td></tr>
+                  <tr><td colspan="7" style="text-align:center;padding:32px;color:var(--text-muted)" data-i18n="msg.loading">Đang tải...</td></tr>
                 </tbody>
               </table>
             </div>
@@ -1977,7 +1977,7 @@ $initials = strtoupper(substr($user, 0, 2));
 
           <!-- How to guide Lazada -->
           <div class="card mt-4" style="background:var(--bg-base)">
-            <div class="card-title">Hướng dẫn kết nối Lazada</div>
+            <div class="card-title" data-i18n="connect.guide.lazada">Hướng dẫn kết nối Lazada</div>
             <ol style="color:var(--text-secondary);font-size:13px;line-height:2;padding-left:20px">
               <li>Đăng nhập <strong>open.lazada.com</strong> → <strong>App Console → Create App</strong></li>
               <li>Trong phần App Settings, thêm Redirect URL: <code id="lazadaOauthRedirectUri">—</code></li>
@@ -2008,7 +2008,7 @@ $initials = strtoupper(substr($user, 0, 2));
             </label>
           </div>
           <div id="langListContent">
-            <div style="text-align:center;padding:24px;color:var(--text-muted)">Đang tải...</div>
+            <div style="text-align:center;padding:24px;color:var(--text-muted)" data-i18n="msg.loading">Đang tải...</div>
           </div>
           <div style="margin-top:14px;font-size:12px;color:var(--text-muted)">
             <svg class="inline-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 15h6"/><path d="M9 18h6"/></svg>
@@ -2028,29 +2028,29 @@ $initials = strtoupper(substr($user, 0, 2));
         <!-- System info -->
         <div class="card mb-4">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-            <div class="card-title" style="margin-bottom:0">Thông tin hệ thống</div>
+            <div class="card-title" style="margin-bottom:0" data-i18n="system.info.title">Thông tin hệ thống</div>
             <button id="btnRefreshSysInfo" class="btn btn-secondary btn-sm">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 0 1-15.5 6.2"/><path d="M3 12A9 9 0 0 1 18.5 5.8"/><path d="M18 2v5h-5"/><path d="M6 22v-5h5"/></svg>
               Làm mới
             </button>
           </div>
           <div id="sysInfoContent">
-            <div style="text-align:center;padding:32px;color:var(--text-muted)">Đang tải...</div>
+            <div style="text-align:center;padding:32px;color:var(--text-muted)" data-i18n="msg.loading">Đang tải...</div>
           </div>
         </div>
 
         <!-- Data stats -->
         <div class="card mb-4">
-          <div class="card-title">Thống kê dữ liệu</div>
+          <div class="card-title" data-i18n="system.data_stats.title">Thống kê dữ liệu</div>
           <div id="dataStatsContent">
-            <div style="text-align:center;padding:24px;color:var(--text-muted)">Đang tải...</div>
+            <div style="text-align:center;padding:24px;color:var(--text-muted)" data-i18n="msg.loading">Đang tải...</div>
           </div>
         </div>
 
         <!-- Auto update -->
         <div class="card mb-4">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-            <div class="card-title" style="margin-bottom:0">Cập nhật tự động</div>
+            <div class="card-title" style="margin-bottom:0" data-i18n="system.update.title">Cập nhật tự động</div>
             <button id="btnCheckUpdateNow" class="btn btn-secondary btn-sm">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 0 1-15.5 6.2"/><path d="M3 12A9 9 0 0 1 18.5 5.8"/><path d="M18 2v5h-5"/><path d="M6 22v-5h5"/></svg>
               Kiểm tra ngay
@@ -2074,7 +2074,7 @@ $initials = strtoupper(substr($user, 0, 2));
           </div>
 
           <div id="updateStatusPanel">
-            <div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px">Đang tải...</div>
+            <div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px" data-i18n="msg.loading">Đang tải...</div>
           </div>
         </div><!-- /auto update -->
 
@@ -2097,24 +2097,24 @@ $initials = strtoupper(substr($user, 0, 2));
           </div>
 
           <div class="reconcile-settings-summary" id="brandSettingsSummary">
-            <span class="reconcile-settings-chip">Đang tải quy ước thương hiệu...</span>
+            <span class="reconcile-settings-chip" data-i18n="brand.loading">Đang tải quy ước thương hiệu...</span>
           </div>
 
           <div class="brand-settings-toolbar">
-            <button id="btnAddBrandRuleRow" class="btn btn-primary btn-sm">Thêm dòng</button>
+            <button id="btnAddBrandRuleRow" class="btn btn-primary btn-sm" data-i18n="brand.btn.add_row">Thêm dòng</button>
           </div>
 
           <div class="table-wrapper">
             <table class="reconcile-settings-table brand-settings-table">
               <thead>
                 <tr>
-                  <th>Mã SKU 3 ký tự</th>
-                  <th>Tên thương hiệu</th>
-                  <th>Thao tác</th>
+                  <th data-i18n="brand.th.sku_code">Mã SKU 3 ký tự</th>
+                  <th data-i18n="brand.th.brand_name">Tên thương hiệu</th>
+                  <th data-i18n="th.actions">Thao tác</th>
                 </tr>
               </thead>
               <tbody id="brandRuleTableBody">
-                <tr><td colspan="3" class="reconcile-settings-empty">Đang tải dữ liệu...</td></tr>
+                <tr><td colspan="3" class="reconcile-settings-empty" data-i18n="msg.loading">Đang tải dữ liệu...</td></tr>
               </tbody>
             </table>
           </div>
