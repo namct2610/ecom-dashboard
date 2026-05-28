@@ -1,7 +1,7 @@
 {
-  "version": "1.5.17",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.5.17/release/dashboard-v3-1.5.17.zip",
-  "changelog": "- Bản chính: dịch nhãn Doanh số / Lượt truy cập trong phần Kế hoạch theo ngôn ngữ\n- Dịch các chuỗi còn hardcode trong app.js (đối soát GBS, filter analytics, confirm kỳ)\n- Thêm data-i18n cho các tiêu đề bảng và loading placeholder trong index.php",
+  "version": "1.5.18",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.5.18/release/dashboard-v3-1.5.18.zip",
+  "changelog": "- So sánh năm: dùng cùng kỳ YTD thay vì cả năm trước (Jan–May 28, 2025 khi xem 2026 vào ngày 28.5)\n- Năm đã qua: so sánh full year vs full year như cũ\n- Nhãn KPI compare hiển thị 'so với cùng kỳ năm trước' khi ở chế độ năm",
   "min_php": "8.1",
   "released_at": "2026-05-28"
 }

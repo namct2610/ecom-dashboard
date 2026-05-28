@@ -346,7 +346,27 @@ function previousFilterParams() {
   }
 
   if (App.mode === 'year' && /^\d{4}$/.test(App.period || '')) {
-    return { mode: 'year', period: String(Number(App.period) - 1), platform, view_mode: viewMode };
+    const year     = Number(App.period);
+    const prevYear = year - 1;
+    const today    = new Date();
+
+    // For the current (or future) year, the effective "to" date is today.
+    // For a fully-elapsed past year, the effective "to" date is Dec 31 of that year.
+    const effectiveTo = year >= today.getFullYear()
+      ? today
+      : new Date(year, 11, 31);   // Dec 31
+
+    // Mirror the same month-day boundary one year earlier so we compare
+    // like-for-like YTD windows (e.g. Jan 1 – May 28, 2025 when viewing 2026).
+    const prevFrom = new Date(prevYear, 0, 1);  // Jan 1 prev year
+    const prevTo   = new Date(prevYear, effectiveTo.getMonth(), effectiveTo.getDate());
+
+    return {
+      date_from: _isoDate(prevFrom),
+      date_to:   _isoDate(prevTo),
+      platform,
+      view_mode: viewMode,
+    };
   }
 
   if (App.mode === 'month' && /^\d{4}-\d{2}$/.test(App.period || '')) {
@@ -385,10 +405,13 @@ function setKpiCompare(valueSelector, current, previous, lowerIsBetter = false) 
     valueEl.insertAdjacentElement('afterend', el);
   }
   const info = compareKpi(current, previous, lowerIsBetter);
+  // For year mode the comparison is YTD-vs-YTD in the previous year,
+  // so use a more descriptive label.
+  const cmpLabelKey = App.mode === 'year' ? 'kpi.compare.ytd_prev_year' : 'kpi.compare.previous';
   el.className = `kpi-compare ${info.cls}`;
   el.innerHTML = info.pct === null
     ? `<span class="kpi-cmp-label">${t('kpi.compare.no_previous')}</span>`
-    : `<span class="kpi-cmp-pct">${info.arrow} ${Math.abs(info.pct).toFixed(1)}%</span><span class="kpi-cmp-label">${t('kpi.compare.previous')}</span>`;
+    : `<span class="kpi-cmp-pct">${info.arrow} ${Math.abs(info.pct).toFixed(1)}%</span><span class="kpi-cmp-label">${t(cmpLabelKey)}</span>`;
 }
 
 // Generic fetch with CSRF (for endpoints that don't need dashboard filter params)
