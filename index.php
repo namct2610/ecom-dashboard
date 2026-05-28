@@ -1007,44 +1007,44 @@ $initials = strtoupper(substr($user, 0, 2));
         <div class="card mb-4" id="reconcileSettingsCard">
           <div class="reconcile-settings-head">
             <div>
-              <div class="card-title" style="margin-bottom:4px">SKU lẻ</div>
-              <div class="card-subtitle">Mã SKU đơn lẻ với tên, thương hiệu và giá gốc. Giá gốc dùng để phân bổ doanh thu khi tách combo về SKU đơn lẻ. Có thể thêm/sửa trực tiếp hoặc Import từ Excel (sau import dữ liệu nằm trong database).</div>
+              <div class="card-title" style="margin-bottom:4px" data-i18n="reconcile.price.title">SKU lẻ</div>
+              <div class="card-subtitle" data-i18n="reconcile.price.sub">Mã SKU đơn lẻ với tên, thương hiệu và giá gốc. Giá gốc dùng để phân bổ doanh thu khi tách combo về SKU đơn lẻ. Có thể thêm/sửa trực tiếp hoặc Import từ Excel.</div>
             </div>
             <div class="reconcile-settings-actions">
-              <button class="btn btn-secondary btn-sm js-reload-reconcile">Tải lại</button>
-              <button class="btn btn-primary btn-sm js-save-reconcile">Lưu thay đổi</button>
+              <button class="btn btn-secondary btn-sm js-reload-reconcile" data-i18n="reconcile.btn.reload">Tải lại</button>
+              <button class="btn btn-primary btn-sm js-save-reconcile" data-i18n="reconcile.btn.save">Lưu thay đổi</button>
             </div>
           </div>
 
           <div class="reconcile-settings-summary" id="reconcileSettingsSummary">
-            <span class="reconcile-settings-chip">Đang tải dữ liệu...</span>
+            <span class="reconcile-settings-chip" data-i18n="reconcile.loading">Đang tải dữ liệu...</span>
           </div>
 
           <section class="reconcile-settings-panel">
             <div class="reconcile-settings-panel-head">
               <div>
-                <h3>Danh sách SKU lẻ</h3>
-                <p>Mã SKU lẻ với tên, thương hiệu và giá gốc.</p>
+                <h3 data-i18n="reconcile.price.panel_title">Danh sách SKU lẻ</h3>
+                <p data-i18n="reconcile.price.panel_sub">Mã SKU lẻ với tên, thương hiệu và giá gốc.</p>
               </div>
               <div class="reconcile-settings-panel-actions">
-                <button class="btn btn-secondary btn-sm js-import-prices" title="Import lần đầu hoặc cập nhật hàng loạt từ Excel; dữ liệu được lưu vào database">Import Excel</button>
-                <button class="btn btn-primary btn-sm js-add-price-row">Thêm dòng</button>
+                <button class="btn btn-secondary btn-sm js-import-prices" title="Import lần đầu hoặc cập nhật hàng loạt từ Excel; dữ liệu được lưu vào database" data-i18n="reconcile.btn.import_excel" data-i18n-title="reconcile.btn.import_title">Import Excel</button>
+                <button class="btn btn-primary btn-sm js-add-price-row" data-i18n="reconcile.btn.add_row">Thêm dòng</button>
               </div>
             </div>
-            <div class="reconcile-settings-hint">Excel cần có cột: <code>SKU</code>, <code>Tên sản phẩm</code>, <code>Thương hiệu</code> (tuỳ chọn), <code>Đơn giá</code>.</div>
+            <div class="reconcile-settings-hint" data-i18n="reconcile.price.hint">Excel cần có cột: SKU, Tên sản phẩm, Thương hiệu (tuỳ chọn), Đơn giá.</div>
             <div class="table-wrapper">
               <table class="reconcile-settings-table">
                 <thead>
                   <tr>
-                    <th>SKU lẻ</th>
-                    <th>Tên sản phẩm</th>
-                    <th>Thương hiệu</th>
-                    <th class="text-right">Đơn giá</th>
-                    <th>Thao tác</th>
+                    <th data-i18n="reconcile.th.single_sku">SKU lẻ</th>
+                    <th data-i18n="reconcile.th.product_name">Tên sản phẩm</th>
+                    <th data-i18n="reconcile.th.brand">Thương hiệu</th>
+                    <th class="text-right" data-i18n="reconcile.th.unit_price">Đơn giá</th>
+                    <th data-i18n="reconcile.th.actions">Thao tác</th>
                   </tr>
                 </thead>
                 <tbody id="reconcilePriceTableBody">
-                  <tr><td colspan="5" class="reconcile-settings-empty">Đang tải dữ liệu...</td></tr>
+                  <tr><td colspan="5" class="reconcile-settings-empty" data-i18n="reconcile.loading">Đang tải dữ liệu...</td></tr>
                 </tbody>
               </table>
             </div>
@@ -1068,45 +1068,45 @@ $initials = strtoupper(substr($user, 0, 2));
         <div class="card mb-4" id="reconcileSettingsLinkCard">
           <div class="reconcile-settings-head">
             <div>
-              <div class="card-title" style="margin-bottom:4px">Liên kết COMBO ↔ SKU</div>
-              <div class="card-subtitle">Một COMBO có thể quy đổi sang nhiều SKU lẻ khác nhau. Số lượng quy đổi dùng để bóc tách qty bán ra; doanh thu phân bổ theo tỉ lệ giá gốc × qty của từng SKU thành phần. Có thể thêm/sửa trực tiếp hoặc Import từ Excel.</div>
+              <div class="card-title" style="margin-bottom:4px" data-i18n="reconcile.combo.title">Liên kết COMBO ↔ SKU</div>
+              <div class="card-subtitle" data-i18n="reconcile.combo.sub">Một COMBO có thể quy đổi sang nhiều SKU lẻ khác nhau. Số lượng quy đổi dùng để bóc tách qty bán ra; doanh thu phân bổ theo tỉ lệ giá gốc × qty của từng SKU thành phần. Có thể thêm/sửa trực tiếp hoặc Import từ Excel.</div>
             </div>
             <div class="reconcile-settings-actions">
-              <button class="btn btn-secondary btn-sm js-reload-reconcile">Tải lại</button>
-              <button class="btn btn-primary btn-sm js-save-reconcile">Lưu thay đổi</button>
+              <button class="btn btn-secondary btn-sm js-reload-reconcile" data-i18n="reconcile.btn.reload">Tải lại</button>
+              <button class="btn btn-primary btn-sm js-save-reconcile" data-i18n="reconcile.btn.save">Lưu thay đổi</button>
             </div>
           </div>
 
           <div class="reconcile-settings-summary" id="reconcileSettingsLinkSummary">
-            <span class="reconcile-settings-chip">Đang tải dữ liệu...</span>
+            <span class="reconcile-settings-chip" data-i18n="reconcile.loading">Đang tải dữ liệu...</span>
           </div>
 
           <section class="reconcile-settings-panel">
             <div class="reconcile-settings-panel-head">
               <div>
-                <h3>Liên kết COMBO ↔ SKU</h3>
-                <p>Một SKU combo có thể liên kết nhiều SKU lẻ thực tế, mỗi SKU con có số lượng quy đổi riêng.</p>
+                <h3 data-i18n="reconcile.combo.panel_title">Liên kết COMBO ↔ SKU</h3>
+                <p data-i18n="reconcile.combo.panel_sub">Một SKU combo có thể liên kết nhiều SKU lẻ thực tế, mỗi SKU con có số lượng quy đổi riêng.</p>
               </div>
               <div class="reconcile-settings-panel-actions">
-                <button class="btn btn-secondary btn-sm js-import-combos" title="Import lần đầu hoặc cập nhật hàng loạt từ Excel; dữ liệu được lưu vào database">Import Excel</button>
-                <button class="btn btn-primary btn-sm js-add-combo-row">Thêm combo</button>
+                <button class="btn btn-secondary btn-sm js-import-combos" title="Import lần đầu hoặc cập nhật hàng loạt từ Excel; dữ liệu được lưu vào database" data-i18n="reconcile.btn.import_excel" data-i18n-title="reconcile.btn.import_title">Import Excel</button>
+                <button class="btn btn-primary btn-sm js-add-combo-row" data-i18n="reconcile.btn.add_combo">Thêm combo</button>
               </div>
             </div>
-            <div class="reconcile-settings-hint">Excel cần có cột: <code>SKU Sản phẩm</code> (combo), kèm các cặp <code>Sản phẩm quy đổi N</code> + <code>Số lượng sản phẩm N</code>.</div>
+            <div class="reconcile-settings-hint" data-i18n="reconcile.combo.hint">Excel cần có cột: SKU Sản phẩm (combo), kèm các cặp Sản phẩm quy đổi N + Số lượng sản phẩm N.</div>
             <div class="table-wrapper">
               <table class="reconcile-settings-table">
                 <thead>
                   <tr>
-                    <th>Sàn</th>
-                    <th>SKU combo</th>
-                    <th>Tên / từ khóa combo</th>
-                    <th>SKU sản phẩm trong danh sách</th>
-                    <th class="text-right">SL trong combo</th>
-                    <th>Thao tác</th>
+                    <th data-i18n="reconcile.th.platform">Sàn</th>
+                    <th data-i18n="reconcile.th.combo_sku">SKU combo</th>
+                    <th data-i18n="reconcile.th.combo_name">Tên / từ khóa combo</th>
+                    <th data-i18n="reconcile.th.product_sku">SKU sản phẩm trong danh sách</th>
+                    <th class="text-right" data-i18n="reconcile.th.qty_in_combo">SL trong combo</th>
+                    <th data-i18n="reconcile.th.actions">Thao tác</th>
                   </tr>
                 </thead>
                 <tbody id="reconcileComboTableBody">
-                  <tr><td colspan="6" class="reconcile-settings-empty">Đang tải dữ liệu...</td></tr>
+                  <tr><td colspan="6" class="reconcile-settings-empty" data-i18n="reconcile.loading">Đang tải dữ liệu...</td></tr>
                 </tbody>
               </table>
               <datalist id="reconcileProductSkuOptions"></datalist>
