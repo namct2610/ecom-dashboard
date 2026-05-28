@@ -319,7 +319,9 @@
   "cl.views":       "Lượt xem",
   "cl.visits":      "Lượt truy cập",
   "cl.no_data":     "Không có dữ liệu",
-  "cl.other":       "Khác",
+  "cl.other":            "Khác",
+  "cl.other_provinces":  "Tỉnh / TP khác",
+  "cl.lazada_excluded":  "% tính trên đơn có địa chỉ (không tính Lazada)",
   "cl.orders_unit": "đơn",
   "cl.cancelled":   "Đã huỷ",
 

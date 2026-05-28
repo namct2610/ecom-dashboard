@@ -1,7 +1,7 @@
 {
-  "version": "1.5.18",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.5.18/release/dashboard-v3-1.5.18.zip",
-  "changelog": "- So sánh năm: dùng cùng kỳ YTD thay vì cả năm trước (Jan–May 28, 2025 khi xem 2026 vào ngày 28.5)\n- Năm đã qua: so sánh full year vs full year như cũ\n- Nhãn KPI compare hiển thị 'so với cùng kỳ năm trước' khi ở chế độ năm",
+  "version": "1.5.19",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.5.19/release/dashboard-v3-1.5.19.zip",
+  "changelog": "- Sửa Top Location: % tính trên đơn có địa chỉ (không tính Lazada) thay vì toàn bộ đơn\n- Hiển thị thêm card 'Tỉnh / TP khác' với % còn lại để tổng rõ ràng hơn\n- API trả về city_total, city_others_orders, city_others_pct",
   "min_php": "8.1",
   "released_at": "2026-05-28"
 }

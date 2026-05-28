@@ -52,6 +52,12 @@ function build_customers_overview(PDO $pdo): array
         'revenue'        => (float) $row['revenue'],
     ], $buyerStmt->fetchAll());
 
+    // Total orders that actually carry city data (Lazada excluded — no address data)
+    $totalWithCity = (int) $pdo->query("
+        SELECT COUNT(*) FROM tmp_customer_orders
+        WHERE shipping_city != '' AND platform != 'lazada'
+    ")->fetchColumn();
+
     $cityStmt = $pdo->query("
         SELECT shipping_city AS city,
                COUNT(*) AS orders,
@@ -64,12 +70,15 @@ function build_customers_overview(PDO $pdo): array
     ");
     $cities = $cityStmt->fetchAll();
 
-    $totalOrders = (int) ($summary['total_orders'] ?? 0);
+    // Orders not captured by the top-12 list (remaining provinces)
+    $topCityOrders  = array_sum(array_column($cities, 'orders'));
+    $othersOrders   = max(0, $totalWithCity - $topCityOrders);
+
     $cityList = array_map(static fn(array $c): array => [
         'city'       => (string) $c['city'],
         'orders'     => (int) $c['orders'],
         'revenue'    => (float) $c['revenue'],
-        'percentage' => $totalOrders > 0 ? round(((int) $c['orders']) / $totalOrders * 100, 1) : 0,
+        'percentage' => $totalWithCity > 0 ? round(((int) $c['orders']) / $totalWithCity * 100, 1) : 0,
     ], $cities);
 
     $hcmStmt = $pdo->query("
@@ -157,7 +166,10 @@ function build_customers_overview(PDO $pdo): array
             'potential_buyers' => (int) ($pot['potential_buyers'] ?? 0),
         ],
         'buyer_stats'       => $buyerStats,
-        'city_distribution' => $cityList,
+        'city_distribution'   => $cityList,
+        'city_total'          => $totalWithCity,
+        'city_others_orders'  => $othersOrders,
+        'city_others_pct'     => $totalWithCity > 0 ? round($othersOrders / $totalWithCity * 100, 1) : 0,
         'hcm_districts'     => $hcmStmt->fetchAll(),
         'hanoi_districts'   => $hanoiStmt->fetchAll(),
         'payment_methods'   => $payStmt->fetchAll(),
