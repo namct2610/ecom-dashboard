@@ -1,7 +1,7 @@
 {
-  "version": "1.5.15",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.5.15/release/dashboard-v3-1.5.15.zip",
-  "changelog": "- Bổ sung hệ thống i18n cho beta: hỗ trợ chuyển đổi Tiếng Việt / English\n- So sánh KPI với kỳ trước thực tế từ database\n- Cải thiện hiển thị % tăng/giảm: mũi tên màu xanh/đỏ, text phụ nhỏ hơn",
+  "version": "1.5.16",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.5.16/release/dashboard-v3-1.5.16.zip",
+  "changelog": "- Bản chính: sửa hiển thị so sánh KPI với kỳ trước (% nổi bật hơn, text nhỏ hơn)\n- Bổ sung tiếng Anh cho phần Đối soát GBS và các nhãn còn hardcode trong app.js",
   "min_php": "8.1",
   "released_at": "2026-05-28"
 }

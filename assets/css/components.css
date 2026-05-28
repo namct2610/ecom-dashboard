@@ -68,6 +68,21 @@
 .kpi-compare.is-up { color: var(--completed); }
 .kpi-compare.is-down { color: var(--cancelled); }
 .kpi-compare.is-flat { color: var(--text-muted); }
+.kpi-cmp-pct {
+  font-size: 13px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.kpi-compare.is-up   .kpi-cmp-pct { color: var(--completed); }
+.kpi-compare.is-down .kpi-cmp-pct { color: var(--cancelled); }
+.kpi-compare.is-flat .kpi-cmp-pct { color: var(--text-muted); }
+.kpi-cmp-label {
+  font-size: 10.5px;
+  font-weight: 500;
+  color: var(--text-muted);
+  opacity: 0.85;
+  margin-left: 4px;
+}
 
 /* ── Pager ───────────────────────────────────────────────────────────────── */
 .pager {

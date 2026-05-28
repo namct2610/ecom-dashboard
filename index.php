@@ -1139,43 +1139,43 @@ $initials = strtoupper(substr($user, 0, 2));
           <section class="card reconcile-upload-card">
             <div class="reconcile-section-head reconcile-section-head-compact">
               <div>
-                <div class="reconcile-kicker">Kho GBS</div>
-                <div class="card-title">Upload file GBS theo tháng</div>
-                <div class="card-subtitle">GBS quản lý riêng theo file tháng. Dữ liệu sàn lấy trực tiếp từ `orders`, không cần upload lại.</div>
+                <div class="reconcile-kicker" data-i18n="gbs.kicker.period">Kho GBS</div>
+                <div class="card-title" data-i18n="gbs.upload.title">Upload file GBS theo tháng</div>
+                <div class="card-subtitle" data-i18n="gbs.upload.sub">GBS quản lý riêng theo file tháng. Dữ liệu sàn lấy trực tiếp từ `orders`, không cần upload lại.</div>
               </div>
               <button type="button" class="btn" id="btnReconcileUploadPrimary">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5-5 5 5"/><path d="M12 5v12"/></svg>
                 Thêm file GBS
               </button>
             </div>
-            <div class="reconcile-upload-status" id="reconcileUploadStatus">Chưa có file GBS nào trong kho đối soát.</div>
+            <div class="reconcile-upload-status" id="reconcileUploadStatus" data-i18n="gbs.upload.empty">Chưa có file GBS nào trong kho đối soát.</div>
             <div class="reconcile-source-grid">
               <div class="reconcile-source-chip">
                 <span class="badge badge-gbs">GBS</span>
                 <div>
-                  <strong>File tháng</strong>
-                  <span>Tự nhận diện theo `Thời gian đối soát`, lưu nhiều file và xoá khi không còn dùng.</span>
+                  <strong data-i18n="gbs.upload.note.file_month">File tháng</strong>
+                  <span data-i18n="gbs.upload.note.file_month_desc">Tự nhận diện theo `Thời gian đối soát`, lưu nhiều file và xoá khi không còn dùng.</span>
                 </div>
               </div>
               <div class="reconcile-source-chip">
                 <span class="badge badge-shopee">Shopee</span>
                 <div>
-                  <strong>Nguồn orders chung</strong>
-                  <span>Khớp tháng theo `Thời gian hoàn thành đơn hàng`.</span>
+                  <strong data-i18n="gbs.upload.note.platform_source">Nguồn orders chung</strong>
+                  <span data-i18n="gbs.upload.note.shopee_source">Khớp tháng theo `Thời gian hoàn thành đơn hàng`.</span>
                 </div>
               </div>
               <div class="reconcile-source-chip">
                 <span class="badge badge-lazada">Lazada</span>
                 <div>
-                  <strong>Nguồn orders chung</strong>
-                  <span>Khớp tháng theo `ttsSla` đã đồng bộ vào hệ thống.</span>
+                  <strong data-i18n="gbs.upload.note.platform_source">Nguồn orders chung</strong>
+                  <span data-i18n="gbs.upload.note.lazada_source">Khớp tháng theo `ttsSla` đã đồng bộ vào hệ thống.</span>
                 </div>
               </div>
               <div class="reconcile-source-chip">
                 <span class="badge badge-tiktokshop">TikTok Shop</span>
                 <div>
-                  <strong>Đối chiếu mã đơn</strong>
-                  <span>Hiện ưu tiên khớp theo mã đơn vì chưa có mốc thời gian ổn định.</span>
+                  <strong data-i18n="gbs.upload.note.match_key">Đối chiếu mã đơn</strong>
+                  <span data-i18n="gbs.upload.note.match_key_desc">Hiện ưu tiên khớp theo mã đơn vì chưa có mốc thời gian ổn định.</span>
                 </div>
               </div>
             </div>
@@ -1184,17 +1184,17 @@ $initials = strtoupper(substr($user, 0, 2));
           <section class="card reconcile-control-card">
             <div class="reconcile-section-head reconcile-section-head-compact">
               <div>
-                <div class="reconcile-kicker">Kỳ Đối Soát</div>
-                <div class="card-title">Tháng đang xem</div>
-                <div class="card-subtitle">Chọn tháng GBS để xác nhận kỳ và xuất danh sách đơn lệch.</div>
+                <div class="reconcile-kicker" data-i18n="gbs.kicker.period">Kỳ Đối Soát</div>
+                <div class="card-title" data-i18n="gbs.period.title">Tháng đang xem</div>
+                <div class="card-subtitle" data-i18n="gbs.period.sub">Chọn tháng GBS để xác nhận kỳ và xuất danh sách đơn lệch.</div>
               </div>
               <div class="reconcile-control-actions">
-                <button id="btnToggleReconcileMonthConfirm" class="btn btn-secondary" disabled>Xác nhận tháng</button>
-                <button id="btnExportReconcileUnmatched" class="btn btn-secondary" disabled>Xuất đơn chưa khớp</button>
+                <button id="btnToggleReconcileMonthConfirm" class="btn btn-secondary" disabled data-i18n="gbs.btn.confirm">Xác nhận tháng</button>
+                <button id="btnExportReconcileUnmatched" class="btn btn-secondary" disabled data-i18n="gbs.btn.export">Xuất đơn chưa khớp</button>
               </div>
             </div>
             <div id="reconcileSelectedMonthMeta" class="reconcile-current-month">
-              Chưa có tháng đối soát nào sẵn sàng.
+              <span data-i18n="gbs.empty.no_months">Chưa có tháng đối soát nào sẵn sàng.</span>
             </div>
           </section>
         </div>
@@ -1202,9 +1202,9 @@ $initials = strtoupper(substr($user, 0, 2));
         <div class="card">
           <div class="reconcile-section-head">
             <div>
-              <div class="reconcile-kicker">Các Kỳ GBS</div>
-              <div class="card-title">Danh sách tháng GBS</div>
-              <div class="card-subtitle">Hệ thống tự gom tháng từ toàn bộ file GBS, chọn nhanh từng kỳ để đối soát.</div>
+              <div class="reconcile-kicker" data-i18n="gbs.kicker.months">Các Kỳ GBS</div>
+              <div class="card-title" data-i18n="gbs.months.title">Danh sách tháng GBS</div>
+              <div class="card-subtitle" data-i18n="gbs.months.sub">Hệ thống tự gom tháng từ toàn bộ file GBS, chọn nhanh từng kỳ để đối soát.</div>
             </div>
             <div class="reconcile-managed-summary" id="reconcileManagedSummary">0 tháng</div>
           </div>
@@ -1213,20 +1213,20 @@ $initials = strtoupper(substr($user, 0, 2));
 
         <div class="card reconcile-hero-card">
           <div class="reconcile-hero-copy">
-            <div class="reconcile-kicker">Nguyên Tắc Khớp</div>
-            <h3>Đối soát GBS theo tháng trên cùng một nguồn dữ liệu đơn hàng</h3>
+            <div class="reconcile-kicker" data-i18n="gbs.kicker.rules">Nguyên Tắc Khớp</div>
+            <h3 data-i18n="gbs.rules.title">Đối soát GBS theo tháng trên cùng một nguồn dữ liệu đơn hàng</h3>
             <div class="reconcile-hero-points">
               <div class="reconcile-hero-point">
                 <strong>NMV</strong>
-                <span>Shopee khớp theo `Giá ưu đãi - Mã giảm giá của Shop` và chỉ trừ voucher shop 1 lần / đơn; GBS làm tròn tiền trước khi so sánh.</span>
+                <span data-i18n="gbs.rules.shopee">Shopee khớp theo `Giá ưu đãi - Mã giảm giá của Shop` và chỉ trừ voucher shop 1 lần / đơn; GBS làm tròn tiền trước khi so sánh.</span>
               </div>
               <div class="reconcile-hero-point">
                 <strong>Combo</strong>
-                <span>Quy đổi combo về SKU lẻ và phân bổ NMV bằng dữ liệu trong trang <strong>SKU & Combo</strong>.</span>
+                <span data-i18n="gbs.rules.combo">Quy đổi combo về SKU lẻ và phân bổ NMV bằng dữ liệu trong trang <strong>SKU & Combo</strong>.</span>
               </div>
               <div class="reconcile-hero-point">
-                <strong>Khóa khớp</strong>
-                <span>Đối chiếu theo `platform + order_id`, ưu tiên dữ liệu orders chung để tránh upload trùng.</span>
+                <strong data-i18n="gbs.rules.match_key">Khóa khớp</strong>
+                <span data-i18n="gbs.rules.match_key_desc">Đối chiếu theo `platform + order_id`, ưu tiên dữ liệu orders chung để tránh upload trùng.</span>
               </div>
             </div>
           </div>
@@ -1235,24 +1235,24 @@ $initials = strtoupper(substr($user, 0, 2));
 
         <div class="grid-4 reconcile-kpi-grid">
           <div class="kpi-card border-blue">
-            <div class="kpi-label">Đơn sàn trong phạm vi</div>
+            <div class="kpi-label" data-i18n="gbs.kpi.platform_orders">Đơn sàn trong phạm vi</div>
             <div class="kpi-value" id="reconcile-stat-platform-orders">0</div>
-            <div class="kpi-sub">Dữ liệu lấy từ bảng orders theo logic thời gian của từng sàn</div>
+            <div class="kpi-sub" data-i18n="gbs.kpi.platform_orders.sub">Dữ liệu lấy từ bảng orders theo logic thời gian của từng sàn</div>
           </div>
           <div class="kpi-card border-green">
-            <div class="kpi-label">Đơn giao nhau</div>
+            <div class="kpi-label" data-i18n="gbs.kpi.intersection">Đơn giao nhau</div>
             <div class="kpi-value" id="reconcile-stat-common-orders">0</div>
-            <div class="kpi-sub">Có mặt đồng thời trong GBS và dữ liệu sàn chung</div>
+            <div class="kpi-sub" data-i18n="gbs.kpi.intersection.sub">Có mặt đồng thời trong GBS và dữ liệu sàn chung</div>
           </div>
           <div class="kpi-card border-teal">
-            <div class="kpi-label">Đơn khớp</div>
+            <div class="kpi-label" data-i18n="gbs.kpi.matched">Đơn khớp</div>
             <div class="kpi-value" id="reconcile-stat-matched-orders">0</div>
-            <div class="kpi-sub">Khớp số lượng và NMV sau khi quy đổi</div>
+            <div class="kpi-sub" data-i18n="gbs.kpi.matched.sub">Khớp số lượng và NMV sau khi quy đổi</div>
           </div>
           <div class="kpi-card border-red">
-            <div class="kpi-label">Đơn cần xem</div>
+            <div class="kpi-label" data-i18n="gbs.kpi.review">Đơn cần xem</div>
             <div class="kpi-value" id="reconcile-stat-review-orders">0</div>
-            <div class="kpi-sub">Bao gồm đơn thiếu ở một phía hoặc lệch sau đối chiếu</div>
+            <div class="kpi-sub" data-i18n="gbs.kpi.review.sub">Bao gồm đơn thiếu ở một phía hoặc lệch sau đối chiếu</div>
           </div>
         </div>
 
@@ -1260,8 +1260,8 @@ $initials = strtoupper(substr($user, 0, 2));
           <div class="reconcile-section-head">
             <div>
               <div class="reconcile-kicker">Kho File</div>
-              <div class="card-title">Quản lý file GBS</div>
-              <div class="card-subtitle">Theo dõi file đã upload, tháng nhận diện được và xoá từng file sau khi hoàn tất đối soát.</div>
+              <div class="card-title" data-i18n="gbs.files.title">Quản lý file GBS</div>
+              <div class="card-subtitle" data-i18n="gbs.files.sub">Theo dõi file đã upload, tháng nhận diện được và xoá từng file sau khi hoàn tất đối soát.</div>
             </div>
             <div class="reconcile-managed-summary" id="reconcileManagedFileCount">0 file</div>
           </div>
@@ -1270,11 +1270,11 @@ $initials = strtoupper(substr($user, 0, 2));
               <thead>
                 <tr>
                   <th>File GBS</th>
-                  <th>Tháng nhận diện</th>
-                  <th>Cập nhật</th>
-                  <th class="text-right">Kích thước</th>
-                  <th class="text-right">Dòng / Đơn</th>
-                  <th>Thao tác</th>
+                  <th data-i18n="gbs.th.detected_month">Tháng nhận diện</th>
+                  <th data-i18n="gbs.th.updated">Cập nhật</th>
+                  <th class="text-right" data-i18n="gbs.th.size">Kích thước</th>
+                  <th class="text-right" data-i18n="gbs.th.rows_orders">Dòng / Đơn</th>
+                  <th data-i18n="gbs.th.actions">Thao tác</th>
                 </tr>
               </thead>
               <tbody id="reconcileManagedFilesTable"></tbody>
@@ -1285,22 +1285,22 @@ $initials = strtoupper(substr($user, 0, 2));
         <div class="card">
           <div class="reconcile-section-head">
             <div>
-              <div class="reconcile-kicker">Tổng Quan</div>
-              <div class="card-title">Tóm tắt theo sàn</div>
-              <div class="card-subtitle">So sánh nhanh số lượng đơn GBS và orders chung theo từng sàn trong tháng đã chọn.</div>
+              <div class="reconcile-kicker" data-i18n="gbs.kicker.summary">Tổng Quan</div>
+              <div class="card-title" data-i18n="gbs.summary.title">Tóm tắt theo sàn</div>
+              <div class="card-subtitle" data-i18n="gbs.summary.sub">So sánh nhanh số lượng đơn GBS và orders chung theo từng sàn trong tháng đã chọn.</div>
             </div>
           </div>
           <div class="table-wrapper">
             <table class="reconcile-table reconcile-summary-table">
               <thead>
                 <tr>
-                  <th>Sàn</th>
-                  <th>Đơn sàn</th>
-                  <th>Đơn GBS</th>
-                  <th>Đơn chung</th>
-                  <th>Đơn khớp</th>
-                  <th>Thiếu trong GBS</th>
-                  <th>Thiếu trong file sàn</th>
+                  <th data-i18n="th.platform">Sàn</th>
+                  <th data-i18n="gbs.th.platform_orders_col">Đơn sàn</th>
+                  <th data-i18n="gbs.th.gbs_orders">Đơn GBS</th>
+                  <th data-i18n="gbs.th.common_orders">Đơn chung</th>
+                  <th data-i18n="gbs.th.matched_orders">Đơn khớp</th>
+                  <th data-i18n="gbs.th.missing_in_gbs">Thiếu trong GBS</th>
+                  <th data-i18n="gbs.th.missing_in_platform">Thiếu trong file sàn</th>
                 </tr>
               </thead>
               <tbody id="reconcileSummaryBody"></tbody>
@@ -1312,7 +1312,7 @@ $initials = strtoupper(substr($user, 0, 2));
           <div class="reconcile-section-head">
             <div>
               <div class="reconcile-kicker">Cần Xử Lý</div>
-              <div class="card-title">Đơn sàn chưa khớp với GBS</div>
+              <div class="card-title" data-i18n="gbs.unmatched.title">Đơn sàn chưa khớp với GBS</div>
               <div class="card-subtitle">Gồm đơn thiếu ở GBS hoặc còn lệch số lượng / NMV. Có thể xuất toàn bộ danh sách theo tháng đang xem.</div>
             </div>
             <div class="reconcile-managed-summary" id="reconcileUnmatchedSummary">0 đơn</div>
@@ -1378,7 +1378,7 @@ $initials = strtoupper(substr($user, 0, 2));
           </div>
           <div class="analytics-filter-grid">
             <label class="analytics-filter-field">
-              <span>Sản phẩm</span>
+              <span data-i18n="th.product">Sản phẩm</span>
               <select id="analyticsProductFilter">
                 <option value="">Tất cả sản phẩm</option>
               </select>
