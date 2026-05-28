@@ -3028,6 +3028,20 @@ function renderReconcileSettingsSummary() {
   summaries.forEach(el => { el.innerHTML = html; });
 }
 
+function renderReconcileProductSkuOptions() {
+  const list = qs('#reconcileProductSkuOptions');
+  if (!list) return;
+
+  list.innerHTML = ReconcileSettingsState.prices
+    .filter(row => String(row.sku || '').trim())
+    .map(row => {
+      const sku = String(row.sku || '').trim().toUpperCase();
+      const name = String(row.product_name || '').trim();
+      return `<option value="${escHtml(sku)}">${escHtml(name || sku)}</option>`;
+    })
+    .join('');
+}
+
 function renderReconcilePriceRows(rows) {
   const tbody = qs('#reconcilePriceTableBody');
   if (!tbody) return;
@@ -3075,14 +3089,25 @@ function renderReconcileComboRows(rows) {
       </td>
       <td><input type="text" data-field="combo_sku" value="${escHtml(row.combo_sku || '')}" placeholder="SKU combo"></td>
       <td><input type="text" data-field="combo_name" value="${escHtml(row.combo_name || '')}" placeholder="Tên hoặc từ khóa combo"></td>
-      <td><input type="text" data-field="single_sku" value="${escHtml(row.single_sku || '')}" placeholder="SKU đơn GBS"></td>
+      <td>
+        <input type="text" data-field="single_sku" list="reconcileProductSkuOptions" value="${escHtml(row.single_sku || '')}" placeholder="Chọn SKU trong danh sách">
+        ${row.single_sku && !ReconcileSettingsState.prices.some(price => String(price.sku || '').trim().toUpperCase() === String(row.single_sku || '').trim().toUpperCase())
+          ? '<div class="reconcile-settings-warning">SKU này chưa có trong danh sách giá GBS.</div>'
+          : ''}
+      </td>
       <td><input type="number" min="0.0001" step="0.0001" data-field="single_qty" value="${escHtml(formatReconcileSettingValue(row.single_qty))}" placeholder="1"></td>
-      <td><button class="btn btn-secondary btn-sm" data-action="delete-reconcile-combo-row" data-index="${index}">Xoá</button></td>
+      <td>
+        <div class="reconcile-settings-row-actions">
+          <button class="btn btn-secondary btn-sm" data-action="add-reconcile-combo-child-row" data-index="${index}">+ SKU con</button>
+          <button class="btn btn-secondary btn-sm" data-action="delete-reconcile-combo-row" data-index="${index}">Xoá</button>
+        </div>
+      </td>
     </tr>
   `).join('');
 }
 
 function renderReconcileSettingsTables() {
+  renderReconcileProductSkuOptions();
   renderReconcilePriceRows(ReconcileSettingsState.prices);
   renderReconcileComboRows(ReconcileSettingsState.combos);
   renderReconcileSettingsSummary();
@@ -3278,6 +3303,20 @@ function addReconcileComboRow() {
   renderReconcileSettingsTables();
 }
 
+function addReconcileComboChildRow(index) {
+  if (!Number.isInteger(index) || index < 0) return;
+  syncReconcileSettingsStateFromDom();
+  const base = ReconcileSettingsState.combos[index] || makeEmptyReconcileComboRow();
+  ReconcileSettingsState.combos.splice(index + 1, 0, {
+    platform: base.platform || 'all',
+    combo_sku: base.combo_sku || '',
+    combo_name: base.combo_name || '',
+    single_sku: '',
+    single_qty: 1,
+  });
+  renderReconcileSettingsTables();
+}
+
 function deleteReconcilePriceRow(index) {
   if (!Number.isInteger(index) || index < 0) return;
   syncReconcileSettingsStateFromDom();
@@ -3358,6 +3397,11 @@ function bindReconcileSettingsCard() {
     const comboDeleteBtn = event.target.closest('[data-action="delete-reconcile-combo-row"]');
     if (comboDeleteBtn) {
       deleteReconcileComboRow(Number(comboDeleteBtn.dataset.index || -1));
+      return;
+    }
+    const comboChildBtn = event.target.closest('[data-action="add-reconcile-combo-child-row"]');
+    if (comboChildBtn) {
+      addReconcileComboChildRow(Number(comboChildBtn.dataset.index || -1));
     }
   });
 }

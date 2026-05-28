@@ -1085,7 +1085,7 @@ $initials = strtoupper(substr($user, 0, 2));
             <div class="reconcile-settings-panel-head">
               <div>
                 <h3>Liên kết COMBO ↔ SKU</h3>
-                <p>Mỗi dòng: 1 SKU combo trên sàn ⇒ 1 SKU lẻ thực tế + số lượng quy đổi.</p>
+                <p>Một SKU combo có thể liên kết nhiều SKU lẻ thực tế, mỗi SKU con có số lượng quy đổi riêng.</p>
               </div>
               <div class="reconcile-settings-panel-actions">
                 <button class="btn btn-secondary btn-sm js-import-combos" title="Import lần đầu hoặc cập nhật hàng loạt từ Excel; dữ liệu được lưu vào database">Import Excel</button>
@@ -1100,8 +1100,8 @@ $initials = strtoupper(substr($user, 0, 2));
                     <th>Sàn</th>
                     <th>SKU combo</th>
                     <th>Tên / từ khóa combo</th>
-                    <th>SKU đơn</th>
-                    <th class="text-right">SL quy đổi</th>
+                    <th>SKU sản phẩm trong danh sách</th>
+                    <th class="text-right">SL trong combo</th>
                     <th>Thao tác</th>
                   </tr>
                 </thead>
@@ -1109,6 +1109,7 @@ $initials = strtoupper(substr($user, 0, 2));
                   <tr><td colspan="6" class="reconcile-settings-empty">Đang tải dữ liệu...</td></tr>
                 </tbody>
               </table>
+              <datalist id="reconcileProductSkuOptions"></datalist>
             </div>
           </section>
 

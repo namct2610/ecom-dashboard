@@ -636,11 +636,38 @@ function PageProductCatalog({ data }) {
   const [message, setMessage] = React.useState('');
   const rows = tab === 'prices' ? prices : combos;
   const inputStyle = {width:'100%', minWidth:90, padding:'7px 8px', border:'1px solid var(--line)', borderRadius:8, background:'var(--surface)', color:'var(--ink)', font:'inherit', fontSize:12};
+  const skuOptions = React.useMemo(() => prices
+    .filter(p => String(p.sku || '').trim())
+    .map(p => ({sku: String(p.sku || '').trim().toUpperCase(), name: String(p.product_name || '').trim()})), [prices]);
+  const comboGroups = React.useMemo(() => {
+    const groups = [];
+    const byKey = new Map();
+    combos.forEach((row, index) => {
+      const key = [
+        String(row.platform || 'all').toLowerCase(),
+        String(row.combo_sku || '').trim().toUpperCase(),
+        String(row.combo_name || '').trim().toLowerCase(),
+      ].join('|');
+      if (!byKey.has(key)) {
+        byKey.set(key, {key, rows: [], indices: []});
+        groups.push(byKey.get(key));
+      }
+      byKey.get(key).rows.push(row);
+      byKey.get(key).indices.push(index);
+    });
+    return groups;
+  }, [combos]);
   const updatePrice = (idx, key, value) => setPrices(prices.map((r,i)=>i===idx ? {...r, [key]: key === 'unit_price' ? safeNum(value) : value} : r));
   const updateCombo = (idx, key, value) => setCombos(combos.map((r,i)=>i===idx ? {...r, [key]: key === 'single_qty' ? safeNum(value) : value} : r));
+  const updateComboGroup = (indices, key, value) => setCombos(combos.map((r,i)=>indices.includes(i) ? {...r, [key]: value} : r));
   const addRow = () => {
     if (tab === 'prices') setPrices([{sku:'', product_name:'', brand:'', unit_price:0}, ...prices]);
     else setCombos([{platform:'all', combo_sku:'', combo_name:'', single_sku:'', single_qty:1}, ...combos]);
+  };
+  const addSkuToCombo = (indices) => {
+    const last = Math.max(...indices);
+    const base = combos[indices[0]] || {platform:'all', combo_sku:'', combo_name:''};
+    setCombos([...combos.slice(0, last + 1), {...base, single_sku:'', single_qty:1}, ...combos.slice(last + 1)]);
   };
   const removeRow = (idx) => {
     if (tab === 'prices') setPrices(prices.filter((_, i) => i !== idx));
@@ -686,7 +713,7 @@ function PageProductCatalog({ data }) {
           </div>
           <div style={{display:'flex', gap:8, alignItems:'center', flexWrap:'wrap'}}>
             {message && <span style={{fontSize:11.5, fontWeight:700, color: message.includes('lưu') || message.includes('Đã') ? 'var(--green)' : 'var(--red)'}}>{message}</span>}
-            <button className="chip" onClick={addRow}>+ Thêm dòng</button>
+            <button className="chip" onClick={addRow}>{tab === 'prices' ? '+ Thêm SKU' : '+ Thêm combo'}</button>
             <button className="btn-primary" onClick={saveRows} disabled={saving} style={{boxShadow:'none', opacity:saving ? .65 : 1}}>{saving ? 'Đang lưu...' : 'Lưu'}</button>
             <div className="tabs">
               <button className={'tab '+(tab==='prices'?'active':'')} onClick={()=>setTab('prices')}>SKU giá GBS</button>
@@ -700,11 +727,11 @@ function PageProductCatalog({ data }) {
               {tab === 'prices' ? (
                 <tr><th>SKU</th><th>Tên sản phẩm</th><th>Brand</th><th className="num">Giá GBS</th><th></th></tr>
               ) : (
-                <tr><th>Sàn</th><th>SKU combo</th><th>Tên combo / từ khoá</th><th>SKU đơn</th><th className="num">SL quy đổi</th><th></th></tr>
+                <tr><th>Sàn</th><th>SKU combo</th><th>Tên combo / từ khoá</th><th>SKU sản phẩm trong danh sách</th><th className="num">SL trong combo</th><th></th></tr>
               )}
             </thead>
             <tbody>
-              {rows.length ? rows.slice(0, 120).map((r,i) => tab === 'prices' ? (
+              {tab === 'prices' && rows.length ? rows.slice(0, 120).map((r,i) => (
                 <tr key={`${r.sku}-${i}`}>
                   <td><input style={{...inputStyle, fontFamily:'JetBrains Mono, monospace', fontWeight:700}} value={r.sku || ''} onChange={e=>updatePrice(i, 'sku', e.target.value)}/></td>
                   <td><input style={inputStyle} value={r.product_name || ''} onChange={e=>updatePrice(i, 'product_name', e.target.value)}/></td>
@@ -712,27 +739,50 @@ function PageProductCatalog({ data }) {
                   <td className="num"><input style={{...inputStyle, textAlign:'right'}} type="number" min="0" value={r.unit_price || 0} onChange={e=>updatePrice(i, 'unit_price', e.target.value)}/></td>
                   <td className="num"><button className="chip" onClick={()=>removeRow(i)}>Xoá</button></td>
                 </tr>
-              ) : (
-                <tr key={`${r.platform}-${r.combo_sku}-${r.single_sku}-${i}`}>
-                  <td>
-                    <select style={inputStyle} value={r.platform || 'all'} onChange={e=>updateCombo(i, 'platform', e.target.value)}>
-                      <option value="all">Tất cả</option>
-                      <option value="shopee">Shopee</option>
-                      <option value="lazada">Lazada</option>
-                      <option value="tiktokshop">TikTok Shop</option>
-                    </select>
-                  </td>
-                  <td><input style={{...inputStyle, fontFamily:'JetBrains Mono, monospace', fontWeight:700}} value={r.combo_sku || ''} onChange={e=>updateCombo(i, 'combo_sku', e.target.value)}/></td>
-                  <td><input style={inputStyle} value={r.combo_name || ''} onChange={e=>updateCombo(i, 'combo_name', e.target.value)}/></td>
-                  <td><input style={{...inputStyle, fontFamily:'JetBrains Mono, monospace', fontWeight:700}} value={r.single_sku || ''} onChange={e=>updateCombo(i, 'single_sku', e.target.value)}/></td>
-                  <td className="num"><input style={{...inputStyle, textAlign:'right'}} type="number" min="0" step="0.0001" value={r.single_qty || 0} onChange={e=>updateCombo(i, 'single_qty', e.target.value)}/></td>
-                  <td className="num"><button className="chip" onClick={()=>removeRow(i)}>Xoá</button></td>
-                </tr>
-              )) : (
+              )) : null}
+              {tab === 'combos' && comboGroups.length ? comboGroups.slice(0, 80).flatMap(group => group.rows.map((r, childIndex) => {
+                const i = group.indices[childIndex];
+                const rowSpan = group.rows.length;
+                return (
+                  <tr key={`${group.key}-${i}`}>
+                    {childIndex === 0 && (
+                      <td rowSpan={rowSpan}>
+                        <select style={inputStyle} value={r.platform || 'all'} onChange={e=>updateComboGroup(group.indices, 'platform', e.target.value)}>
+                          <option value="all">Tất cả</option>
+                          <option value="shopee">Shopee</option>
+                          <option value="lazada">Lazada</option>
+                          <option value="tiktokshop">TikTok Shop</option>
+                        </select>
+                      </td>
+                    )}
+                    {childIndex === 0 && (
+                      <td rowSpan={rowSpan}><input style={{...inputStyle, fontFamily:'JetBrains Mono, monospace', fontWeight:700}} value={r.combo_sku || ''} onChange={e=>updateComboGroup(group.indices, 'combo_sku', e.target.value)} placeholder="SKU combo trên sàn"/></td>
+                    )}
+                    {childIndex === 0 && (
+                      <td rowSpan={rowSpan}>
+                        <input style={inputStyle} value={r.combo_name || ''} onChange={e=>updateComboGroup(group.indices, 'combo_name', e.target.value)} placeholder="Tên/từ khoá combo"/>
+                        <button className="chip" onClick={()=>addSkuToCombo(group.indices)} style={{marginTop:8, justifyContent:'center'}}>+ SKU con</button>
+                      </td>
+                    )}
+                    <td>
+                      <input list="betaProductSkuOptions" style={{...inputStyle, fontFamily:'JetBrains Mono, monospace', fontWeight:700}} value={r.single_sku || ''} onChange={e=>updateCombo(i, 'single_sku', e.target.value)} placeholder="Chọn SKU trong danh sách"/>
+                      {r.single_sku && !skuOptions.some(opt => opt.sku === String(r.single_sku || '').trim().toUpperCase()) && (
+                        <div style={{fontSize:10.5, color:'var(--amber)', marginTop:4, fontWeight:700}}>SKU này chưa có trong danh sách giá GBS</div>
+                      )}
+                    </td>
+                    <td className="num"><input style={{...inputStyle, textAlign:'right'}} type="number" min="0" step="0.0001" value={r.single_qty || 0} onChange={e=>updateCombo(i, 'single_qty', e.target.value)}/></td>
+                    <td className="num"><button className="chip" onClick={()=>removeRow(i)}>Xoá SKU</button></td>
+                  </tr>
+                );
+              })) : null}
+              {!rows.length ? (
                 <tr><td colSpan="6"><div className="empty-state">Chưa có dữ liệu cấu hình sản phẩm.</div></td></tr>
-              )}
+              ) : null}
             </tbody>
           </table>
+          <datalist id="betaProductSkuOptions">
+            {skuOptions.map(opt => <option key={opt.sku} value={opt.sku}>{opt.name || opt.sku}</option>)}
+          </datalist>
         </div>
       </div>
     </div>
