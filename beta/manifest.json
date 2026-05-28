@@ -1,8 +1,8 @@
 {
-  "version": "1.5.10",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.5.10/release/dashboard-v3-1.5.10.zip",
-  "changelog": "- Beta: tô màu chi tiết kế hoạch theo tỷ lệ đạt target và bỏ mục tiêu theo từng sàn\n- Beta: Radar 5 chỉ số đúng dạng ngũ giác, bỏ Tin cậy\n- Beta: TikTok chuyển sang màu nhận diện đen\n- Beta: đồng bộ chiều cao filter topbar và làm lại date picker\n- Beta: sửa lỗi hiển thị biểu đồ/gauge khách hàng",
+  "version": "1.5.11",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.5.11/release/dashboard-v3-1.5.11.zip",
+  "changelog": "- Beta: Danh sách sản phẩm nhóm Combo → nhiều SKU con, mỗi SKU có số lượng riêng\n- Beta: chọn SKU con trực tiếp từ danh sách SKU giá GBS và cảnh báo SKU chưa khai báo\n- Production UI: bổ sung nút thêm SKU con cùng combo trong trang SKU & Combo",
   "min_php": "8.1",
-  "released_at": "2026-05-27",
+  "released_at": "2026-05-28",
   "channel": "beta"
 }

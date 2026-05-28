@@ -504,6 +504,20 @@
   white-space: nowrap;
 }
 
+.reconcile-settings-warning {
+  margin-top: 5px;
+  color: #b45309;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.reconcile-settings-row-actions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
 .reconcile-settings-empty {
   padding: 22px 16px;
   text-align: center;
