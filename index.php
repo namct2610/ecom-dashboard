@@ -1089,7 +1089,7 @@ $initials = strtoupper(substr($user, 0, 2));
               </div>
               <div class="reconcile-settings-panel-actions">
                 <button class="btn btn-secondary btn-sm js-import-combos" title="Import lần đầu hoặc cập nhật hàng loạt từ Excel; dữ liệu được lưu vào database">Import Excel</button>
-                <button class="btn btn-primary btn-sm js-add-combo-row">Thêm dòng</button>
+                <button class="btn btn-primary btn-sm js-add-combo-row">Thêm combo</button>
               </div>
             </div>
             <div class="reconcile-settings-hint">Excel cần có cột: <code>SKU Sản phẩm</code> (combo), kèm các cặp <code>Sản phẩm quy đổi N</code> + <code>Số lượng sản phẩm N</code>.</div>

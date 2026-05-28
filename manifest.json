@@ -1,7 +1,7 @@
 {
-  "version": "1.5.11",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.5.11/release/dashboard-v3-1.5.11.zip",
-  "changelog": "- Danh sách sản phẩm: một combo có thể liên kết nhiều SKU đơn lẻ với số lượng riêng từng SKU\n- Danh sách sản phẩm: thêm chọn SKU con từ danh sách SKU giá GBS và cảnh báo khi SKU chưa có trong danh sách\n- Production UI SKU & Combo: bổ sung nút thêm SKU con cùng combo để nhập mapping chính xác hơn",
+  "version": "1.5.12",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.5.12/release/dashboard-v3-1.5.12.zip",
+  "changelog": "- Bản chính thức cũ: nhóm Liên kết COMBO ↔ SKU theo combo, một combo hiển thị nhiều SKU con bên dưới\n- Bản chính thức cũ: thêm nút + SKU con trong từng nhóm combo và lưu đúng sàn/SKU combo/từ khóa cho mọi SKU con\n- Bản chính thức cũ: đổi nút thêm mới thành Thêm combo để nhập mapping rõ hơn",
   "min_php": "8.1",
   "released_at": "2026-05-28"
 }
