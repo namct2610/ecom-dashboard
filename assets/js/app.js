@@ -386,9 +386,9 @@ function setKpiCompare(valueSelector, current, previous, lowerIsBetter = false) 
   }
   const info = compareKpi(current, previous, lowerIsBetter);
   el.className = `kpi-compare ${info.cls}`;
-  el.textContent = info.pct === null
-    ? t('kpi.compare.no_previous')
-    : `${info.arrow} ${Math.abs(info.pct).toFixed(1)}% ${t('kpi.compare.previous')}`;
+  el.innerHTML = info.pct === null
+    ? `<span class="kpi-cmp-label">${t('kpi.compare.no_previous')}</span>`
+    : `<span class="kpi-cmp-pct">${info.arrow} ${Math.abs(info.pct).toFixed(1)}%</span><span class="kpi-cmp-label">${t('kpi.compare.previous')}</span>`;
 }
 
 // Generic fetch with CSRF (for endpoints that don't need dashboard filter params)
@@ -843,7 +843,7 @@ function loadPage(name) {
   }
 
   if (name === 'admin' && !isAdminUser()) {
-    toast('Bạn không có quyền truy cập khu quản trị.', 'error');
+    toast(t('msg.no_admin_access'), 'error');
     name = 'overview';
   }
 
@@ -1147,7 +1147,7 @@ async function loadPlan() {
     qs('#planYearInput').value = data.year;
     qs('#planRevenueTarget').value = Math.round(Number(data.targets?.revenue || 0)) || '';
     qs('#planVisitsTarget').value = Math.round(Number(data.targets?.visits || 0)) || '';
-    qs('#planUpdatedAt').textContent = data.generated_at ? `Cập nhật ${fmtDateTime(data.generated_at)}` : '—';
+    qs('#planUpdatedAt').textContent = data.generated_at ? `${t('plan.updated_at')} ${fmtDateTime(data.generated_at)}` : '—';
 
     renderPlanTargetTable(data);
     renderPlanMonthlyTable(data);
@@ -1420,7 +1420,7 @@ function renderReconcileMonthList(months, selectedMonth) {
   if (!root) return;
 
   if (!Array.isArray(months) || !months.length) {
-    root.innerHTML = '<div class="reconcile-empty-cell">Chưa có tháng GBS nào được nhận diện. Upload file GBS để hệ thống tự gom tháng.</div>';
+    root.innerHTML = `<div class="reconcile-empty-cell">${t('gbs.empty.no_gbs_months')}</div>`;
     return;
   }
 
@@ -1437,7 +1437,7 @@ function renderReconcileMonthList(months, selectedMonth) {
             <strong>${escHtml(month.label || fmtMonthLabel(month.month || ''))}</strong>
             <div class="reconcile-month-card-sub">${stamp}</div>
           </div>
-          <span class="badge ${confirmed ? 'badge-completed' : 'badge-pending'}">${confirmed ? 'Đã xác nhận' : 'Chưa xác nhận'}</span>
+          <span class="badge ${confirmed ? 'badge-completed' : 'badge-pending'}">${confirmed ? t('gbs.period.confirmed') : t('gbs.period.open')}</span>
         </div>
         <div class="reconcile-month-card-stats">
           <div class="reconcile-month-stat">
@@ -1450,8 +1450,8 @@ function renderReconcileMonthList(months, selectedMonth) {
           </div>
         </div>
         <div class="reconcile-month-card-foot">
-          <span>${active ? 'Đang xem kỳ này' : 'Chọn để xem chi tiết'}</span>
-          <span>${confirmed ? 'Đã chốt kỳ' : 'Đang mở kỳ'}</span>
+          <span>${active ? t('gbs.period.viewing') : t('gbs.period.select_detail')}</span>
+          <span>${confirmed ? t('gbs.period.confirmed') : t('gbs.period.open')}</span>
         </div>
       </button>
     `;
@@ -1465,7 +1465,7 @@ function renderReconcileSelectedMonthMeta(meta, summary, unmatchedCount) {
 
   if (confirmBtn) {
     confirmBtn.disabled = !meta;
-    confirmBtn.textContent = meta?.confirmed ? 'Bỏ xác nhận kỳ' : 'Xác nhận kỳ';
+    confirmBtn.textContent = meta?.confirmed ? t('gbs.btn.unconfirm_period') : t('gbs.btn.confirm_period');
   }
   if (exportBtn) {
     exportBtn.disabled = !meta;
@@ -1473,7 +1473,7 @@ function renderReconcileSelectedMonthMeta(meta, summary, unmatchedCount) {
   if (!root) return;
 
   if (!meta) {
-    root.innerHTML = 'Chưa có tháng đối soát nào sẵn sàng.';
+    root.innerHTML = t('gbs.empty.no_months');
     return;
   }
 
@@ -1482,12 +1482,12 @@ function renderReconcileSelectedMonthMeta(meta, summary, unmatchedCount) {
   const completion = scopeTotal > 0 ? Math.round((matched / scopeTotal) * 100) : 0;
   const progressNote = scopeTotal > 0
     ? `${fmtNum(matched)} / ${fmtNum(scopeTotal)} đơn giao nhau đã khớp.`
-    : 'Chưa có đơn giao nhau trong kỳ này.';
+    : t('gbs.empty.no_intersection');
   root.innerHTML = `
     <div class="reconcile-current-month-head">
       <div class="reconcile-current-month-title">
         <span class="badge badge-gbs">${escHtml(meta.label || fmtMonthLabel(meta.month || ''))}</span>
-        <span class="badge ${meta.confirmed ? 'badge-completed' : 'badge-pending'}">${meta.confirmed ? 'Đã xác nhận' : 'Đang mở'}</span>
+        <span class="badge ${meta.confirmed ? 'badge-completed' : 'badge-pending'}">${meta.confirmed ? t('gbs.period.confirmed') : t('gbs.period.open')}</span>
       </div>
       <span class="reconcile-status-pill is-live">${fmtNum(scopeTotal || 0)} đơn trong phạm vi khớp</span>
     </div>
@@ -1501,7 +1501,7 @@ function renderReconcileSelectedMonthMeta(meta, summary, unmatchedCount) {
       <div class="reconcile-current-month-note">
         ${meta.confirmed_at
           ? `Xác nhận lúc ${escHtml(fmtDateTime(meta.confirmed_at))}${meta.confirmed_by ? ` bởi ${escHtml(meta.confirmed_by)}` : ''}.`
-          : 'Tháng này chưa được xác nhận hoàn tất.'}
+          : t('gbs.empty.not_confirmed')}
       </div>
       <div class="reconcile-progress-card">
         <div class="reconcile-progress-head">
@@ -1858,9 +1858,9 @@ function renderReconcileOrderRow(order) {
         <div class="reconcile-note-meta">
           ${order.gbs_statuses?.length ? `GBS: ${escHtml(order.gbs_statuses.join(', '))}` : 'GBS: —'}
           <br>
-          ${order.platform_statuses?.length ? `Sàn: ${escHtml(order.platform_statuses.join(', '))}` : 'Sàn: —'}
+          ${order.platform_statuses?.length ? `${t('gbs.order.platform_statuses')}: ${escHtml(order.platform_statuses.join(', '))}` : `${t('gbs.order.platform_statuses')}: —`}
           <br>
-          ${order.platform_reconcile_at ? `Mốc sàn: ${escHtml(fmtDateTime(order.platform_reconcile_at))}` : 'Mốc sàn: —'}
+          ${order.platform_reconcile_at ? `${t('gbs.order.platform_time')}: ${escHtml(fmtDateTime(order.platform_reconcile_at))}` : `${t('gbs.order.platform_time')}: —`}
         </div>
       </td>
     </tr>
@@ -1906,12 +1906,12 @@ function renderReconcileSkuList(items, source) {
 
 function reconcileStatusBadge(status) {
   const map = {
-    matched: ['badge-completed', 'Khớp'],
-    order_match: ['badge-delivered', 'Khớp đơn'],
-    bundle_match: ['badge-delivered', 'Khớp combo'],
-    mismatch: ['badge-cancelled', 'Lệch'],
-    missing_in_gbs: ['badge-pending', 'Thiếu GBS'],
-    missing_in_platform: ['badge-cancelled', 'Thiếu dữ liệu sàn'],
+    matched: ['badge-completed', t('gbs.result.matched')],
+    order_match: ['badge-delivered', t('gbs.result.order_match')],
+    bundle_match: ['badge-delivered', t('gbs.result.bundle_match')],
+    mismatch: ['badge-cancelled', t('gbs.result.mismatch')],
+    missing_in_gbs: ['badge-pending', t('gbs.result.missing_gbs')],
+    missing_in_platform: ['badge-cancelled', t('gbs.result.missing_platform')],
   };
   const [cls, label] = map[status] || ['badge-pending', status];
   return `<span class="badge ${cls}">${escHtml(label)}</span>`;
@@ -1966,7 +1966,7 @@ function renderAnalyticsFilters(filters = {}) {
       : products;
 
     productSelect.innerHTML = [
-      '<option value="">Tất cả sản phẩm</option>',
+      `<option value="">${t('filter.all_products')}</option>`,
       ...productRows.map(row => {
         const name = row.product_name ? ` - ${row.product_name}` : '';
         const label = `${row.sku || ''}${name}`;
@@ -1984,7 +1984,7 @@ function renderAnalyticsFilters(filters = {}) {
       : brands;
 
     brandSelect.innerHTML = [
-      '<option value="">Tất cả thương hiệu</option>',
+      `<option value="">${t('filter.all_brands')}</option>`,
       ...brandRows.map(row => {
         const label = row.brand_name && row.brand_name !== row.prefix
           ? `${row.brand_name} (${row.prefix})`
@@ -2959,7 +2959,7 @@ function renderBrandSettingsSummary() {
     .map(row => `${row.prefix}: ${row.brand_name}`);
   const chips = [
     `${fmtNum(BrandSettingsState.rules.length || 0)} quy ước thương hiệu`,
-    preview.length ? `Ví dụ: ${preview.join(' · ')}` : 'Chưa có quy ước nào',
+    preview.length ? `${t('brand.preview.example')}: ${preview.join(' · ')}` : t('brand.preview.empty'),
   ];
 
   el.innerHTML = chips.map(text => `<span class="reconcile-settings-chip">${escHtml(text)}</span>`).join('');
@@ -3011,7 +3011,7 @@ function updateBrandSettingsUiState() {
 
   if (saveBtn) {
     saveBtn.disabled = busy;
-    saveBtn.textContent = BrandSettingsState.saving ? 'Đang lưu...' : 'Lưu thương hiệu';
+    saveBtn.textContent = BrandSettingsState.saving ? t('brand.btn.saving') : t('brand.btn.save');
   }
   if (reloadBtn) reloadBtn.disabled = busy;
   if (addBtn) addBtn.disabled = busy;
@@ -3027,11 +3027,11 @@ function updateBrandSettingsUiState() {
 async function loadBrandSettings() {
   BrandSettingsState.loading = true;
   updateBrandSettingsUiState();
-  setBrandSettingsResult('Đang tải quy ước thương hiệu...', 'info');
+  setBrandSettingsResult(t('msg.loading'), 'info');
 
   try {
     const data = await apiFetch('api/brand-settings.php', { method: 'GET' });
-    if (!data.success) throw new Error(data.error || 'Không thể tải quy ước thương hiệu.');
+    if (!data.success) throw new Error(data.error || t('brand.load_error'));
 
     BrandSettingsState.rules = Array.isArray(data.rules) ? data.rules : [];
     renderBrandSettingsTable();
@@ -3040,7 +3040,7 @@ async function loadBrandSettings() {
     console.error('loadBrandSettings', e);
     BrandSettingsState.rules = [];
     renderBrandSettingsTable();
-    setBrandSettingsResult(e.message || 'Không thể tải quy ước thương hiệu.', 'error');
+    setBrandSettingsResult(e.message || t('brand.load_error'), 'error');
   } finally {
     BrandSettingsState.loading = false;
     updateBrandSettingsUiState();
@@ -3051,7 +3051,7 @@ async function saveBrandSettings() {
   syncBrandSettingsStateFromDom();
   BrandSettingsState.saving = true;
   updateBrandSettingsUiState();
-  setBrandSettingsResult('Đang lưu quy ước thương hiệu...', 'info');
+  setBrandSettingsResult(t('msg.loading'), 'info');
 
   try {
     const res = await apiFetch('api/brand-settings.php', {
@@ -3061,15 +3061,15 @@ async function saveBrandSettings() {
         rules: BrandSettingsState.rules,
       }),
     });
-    if (!res.success) throw new Error(res.error || 'Không thể lưu quy ước thương hiệu.');
+    if (!res.success) throw new Error(res.error || t('brand.save_error'));
 
     BrandSettingsState.rules = Array.isArray(res.rules) ? res.rules : [];
     renderBrandSettingsTable();
-    setBrandSettingsResult(`${res.message || 'Đã lưu quy ước thương hiệu.'} Tổng: ${fmtNum(BrandSettingsState.rules.length)} dòng.`, 'success');
-    toast('Đã lưu quy ước thương hiệu.', 'success');
+    setBrandSettingsResult(`${res.message || t('brand.saved')} ${t('msg.total')}: ${fmtNum(BrandSettingsState.rules.length)} ${t('brand.lines_unit')}.`, 'success');
+    toast(t('brand.saved'), 'success');
   } catch (e) {
-    setBrandSettingsResult(e.message || 'Không thể lưu quy ước thương hiệu.', 'error');
-    toast(e.message || 'Không thể lưu quy ước thương hiệu.', 'error');
+    setBrandSettingsResult(e.message || t('brand.save_error'), 'error');
+    toast(e.message || t('brand.save_error'), 'error');
   } finally {
     BrandSettingsState.saving = false;
     updateBrandSettingsUiState();
