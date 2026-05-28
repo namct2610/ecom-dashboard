@@ -169,6 +169,7 @@
   "kpi.visits":        "Visits",
   "kpi.bounce_rate":   "Avg Bounce Rate",
   "kpi.compare.previous": "vs previous period",
+  "kpi.compare.ytd_prev_year": "vs same period last year",
   "kpi.compare.no_previous": "No previous-period data",
 
   "chart.revenue_trend":         "Revenue over time",

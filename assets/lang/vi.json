@@ -169,6 +169,7 @@
   "kpi.visits":        "Lượt truy cập",
   "kpi.bounce_rate":   "Tỷ lệ thoát TB",
   "kpi.compare.previous": "so với kỳ trước",
+  "kpi.compare.ytd_prev_year": "so với cùng kỳ năm trước",
   "kpi.compare.no_previous": "Chưa có dữ liệu kỳ trước",
 
   "chart.revenue_trend":         "Doanh thu theo thời gian",
