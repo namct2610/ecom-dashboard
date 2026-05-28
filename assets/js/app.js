@@ -1155,7 +1155,7 @@ async function loadPlan() {
     renderPlanYtgProgress(data);
   } catch (e) {
     console.error('loadPlan', e);
-    qs('#planTargetTableBody').innerHTML = `<tr><td colspan="9" class="plan-empty-cell">Không tải được kế hoạch: ${escHtml(e.message || 'Unknown error')}</td></tr>`;
+    qs('#planTargetTableBody').innerHTML = `<tr><td colspan="9" class="plan-empty-cell">${escHtml(t('plan.error.load_failed'))}: ${escHtml(e.message || 'Unknown error')}</td></tr>`;
     const monthlyBody = qs('#planMonthlyTableBody');
     if (monthlyBody) monthlyBody.innerHTML = `<tr><td colspan="13" class="plan-empty-cell">—</td></tr>`;
     toast('Không thể tải dữ liệu kế hoạch.', 'error');
@@ -1211,7 +1211,7 @@ function renderPlanTargetTable(data) {
     return `
       <tr>
         <td class="plan-col-metric">
-          <div class="plan-metric-name">${escHtml(metric.label || '')}</div>
+          <div class="plan-metric-name">${escHtml(t('plan.metric.' + metric.key, metric.label || ''))}</div>
           <div class="plan-metric-sub">${metric.key === 'revenue' ? t('plan.metric.revenue_sub') : t('plan.metric.visits_sub')}</div>
         </td>
         <td class="text-right font-mono">${planMetricFormatter(metric.key, metric.target)}</td>
@@ -1274,7 +1274,7 @@ function renderPlanMonthlyTable(data) {
     return `
       <tr>
         <td class="plan-col-metric">
-          <div class="plan-metric-name">${escHtml(metric.label || '')}</div>
+          <div class="plan-metric-name">${escHtml(t('plan.metric.' + metric.key, metric.label || ''))}</div>
           <div class="plan-metric-sub">${metric.key === 'revenue' ? t('plan.metric.revenue_sub') : t('plan.metric.visits_sub')}</div>
         </td>
         ${monthCells}
@@ -1312,7 +1312,7 @@ function renderPlanYtgProgress(data) {
     return `
       <div class="plan-ytg-item ${accentClass} ${isOnTrack ? 'is-on' : 'is-behind'}">
         <div class="plan-ytg-head">
-          <div class="plan-ytg-label">${escHtml(metric.label || '')}</div>
+          <div class="plan-ytg-label">${escHtml(t('plan.metric.' + metric.key, metric.label || ''))}</div>
           <div class="plan-ytg-pct">${pct.toFixed(1)}<span>%</span></div>
         </div>
         <div class="plan-ytg-bar">
@@ -1428,8 +1428,8 @@ function renderReconcileMonthList(months, selectedMonth) {
     const active = (month.month || '') === selectedMonth;
     const confirmed = Boolean(month.confirmed);
     const stamp = month.confirmed_at
-      ? `Xác nhận lúc ${escHtml(fmtDateTime(month.confirmed_at))}`
-      : `Cập nhật ${escHtml(fmtDateTime(month.latest_modified_at || ''))}`;
+      ? `${t('gbs.confirmed_at')} ${escHtml(fmtDateTime(month.confirmed_at))}`
+      : `${t('gbs.updated_at')} ${escHtml(fmtDateTime(month.latest_modified_at || ''))}`;
     return `
       <button type="button" class="reconcile-month-card ${active ? 'is-active' : ''} ${confirmed ? 'is-confirmed' : ''}" data-action="select-reconcile-month" data-month="${escHtml(month.month || '')}">
         <div class="reconcile-month-card-head">
@@ -1481,7 +1481,7 @@ function renderReconcileSelectedMonthMeta(meta, summary, unmatchedCount) {
   const scopeTotal = Number(summary.common_orders || 0) || Number(matched || 0) + Number(unmatchedCount || 0);
   const completion = scopeTotal > 0 ? Math.round((matched / scopeTotal) * 100) : 0;
   const progressNote = scopeTotal > 0
-    ? `${fmtNum(matched)} / ${fmtNum(scopeTotal)} đơn giao nhau đã khớp.`
+    ? reconcileText('gbs.stat.intersect_matched', { matched: fmtNum(matched), total: fmtNum(scopeTotal) })
     : t('gbs.empty.no_intersection');
   root.innerHTML = `
     <div class="reconcile-current-month-head">
@@ -1489,23 +1489,23 @@ function renderReconcileSelectedMonthMeta(meta, summary, unmatchedCount) {
         <span class="badge badge-gbs">${escHtml(meta.label || fmtMonthLabel(meta.month || ''))}</span>
         <span class="badge ${meta.confirmed ? 'badge-completed' : 'badge-pending'}">${meta.confirmed ? t('gbs.period.confirmed') : t('gbs.period.open')}</span>
       </div>
-      <span class="reconcile-status-pill is-live">${fmtNum(scopeTotal || 0)} đơn trong phạm vi khớp</span>
+      <span class="reconcile-status-pill is-live">${reconcileText('gbs.stat.scope_total', { n: fmtNum(scopeTotal || 0) })}</span>
     </div>
     <div class="reconcile-current-month-grid">
-      <div><span>File GBS</span><strong>${fmtNum(meta.file_count || 0)}</strong></div>
-      <div><span>Đơn GBS</span><strong>${fmtNum(meta.gbs_orders || 0)}</strong></div>
-      <div><span>Đơn khớp</span><strong>${fmtNum(matched)}</strong></div>
-      <div><span>Chưa khớp</span><strong>${fmtNum(unmatchedCount || 0)}</strong></div>
+      <div><span>${t('gbs.stat.file_gbs')}</span><strong>${fmtNum(meta.file_count || 0)}</strong></div>
+      <div><span>${t('gbs.stat.gbs_orders_short')}</span><strong>${fmtNum(meta.gbs_orders || 0)}</strong></div>
+      <div><span>${t('gbs.kpi.matched')}</span><strong>${fmtNum(matched)}</strong></div>
+      <div><span>${t('gbs.stat.unmatched')}</span><strong>${fmtNum(unmatchedCount || 0)}</strong></div>
     </div>
     <div class="reconcile-current-month-foot">
       <div class="reconcile-current-month-note">
         ${meta.confirmed_at
-          ? `Xác nhận lúc ${escHtml(fmtDateTime(meta.confirmed_at))}${meta.confirmed_by ? ` bởi ${escHtml(meta.confirmed_by)}` : ''}.`
+          ? reconcileText('gbs.stat.confirmed_by_at', { at: escHtml(fmtDateTime(meta.confirmed_at)), by: meta.confirmed_by ? ` ${t('gbs.stat.by')} ${escHtml(meta.confirmed_by)}` : '' })
           : t('gbs.empty.not_confirmed')}
       </div>
       <div class="reconcile-progress-card">
         <div class="reconcile-progress-head">
-          <span>Độ phủ khớp</span>
+          <span>${t('gbs.stat.coverage')}</span>
           <strong>${fmtNum(completion)}%</strong>
         </div>
         <div class="reconcile-progress-bar"><span style="width:${Math.max(0, Math.min(completion, 100))}%"></span></div>
@@ -1519,7 +1519,7 @@ function renderReconcileManagedFiles(files) {
   const tbody = qs('#reconcileManagedFilesTable');
   const summaryEl = qs('#reconcileManagedFileCount');
   if (summaryEl) {
-    summaryEl.textContent = `${fmtNum(Array.isArray(files) ? files.length : 0)} file trong kho`;
+    summaryEl.textContent = reconcileText('gbs.stat.files_in_store', { n: fmtNum(Array.isArray(files) ? files.length : 0) });
   }
   if (!tbody) return;
 
@@ -1962,7 +1962,7 @@ function renderAnalyticsFilters(filters = {}) {
 
   if (productSelect) {
     const productRows = activeProductSku && !products.some(row => row.sku === activeProductSku)
-      ? [{ sku: activeProductSku, product_name: 'Đang chọn', order_count: 0 }, ...products]
+      ? [{ sku: activeProductSku, product_name: t('filter.current_sku'), order_count: 0 }, ...products]
       : products;
 
     productSelect.innerHTML = [
@@ -1970,7 +1970,7 @@ function renderAnalyticsFilters(filters = {}) {
       ...productRows.map(row => {
         const name = row.product_name ? ` - ${row.product_name}` : '';
         const label = `${row.sku || ''}${name}`;
-        const meta = row.order_count ? ` (${fmtNum(row.order_count)} đơn)` : '';
+        const meta = row.order_count ? ` (${fmtNum(row.order_count)} ${t('unit.orders')})` : '';
         return `<option value="${escHtml(row.sku || '')}">${escHtml(shortAnalyticsLabel(label + meta))}</option>`;
       }),
     ].join('');
@@ -1999,11 +1999,11 @@ function renderAnalyticsFilters(filters = {}) {
   if (summaryEl) {
     const activeParts = [];
     if (activeProductSku) activeParts.push(`SKU ${activeProductSku}`);
-    if (activeBrandPrefix) activeParts.push(`thương hiệu ${active.brand_name || activeBrandPrefix}`);
+    if (activeBrandPrefix) activeParts.push(`${t('filter.brand_prefix')} ${active.brand_name || activeBrandPrefix}`);
 
     summaryEl.textContent = activeParts.length
-      ? `Đang lọc theo ${activeParts.join(' · ')}`
-      : `Có ${fmtNum(products.length)} SKU và ${fmtNum(brands.length)} nhóm thương hiệu trong kỳ hiện tại.`;
+      ? reconcileText('filter.filtering_by', { parts: activeParts.join(' · ') })
+      : reconcileText('filter.sku_brand_summary', { skus: fmtNum(products.length), brands: fmtNum(brands.length) });
   }
 
   if (clearBtn) clearBtn.disabled = !activeProductSku && !activeBrandPrefix;
@@ -3321,7 +3321,7 @@ async function loadReconcileSettings() {
 
   try {
     const data = await apiFetch('api/reconcile-settings.php', { method: 'GET' });
-    if (!data.success) throw new Error(data.error || 'Không thể tải cài đặt đối soát.');
+    if (!data.success) throw new Error(data.error || t('reconcile.error.load_settings'));
 
     ReconcileSettingsState.prices = Array.isArray(data.prices) ? data.prices : [];
     ReconcileSettingsState.combos = Array.isArray(data.combos) ? data.combos : [];
@@ -4404,8 +4404,8 @@ async function toggleReconcileMonthConfirmed() {
 
   const targetConfirmed = !meta.confirmed;
   const question = targetConfirmed
-    ? `Xác nhận hoàn tất đối soát cho ${fmtMonthLabel(month)}?`
-    : `Bỏ xác nhận đối soát cho ${fmtMonthLabel(month)}?`;
+    ? reconcileText('gbs.confirm.question', { month: fmtMonthLabel(month) })
+    : reconcileText('gbs.unconfirm.question', { month: fmtMonthLabel(month) });
   if (!window.confirm(question)) return;
 
   try {
@@ -4418,10 +4418,10 @@ async function toggleReconcileMonthConfirmed() {
       }),
     });
     if (!data.success) throw new Error(data.error || 'Update failed');
-    toast(targetConfirmed ? `Đã xác nhận ${fmtMonthLabel(month)}` : `Đã bỏ xác nhận ${fmtMonthLabel(month)}`, 'success');
+    toast(reconcileText(targetConfirmed ? 'gbs.confirm.success' : 'gbs.unconfirm.success', { month: fmtMonthLabel(month) }), 'success');
     await loadReconcile();
   } catch (e) {
-    toast(e.message || 'Không thể cập nhật trạng thái tháng đối soát', 'error');
+    toast(e.message || t('gbs.confirm.error'), 'error');
   }
 }
 
