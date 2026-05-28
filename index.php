@@ -33,7 +33,7 @@ $initials = strtoupper(substr($user, 0, 2));
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard v3 — Quản lý kinh doanh</title>
+  <title>Dashboard v3</title>
   <meta name="csrf-token" content="<?= htmlspecialchars($csrf) ?>">
 
   <!-- Fonts -->
@@ -213,9 +213,9 @@ $initials = strtoupper(substr($user, 0, 2));
     </div>
 
     <div class="sidebar-footer">
-      <a href="beta/" class="btn-try-beta" title="UI mới v2.0.0 — dùng chung database">
+      <a href="beta/" class="btn-try-beta" title="UI mới v2.0.0 — dùng chung database" data-i18n-title="beta.try_title">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12l5 5L20 7"/></svg>
-        <span class="nav-label">Thử bản beta v2.0.0</span>
+        <span class="nav-label" data-i18n="beta.try">Thử bản beta v2.0.0</span>
       </a>
       <button id="btnCollapseSidebar" class="btn-collapse-sidebar">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
@@ -250,7 +250,7 @@ $initials = strtoupper(substr($user, 0, 2));
       </div>
 
       <!-- View mode toggle: COMBO ↔ SKU -->
-      <div class="view-mode-toggle" title="Hiển thị sản phẩm dạng nguyên gốc từ sàn hoặc tách thành SKU đơn lẻ">
+      <div class="view-mode-toggle" title="Hiển thị sản phẩm dạng nguyên gốc từ sàn hoặc tách thành SKU đơn lẻ" data-i18n-title="view_mode.title">
         <button class="view-mode-btn active" data-view-mode="combo">COMBO</button>
         <button class="view-mode-btn" data-view-mode="sku">SKU</button>
       </div>
@@ -399,7 +399,7 @@ $initials = strtoupper(substr($user, 0, 2));
               </span>
             </div>
             <div class="kpi-value" id="kpi-views">—</div>
-            <div class="kpi-sub">Truy cập: <span id="kpi-visitors">—</span> lượt</div>
+            <div class="kpi-sub"><span data-i18n="kpi.visits">Lượt truy cập</span>: <span id="kpi-visitors">—</span></div>
           </div>
         </div>
 
@@ -601,8 +601,8 @@ $initials = strtoupper(substr($user, 0, 2));
           <div class="chart-card">
             <div class="chart-header">
               <div class="chart-header-left">
-                <h3>Tỉ trọng doanh số theo thương hiệu</h3>
-                <p>Số lượng bán ra, gom theo 3 ký tự đầu SKU</p>
+                <h3 data-i18n="chart.brand_qty_share">Tỉ trọng doanh số theo thương hiệu</h3>
+                <p data-i18n="chart.brand_qty_share.sub">Số lượng bán ra, gom theo 3 ký tự đầu SKU</p>
               </div>
             </div>
             <div class="chart-wrap" style="height:260px">
@@ -612,8 +612,8 @@ $initials = strtoupper(substr($user, 0, 2));
           <div class="chart-card">
             <div class="chart-header">
               <div class="chart-header-left">
-                <h3>Tỉ trọng doanh thu theo thương hiệu</h3>
-                <p>Doanh thu sau giảm giá của đơn hoàn thành</p>
+                <h3 data-i18n="chart.brand_revenue_share">Tỉ trọng doanh thu theo thương hiệu</h3>
+                <p data-i18n="chart.brand_revenue_share.sub">Doanh thu sau giảm giá của đơn hoàn thành</p>
               </div>
             </div>
             <div class="chart-wrap" style="height:260px">
@@ -623,17 +623,17 @@ $initials = strtoupper(substr($user, 0, 2));
         </div>
 
         <div class="card mb-4">
-          <div class="card-title" style="margin-bottom:12px">Phân tích thương hiệu</div>
+          <div class="card-title" style="margin-bottom:12px" data-i18n="card.brand_analysis">Phân tích thương hiệu</div>
           <div class="table-wrapper">
             <table>
               <thead>
                 <tr>
-                  <th>Thương hiệu</th>
+                  <th data-i18n="th.brand">Thương hiệu</th>
                   <th class="text-right">SKU</th>
-                  <th class="text-right">SL bán</th>
-                  <th class="text-right">Tỉ trọng SL</th>
-                  <th class="text-right">Doanh thu</th>
-                  <th class="text-right">Tỉ trọng DT</th>
+                  <th class="text-right" data-i18n="th.qty_sold">SL bán</th>
+                  <th class="text-right" data-i18n="th.qty_share">Tỉ trọng SL</th>
+                  <th class="text-right" data-i18n="th.revenue">Doanh thu</th>
+                  <th class="text-right" data-i18n="th.revenue_share">Tỉ trọng DT</th>
                 </tr>
               </thead>
               <tbody id="brandShareTable"></tbody>
@@ -749,7 +749,7 @@ $initials = strtoupper(substr($user, 0, 2));
           <div class="chart-card">
             <div class="chart-header">
               <div class="chart-header-left">
-                <h3>Quận / Huyện — TP. Hồ Chí Minh</h3>
+                <h3 data-i18n="chart.hcm_districts">Quận / Huyện — TP. Hồ Chí Minh</h3>
                 <p>Shopee &amp; TikTok Shop</p>
               </div>
             </div>
@@ -760,7 +760,7 @@ $initials = strtoupper(substr($user, 0, 2));
           <div class="chart-card">
             <div class="chart-header">
               <div class="chart-header-left">
-                <h3>Quận / Huyện — Hà Nội</h3>
+                <h3 data-i18n="chart.hanoi_districts">Quận / Huyện — Hà Nội</h3>
                 <p>Shopee &amp; TikTok Shop</p>
               </div>
             </div>
@@ -798,7 +798,7 @@ $initials = strtoupper(substr($user, 0, 2));
             <div class="chart-header">
               <div class="chart-header-left">
                 <h3 data-i18n="chart.traffic_trend">Traffic theo thời gian</h3>
-                <p>Lượt xem + đơn hàng tương quan</p>
+                <p data-i18n="chart.traffic_trend.sub">Lượt xem + đơn hàng tương quan</p>
               </div>
             </div>
             <div class="chart-wrap" style="height:220px">
@@ -863,7 +863,7 @@ $initials = strtoupper(substr($user, 0, 2));
 
         <!-- Top products table -->
         <div class="card">
-          <div class="card-title" style="margin-bottom:10px">Top 5 sản phẩm mỗi sàn</div>
+          <div class="card-title" style="margin-bottom:10px" data-i18n="compare.top5">Top 5 sản phẩm mỗi sàn</div>
           <div class="table-wrapper">
             <table>
               <thead>
@@ -890,18 +890,18 @@ $initials = strtoupper(substr($user, 0, 2));
         </div>
 
         <div class="card plan-ytg-card mb-4">
-          <div class="card-title">Tiến độ hiện tại</div>
-          <div class="card-subtitle">Tiến độ chuẩn hóa theo % để so sánh giữa các chỉ tiêu có quy mô khác nhau.</div>
+          <div class="card-title" data-i18n="plan.progress.title">Tiến độ hiện tại</div>
+          <div class="card-subtitle" data-i18n="plan.progress.sub">Tiến độ chuẩn hóa theo % để so sánh giữa các chỉ tiêu có quy mô khác nhau.</div>
           <div id="planYtgProgress" class="plan-ytg-progress plan-ytg-progress-cols">
-            <div class="plan-empty-cell">Đang tải...</div>
+            <div class="plan-empty-cell" data-i18n="msg.loading">Đang tải...</div>
           </div>
         </div>
 
         <div class="card plan-target-card mb-4">
           <div class="plan-card-head">
             <div>
-              <div class="card-title">Target YTD / YTG</div>
-              <div class="card-subtitle">Bảng điều hành nhanh theo mục tiêu năm, thực đạt hiện tại và mức trung bình cần đạt cho các tháng còn lại.</div>
+              <div class="card-title" data-i18n="plan.target_table.title">Target YTD / YTG</div>
+              <div class="card-subtitle" data-i18n="plan.target_table.sub">Bảng điều hành nhanh theo mục tiêu năm, thực đạt hiện tại và mức trung bình cần đạt cho các tháng còn lại.</div>
             </div>
             <span class="plan-updated" id="planUpdatedAt">—</span>
           </div>
@@ -909,19 +909,19 @@ $initials = strtoupper(substr($user, 0, 2));
             <table class="plan-target-table plan-target-summary">
               <thead>
                 <tr>
-                  <th class="plan-col-metric">Chỉ tiêu</th>
+                  <th class="plan-col-metric" data-i18n="plan.th.metric">Chỉ tiêu</th>
                   <th class="text-right">Target FY</th>
                   <th class="text-right">Target YTD</th>
                   <th class="text-right">Actual YTD</th>
                   <th class="text-right">% YTD</th>
                   <th class="text-right">Gap YTD</th>
                   <th class="text-right">YTG</th>
-                  <th class="text-right">TB/tháng còn lại</th>
-                  <th>Trạng thái</th>
+                  <th class="text-right" data-i18n="plan.th.avg_remaining">TB/tháng còn lại</th>
+                  <th data-i18n="plan.th.status">Trạng thái</th>
                 </tr>
               </thead>
               <tbody id="planTargetTableBody">
-                <tr><td colspan="9" class="plan-empty-cell">Đang tải kế hoạch...</td></tr>
+                <tr><td colspan="9" class="plan-empty-cell" data-i18n="plan.loading">Đang tải kế hoạch...</td></tr>
               </tbody>
             </table>
           </div>
@@ -930,15 +930,15 @@ $initials = strtoupper(substr($user, 0, 2));
         <div class="card plan-target-card mb-4">
           <div class="plan-card-head">
             <div>
-              <div class="card-title">Chi tiết theo tháng</div>
-              <div class="card-subtitle">Thực đạt từng tháng so với mục tiêu trung bình tháng (Target FY ÷ 12).</div>
+              <div class="card-title" data-i18n="plan.monthly.title">Chi tiết theo tháng</div>
+              <div class="card-subtitle" data-i18n="plan.monthly.sub">Thực đạt từng tháng so với mục tiêu trung bình tháng (Target FY / 12).</div>
             </div>
           </div>
           <div class="table-wrapper plan-target-table-wrap">
             <table class="plan-target-table plan-target-monthly">
               <thead>
                 <tr>
-                  <th class="plan-col-metric">Chỉ tiêu</th>
+                  <th class="plan-col-metric" data-i18n="plan.th.metric">Chỉ tiêu</th>
                   <th class="text-right plan-col-month">T1</th>
                   <th class="text-right plan-col-month">T2</th>
                   <th class="text-right plan-col-month">T3</th>
@@ -954,7 +954,7 @@ $initials = strtoupper(substr($user, 0, 2));
                 </tr>
               </thead>
               <tbody id="planMonthlyTableBody">
-                <tr><td colspan="13" class="plan-empty-cell">Đang tải dữ liệu tháng...</td></tr>
+                <tr><td colspan="13" class="plan-empty-cell" data-i18n="plan.monthly.loading">Đang tải dữ liệu tháng...</td></tr>
               </tbody>
             </table>
           </div>
@@ -964,8 +964,8 @@ $initials = strtoupper(substr($user, 0, 2));
           <div class="chart-card">
             <div class="chart-header">
               <div class="chart-header-left">
-                <h3>Tiến độ theo tháng</h3>
-                <p>Actual so với đường target bình quân năm</p>
+                <h3 data-i18n="plan.chart.run_rate">Tiến độ theo tháng</h3>
+                <p data-i18n="plan.chart.run_rate.sub">Actual so với đường target bình quân năm</p>
               </div>
             </div>
             <div class="chart-wrap" style="height:300px">
@@ -973,22 +973,22 @@ $initials = strtoupper(substr($user, 0, 2));
             </div>
           </div>
           <div class="card plan-form-card">
-            <div class="card-title">Mục tiêu năm</div>
-            <div class="card-subtitle">Nhập mục tiêu doanh số và lượt truy cập cho năm đang xem.</div>
+            <div class="card-title" data-i18n="plan.form.title">Mục tiêu năm</div>
+            <div class="card-subtitle" data-i18n="plan.form.sub">Nhập mục tiêu doanh số và lượt truy cập cho năm đang xem.</div>
             <form id="planTargetForm" class="plan-target-form">
               <label>
-                <span>Năm</span>
+                <span data-i18n="plan.form.year">Năm</span>
                 <input id="planYearInput" type="number" min="2020" max="2100" step="1">
               </label>
               <label>
-                <span>Doanh số mục tiêu</span>
+                <span data-i18n="plan.form.revenue_target">Doanh số mục tiêu</span>
                 <input id="planRevenueTarget" type="number" min="0" step="1000000" inputmode="numeric" placeholder="VD: 2500000000">
               </label>
               <label>
-                <span>Lượt truy cập mục tiêu</span>
+                <span data-i18n="plan.form.visits_target">Lượt truy cập mục tiêu</span>
                 <input id="planVisitsTarget" type="number" min="0" step="1000" inputmode="numeric" placeholder="VD: 1200000">
               </label>
-              <button class="btn btn-primary" type="submit">Lưu mục tiêu</button>
+              <button class="btn btn-primary" type="submit" data-i18n="plan.form.save">Lưu mục tiêu</button>
             </form>
           </div>
         </div>

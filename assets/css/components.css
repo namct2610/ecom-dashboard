@@ -55,6 +55,19 @@
 .kpi-sub { font-size: 12px; color: var(--text-muted); }
 .kpi-sub.up   { color: var(--completed); }
 .kpi-sub.down { color: var(--cancelled); }
+.kpi-compare {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 16px;
+  margin: -1px 0 4px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+.kpi-compare.is-up { color: var(--completed); }
+.kpi-compare.is-down { color: var(--cancelled); }
+.kpi-compare.is-flat { color: var(--text-muted); }
 
 /* ── Pager ───────────────────────────────────────────────────────────────── */
 .pager {

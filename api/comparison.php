@@ -17,8 +17,8 @@ try {
     $platStmt = $pdo->prepare("
         SELECT platform,
                COUNT(DISTINCT CONCAT(platform,':',order_id)) AS total_orders,
-               SUM(CASE WHEN normalized_status IN ('completed','delivered') THEN 1 ELSE 0 END) AS completed,
-               SUM(CASE WHEN normalized_status = 'cancelled' THEN 1 ELSE 0 END) AS cancelled,
+               COUNT(DISTINCT CASE WHEN normalized_status IN ('completed','delivered') THEN CONCAT(platform,':',order_id) END) AS completed,
+               COUNT(DISTINCT CASE WHEN normalized_status = 'cancelled' THEN CONCAT(platform,':',order_id) END) AS cancelled,
                COALESCE(SUM(CASE WHEN normalized_status IN ('completed','delivered') THEN order_total ELSE 0 END),0) AS revenue,
                COALESCE(AVG(CASE WHEN normalized_status IN ('completed','delivered') THEN order_total END),0) AS aov,
                COUNT(DISTINCT sku) AS skus

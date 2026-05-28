@@ -51,11 +51,11 @@ try {
     $tsSql = "
         SELECT {$gran['label']} AS bucket,
                COUNT(DISTINCT CONCAT(platform,':',order_id)) AS total,
-               SUM(CASE WHEN normalized_status IN ('completed','delivered') THEN 1 ELSE 0 END) AS completed,
-               SUM(CASE WHEN normalized_status = 'cancelled' THEN 1 ELSE 0 END) AS cancelled,
-               SUM(CASE WHEN platform='shopee' THEN 1 ELSE 0 END) AS shopee,
-               SUM(CASE WHEN platform='lazada' THEN 1 ELSE 0 END) AS lazada,
-               SUM(CASE WHEN platform='tiktokshop' THEN 1 ELSE 0 END) AS tiktokshop
+               COUNT(DISTINCT CASE WHEN normalized_status IN ('completed','delivered') THEN CONCAT(platform,':',order_id) END) AS completed,
+               COUNT(DISTINCT CASE WHEN normalized_status = 'cancelled' THEN CONCAT(platform,':',order_id) END) AS cancelled,
+               COUNT(DISTINCT CASE WHEN platform='shopee' THEN CONCAT(platform,':',order_id) END) AS shopee,
+               COUNT(DISTINCT CASE WHEN platform='lazada' THEN CONCAT(platform,':',order_id) END) AS lazada,
+               COUNT(DISTINCT CASE WHEN platform='tiktokshop' THEN CONCAT(platform,':',order_id) END) AS tiktokshop
         FROM orders {$where}
         GROUP BY {$gran['bucket']}
         ORDER BY MIN(order_created_at) ASC
@@ -77,7 +77,7 @@ try {
 
     // Hourly heatmap (for orders page quick view)
     $hourStmt = $pdo->prepare("
-        SELECT HOUR(order_created_at) AS hr, COUNT(*) AS cnt
+        SELECT HOUR(order_created_at) AS hr, COUNT(DISTINCT CONCAT(platform,':',order_id)) AS cnt
         FROM orders {$where}
         GROUP BY hr ORDER BY hr
     ");
