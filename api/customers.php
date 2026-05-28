@@ -52,6 +52,8 @@ function build_customers_overview(PDO $pdo): array
         'revenue'        => (float) $row['revenue'],
     ], $buyerStmt->fetchAll());
 
+    $totalOrders = (int) ($summary['total_orders'] ?? 0);
+
     // Total orders that actually carry city data (Lazada excluded — no address data)
     $totalWithCity = (int) $pdo->query("
         SELECT COUNT(*) FROM tmp_customer_orders

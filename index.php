@@ -715,7 +715,8 @@ $initials = strtoupper(substr($user, 0, 2));
             <div class="chart-legend" id="custSegLegend"></div>
           </div>
           <div class="card">
-            <div class="card-title" data-i18n="card.top_locations" style="margin-bottom:12px">Top địa phương</div>
+            <div class="card-title" data-i18n="card.top_locations" style="margin-bottom:4px">Top địa phương</div>
+            <p style="font-size:11px;color:var(--text-muted);margin-bottom:12px" data-i18n="cl.location_note">Chỉ tính Shopee &amp; TikTok Shop — Lazada không có thông tin địa chỉ</p>
             <div id="cityList"></div>
             <div id="cityListPager"></div>
           </div>

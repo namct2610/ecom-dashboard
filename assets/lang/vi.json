@@ -321,7 +321,8 @@
   "cl.no_data":     "Không có dữ liệu",
   "cl.other":            "Khác",
   "cl.other_provinces":  "Tỉnh / TP khác",
-  "cl.lazada_excluded":  "% tính trên đơn có địa chỉ (không tính Lazada)",
+  "cl.lazada_excluded":  "Các tỉnh còn lại",
+  "cl.location_note":    "Chỉ tính Shopee & TikTok Shop — Lazada không có thông tin địa chỉ",
   "cl.orders_unit": "đơn",
   "cl.cancelled":   "Đã huỷ",
 
