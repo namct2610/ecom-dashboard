@@ -131,6 +131,7 @@ const I18n = (() => {
     'plan.form.year':'Năm','plan.form.revenue_target':'Doanh số mục tiêu','plan.form.visits_target':'Lượt truy cập mục tiêu','plan.form.save':'Lưu mục tiêu',
     'plan.empty':'Chưa có dữ liệu kế hoạch.','plan.monthly.empty':'Chưa có dữ liệu tháng.','plan.progress.empty':'Chưa có dữ liệu để so sánh.',
     'plan.status.on_track':'Đúng tiến độ','plan.status.behind':'Cần bù tốc độ',
+    'plan.metric.revenue':'Doanh số','plan.metric.visits':'Lượt truy cập',
     'plan.metric.revenue_sub':'Doanh thu đơn hoàn thành','plan.metric.visits_sub':'Traffic visits toàn sàn',
     'plan.monthly.target_title':'Mục tiêu TB','plan.progress.need_avg':'Cần TB {value} / tháng trong {months} tháng còn lại',
     'plan.progress.year_done_behind':'Năm đã hết kỳ, chưa đạt mục tiêu.','plan.progress.completed_year':'Đã hoàn thành mục tiêu năm.',

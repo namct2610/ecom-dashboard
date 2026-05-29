@@ -1,7 +1,7 @@
 {
-  "version": "1.5.21",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.5.21/release/dashboard-v3-1.5.21.zip",
-  "changelog": "- Rà soát i18n bản chính: bổ sung tiếng Anh cho các nhãn còn hardcode ở Đối soát GBS, Upload, Nhật ký, Kết nối API và Hệ thống\n- Thêm data-i18n-html để dịch các đoạn hướng dẫn có định dạng strong/code mà vẫn giữ markup\n- Chuẩn hóa toast, prompt reset, trạng thái GBS và quy ước thương hiệu theo t()/tFormat() khi đổi ngôn ngữ",
+  "version": "1.5.22",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.5.22/release/dashboard-v3-1.5.22.zip",
+  "changelog": "- Hotfix: bổ sung fallback i18n cho plan.metric.revenue và plan.metric.visits để phần Kế hoạch không hiện raw key khi đổi/ngắt cache ngôn ngữ",
   "min_php": "8.1",
   "released_at": "2026-05-29"
 }
