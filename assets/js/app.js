@@ -1043,7 +1043,10 @@ async function loadCustomers() {
     if (convEl) {
       const sub = convEl.nextElementSibling;
       if (sub && data.summary.total_visits > 0) {
-        sub.textContent = `${fmtNum(data.summary.total_orders)} đơn / ${fmtNum(data.summary.total_visits)} visit`;
+        sub.textContent = reconcileText('customer.conv.detail', {
+          orders: fmtNum(data.summary.total_orders),
+          visits: fmtNum(data.summary.total_visits),
+        });
       }
     }
 
@@ -1183,7 +1186,7 @@ async function loadPlan() {
     qs('#planTargetTableBody').innerHTML = `<tr><td colspan="9" class="plan-empty-cell">${escHtml(t('plan.error.load_failed'))}: ${escHtml(e.message || 'Unknown error')}</td></tr>`;
     const monthlyBody = qs('#planMonthlyTableBody');
     if (monthlyBody) monthlyBody.innerHTML = `<tr><td colspan="13" class="plan-empty-cell">—</td></tr>`;
-    toast('Không thể tải dữ liệu kế hoạch.', 'error');
+    toast(t('plan.error.load_failed'), 'error');
   }
 }
 
@@ -1413,16 +1416,16 @@ function renderReconcileUploadStatus(files) {
 
   if (ReconcileFileManager.uploading) {
     statusEl.innerHTML = `
-      <span class="reconcile-status-pill is-busy">Đang xử lý file</span>
-      <span class="reconcile-status-inline">Hệ thống đang kiểm tra cấu trúc và nhận diện tháng đối soát từ file GBS.</span>
+      <span class="reconcile-status-pill is-busy">${t('gbs.upload.processing')}</span>
+      <span class="reconcile-status-inline">${t('gbs.upload.processing_desc')}</span>
     `;
     return;
   }
 
   if (!Array.isArray(files) || !files.length) {
     statusEl.innerHTML = `
-      <span class="reconcile-status-pill">Chưa có file GBS</span>
-      <span class="reconcile-status-inline">Upload file GBS để hệ thống tự gom tháng đối soát.</span>
+      <span class="reconcile-status-pill">${t('gbs.upload.no_file')}</span>
+      <span class="reconcile-status-inline">${t('gbs.upload.empty_hint')}</span>
     `;
     return;
   }
@@ -1430,9 +1433,9 @@ function renderReconcileUploadStatus(files) {
   const latest = files[0] || {};
   const monthCount = Array.isArray(ReconcileFileManager.months) ? ReconcileFileManager.months.length : 0;
   statusEl.innerHTML = `
-    <span class="reconcile-status-pill is-live">${fmtNum(files.length)} file đang lưu</span>
-    <span class="reconcile-status-pill">${fmtNum(monthCount)} tháng sẵn sàng</span>
-    <span class="reconcile-status-inline">Mới nhất: <strong>${escHtml(latest.filename || '—')}</strong> • ${escHtml(fmtDateTime(latest.modified_at || ''))}</span>
+    <span class="reconcile-status-pill is-live">${reconcileText('gbs.upload.files_saved', { n: fmtNum(files.length) })}</span>
+    <span class="reconcile-status-pill">${reconcileText('gbs.upload.months_ready', { n: fmtNum(monthCount) })}</span>
+    <span class="reconcile-status-inline">${reconcileText('gbs.upload.latest_file', { file: `<strong>${escHtml(latest.filename || '—')}</strong>`, time: escHtml(fmtDateTime(latest.modified_at || '')) })}</span>
   `;
 }
 
@@ -1440,7 +1443,7 @@ function renderReconcileMonthList(months, selectedMonth) {
   const root = qs('#reconcileMonthList');
   const summaryEl = qs('#reconcileManagedSummary');
   if (summaryEl) {
-    summaryEl.textContent = `${fmtNum(Array.isArray(months) ? months.length : 0)} tháng`;
+    summaryEl.textContent = reconcileText('gbs.stat.month_count', { n: fmtNum(Array.isArray(months) ? months.length : 0) });
   }
   if (!root) return;
 
@@ -1467,11 +1470,11 @@ function renderReconcileMonthList(months, selectedMonth) {
         <div class="reconcile-month-card-stats">
           <div class="reconcile-month-stat">
             <strong>${fmtNum(month.file_count || 0)}</strong>
-            <small>file GBS</small>
+            <small>${t('gbs.stat.file_gbs')}</small>
           </div>
           <div class="reconcile-month-stat">
             <strong>${fmtNum(month.gbs_orders || 0)}</strong>
-            <small>đơn GBS</small>
+            <small>${t('gbs.stat.gbs_orders_short')}</small>
           </div>
         </div>
         <div class="reconcile-month-card-foot">
@@ -1549,7 +1552,7 @@ function renderReconcileManagedFiles(files) {
   if (!tbody) return;
 
   if (!Array.isArray(files) || !files.length) {
-    tbody.innerHTML = '<tr><td colspan="6" class="reconcile-empty-cell">Chưa có file GBS nào trong kho đối soát.</td></tr>';
+    tbody.innerHTML = `<tr><td colspan="6" class="reconcile-empty-cell">${t('gbs.upload.empty')}</td></tr>`;
     return;
   }
 
@@ -1557,7 +1560,7 @@ function renderReconcileManagedFiles(files) {
     <tr>
       <td style="max-width:320px">
         <div class="reconcile-file-name">${escHtml(file.filename || '—')}</div>
-        <div class="reconcile-file-meta">${escHtml(file.source_label || 'Kho đối soát')}</div>
+        <div class="reconcile-file-meta">${escHtml(file.source_label || t('gbs.files.store'))}</div>
       </td>
       <td>
         <div class="reconcile-file-months">
@@ -1571,7 +1574,7 @@ function renderReconcileManagedFiles(files) {
       <td class="text-right">${fmtNum(file.row_count || 0)} / ${fmtNum(file.order_count || 0)}</td>
       <td>
         ${file.deletable
-          ? `<button class="btn btn-secondary btn-sm" data-action="delete-reconcile-file" data-filename="${escHtml(file.filename || '')}"${ReconcileFileManager.uploading ? ' disabled' : ''}>Xoá</button>`
+          ? `<button class="btn btn-secondary btn-sm" data-action="delete-reconcile-file" data-filename="${escHtml(file.filename || '')}"${ReconcileFileManager.uploading ? ' disabled' : ''}>${t('btn.delete')}</button>`
           : '<span class="reconcile-empty-inline">—</span>'}
       </td>
     </tr>
@@ -1607,24 +1610,24 @@ async function uploadReconcileManagedFile(file) {
     }
 
     const data = await res.json();
-    if (!data.success) throw new Error(data.error || 'Upload failed');
+    if (!data.success) throw new Error(data.error || t('gbs.upload.failed'));
 
     const stats = data.stats || {};
     const details = [];
-    if (stats.order_count) details.push(`${fmtNum(stats.order_count)} đơn`);
-    if (stats.row_count) details.push(`${fmtNum(stats.row_count)} dòng`);
+    if (stats.order_count) details.push(reconcileText('gbs.upload.detail_orders', { n: fmtNum(stats.order_count) }));
+    if (stats.row_count) details.push(reconcileText('gbs.upload.detail_rows', { n: fmtNum(stats.row_count) }));
     if (Array.isArray(stats.months) && stats.months.length) {
       details.push(stats.months.map(fmtMonthLabel).join(', '));
     }
 
     toast(
-      `GBS: đã lưu file${details.length ? ` (${details.join(' • ')})` : ''}`,
+      reconcileText('gbs.upload.saved_toast', { details: details.length ? ` (${details.join(' • ')})` : '' }),
       'success'
     );
 
     await loadReconcile();
   } catch (e) {
-    toast(`GBS: ${e.message || 'Upload thất bại'}`, 'error');
+    toast(reconcileText('gbs.error.prefixed', { message: e.message || t('gbs.upload.failed') }), 'error');
   } finally {
     ReconcileFileManager.uploading = false;
     applyReconcileUploadState();
@@ -1632,7 +1635,7 @@ async function uploadReconcileManagedFile(file) {
 }
 
 async function deleteReconcileManagedFile(filename) {
-  if (!window.confirm(`Xoá file ${filename} khỏi kho đối soát?`)) {
+  if (!window.confirm(reconcileText('gbs.files.delete_confirm', { file: filename }))) {
     return;
   }
 
@@ -1645,12 +1648,12 @@ async function deleteReconcileManagedFile(filename) {
       body: JSON.stringify({ filename }),
     });
 
-    if (!data.success) throw new Error(data.error || 'Delete failed');
+    if (!data.success) throw new Error(data.error || t('gbs.files.delete_failed'));
 
-    toast(`GBS: đã xoá file ${filename}`, 'success');
+    toast(reconcileText('gbs.files.deleted_toast', { file: filename }), 'success');
     await loadReconcile();
   } catch (e) {
-    toast(`GBS: ${e.message || 'Xoá thất bại'}`, 'error');
+    toast(reconcileText('gbs.error.prefixed', { message: e.message || t('gbs.files.delete_failed') }), 'error');
   } finally {
     ReconcileFileManager.uploading = false;
     applyReconcileUploadState();
@@ -1678,11 +1681,11 @@ function renderReconcileRunMeta(generatedAt, insights) {
 
   const lines = Array.isArray(insights) ? insights.slice(0, 4) : [];
   el.innerHTML = `
-    <div class="reconcile-run-stamp">Lần làm mới gần nhất: ${generatedAt ? escHtml(fmtDateTime(generatedAt)) : '—'}</div>
+    <div class="reconcile-run-stamp">${t('gbs.run.latest_refresh')}: ${generatedAt ? escHtml(fmtDateTime(generatedAt)) : '—'}</div>
     <div class="reconcile-run-points">
       ${lines.length
         ? lines.map(line => `<div class="reconcile-run-point">${escHtml(line)}</div>`).join('')
-        : '<div class="reconcile-run-point">Chưa có ghi chú đối soát.</div>'}
+        : `<div class="reconcile-run-point">${t('gbs.run.no_note')}</div>`}
     </div>
   `;
 }
@@ -1698,16 +1701,16 @@ function renderReconcileMappings(mappings) {
       <section class="reconcile-map-card">
         <div class="reconcile-map-head">
           ${platformBadge(platform)}
-          <span class="reconcile-map-title">Quy tắc ${escHtml(reconcilePlatformName(platform))}</span>
+          <span class="reconcile-map-title">${reconcileText('gbs.mapping.platform_rules', { platform: escHtml(reconcilePlatformName(platform)) })}</span>
         </div>
         <div class="table-wrapper">
           <table class="reconcile-map-table">
             <thead>
               <tr>
-                <th>Logic</th>
+                <th>${t('gbs.mapping.logic')}</th>
                 <th>GBS</th>
-                <th>Dữ liệu sàn chung</th>
-                <th>Quy tắc</th>
+                <th>${t('gbs.mapping.platform_data')}</th>
+                <th>${t('gbs.mapping.rule')}</th>
               </tr>
             </thead>
             <tbody>
@@ -1756,13 +1759,13 @@ function renderReconcileUnmatched(orders) {
   const totalOrders = Array.isArray(orders) ? orders.length : 0;
   if (summaryEl) {
     summaryEl.textContent = totalOrders > 120
-      ? `${fmtNum(totalOrders)} đơn • xem 120 dòng đầu`
-      : `${fmtNum(totalOrders)} đơn cần xem`;
+      ? reconcileText('gbs.unmatched.summary_limited', { n: fmtNum(totalOrders), limit: fmtNum(120) })
+      : reconcileText('gbs.unmatched.summary', { n: fmtNum(totalOrders) });
   }
   if (!tbody) return;
 
   if (!Array.isArray(orders) || !orders.length) {
-    tbody.innerHTML = '<tr><td colspan="7" class="reconcile-empty-cell">Không có đơn sàn nào đang lệch hoặc thiếu trong GBS.</td></tr>';
+    tbody.innerHTML = `<tr><td colspan="7" class="reconcile-empty-cell">${t('gbs.unmatched.empty')}</td></tr>`;
     return;
   }
 
@@ -1787,7 +1790,7 @@ function renderReconcileUnmatched(orders) {
       </td>
       <td>
         <div class="reconcile-note">${escHtml(order.note || '—')}</div>
-        <div class="reconcile-note-meta">${(order.platform_statuses || []).length ? `Trạng thái sàn: ${escHtml(order.platform_statuses.join(', '))}` : 'Trạng thái sàn: —'}</div>
+        <div class="reconcile-note-meta">${t('gbs.order.platform_status')}: ${(order.platform_statuses || []).length ? escHtml(order.platform_statuses.join(', ')) : '—'}</div>
       </td>
     </tr>
   `).join('');
@@ -1815,14 +1818,14 @@ function renderReconcilePlatformSections(platforms) {
             <div>
               <div class="reconcile-platform-chip">${platformBadge(platform)}</div>
               <div class="card-title">${escHtml(reconcilePlatformName(platform))}</div>
-              <div class="card-subtitle">${escHtml(info.scope_note || 'Đối soát theo đơn hàng và quy đổi combo trước khi so sánh.')}</div>
-              <div class="reconcile-platform-toggle">${reviewCount > 0 ? `${fmtNum(reviewCount)} đơn cần xem` : 'Mở chi tiết'}</div>
+              <div class="card-subtitle">${escHtml(info.scope_note || t('gbs.platform.default_scope'))}</div>
+              <div class="reconcile-platform-toggle">${reviewCount > 0 ? reconcileText('gbs.unmatched.summary', { n: fmtNum(reviewCount) }) : t('gbs.platform.open_detail')}</div>
             </div>
             <div class="reconcile-mini-metrics">
-              <div class="reconcile-mini-metric"><span>Đơn sàn</span><strong>${fmtNum(summary.platform_orders || 0)}</strong></div>
-              <div class="reconcile-mini-metric"><span>Đơn khớp</span><strong>${fmtNum(matched)}</strong></div>
-              <div class="reconcile-mini-metric"><span>Thiếu trong GBS</span><strong>${fmtNum(summary.missing_in_gbs || 0)}</strong></div>
-              <div class="reconcile-mini-metric"><span>Thiếu dữ liệu sàn</span><strong>${fmtNum(summary.missing_in_platform || 0)}</strong></div>
+              <div class="reconcile-mini-metric"><span>${t('gbs.th.platform_orders_col')}</span><strong>${fmtNum(summary.platform_orders || 0)}</strong></div>
+              <div class="reconcile-mini-metric"><span>${t('gbs.th.matched_orders')}</span><strong>${fmtNum(matched)}</strong></div>
+              <div class="reconcile-mini-metric"><span>${t('gbs.th.missing_in_gbs')}</span><strong>${fmtNum(summary.missing_in_gbs || 0)}</strong></div>
+              <div class="reconcile-mini-metric"><span>${t('gbs.th.missing_in_platform')}</span><strong>${fmtNum(summary.missing_in_platform || 0)}</strong></div>
             </div>
           </div>
         </summary>
@@ -1831,23 +1834,23 @@ function renderReconcilePlatformSections(platforms) {
             <table class="reconcile-order-table">
               <thead>
                 <tr>
-                  <th>Mã đơn</th>
-                  <th>Kết quả</th>
+                  <th>${t('th.order_id')}</th>
+                  <th>${t('gbs.th.result')}</th>
                   <th>GBS</th>
-                  <th>File sàn</th>
+                  <th>${t('gbs.th.platform_file')}</th>
                   <th>SL</th>
                   <th>NMV</th>
-                  <th>Ghi chú</th>
+                  <th>${t('gbs.th.note')}</th>
                 </tr>
               </thead>
               <tbody>
                 ${displayOrders.length
                   ? displayOrders.map(orderRow => renderReconcileOrderRow(orderRow)).join('')
-                  : `<tr><td colspan="7" class="reconcile-empty-cell">Không có dữ liệu để hiển thị.</td></tr>`}
+                  : `<tr><td colspan="7" class="reconcile-empty-cell">${t('msg.no_data')}</td></tr>`}
               </tbody>
             </table>
           </div>
-          ${hiddenCount > 0 ? `<div class="reconcile-hidden-note">Còn ${fmtNum(hiddenCount)} đơn chưa hiển thị trong bảng này.</div>` : ''}
+          ${hiddenCount > 0 ? `<div class="reconcile-hidden-note">${reconcileText('gbs.platform.hidden_orders', { n: fmtNum(hiddenCount) })}</div>` : ''}
         </div>
       </details>
     `;
@@ -1867,14 +1870,14 @@ function renderReconcileOrderRow(order) {
       <td>
         <div class="reconcile-metric-pair">
           <span class="reconcile-metric-line">GBS: <strong>${fmtQtyExact(order.gbs_qty || 0)}</strong></span>
-          <span class="reconcile-metric-line">Sàn: <strong>${fmtQtyExact(order.platform_qty || 0)}</strong></span>
+          <span class="reconcile-metric-line">${t('gbs.order.platform_statuses')}: <strong>${fmtQtyExact(order.platform_qty || 0)}</strong></span>
           <span class="reconcile-diff ${qtyChanged ? 'is-alert' : ''}">Δ ${fmtQtyExact(order.qty_diff || 0)}</span>
         </div>
       </td>
       <td>
         <div class="reconcile-metric-pair">
           <span class="reconcile-metric-line">GBS: <strong>${fmtVNDExact(order.gbs_nmv || 0)}</strong></span>
-          <span class="reconcile-metric-line">Sàn: <strong>${fmtVNDExact(order.platform_nmv || 0)}</strong></span>
+          <span class="reconcile-metric-line">${t('gbs.order.platform_statuses')}: <strong>${fmtVNDExact(order.platform_nmv || 0)}</strong></span>
           <span class="reconcile-diff ${nmvChanged ? 'is-alert' : ''}">Δ ${fmtVNDExact(order.nmv_diff || 0)}</span>
         </div>
       </td>
@@ -1911,7 +1914,7 @@ function renderReconcileSkuList(items, source) {
           extras.push(`combo x${fmtQtyExact(item.combo_multiplier)}`);
         }
         if (source === 'platform' && Math.abs(Number(comparedQty || 0) - Number(qty || 0)) >= 0.001) {
-          extras.push(`so khớp ${fmtQtyExact(comparedQty)}`);
+          extras.push(reconcileText('gbs.sku.compared_qty', { qty: fmtQtyExact(comparedQty) }));
         }
         const extra = extras.length
           ? ` <span class="reconcile-sku-extra">${escHtml(extras.join(' · '))}</span>`
@@ -1924,7 +1927,7 @@ function renderReconcileSkuList(items, source) {
           </div>
         `;
       }).join('')}
-      ${items.length > 4 ? `<div class="reconcile-more">+${fmtNum(items.length - 4)} dòng nữa</div>` : ''}
+      ${items.length > 4 ? `<div class="reconcile-more">${reconcileText('gbs.sku.more_rows', { n: fmtNum(items.length - 4) })}</div>` : ''}
     </div>
   `;
 }
@@ -2158,13 +2161,13 @@ function renderBrandShareTable(tbodyId, brands) {
   tbody.innerHTML = rows.slice(0, 20).map(row => {
     const brandName = row.brand_name || row.prefix || 'N/A';
     const prefix = row.prefix || '';
-    const configuredNote = row.is_configured ? '' : '<span class="brand-share-unmapped">Chưa quy ước</span>';
+    const configuredNote = row.is_configured ? '' : `<span class="brand-share-unmapped">${t('brand.unmapped')}</span>`;
 
     return `
       <tr>
         <td>
           <div class="brand-share-name">${escHtml(brandName)}</div>
-          <div class="brand-share-meta">${escHtml(prefix)} · ${fmtNum(row.order_count || 0)} đơn ${configuredNote}</div>
+          <div class="brand-share-meta">${escHtml(prefix)} · ${reconcileText('brand.meta.orders', { n: fmtNum(row.order_count || 0) })} ${configuredNote}</div>
         </td>
         <td class="text-right" style="font-weight:600;font-size:12px">${fmtNum(row.sku_count || 0)}</td>
         <td class="text-right" style="font-weight:600;font-size:12px">${fmtNum(row.total_qty || 0)}</td>
@@ -3003,7 +3006,7 @@ function renderBrandSettingsSummary() {
     .slice(0, 4)
     .map(row => `${row.prefix}: ${row.brand_name}`);
   const chips = [
-    `${fmtNum(BrandSettingsState.rules.length || 0)} quy ước thương hiệu`,
+    reconcileText('brand.rules_count', { n: fmtNum(BrandSettingsState.rules.length || 0) }),
     preview.length ? `${t('brand.preview.example')}: ${preview.join(' · ')}` : t('brand.preview.empty'),
   ];
 
@@ -3015,15 +3018,15 @@ function renderBrandRuleRows(rows) {
   if (!tbody) return;
 
   if (!rows.length) {
-    tbody.innerHTML = '<tr><td colspan="3" class="reconcile-settings-empty">Chưa có quy ước thương hiệu. Thêm mã 3 ký tự đầu SKU để đặt tên thương hiệu.</td></tr>';
+    tbody.innerHTML = `<tr><td colspan="3" class="reconcile-settings-empty">${t('brand.empty_rules')}</td></tr>`;
     return;
   }
 
   tbody.innerHTML = rows.map((row, index) => `
     <tr data-brand-row data-index="${index}">
       <td><input type="text" maxlength="3" data-field="prefix" value="${escHtml(row.prefix || '')}" placeholder="MON" style="text-transform:uppercase"></td>
-      <td><input type="text" data-field="brand_name" value="${escHtml(row.brand_name || '')}" placeholder="Tên thương hiệu"></td>
-      <td><button class="btn btn-secondary btn-sm" data-action="delete-brand-rule-row" data-index="${index}">Xoá</button></td>
+      <td><input type="text" data-field="brand_name" value="${escHtml(row.brand_name || '')}" placeholder="${escHtml(t('brand.placeholder.name'))}"></td>
+      <td><button class="btn btn-secondary btn-sm" data-action="delete-brand-rule-row" data-index="${index}">${t('btn.delete')}</button></td>
     </tr>
   `).join('');
 }
@@ -3080,7 +3083,7 @@ async function loadBrandSettings() {
 
     BrandSettingsState.rules = Array.isArray(data.rules) ? data.rules : [];
     renderBrandSettingsTable();
-    setBrandSettingsResult(`Đã tải ${fmtNum(BrandSettingsState.rules.length)} quy ước thương hiệu.`, 'info');
+    setBrandSettingsResult(reconcileText('brand.loaded_count', { n: fmtNum(BrandSettingsState.rules.length) }), 'info');
   } catch (e) {
     console.error('loadBrandSettings', e);
     BrandSettingsState.rules = [];

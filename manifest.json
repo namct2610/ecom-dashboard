@@ -1,7 +1,7 @@
 {
-  "version": "1.5.20",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.5.20/release/dashboard-v3-1.5.20.zip",
-  "changelog": "- Hotfix: khôi phục $totalOrders trong customers.php (bị xoá nhầm ở 1.5.19) — sửa lỗi tổng đơn = 0 và tỉ lệ chuyển đổi = 0 trang Khách hàng\n- Thêm ghi chú rõ ràng trên card Top Địa Phương: 'Chỉ tính Shopee & TikTok Shop — Lazada không có địa chỉ'\n- Tất cả chuỗi mới đều dùng t() để đồng bộ ngôn ngữ",
+  "version": "1.5.21",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.5.21/release/dashboard-v3-1.5.21.zip",
+  "changelog": "- Rà soát i18n bản chính: bổ sung tiếng Anh cho các nhãn còn hardcode ở Đối soát GBS, Upload, Nhật ký, Kết nối API và Hệ thống\n- Thêm data-i18n-html để dịch các đoạn hướng dẫn có định dạng strong/code mà vẫn giữ markup\n- Chuẩn hóa toast, prompt reset, trạng thái GBS và quy ước thương hiệu theo t()/tFormat() khi đổi ngôn ngữ",
   "min_php": "8.1",
-  "released_at": "2026-05-28"
+  "released_at": "2026-05-29"
 }
