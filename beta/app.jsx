@@ -1,4 +1,4 @@
-/* global React, ReactDOM, TweaksPanel, useTweaks, TweakSection, TweakSelect, TweakRadio, TweakColor */
+/* global React, ReactDOM, LangCtx, useT, BETA_I18N */
 /* global PageOverview, PageOrders, PageProducts, PageCustomers, PageTraffic, PageComparison */
 /* global PagePlan, PageReconcile, PageUpload, PageLogs, PageSettings, PageAdmin, PageCustomerDetail, PageDataLinks, PageProductCatalog */
 /* global PLATFORM_COLORS, PLATFORM_NAME, fmtVnd */
@@ -615,8 +615,10 @@ function LoginScreen({ onLogin }) {
 
 // ── App ──────────────────────────────────────────────────────────────
 
+// Chart rendering style for the redesigned UI (smooth area charts).
+const CHART_MODE = 'area';
+
 function App() {
-  const [tweaks, setTweak] = useTweaks(window.TWEAK_DEFAULTS);
   const [page, setPage] = React.useState('overview');
   const [platform, setPlatform] = React.useState('all');
   const [viewMode, setViewMode] = React.useState('combo');
@@ -627,12 +629,6 @@ function App() {
   const beta = window.__BETA__ || {};
   const currentUser = { name: beta.username || 'Admin', role: beta.isAdmin ? 'admin' : 'staff' };
   const [loggedIn, setLoggedIn] = React.useState(true);
-
-  React.useEffect(() => {
-    document.body.dataset.palette = tweaks.palette;
-    document.body.dataset.theme = tweaks.theme;
-    document.body.dataset.density = tweaks.density;
-  }, [tweaks.palette, tweaks.theme, tweaks.density]);
 
   const data = window.DASHBOARD_DATA;
   if (!data) return (
@@ -680,7 +676,6 @@ function App() {
     return (
       <LangCtx.Provider value={{lang, setLang: handleSetLang}}>
         <LoginScreen onLogin={() => setLoggedIn(true)}/>
-        {renderTweaks(tweaks, setTweak)}
       </LangCtx.Provider>
     );
   }
@@ -700,54 +695,12 @@ function App() {
                   viewMode={viewMode} onViewMode={setViewMode}
                   onLogout={()=>{ window.location.href = beta.backUrl || '../index.php'; }} />
           <div className="content">
-            <PageComp data={filteredData} mode={tweaks.chartStyle} key={page+platform}/>
+            <PageComp data={filteredData} mode={CHART_MODE} key={page+platform}/>
           </div>
         </main>
-        {renderTweaks(tweaks, setTweak)}
       </div>
     </LangCtx.Provider>
   );
 }
-
-function renderTweaks(tweaks, setTweak) {
-  const palettes = {
-    indigo: ['#5B5BF0','#7C3AED','#4338CA','#FF5C8A'],
-    sunset: ['#F97316','#DC2626','#B91C1C','#FBBF24'],
-    emerald:['#10B981','#059669','#047857','#FCD34D'],
-    violet: ['#A855F7','#6366F1','#4F46E5','#22D3EE'],
-  };
-  return (
-    <TweaksPanel title="Tuỳ chỉnh giao diện">
-      <TweakSection label="Bảng màu thương hiệu">
-        <TweakColor label="Palette"
-          value={palettes[tweaks.palette] || palettes.indigo}
-          options={Object.values(palettes)}
-          onChange={(palette) => {
-            const m = { '#5B5BF0': 'indigo', '#F97316': 'sunset', '#10B981': 'emerald', '#A855F7': 'violet' };
-            setTweak('palette', m[palette[0]] || 'indigo');
-          }} />
-      </TweakSection>
-      <TweakSection label="Chế độ hiển thị">
-        <TweakRadio label="Theme" value={tweaks.theme}
-                    options={['light','dark']}
-                    onChange={(v)=>setTweak('theme', v)} />
-      </TweakSection>
-      <TweakSection label="Mật độ thông tin">
-        <TweakRadio label="Density" value={tweaks.density}
-                    options={['compact','balanced','spacious']}
-                    onChange={(v)=>setTweak('density', v)} />
-      </TweakSection>
-      <TweakSection label="Kiểu biểu đồ">
-        <TweakRadio label="Chart" value={tweaks.chartStyle}
-                    options={['line','area','bar']}
-                    onChange={(v)=>setTweak('chartStyle', v)} />
-      </TweakSection>
-    </TweaksPanel>
-  );
-}
-
-document.body.dataset.palette = window.TWEAK_DEFAULTS.palette;
-document.body.dataset.theme = window.TWEAK_DEFAULTS.theme;
-document.body.dataset.density = window.TWEAK_DEFAULTS.density;
 
 ReactDOM.createRoot(document.getElementById('root')).render(<App />);
