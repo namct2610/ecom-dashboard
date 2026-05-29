@@ -1,7 +1,7 @@
 {
-  "version": "1.5.23",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.5.23/release/dashboard-v3-1.5.23.zip",
-  "changelog": "- Hotfix i18n: bổ sung toàn bộ fallback nội tuyến còn thiếu cho các key UI đang được sử dụng\n- Kiểm tra tự động bảo đảm không còn key runtime nào có thể hiện raw key khi file ngôn ngữ chưa load hoặc bị cache",
+  "version": "1.5.24",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.5.24/release/dashboard-v3-1.5.24.zip",
+  "changelog": "- Beta v2: làm lại toàn bộ giao diện theo phong cách modern minimal SaaS (nền sáng, sidebar sáng tối giản, card viền mảnh phẳng, một màu nhấn indigo, hero than chì)\n- Giữ nguyên 15 trang, dữ liệu và song ngữ VI/EN; gỡ bảng tuỳ chỉnh palette/theme/density",
   "min_php": "8.1",
   "released_at": "2026-05-29"
 }
