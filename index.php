@@ -296,7 +296,7 @@ $initials = strtoupper(substr($user, 0, 2));
         <button class="user-menu-btn" id="btnUserMenu" type="button" aria-haspopup="true" aria-expanded="false">
           <span id="adminNavBadge" class="user-menu-badge" style="display:none"></span>
           <div class="user-menu-meta">
-            <span class="user-menu-name" id="headerUserName"><?= htmlspecialchars($_SESSION['full_name'] ?? $_SESSION['username'] ?? 'Tài khoản') ?></span>
+            <span class="user-menu-name" id="headerUserName"><?= htmlspecialchars($_SESSION['full_name'] ?? $_SESSION['username'] ?? '') ?></span>
             <span class="user-menu-role" id="headerUserRole"><?= htmlspecialchars($_SESSION['role'] ?? 'staff') ?></span>
           </div>
           <div class="header-avatar" id="headerAvatar"><?= htmlspecialchars($initials) ?></div>
@@ -307,7 +307,7 @@ $initials = strtoupper(substr($user, 0, 2));
           <div class="user-menu-card">
             <div class="user-menu-card-avatar" id="userMenuAvatar"><?= htmlspecialchars($initials) ?></div>
             <div class="user-menu-card-info">
-              <div class="user-menu-card-name" id="userMenuName"><?= htmlspecialchars($_SESSION['full_name'] ?? $_SESSION['username'] ?? 'Tài khoản') ?></div>
+              <div class="user-menu-card-name" id="userMenuName"><?= htmlspecialchars($_SESSION['full_name'] ?? $_SESSION['username'] ?? '') ?></div>
               <div class="user-menu-card-username" id="userMenuUsername">@<?= htmlspecialchars($_SESSION['username'] ?? 'guest') ?></div>
               <div class="user-menu-card-role" id="userMenuRole"><?= htmlspecialchars($_SESSION['role'] ?? 'staff') ?></div>
             </div>
@@ -1130,7 +1130,7 @@ $initials = strtoupper(substr($user, 0, 2));
           <div class="reconcile-page-actions">
             <button id="btnRefreshReconcile" class="btn btn-secondary">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 11a8.1 8.1 0 0 0-15.5-2M4 5v4h4"/><path d="M4 13a8.1 8.1 0 0 0 15.5 2M20 19v-4h-4"/></svg>
-              Làm mới
+              <span data-i18n="btn.refresh">Làm mới</span>
             </button>
           </div>
         </div>
@@ -1146,7 +1146,7 @@ $initials = strtoupper(substr($user, 0, 2));
               </div>
               <button type="button" class="btn" id="btnReconcileUploadPrimary">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5-5 5 5"/><path d="M12 5v12"/></svg>
-                Thêm file GBS
+                <span data-i18n="gbs.btn.add_file">Thêm file GBS</span>
               </button>
             </div>
             <div class="reconcile-upload-status" id="reconcileUploadStatus" data-i18n="gbs.upload.empty">Chưa có file GBS nào trong kho đối soát.</div>
@@ -1207,7 +1207,7 @@ $initials = strtoupper(substr($user, 0, 2));
               <div class="card-title" data-i18n="gbs.months.title">Danh sách tháng GBS</div>
               <div class="card-subtitle" data-i18n="gbs.months.sub">Hệ thống tự gom tháng từ toàn bộ file GBS, chọn nhanh từng kỳ để đối soát.</div>
             </div>
-            <div class="reconcile-managed-summary" id="reconcileManagedSummary">0 tháng</div>
+            <div class="reconcile-managed-summary" id="reconcileManagedSummary" data-i18n="gbs.stat.zero_months">0 tháng</div>
           </div>
           <div class="reconcile-month-list" id="reconcileMonthList"></div>
         </div>
@@ -1231,7 +1231,7 @@ $initials = strtoupper(substr($user, 0, 2));
               </div>
             </div>
           </div>
-          <div class="reconcile-run-meta" id="reconcileRunMeta">Chưa tải dữ liệu đối soát.</div>
+          <div class="reconcile-run-meta" id="reconcileRunMeta" data-i18n="gbs.run.not_loaded">Chưa tải dữ liệu đối soát.</div>
         </div>
 
         <div class="grid-4 reconcile-kpi-grid">
@@ -1312,23 +1312,23 @@ $initials = strtoupper(substr($user, 0, 2));
         <div class="card">
           <div class="reconcile-section-head">
             <div>
-              <div class="reconcile-kicker">Cần Xử Lý</div>
+              <div class="reconcile-kicker" data-i18n="gbs.unmatched.kicker">Cần Xử Lý</div>
               <div class="card-title" data-i18n="gbs.unmatched.title">Đơn sàn chưa khớp với GBS</div>
-              <div class="card-subtitle">Gồm đơn thiếu ở GBS hoặc còn lệch số lượng / NMV. Có thể xuất toàn bộ danh sách theo tháng đang xem.</div>
+              <div class="card-subtitle" data-i18n="gbs.unmatched.sub">Gồm đơn thiếu ở GBS hoặc còn lệch số lượng / NMV. Có thể xuất toàn bộ danh sách theo tháng đang xem.</div>
             </div>
-            <div class="reconcile-managed-summary" id="reconcileUnmatchedSummary">0 đơn</div>
+            <div class="reconcile-managed-summary" id="reconcileUnmatchedSummary" data-i18n="gbs.unmatched.zero">0 đơn</div>
           </div>
           <div class="table-wrapper">
             <table class="reconcile-table reconcile-unmatched-table">
               <thead>
                 <tr>
-                  <th>Sàn</th>
-                  <th>Mã đơn</th>
-                  <th>Kết quả</th>
-                  <th>Thời gian sàn</th>
-                  <th>SL / NMV sàn</th>
-                  <th>SL / NMV GBS</th>
-                  <th>Ghi chú</th>
+                  <th data-i18n="th.platform">Sàn</th>
+                  <th data-i18n="th.order_id">Mã đơn</th>
+                  <th data-i18n="gbs.th.result">Kết quả</th>
+                  <th data-i18n="gbs.th.platform_time">Thời gian sàn</th>
+                  <th data-i18n="gbs.th.platform_qty_nmv">SL / NMV sàn</th>
+                  <th data-i18n="gbs.th.gbs_qty_nmv">SL / NMV GBS</th>
+                  <th data-i18n="gbs.th.note">Ghi chú</th>
                 </tr>
               </thead>
               <tbody id="reconcileUnmatchedBody"></tbody>
@@ -1339,11 +1339,11 @@ $initials = strtoupper(substr($user, 0, 2));
         <details class="card reconcile-disclosure">
           <summary class="reconcile-disclosure-head">
             <div>
-              <div class="reconcile-kicker">Quy Tắc Dữ Liệu</div>
-              <div class="card-title">Quy tắc đối soát theo sàn</div>
-              <div class="card-subtitle">Mở ra khi cần kiểm tra cách GBS được quy đổi và khớp với dữ liệu orders chung.</div>
+              <div class="reconcile-kicker" data-i18n="gbs.mapping.kicker">Quy Tắc Dữ Liệu</div>
+              <div class="card-title" data-i18n="gbs.mapping.title">Quy tắc đối soát theo sàn</div>
+              <div class="card-subtitle" data-i18n="gbs.mapping.sub">Mở ra khi cần kiểm tra cách GBS được quy đổi và khớp với dữ liệu orders chung.</div>
             </div>
-            <span class="reconcile-disclosure-label">Xem chi tiết</span>
+            <span class="reconcile-disclosure-label" data-i18n="gbs.mapping.view_detail">Xem chi tiết</span>
           </summary>
           <div class="reconcile-disclosure-body">
             <div class="reconcile-map-grid" id="reconcileMappings"></div>
@@ -1353,9 +1353,9 @@ $initials = strtoupper(substr($user, 0, 2));
         <div class="card">
           <div class="reconcile-section-head">
             <div>
-              <div class="reconcile-kicker">Chi Tiết Theo Sàn</div>
-              <div class="card-title">Bảng đối chiếu chi tiết</div>
-              <div class="card-subtitle">Mỗi sàn được thu gọn riêng để giảm chiều dài trang và tập trung vào các phần có chênh lệch.</div>
+              <div class="reconcile-kicker" data-i18n="gbs.platform.kicker">Chi Tiết Theo Sàn</div>
+              <div class="card-title" data-i18n="gbs.platform.title">Bảng đối chiếu chi tiết</div>
+              <div class="card-subtitle" data-i18n="gbs.platform.sub">Mỗi sàn được thu gọn riêng để giảm chiều dài trang và tập trung vào các phần có chênh lệch.</div>
             </div>
           </div>
           <div class="reconcile-platform-sections" id="reconcilePlatformSections"></div>
@@ -1372,22 +1372,22 @@ $initials = strtoupper(substr($user, 0, 2));
         <div class="analytics-filter-card">
           <div class="analytics-filter-head">
             <div>
-              <div class="card-title">Bộ lọc phân tích</div>
-              <div class="card-subtitle">Lọc riêng heatmap và biểu đồ địa phương theo SKU sản phẩm hoặc thương hiệu.</div>
+              <div class="card-title" data-i18n="analytics.filters.title">Bộ lọc phân tích</div>
+              <div class="card-subtitle" data-i18n="analytics.filters.sub">Lọc riêng heatmap và biểu đồ địa phương theo SKU sản phẩm hoặc thương hiệu.</div>
             </div>
-            <button id="btnClearAnalyticsFilters" class="btn btn-secondary btn-sm">Xóa lọc</button>
+            <button id="btnClearAnalyticsFilters" class="btn btn-secondary btn-sm" data-i18n="analytics.filters.clear">Xóa lọc</button>
           </div>
           <div class="analytics-filter-grid">
             <label class="analytics-filter-field">
               <span data-i18n="th.product">Sản phẩm</span>
               <select id="analyticsProductFilter">
-                <option value="">Tất cả sản phẩm</option>
+                <option value="" data-i18n="filter.all_products">Tất cả sản phẩm</option>
               </select>
             </label>
             <label class="analytics-filter-field">
-              <span>Thương hiệu</span>
+              <span data-i18n="th.brand">Thương hiệu</span>
               <select id="analyticsBrandFilter">
-                <option value="">Tất cả thương hiệu</option>
+                <option value="" data-i18n="filter.all_brands">Tất cả thương hiệu</option>
               </select>
             </label>
             <div class="analytics-filter-summary" id="analyticsFilterSummary" data-i18n="msg.loading">Đang tải...</div>
@@ -1455,9 +1455,9 @@ $initials = strtoupper(substr($user, 0, 2));
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                 <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
               </svg>
-              <div class="upload-area-title">Kéo thả file vào đây</div>
-              <div class="upload-area-sub">hoặc <span id="browseBtn">chọn file</span> từ máy tính</div>
-              <div class="upload-area-hint">Hỗ trợ .xlsx và .xls — nhiều file cùng lúc, tự nhận diện đúng mẫu traffic Shopee / Lazada / TikTok Shop khi upload</div>
+              <div class="upload-area-title" data-i18n="upload.area.title">Kéo thả file vào đây</div>
+              <div class="upload-area-sub" data-i18n-html="upload.area.sub">hoặc <span id="browseBtn">chọn file</span> từ máy tính</div>
+              <div class="upload-area-hint" data-i18n="upload.area.hint">Hỗ trợ .xlsx và .xls — nhiều file cùng lúc, tự nhận diện đúng mẫu traffic Shopee / Lazada / TikTok Shop khi upload</div>
               <input id="fileInput" type="file" accept=".xlsx,.xls" multiple style="display:none">
             </div>
 
@@ -1468,9 +1468,9 @@ $initials = strtoupper(substr($user, 0, 2));
             <div class="upload-actions">
               <button id="btnUpload" class="btn btn-primary btn-sm" disabled>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
-                Tải lên
+                <span data-i18n="upload.btn_upload">Tải lên</span>
               </button>
-              <button id="btnClear" class="btn btn-secondary btn-sm">Xoá đã xong</button>
+              <button id="btnClear" class="btn btn-secondary btn-sm" data-i18n="upload.clear_done">Xoá đã xong</button>
             </div>
 
             <!-- Results -->
@@ -1478,25 +1478,25 @@ $initials = strtoupper(substr($user, 0, 2));
           </div>
 
           <div class="card">
-            <div class="card-title">Hướng dẫn</div>
-            <div class="card-subtitle">Hệ thống tự động nhận diện sàn và loại dữ liệu</div>
+            <div class="card-title" data-i18n="upload.guide.title">Hướng dẫn</div>
+            <div class="card-subtitle" data-i18n="upload.guide.sub">Hệ thống tự động nhận diện sàn và loại dữ liệu</div>
             <div style="font-size:12px;color:var(--text-secondary);line-height:1.7">
-              <p style="margin-bottom:8px"><strong>Sàn được hỗ trợ:</strong></p>
+              <p style="margin-bottom:8px"><strong data-i18n="upload.guide.platforms">Sàn được hỗ trợ:</strong></p>
               <ul style="padding-left:16px;margin-bottom:12px">
-                <li>Shopee — file xuất từ Seller Centre</li>
+                <li data-i18n="upload.guide.shopee">Shopee — file xuất từ Seller Centre</li>
                 <li>Lazada — file Orders export</li>
                 <li>TikTok Shop — Order Management export</li>
               </ul>
-              <p style="margin-bottom:8px"><strong>Loại file:</strong></p>
+              <p style="margin-bottom:8px"><strong data-i18n="upload.guide.file_types">Loại file:</strong></p>
               <ul style="padding-left:16px;margin-bottom:12px">
-                <li><strong>Orders</strong> — dữ liệu đơn hàng</li>
-                <li><strong>Traffic</strong> — lượt xem, lượt truy cập</li>
+                <li data-i18n-html="upload.guide.orders"><strong>Orders</strong> — dữ liệu đơn hàng</li>
+                <li data-i18n-html="upload.guide.traffic"><strong>Traffic</strong> — lượt xem, lượt truy cập</li>
               </ul>
-              <p style="margin-bottom:8px"><strong>Lưu ý:</strong></p>
+              <p style="margin-bottom:8px"><strong data-i18n="upload.guide.notes">Lưu ý:</strong></p>
               <ul style="padding-left:16px">
-                <li>File tối đa 50MB mỗi file</li>
-                <li>Dữ liệu trùng sẽ được cập nhật (upsert)</li>
-                <li>File sẽ bị xoá sau khi xử lý</li>
+                <li data-i18n="upload.guide.max_size">File tối đa 50MB mỗi file</li>
+                <li data-i18n="upload.guide.upsert">Dữ liệu trùng sẽ được cập nhật (upsert)</li>
+                <li data-i18n="upload.guide.cleanup">File sẽ bị xoá sau khi xử lý</li>
               </ul>
             </div>
           </div>
@@ -1533,7 +1533,7 @@ $initials = strtoupper(substr($user, 0, 2));
 
         <!-- Stats row -->
         <div class="grid-5 mb-4" id="logStats">
-          <div class="kpi-card border-blue">  <div class="kpi-label">Tất cả</div>  <div class="kpi-value" id="log-stat-all">—</div></div>
+          <div class="kpi-card border-blue">  <div class="kpi-label" data-i18n="msg.all">Tất cả</div>  <div class="kpi-value" id="log-stat-all">—</div></div>
           <div class="kpi-card border-green"> <div class="kpi-label">Info</div>    <div class="kpi-value" id="log-stat-info">—</div></div>
           <div class="kpi-card border-orange"><div class="kpi-label">Warning</div> <div class="kpi-value" id="log-stat-warning">—</div></div>
           <div class="kpi-card border-red">   <div class="kpi-label">Error</div>   <div class="kpi-value" id="log-stat-error">—</div></div>
@@ -1544,7 +1544,7 @@ $initials = strtoupper(substr($user, 0, 2));
           <!-- Filter bar -->
           <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px">
             <select id="logFilterLevel" style="height:34px;padding:0 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text-primary);font-size:13px">
-              <option value="">Tất cả mức</option>
+              <option value="" data-i18n="log.all_levels">Tất cả mức</option>
               <option value="debug">Debug</option>
               <option value="info">Info</option>
               <option value="warning">Warning</option>
@@ -1552,7 +1552,7 @@ $initials = strtoupper(substr($user, 0, 2));
               <option value="critical">Critical</option>
             </select>
             <select id="logFilterCategory" style="height:34px;padding:0 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text-primary);font-size:13px">
-              <option value="">Tất cả danh mục</option>
+              <option value="" data-i18n="log.all_categories">Tất cả danh mục</option>
               <option value="auth">Auth</option>
               <option value="upload">Upload</option>
               <option value="api">API</option>
@@ -1561,11 +1561,11 @@ $initials = strtoupper(substr($user, 0, 2));
               <option value="lazada">Lazada</option>
               <option value="app">App</option>
             </select>
-            <input id="logSearch" type="text" placeholder="Tìm kiếm..." style="height:34px;padding:0 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text-primary);font-size:13px;flex:1;min-width:180px">
-            <button id="btnLogRefresh" class="btn btn-secondary btn-sm icon-only-btn" type="button" title="Làm mới" aria-label="Làm mới">
+            <input id="logSearch" type="text" placeholder="Tìm kiếm..." data-i18n-placeholder="log.search" style="height:34px;padding:0 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text-primary);font-size:13px;flex:1;min-width:180px">
+            <button id="btnLogRefresh" class="btn btn-secondary btn-sm icon-only-btn" type="button" title="Làm mới" aria-label="Làm mới" data-i18n-title="btn.refresh">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.13-3.36L23 10M1 14l5.36 4.36A9 9 0 0020.49 15"/></svg>
             </button>
-            <button id="btnLogClear" class="btn btn-sm" style="background:var(--red,#ef4444);color:#fff;border:none;padding:0 14px;height:34px;border-radius:6px;cursor:pointer;font-size:13px">Xoá log</button>
+            <button id="btnLogClear" class="btn btn-sm" style="background:var(--red,#ef4444);color:#fff;border:none;padding:0 14px;height:34px;border-radius:6px;cursor:pointer;font-size:13px" data-i18n="log.clear">Xoá log</button>
           </div>
 
           <!-- Table -->
@@ -1573,10 +1573,10 @@ $initials = strtoupper(substr($user, 0, 2));
             <table id="logsTable">
               <thead>
                 <tr>
-                  <th style="width:140px">Thời gian</th>
-                  <th style="width:80px">Mức</th>
-                  <th style="width:80px">Danh mục</th>
-                  <th>Thông điệp</th>
+                  <th style="width:140px" data-i18n="th.time">Thời gian</th>
+                  <th style="width:80px" data-i18n="log.level">Mức</th>
+                  <th style="width:80px" data-i18n="log.category">Danh mục</th>
+                  <th data-i18n="log.message">Thông điệp</th>
                   <th style="width:80px">IP</th>
                   <th style="width:40px"></th>
                 </tr>
@@ -1688,7 +1688,7 @@ $initials = strtoupper(substr($user, 0, 2));
                   <div class="admin-field-grid">
                     <div class="admin-field">
                       <label for="adminUserFullName" data-i18n="admin.form.full_name">Tên hiển thị</label>
-                      <input id="adminUserFullName" type="text" placeholder="Nguyễn Văn A">
+            <input id="adminUserFullName" type="text" placeholder="Nguyễn Văn A" data-i18n-placeholder="admin.form.full_name_placeholder">
                     </div>
                     <div class="admin-field">
                       <label for="adminUserRole" data-i18n="admin.form.role">Vai trò</label>
@@ -1701,7 +1701,7 @@ $initials = strtoupper(substr($user, 0, 2));
 
                   <div class="admin-field">
                     <label for="adminUserPassword" data-i18n="admin.form.password">Mật khẩu</label>
-                    <input id="adminUserPassword" type="password" placeholder="Từ 8 ký tự, tối thiểu mức Trung bình">
+            <input id="adminUserPassword" type="password" placeholder="Từ 8 ký tự, tối thiểu mức Trung bình" data-i18n-placeholder="admin.form.password_placeholder">
                     <div class="password-strength is-empty" id="adminUserPasswordStrength">
                       <div class="password-strength-bar"><span class="password-strength-fill"></span></div>
                       <div class="password-strength-meta">
@@ -1766,25 +1766,25 @@ $initials = strtoupper(substr($user, 0, 2));
         <div id="connectTabShopee">
           <!-- Credentials card -->
           <div class="card mb-4">
-            <div class="card-title">Thông tin xác thực Shopee Open Platform App</div>
-            <p style="color:var(--text-muted);font-size:13px;margin-bottom:16px">
+            <div class="card-title" data-i18n="connect.shopee.credentials_title">Thông tin xác thực Shopee Open Platform App</div>
+            <p style="color:var(--text-muted);font-size:13px;margin-bottom:16px" data-i18n-html="connect.shopee.credentials_sub">
               Đăng nhập <strong>open.shopee.com</strong> → My Apps → Create App để lấy Partner ID và Partner Key.
             </p>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;max-width:600px">
               <div>
                 <label style="font-size:12px;font-weight:600;color:var(--text-secondary);display:block" for="shopeePartnerId">Partner ID</label>
-                <input id="shopeePartnerId" type="number" class="login-input" placeholder="Nhập Partner ID..." style="width:100%;margin-top:4px">
+                <input id="shopeePartnerId" type="number" class="login-input" placeholder="Nhập Partner ID..." data-i18n-placeholder="connect.placeholder.partner_id" style="width:100%;margin-top:4px">
               </div>
               <div>
                 <label style="font-size:12px;font-weight:600;color:var(--text-secondary);display:block" for="shopeePartnerKey">Partner Key</label>
-                <input id="shopeePartnerKey" type="password" class="login-input" placeholder="Nhập Partner Key..." style="width:100%;margin-top:4px">
+                <input id="shopeePartnerKey" type="password" class="login-input" placeholder="Nhập Partner Key..." data-i18n-placeholder="connect.placeholder.partner_key" style="width:100%;margin-top:4px">
               </div>
             </div>
             <div style="margin-top:12px;display:flex;gap:10px;align-items:center">
-              <button id="btnShopeeSaveCredentials" class="btn btn-primary">Lưu thông tin</button>
+              <button id="btnShopeeSaveCredentials" class="btn btn-primary" data-i18n="connect.save_credentials">Lưu thông tin</button>
               <button id="btnConnectShopee" class="btn btn-secondary" style="display:flex;align-items:center;gap:6px">
                 <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
-                Kết nối Shopee
+                <span data-i18n="connect.shopee.connect">Kết nối Shopee</span>
               </button>
               <span id="shopeeConnectStatus" style="font-size:13px;color:var(--text-muted)"></span>
             </div>
@@ -1793,13 +1793,13 @@ $initials = strtoupper(substr($user, 0, 2));
           <!-- Connected shops -->
           <div class="card">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-              <div class="card-title" style="margin-bottom:0">Shop Shopee đã kết nối</div>
+              <div class="card-title" style="margin-bottom:0" data-i18n="connect.shopee.connected_title">Shop Shopee đã kết nối</div>
               <div style="display:flex;gap:8px">
                 <button id="btnShopeeSyncAll" class="btn btn-primary btn-sm" style="display:flex;align-items:center;gap:6px">
                   <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
-                  Đồng bộ tất cả
+                  <span data-i18n="connect.sync_all">Đồng bộ tất cả</span>
                 </button>
-                <button id="btnShopeeRefresh" class="btn btn-secondary btn-sm">Làm mới</button>
+                <button id="btnShopeeRefresh" class="btn btn-secondary btn-sm" data-i18n="btn.refresh">Làm mới</button>
               </div>
             </div>
             <div class="table-wrapper">
@@ -1827,12 +1827,12 @@ $initials = strtoupper(substr($user, 0, 2));
           <div class="card mt-4" style="background:var(--bg-base)">
             <div class="card-title" data-i18n="connect.guide.shopee">Hướng dẫn kết nối Shopee</div>
             <ol style="color:var(--text-secondary);font-size:13px;line-height:2;padding-left:20px">
-              <li>Đăng nhập <strong>open.shopee.com</strong> → <strong>My Apps → Create App</strong></li>
-              <li>Trong App Settings, thêm Redirect URL: <code id="shopeeOauthRedirectUri">—</code></li>
-              <li>Sao chép <strong>Partner ID</strong> và <strong>Partner Key</strong> rồi điền vào form trên</li>
-              <li>Nhấn <strong>Lưu thông tin</strong> rồi nhấn <strong>Kết nối Shopee</strong></li>
-              <li>Đăng nhập tài khoản Shopee Seller và cấp quyền cho app</li>
-              <li>Sau khi kết nối thành công, nhấn <strong>Đồng bộ</strong> để tải đơn hàng về</li>
+              <li data-i18n-html="connect.shopee.step1">Đăng nhập <strong>open.shopee.com</strong> → <strong>My Apps → Create App</strong></li>
+              <li data-i18n-html="connect.shopee.step2">Trong App Settings, thêm Redirect URL: <code id="shopeeOauthRedirectUri">—</code></li>
+              <li data-i18n-html="connect.shopee.step3">Sao chép <strong>Partner ID</strong> và <strong>Partner Key</strong> rồi điền vào form trên</li>
+              <li data-i18n-html="connect.shopee.step4">Nhấn <strong>Lưu thông tin</strong> rồi nhấn <strong>Kết nối Shopee</strong></li>
+              <li data-i18n="connect.shopee.step5">Đăng nhập tài khoản Shopee Seller và cấp quyền cho app</li>
+              <li data-i18n-html="connect.shopee.step6">Sau khi kết nối thành công, nhấn <strong>Đồng bộ</strong> để tải đơn hàng về</li>
             </ol>
           </div>
         </div><!-- /#connectTabShopee -->
@@ -1841,25 +1841,25 @@ $initials = strtoupper(substr($user, 0, 2));
         <div id="connectTabTiktok" style="display:none">
           <!-- Credentials card -->
           <div class="card mb-4">
-            <div class="card-title">Thông tin xác thực TikTok Shop App</div>
-            <p style="color:var(--text-muted);font-size:13px;margin-bottom:16px">
+            <div class="card-title" data-i18n="connect.tiktok.credentials_title">Thông tin xác thực TikTok Shop App</div>
+            <p style="color:var(--text-muted);font-size:13px;margin-bottom:16px" data-i18n-html="connect.tiktok.credentials_sub">
               Tạo app tại <strong>TikTok Shop Partner Center</strong> → App &amp; Service → Create app &amp; service để lấy App Key và App Secret.
             </p>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;max-width:600px">
               <div>
                 <label style="font-size:12px;font-weight:600;color:var(--text-secondary);display:block" for="tiktokAppKey">App Key</label>
-                <input id="tiktokAppKey" type="text" class="login-input" placeholder="Nhập App Key..." style="width:100%;margin-top:4px">
+                <input id="tiktokAppKey" type="text" class="login-input" placeholder="Nhập App Key..." data-i18n-placeholder="connect.placeholder.app_key" style="width:100%;margin-top:4px">
               </div>
               <div>
                 <label style="font-size:12px;font-weight:600;color:var(--text-secondary);display:block" for="tiktokAppSecret">App Secret</label>
-                <input id="tiktokAppSecret" type="password" class="login-input" placeholder="Nhập App Secret..." style="width:100%;margin-top:4px">
+                <input id="tiktokAppSecret" type="password" class="login-input" placeholder="Nhập App Secret..." data-i18n-placeholder="connect.placeholder.app_secret" style="width:100%;margin-top:4px">
               </div>
             </div>
             <div style="margin-top:12px;display:flex;gap:10px;align-items:center">
-              <button id="btnSaveCredentials" class="btn btn-primary">Lưu thông tin</button>
+              <button id="btnSaveCredentials" class="btn btn-primary" data-i18n="connect.save_credentials">Lưu thông tin</button>
               <button id="btnConnectTiktok" class="btn btn-secondary" style="display:flex;align-items:center;gap:6px">
                 <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
-                Kết nối TikTok Shop
+                <span data-i18n="connect.tiktok.connect">Kết nối TikTok Shop</span>
               </button>
               <span id="connectStatus" style="font-size:13px;color:var(--text-muted)"></span>
             </div>
@@ -1868,13 +1868,13 @@ $initials = strtoupper(substr($user, 0, 2));
           <!-- Connected shops -->
           <div class="card">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-              <div class="card-title" style="margin-bottom:0">Shop đã kết nối</div>
+              <div class="card-title" style="margin-bottom:0" data-i18n="connect.tiktok.connected_title">Shop đã kết nối</div>
               <div style="display:flex;gap:8px">
                 <button id="btnSyncAll" class="btn btn-primary btn-sm" style="display:flex;align-items:center;gap:6px">
                   <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
-                  Đồng bộ tất cả
+                  <span data-i18n="connect.sync_all">Đồng bộ tất cả</span>
                 </button>
-                <button id="btnRefreshShops" class="btn btn-secondary btn-sm">Làm mới</button>
+                <button id="btnRefreshShops" class="btn btn-secondary btn-sm" data-i18n="btn.refresh">Làm mới</button>
               </div>
             </div>
             <div id="shopsTableWrapper">
@@ -1904,13 +1904,13 @@ $initials = strtoupper(substr($user, 0, 2));
           <div class="card mt-4" style="background:var(--bg-base)">
             <div class="card-title" data-i18n="connect.guide.tiktok">Hướng dẫn kết nối TikTok Shop</div>
             <ol style="color:var(--text-secondary);font-size:13px;line-height:2;padding-left:20px">
-              <li>Đăng ký tài khoản <strong>TikTok Shop Partner Center</strong> tại <code>partner.tiktokshop.com</code></li>
-              <li>Vào <strong>App &amp; Service → Create app &amp; service</strong>, tạo Custom App</li>
-              <li>Trong phần cài đặt app, bật <strong>Enable API</strong> và nhập Redirect URL: <code id="oauthRedirectUri">—</code></li>
-              <li>Sao chép <strong>App Key</strong> và <strong>App Secret</strong> rồi điền vào form trên</li>
-              <li>Nhấn <strong>Lưu thông tin</strong> rồi nhấn <strong>Kết nối TikTok Shop</strong></li>
-              <li>Đăng nhập tài khoản TikTok Shop và cấp quyền cho app</li>
-              <li>Sau khi kết nối thành công, nhấn <strong>Đồng bộ</strong> để tải đơn hàng về</li>
+              <li data-i18n-html="connect.tiktok.step1">Đăng ký tài khoản <strong>TikTok Shop Partner Center</strong> tại <code>partner.tiktokshop.com</code></li>
+              <li data-i18n-html="connect.tiktok.step2">Vào <strong>App &amp; Service → Create app &amp; service</strong>, tạo Custom App</li>
+              <li data-i18n-html="connect.tiktok.step3">Trong phần cài đặt app, bật <strong>Enable API</strong> và nhập Redirect URL: <code id="oauthRedirectUri">—</code></li>
+              <li data-i18n-html="connect.tiktok.step4">Sao chép <strong>App Key</strong> và <strong>App Secret</strong> rồi điền vào form trên</li>
+              <li data-i18n-html="connect.tiktok.step5">Nhấn <strong>Lưu thông tin</strong> rồi nhấn <strong>Kết nối TikTok Shop</strong></li>
+              <li data-i18n="connect.tiktok.step6">Đăng nhập tài khoản TikTok Shop và cấp quyền cho app</li>
+              <li data-i18n-html="connect.tiktok.step7">Sau khi kết nối thành công, nhấn <strong>Đồng bộ</strong> để tải đơn hàng về</li>
             </ol>
           </div>
         </div><!-- /#connectTabTiktok -->
@@ -1919,25 +1919,25 @@ $initials = strtoupper(substr($user, 0, 2));
         <div id="connectTabLazada" style="display:none">
           <!-- Credentials card -->
           <div class="card mb-4">
-            <div class="card-title">Thông tin xác thực Lazada Open Platform App</div>
-            <p style="color:var(--text-muted);font-size:13px;margin-bottom:16px">
+            <div class="card-title" data-i18n="connect.lazada.credentials_title">Thông tin xác thực Lazada Open Platform App</div>
+            <p style="color:var(--text-muted);font-size:13px;margin-bottom:16px" data-i18n-html="connect.lazada.credentials_sub">
               Đăng nhập <strong>open.lazada.com</strong> → App Console → Create App để lấy App Key và App Secret.
             </p>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;max-width:600px">
               <div>
                 <label style="font-size:12px;font-weight:600;color:var(--text-secondary);display:block" for="lazadaAppKey">App Key</label>
-                <input id="lazadaAppKey" type="text" class="login-input" placeholder="Nhập App Key..." style="width:100%;margin-top:4px">
+                <input id="lazadaAppKey" type="text" class="login-input" placeholder="Nhập App Key..." data-i18n-placeholder="connect.placeholder.app_key" style="width:100%;margin-top:4px">
               </div>
               <div>
                 <label style="font-size:12px;font-weight:600;color:var(--text-secondary);display:block" for="lazadaAppSecret">App Secret</label>
-                <input id="lazadaAppSecret" type="password" class="login-input" placeholder="Nhập App Secret..." style="width:100%;margin-top:4px">
+                <input id="lazadaAppSecret" type="password" class="login-input" placeholder="Nhập App Secret..." data-i18n-placeholder="connect.placeholder.app_secret" style="width:100%;margin-top:4px">
               </div>
             </div>
             <div style="margin-top:12px;display:flex;gap:10px;align-items:center">
-              <button id="btnLazadaSaveCredentials" class="btn btn-primary">Lưu thông tin</button>
+              <button id="btnLazadaSaveCredentials" class="btn btn-primary" data-i18n="connect.save_credentials">Lưu thông tin</button>
               <button id="btnConnectLazada" class="btn btn-secondary" style="display:flex;align-items:center;gap:6px">
                 <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
-                Kết nối Lazada
+                <span data-i18n="connect.lazada.connect">Kết nối Lazada</span>
               </button>
               <span id="lazadaConnectStatus" style="font-size:13px;color:var(--text-muted)"></span>
             </div>
@@ -1946,13 +1946,13 @@ $initials = strtoupper(substr($user, 0, 2));
           <!-- Connected accounts -->
           <div class="card">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-              <div class="card-title" style="margin-bottom:0">Tài khoản Lazada đã kết nối</div>
+              <div class="card-title" style="margin-bottom:0" data-i18n="connect.lazada.connected_title">Tài khoản Lazada đã kết nối</div>
               <div style="display:flex;gap:8px">
                 <button id="btnLazadaSyncAll" class="btn btn-primary btn-sm" style="display:flex;align-items:center;gap:6px">
                   <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
-                  Đồng bộ tất cả
+                  <span data-i18n="connect.sync_all">Đồng bộ tất cả</span>
                 </button>
-                <button id="btnLazadaRefresh" class="btn btn-secondary btn-sm">Làm mới</button>
+                <button id="btnLazadaRefresh" class="btn btn-secondary btn-sm" data-i18n="btn.refresh">Làm mới</button>
               </div>
             </div>
             <div class="table-wrapper">
@@ -1980,12 +1980,12 @@ $initials = strtoupper(substr($user, 0, 2));
           <div class="card mt-4" style="background:var(--bg-base)">
             <div class="card-title" data-i18n="connect.guide.lazada">Hướng dẫn kết nối Lazada</div>
             <ol style="color:var(--text-secondary);font-size:13px;line-height:2;padding-left:20px">
-              <li>Đăng nhập <strong>open.lazada.com</strong> → <strong>App Console → Create App</strong></li>
-              <li>Trong phần App Settings, thêm Redirect URL: <code id="lazadaOauthRedirectUri">—</code></li>
-              <li>Sao chép <strong>App Key</strong> và <strong>App Secret</strong> rồi điền vào form trên</li>
-              <li>Nhấn <strong>Lưu thông tin</strong> rồi nhấn <strong>Kết nối Lazada</strong></li>
-              <li>Đăng nhập tài khoản Lazada Seller Center và cấp quyền cho app</li>
-              <li>Sau khi kết nối thành công, nhấn <strong>Đồng bộ</strong> để tải đơn hàng về</li>
+              <li data-i18n-html="connect.lazada.step1">Đăng nhập <strong>open.lazada.com</strong> → <strong>App Console → Create App</strong></li>
+              <li data-i18n-html="connect.lazada.step2">Trong phần App Settings, thêm Redirect URL: <code id="lazadaOauthRedirectUri">—</code></li>
+              <li data-i18n-html="connect.lazada.step3">Sao chép <strong>App Key</strong> và <strong>App Secret</strong> rồi điền vào form trên</li>
+              <li data-i18n-html="connect.lazada.step4">Nhấn <strong>Lưu thông tin</strong> rồi nhấn <strong>Kết nối Lazada</strong></li>
+              <li data-i18n="connect.lazada.step5">Đăng nhập tài khoản Lazada Seller Center và cấp quyền cho app</li>
+              <li data-i18n-html="connect.lazada.step6">Sau khi kết nối thành công, nhấn <strong>Đồng bộ</strong> để tải đơn hàng về</li>
             </ol>
           </div>
         </div><!-- /#connectTabLazada -->
@@ -2014,7 +2014,7 @@ $initials = strtoupper(substr($user, 0, 2));
           <div style="margin-top:14px;font-size:12px;color:var(--text-muted)">
             <svg class="inline-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 15h6"/><path d="M9 18h6"/></svg>
             <a href="assets/lang/vi.json" download="lang-template.json" style="color:var(--primary);text-decoration:none" data-i18n="lang.template">Tải file mẫu</a>
-            &nbsp;— chỉnh sửa các giá trị (không đổi key), giữ nguyên <code>_meta</code>, rồi upload.
+            <span data-i18n-html="lang.template_hint">&nbsp;— chỉnh sửa các giá trị (không đổi key), giữ nguyên <code>_meta</code>, rồi upload.</span>
           </div>
         </div>
       </div>
@@ -2032,7 +2032,7 @@ $initials = strtoupper(substr($user, 0, 2));
             <div class="card-title" style="margin-bottom:0" data-i18n="system.info.title">Thông tin hệ thống</div>
             <button id="btnRefreshSysInfo" class="btn btn-secondary btn-sm">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 0 1-15.5 6.2"/><path d="M3 12A9 9 0 0 1 18.5 5.8"/><path d="M18 2v5h-5"/><path d="M6 22v-5h5"/></svg>
-              Làm mới
+              <span data-i18n="btn.refresh">Làm mới</span>
             </button>
           </div>
           <div id="sysInfoContent">
@@ -2054,14 +2054,14 @@ $initials = strtoupper(substr($user, 0, 2));
             <div class="card-title" style="margin-bottom:0" data-i18n="system.update.title">Cập nhật tự động</div>
             <button id="btnCheckUpdateNow" class="btn btn-secondary btn-sm">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 0 1-15.5 6.2"/><path d="M3 12A9 9 0 0 1 18.5 5.8"/><path d="M18 2v5h-5"/><path d="M6 22v-5h5"/></svg>
-              Kiểm tra ngay
+              <span data-i18n="update.check_now">Kiểm tra ngay</span>
             </button>
           </div>
 
           <div style="margin-bottom:16px">
             <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:6px">
-              URL Manifest cập nhật
-              <span style="font-size:11px;opacity:.7">— file JSON chứa thông tin phiên bản mới nhất</span>
+              <span data-i18n="update.manifest_url">URL Manifest cập nhật</span>
+              <span style="font-size:11px;opacity:.7" data-i18n="update.manifest_url_hint">— file JSON chứa thông tin phiên bản mới nhất</span>
             </label>
             <div style="display:flex;gap:8px">
               <input type="url" id="inputManifestUrl" class="form-control"
@@ -2069,7 +2069,7 @@ $initials = strtoupper(substr($user, 0, 2));
                      readonly
                      style="flex:1;font-size:13px">
             </div>
-            <div style="font-size:11px;color:var(--text-muted);margin-top:5px">
+            <div style="font-size:11px;color:var(--text-muted);margin-top:5px" data-i18n="update.production_manifest_note">
               Production chỉ sử dụng duy nhất manifest này. Không cần nhập URL theo tag phiên bản.
             </div>
           </div>
@@ -2083,18 +2083,19 @@ $initials = strtoupper(substr($user, 0, 2));
         <div class="card mb-4" id="brandSettingsCard">
           <div class="reconcile-settings-head">
             <div>
-              <div class="card-title" style="margin-bottom:4px">Quy ước SKU sang Thương hiệu</div>
-              <div class="card-subtitle">Thiết lập tên thương hiệu theo đúng 3 ký tự đầu trong mã SKU để dùng trong phần phân tích.</div>
+              <div class="card-title" style="margin-bottom:4px" data-i18n="brand.settings.title">Quy ước SKU sang Thương hiệu</div>
+              <div class="card-subtitle" data-i18n="brand.settings.sub">Thiết lập tên thương hiệu theo đúng 3 ký tự đầu trong mã SKU để dùng trong phần phân tích.</div>
             </div>
             <div class="reconcile-settings-actions">
-              <button id="btnReloadBrandSettings" class="btn btn-secondary btn-sm">Tải lại</button>
-              <button id="btnSaveBrandSettings" class="btn btn-primary btn-sm">Lưu thương hiệu</button>
+              <button id="btnReloadBrandSettings" class="btn btn-secondary btn-sm" data-i18n="btn.reload">Tải lại</button>
+              <button id="btnSaveBrandSettings" class="btn btn-primary btn-sm" data-i18n="brand.btn.save">Lưu thương hiệu</button>
             </div>
           </div>
 
           <div class="reconcile-settings-banner">
-            <strong>Nhận diện thương hiệu:</strong> hệ thống lấy 3 ký tự đầu của SKU sau khi chuẩn hóa chữ hoa.
-            <span>Ví dụ SKU `MON055GH04VAN` sẽ thuộc mã thương hiệu `MON`.</span>
+            <strong data-i18n="brand.banner.title">Nhận diện thương hiệu:</strong>
+            <span data-i18n="brand.banner.desc">hệ thống lấy 3 ký tự đầu của SKU sau khi chuẩn hóa chữ hoa.</span>
+            <span data-i18n="brand.banner.example">Ví dụ SKU `MON055GH04VAN` sẽ thuộc mã thương hiệu `MON`.</span>
           </div>
 
           <div class="reconcile-settings-summary" id="brandSettingsSummary">
@@ -2127,9 +2128,9 @@ $initials = strtoupper(substr($user, 0, 2));
         <div class="card" style="border:2px solid #fecaca">
           <div class="card-title" style="color:#dc2626;display:flex;align-items:center;gap:8px">
             <svg class="inline-icon icon-status-warning" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
-            <span>Vùng nguy hiểm — Reset Database</span>
+            <span data-i18n="danger.title">Vùng nguy hiểm — Reset Database</span>
           </div>
-          <p style="color:var(--text-muted);font-size:13px;margin-bottom:20px">
+          <p style="color:var(--text-muted);font-size:13px;margin-bottom:20px" data-i18n="danger.sub">
             Các thao tác dưới đây không thể hoàn tác. Hãy chắc chắn trước khi thực hiện.
           </p>
 
@@ -2138,11 +2139,12 @@ $initials = strtoupper(substr($user, 0, 2));
             <!-- Reset orders -->
             <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:#fef2f2;border-radius:10px;gap:16px;flex-wrap:wrap">
               <div>
-                <div style="font-weight:600;font-size:14px;color:#1e293b">Xóa dữ liệu đơn hàng</div>
-                <div style="font-size:12px;color:var(--text-muted);margin-top:2px">Xóa toàn bộ orders, traffic, upload_history, import_errors</div>
+                <div style="font-weight:600;font-size:14px;color:#1e293b" data-i18n="danger.orders.title">Xóa dữ liệu đơn hàng</div>
+                <div style="font-size:12px;color:var(--text-muted);margin-top:2px" data-i18n="danger.orders.desc">Xóa toàn bộ orders, traffic, upload_history, import_errors</div>
               </div>
               <button class="btn btn-sm" style="background:#ef4444;color:#fff;border:none;white-space:nowrap"
-                      onclick="confirmReset('reset_orders','Xóa toàn bộ đơn hàng và traffic?','Nhập DELETE ORDERS để xác nhận:','DELETE ORDERS')">
+                      onclick="confirmReset('reset_orders',t('danger.orders.confirm'),t('danger.orders.prompt'),'DELETE ORDERS')"
+                      data-i18n="danger.orders.button">
                 Xóa dữ liệu đơn hàng
               </button>
             </div>
@@ -2150,11 +2152,12 @@ $initials = strtoupper(substr($user, 0, 2));
             <!-- Reset API connections -->
             <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:#fef2f2;border-radius:10px;gap:16px;flex-wrap:wrap">
               <div>
-                <div style="font-weight:600;font-size:14px;color:#1e293b">Xóa kết nối API</div>
-                <div style="font-size:12px;color:var(--text-muted);margin-top:2px">Xóa TikTok & Lazada connections, App Key/Secret đã lưu</div>
+                <div style="font-weight:600;font-size:14px;color:#1e293b" data-i18n="danger.api.title">Xóa kết nối API</div>
+                <div style="font-size:12px;color:var(--text-muted);margin-top:2px" data-i18n="danger.api.desc">Xóa TikTok & Lazada connections, App Key/Secret đã lưu</div>
               </div>
               <button class="btn btn-sm" style="background:#ef4444;color:#fff;border:none;white-space:nowrap"
-                      onclick="confirmReset('reset_api_connections','Xóa toàn bộ kết nối API?','Nhập DELETE API để xác nhận:','DELETE API')">
+                      onclick="confirmReset('reset_api_connections',t('danger.api.confirm'),t('danger.api.prompt'),'DELETE API')"
+                      data-i18n="danger.api.button">
                 Xóa kết nối API
               </button>
             </div>
@@ -2162,11 +2165,12 @@ $initials = strtoupper(substr($user, 0, 2));
             <!-- Reset logs -->
             <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:#fffbeb;border-radius:10px;gap:16px;flex-wrap:wrap">
               <div>
-                <div style="font-weight:600;font-size:14px;color:#1e293b">Xóa nhật ký hệ thống</div>
-                <div style="font-size:12px;color:var(--text-muted);margin-top:2px">Xóa toàn bộ app_logs (không ảnh hưởng đến dữ liệu)</div>
+                <div style="font-weight:600;font-size:14px;color:#1e293b" data-i18n="danger.logs.title">Xóa nhật ký hệ thống</div>
+                <div style="font-size:12px;color:var(--text-muted);margin-top:2px" data-i18n="danger.logs.desc">Xóa toàn bộ app_logs (không ảnh hưởng đến dữ liệu)</div>
               </div>
               <button class="btn btn-sm" style="background:#f59e0b;color:#fff;border:none;white-space:nowrap"
-                      onclick="confirmReset('reset_logs','Xóa toàn bộ nhật ký?','Nhập DELETE LOGS để xác nhận:','DELETE LOGS')">
+                      onclick="confirmReset('reset_logs',t('danger.logs.confirm'),t('danger.logs.prompt'),'DELETE LOGS')"
+                      data-i18n="danger.logs.button">
                 Xóa nhật ký
               </button>
             </div>
@@ -2176,14 +2180,14 @@ $initials = strtoupper(substr($user, 0, 2));
               <div>
                 <div style="font-weight:700;font-size:14px;color:#dc2626;display:flex;align-items:center;gap:6px">
                   <svg class="inline-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 15H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
-                  <span>Reset TOÀN BỘ database</span>
+                  <span data-i18n="danger.all.title">Reset TOÀN BỘ database</span>
                 </div>
-                <div style="font-size:12px;color:var(--text-muted);margin-top:2px">Xóa tất cả: đơn hàng, traffic, API keys, logs, cài đặt</div>
+                <div style="font-size:12px;color:var(--text-muted);margin-top:2px" data-i18n="danger.all.desc">Xóa tất cả: đơn hàng, traffic, API keys, logs, cài đặt</div>
               </div>
               <button class="btn btn-sm" style="background:#7f1d1d;color:#fff;border:none;white-space:nowrap"
-                      onclick="confirmReset('reset_all','CẢNH BÁO: Xóa TOÀN BỘ dữ liệu không thể khôi phục!','Nhập RESET ALL để xác nhận:','RESET ALL')">
+                      onclick="confirmReset('reset_all',t('danger.all.confirm'),t('danger.all.prompt'),'RESET ALL')">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 15H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
-                Reset toàn bộ
+                <span data-i18n="danger.all.button">Reset toàn bộ</span>
               </button>
             </div>
 
@@ -2344,31 +2348,31 @@ $initials = strtoupper(substr($user, 0, 2));
     const usp = new URLSearchParams(location.search);
     if (usp.has('tiktok_connected')) {
       const n = usp.get('tiktok_connected');
-      toast(`Đã kết nối thành công ${n} shop TikTok!`, 'success');
+      toast(tFormat('connect.oauth.tiktok_success', { n }), 'success');
       history.replaceState({}, '', location.pathname + '#admin');
       setTimeout(() => window.openAdminTab?.('api'), 300);
     } else if (usp.has('tiktok_error')) {
-      toast('Kết nối TikTok thất bại: ' + usp.get('tiktok_error'), 'error');
+      toast(`${t('connect.oauth.tiktok_error')} ${usp.get('tiktok_error')}`, 'error');
       history.replaceState({}, '', location.pathname);
     } else if (usp.has('shopee_connected')) {
-      toast('Đã kết nối shop Shopee thành công!', 'success');
+      toast(t('connect.oauth.shopee_success'), 'success');
       history.replaceState({}, '', location.pathname + '#admin');
       setTimeout(() => {
         window.openAdminTab?.('api');
         switchConnectTab('shopee');
       }, 300);
     } else if (usp.has('shopee_error')) {
-      toast('Kết nối Shopee thất bại: ' + usp.get('shopee_error'), 'error');
+      toast(`${t('connect.oauth.shopee_error')} ${usp.get('shopee_error')}`, 'error');
       history.replaceState({}, '', location.pathname);
     } else if (usp.has('lazada_connected')) {
-      toast('Đã kết nối tài khoản Lazada thành công!', 'success');
+      toast(t('connect.oauth.lazada_success'), 'success');
       history.replaceState({}, '', location.pathname + '#admin');
       setTimeout(() => {
         window.openAdminTab?.('api');
         switchConnectTab('lazada');
       }, 300);
     } else if (usp.has('lazada_error')) {
-      toast('Kết nối Lazada thất bại: ' + usp.get('lazada_error'), 'error');
+      toast(`${t('connect.oauth.lazada_error')} ${usp.get('lazada_error')}`, 'error');
       history.replaceState({}, '', location.pathname);
     }
   });
