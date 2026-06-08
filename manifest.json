@@ -1,7 +1,7 @@
 {
-  "version": "1.5.25",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.5.25/release/dashboard-v3-1.5.25.zip",
-  "changelog": "- Thêm trang Trích xuất Database (db-export.php): chỉ admin, xuất toàn bộ schema + dữ liệu ra file .sql để backup/khôi phục\n- Dọn dẹp thư mục beta/ cũ (đã thay bằng UI v2 ở 1.5.24)",
+  "version": "1.5.26",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.5.26/release/dashboard-v3-1.5.26.zip",
+  "changelog": "- Đưa tính năng trích xuất database vào tab \"Hệ thống\" trong trang Quản trị (thay vì trang riêng db-export.php)\n- db-export.php còn lại làm endpoint API: ?action=stats (JSON), ?action=download (stream .sql)\n- Bổ sung i18n VI/EN cho tab Hệ thống",
   "min_php": "8.1",
   "released_at": "2026-06-08"
 }

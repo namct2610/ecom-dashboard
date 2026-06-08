@@ -3636,6 +3636,7 @@ function setupAdminPage() {
   qs('#btnAdminUserReset')?.addEventListener('click', resetAdminUserForm);
   qs('#adminUserForm')?.addEventListener('submit', submitAdminUserForm);
   qs('#adminUserPassword')?.addEventListener('input', syncPasswordStrengthIndicators);
+  qs('#btnAdminDbRefresh')?.addEventListener('click', loadAdminDbStats);
 }
 
 function loadAdminPage() {
@@ -3660,6 +3661,44 @@ function activateAdminTab(tab, options = {}) {
 
   if (App.adminTab === 'accounts') loadAdminUsers();
   if (App.adminTab === 'api') loadConnectPage();
+  if (App.adminTab === 'system') loadAdminDbStats();
+}
+
+async function loadAdminDbStats() {
+  const tbody = qs('#adminDbTablesBody');
+  if (tbody) {
+    tbody.innerHTML = `<tr><td colspan="2" style="text-align:center;padding:20px;color:var(--text-muted)">${escHtml(t('admin.system.export.loading') || 'Đang tải...')}</td></tr>`;
+  }
+  try {
+    const data = await apiFetch('db-export.php?action=stats');
+    if (!data.success) throw new Error(data.error || 'API error');
+
+    qs('#adminDbName').textContent = data.database || '—';
+    qs('#adminDbTableCount').textContent = fmtNum((data.tables || []).length);
+    qs('#adminDbTotalRows').textContent = fmtNum(data.total_rows || 0);
+
+    if (tbody) {
+      if (!data.tables || data.tables.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="2" style="text-align:center;padding:20px;color:var(--text-muted)">—</td></tr>`;
+      } else {
+        tbody.innerHTML = data.tables.map(t => `
+          <tr>
+            <td><code>${escHtml(t.name)}</code></td>
+            <td class="text-right" style="font-variant-numeric:tabular-nums">${fmtNum(t.rows)}</td>
+          </tr>
+        `).join('');
+      }
+    }
+
+    const dlBtn = qs('#btnAdminDbDownload');
+    if (dlBtn && data.csrf) {
+      dlBtn.setAttribute('href', `db-export.php?action=download&_csrf=${encodeURIComponent(data.csrf)}`);
+    }
+  } catch (e) {
+    if (tbody) {
+      tbody.innerHTML = `<tr><td colspan="2" style="text-align:center;padding:20px;color:var(--red,#ef4444)">${escHtml(e.message)}</td></tr>`;
+    }
+  }
 }
 
 window.openAdminTab = function(tab = 'accounts') {

@@ -1640,6 +1640,10 @@ $initials = strtoupper(substr($user, 0, 2));
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
               <span data-i18n="admin.tab.api">API & kết nối</span>
             </button>
+            <button class="admin-tab-btn" id="btnAdminTabSystem" data-admin-tab="system" type="button">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v6c0 1.66 4.03 3 9 3s9-1.34 9-3V5"/><path d="M3 11v6c0 1.66 4.03 3 9 3s9-1.34 9-3v-6"/></svg>
+              <span data-i18n="admin.tab.system">Hệ thống</span>
+            </button>
           </div>
 
           <div class="admin-tab-panel active" data-admin-tab-panel="accounts">
@@ -1744,6 +1748,44 @@ $initials = strtoupper(substr($user, 0, 2));
 
           <div class="admin-tab-panel" data-admin-tab-panel="api">
             <div id="adminApiMount"></div>
+          </div>
+
+          <div class="admin-tab-panel" data-admin-tab-panel="system">
+            <div class="admin-panel-card">
+              <div class="admin-panel-head">
+                <div>
+                  <h3 data-i18n="admin.system.export.title">Trích xuất database</h3>
+                  <p data-i18n="admin.system.export.sub">Xuất toàn bộ schema và dữ liệu ra file .sql để backup hoặc khôi phục.</p>
+                </div>
+                <div class="admin-panel-actions">
+                  <button class="btn btn-secondary btn-sm" id="btnAdminDbRefresh" type="button" data-i18n="admin.system.export.refresh">Làm mới</button>
+                </div>
+              </div>
+
+              <div class="admin-db-meta" id="adminDbMeta" style="display:flex;gap:24px;flex-wrap:wrap;padding:14px 16px;background:var(--surface-muted,#f9fafb);border-radius:8px;margin-bottom:16px;font-size:13px">
+                <div><span style="color:var(--text-muted)" data-i18n="admin.system.export.meta.database">Database:</span> <b id="adminDbName">—</b></div>
+                <div><span style="color:var(--text-muted)" data-i18n="admin.system.export.meta.tables">Số bảng:</span> <b id="adminDbTableCount">—</b></div>
+                <div><span style="color:var(--text-muted)" data-i18n="admin.system.export.meta.rows">Tổng số dòng:</span> <b id="adminDbTotalRows">—</b></div>
+              </div>
+
+              <div class="table-wrapper">
+                <table class="admin-user-table">
+                  <thead>
+                    <tr>
+                      <th data-i18n="admin.system.export.th.table">Tên bảng</th>
+                      <th class="text-right" data-i18n="admin.system.export.th.rows">Số dòng</th>
+                    </tr>
+                  </thead>
+                  <tbody id="adminDbTablesBody"></tbody>
+                </table>
+              </div>
+
+              <div class="admin-form-note" style="background:#fef3c7;border:1px solid #fde68a;color:#92400e;border-radius:8px;padding:10px 12px;margin-top:14px;font-size:12px" data-i18n="admin.system.export.warn">⚠️ File dump có thể chứa thông tin nhạy cảm (token API, hash mật khẩu, dữ liệu khách hàng). Hãy bảo quản cẩn thận.</div>
+
+              <div class="admin-form-actions" style="margin-top:16px">
+                <a class="btn btn-primary" id="btnAdminDbDownload" href="#" data-i18n="admin.system.export.download">Tải file dump (.sql)</a>
+              </div>
+            </div>
           </div>
         </div>
       </div>
