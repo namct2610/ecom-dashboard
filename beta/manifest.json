@@ -1,8 +1,0 @@
-{
-  "version": "1.5.13",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.5.13/release/dashboard-v3-1.5.13.zip",
-  "changelog": "- Đồng bộ manifest beta với bản production 1.5.13\n- Bổ sung key tiếng Anh còn thiếu cho các trang/chức năng mới\n- Chuyển phần SKU lẻ / COMBO ↔ SKU sang hệ thống i18n runtime",
-  "min_php": "8.1",
-  "released_at": "2026-05-28",
-  "channel": "beta"
-}
