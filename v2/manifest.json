@@ -1,7 +1,7 @@
 {
-  "version": "2.3.2",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v2-2.3.2/release/dashboard-v2-2.3.2.zip",
-  "changelog": "- Sidebar khi thu gọn: căn giữa brand mark, các icon nav, nút Thu gọn (trước đây vẫn neo trái vì padding 11px còn nguyên).",
+  "version": "2.3.3",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v2-2.3.3/release/dashboard-v2-2.3.3.zip",
+  "changelog": "- Sidebar thu gọn (hoàn chỉnh): icon nav giờ thật sự nằm giữa rail. Bản 2.3.2 chỉ thêm justify-content:center nhưng .nav-label vẫn có flex:1 nên giãn ra đẩy icon sang trái. Fix bằng display:none cho .nav-label/.brand-text khi collapsed.",
   "min_php": "8.1",
   "released_at": "2026-06-09"
 }
