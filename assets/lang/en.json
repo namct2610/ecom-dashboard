@@ -268,8 +268,8 @@
   "brand.th.sku_code": "3-char SKU Code",
   "brand.th.brand_name": "Brand Name",
 
-  "beta.try":       "Try beta v2.0.0",
-  "beta.try_title": "New v2.0.0 UI — shared database",
+  "beta.try":       "Try new UI",
+  "beta.try_title": "Zott Marketplace Analytics UI — shared database",
   "view_mode.title": "Show products as original platform combos or split into single SKUs",
 
   "plan.progress.title": "Current Progress",

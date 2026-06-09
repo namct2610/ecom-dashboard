@@ -122,7 +122,7 @@ const I18n = (() => {
     'th.value':'Giá trị','th.status':'Trạng thái','th.sku':'SKU','th.product_name':'Tên sản phẩm','th.brand':'Thương hiệu',
     'th.qty':'SL','th.qty_sold':'SL bán','th.qty_share':'Tỉ trọng SL',
     'th.revenue':'Doanh thu','th.revenue_share':'Tỉ trọng DT','th.rank':'Hạng','th.username':'Username',
-    'beta.try':'Thử bản beta v2.0.0','beta.try_title':'UI mới v2.0.0 — dùng chung database',
+    'beta.try':'Thử giao diện mới','beta.try_title':'Giao diện Zott Marketplace Analytics — dùng chung database',
     'view_mode.title':'Hiển thị sản phẩm dạng nguyên gốc từ sàn hoặc tách thành SKU đơn lẻ',
     'plan.progress.title':'Tiến độ hiện tại','plan.progress.sub':'Tiến độ chuẩn hóa theo % để so sánh giữa các chỉ tiêu có quy mô khác nhau.',
     'plan.target_table.title':'Target YTD / YTG','plan.target_table.sub':'Bảng điều hành nhanh theo mục tiêu năm, thực đạt hiện tại và mức trung bình cần đạt cho các tháng còn lại.',

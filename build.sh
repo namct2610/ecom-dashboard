@@ -41,6 +41,7 @@ rsync -a \
   --exclude='*.zip' \
   --exclude='*.xlsx' \
   --exclude='*.xls' \
+  --exclude='*.sql' \
   --exclude='*.log' \
   --exclude='.DS_Store' \
   --exclude='__MACOSX/' \

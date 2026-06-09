@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="vi" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zott Monte · Marketplace Analytics</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Carlito:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/theme.css?v=5">
+</head>
+<body>
+<div id="app">
+  <div class="scrim" id="scrim"></div>
+
+  <!-- ════ Sidebar ════ -->
+  <nav id="sidebar">
+    <div class="brand">
+      <div class="brand-mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17.5 9 11l4 4 8-9"/><path d="M21 6v5h-5"/></svg>
+      </div>
+      <div class="brand-text">
+        <div class="brand-name">Zott Monte</div>
+        <div class="brand-sub">Marketplace Analytics</div>
+      </div>
+    </div>
+
+    <div class="nav">
+      <div class="nav-section">Phân tích</div>
+      <a class="nav-item active" data-page="overview" data-screen-label="Tổng quan">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+        <span class="nav-label">Tổng quan</span>
+      </a>
+      <a class="nav-item" data-page="compare" data-screen-label="So sánh sàn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.7l-7-4a2 2 0 0 0-2 0l-7 4M3 8l9 5 9-5M3 8v8a2 2 0 0 0 1 1.7l7 4a2 2 0 0 0 2 0"/><path d="M12 22V12"/></svg>
+        <span class="nav-label">So sánh sàn</span>
+      </a>
+      <a class="nav-item" data-page="orders" data-screen-label="Đơn hàng">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+        <span class="nav-label">Đơn hàng</span>
+      </a>
+      <a class="nav-item" data-page="products" data-screen-label="Sản phẩm">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.7l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.7l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5M12 22V12"/></svg>
+        <span class="nav-label">Sản phẩm</span>
+      </a>
+      <a class="nav-item" data-page="customers" data-screen-label="Khách hàng">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/></svg>
+        <span class="nav-label">Khách hàng</span>
+      </a>
+      <a class="nav-item" data-page="traffic" data-screen-label="Lưu lượng">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-4 4"/></svg>
+        <span class="nav-label">Lưu lượng</span>
+      </a>
+
+      <div class="nav-section">Hệ thống</div>
+      <a class="nav-item" data-sys="reconcile">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h6v6M10 20H4v-6M20 4l-7 7M4 20l7-7"/></svg>
+        <span class="nav-label">Đối soát GBS</span>
+      </a>
+      <a class="nav-item" data-sys="upload">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5M12 15V3"/></svg>
+        <span class="nav-label">Tải dữ liệu</span>
+      </a>
+      <a class="nav-item" data-sys="settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-2.7 1.1V21a2 2 0 1 1-4 0v-.1A1.6 1.6 0 0 0 7 19.4l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0-1.1-2.7H3a2 2 0 1 1 0-4h.1A1.6 1.6 0 0 0 4.6 7l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H9a1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 2.7 1.1l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V9a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1Z"/></svg>
+        <span class="nav-label">Cài đặt</span>
+      </a>
+    </div>
+
+    <div class="side-foot">
+      <div class="side-card">
+        <div class="side-card-top"><span class="dot"></span>Dữ liệu đồng bộ</div>
+        <div class="side-card-sub" id="syncDate">Cập nhật 08/06/2026</div>
+      </div>
+      <button class="icon-btn" id="collapseBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+        <span>Thu gọn</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ════ Main ════ -->
+  <div id="main">
+    <header id="header">
+      <button class="iconbtn-sq hamburger" id="hamburger" aria-label="Menu">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+      </button>
+      <div class="header-titles">
+        <div class="header-eyebrow hide-sm" id="headerEyebrow">Báo cáo kinh doanh</div>
+        <div class="header-title" id="headerTitle">Tổng quan</div>
+      </div>
+      <div class="spacer"></div>
+      <div id="controls" style="display:flex;align-items:center;gap:10px"></div>
+      <button class="iconbtn-sq theme-toggle" id="themeBtn" aria-label="Đổi giao diện">
+        <svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></svg>
+      </button>
+      <div class="avatar hide-sm">ZM</div>
+    </header>
+
+    <main id="content">
+      <div id="pageRoot"></div>
+      <div style="height:8px"></div>
+    </main>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="assets/store.js?v=6"></script>
+<script src="assets/charts.js?v=6"></script>
+<script src="assets/ui.js?v=6"></script>
+<script src="assets/views-overview.js?v=6"></script>
+<script src="assets/views-compare.js?v=6"></script>
+<script src="assets/views-pages.js?v=6"></script>
+<script src="assets/app.js?v=6"></script>
+<script>
+  (function () {
+    var root = document.getElementById('pageRoot');
+    root.innerHTML = '<div style="padding:48px 24px;color:var(--ink-3);font-weight:600;text-align:center">Đang tải dữ liệu…</div>';
+
+    fetch('../api/v2-data.php', { credentials: 'same-origin' })
+      .then(function (r) {
+        if (r.status === 401) {
+          window.location.href = '../index.php#/login';
+          throw new Error('unauthenticated');
+        }
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      })
+      .then(function (data) {
+        window.DASH = data;
+        window.App.init();
+      })
+      .catch(function (err) {
+        root.innerHTML = '<div style="padding:48px 24px;color:var(--neg);font-weight:700;text-align:center">Không tải được dữ liệu: ' + (err && err.message ? err.message : err) + '</div>';
+      });
+  })();
+</script>
+</body>
+</html>

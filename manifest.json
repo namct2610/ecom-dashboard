@@ -1,7 +1,7 @@
 {
-  "version": "1.5.26",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.5.26/release/dashboard-v3-1.5.26.zip",
-  "changelog": "- Đưa tính năng trích xuất database vào tab \"Hệ thống\" trong trang Quản trị (thay vì trang riêng db-export.php)\n- db-export.php còn lại làm endpoint API: ?action=stats (JSON), ?action=download (stream .sql)\n- Bổ sung i18n VI/EN cho tab Hệ thống",
+  "version": "1.5.27",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.5.27/release/dashboard-v3-1.5.27.zip",
+  "changelog": "- Bản UI mới Zott Marketplace Analytics (v2): 6 trang (Tổng quan / So sánh sàn / Đơn hàng / Sản phẩm / Khách hàng / Lưu lượng), light + dark, brand Zott (đỏ #E2001A + Calibri).\n- Truy cập qua nút \"Thử giao diện mới\" trong sidebar (đổi từ tím sang đỏ Zott).\n- Endpoint dữ liệu /api/v2-data.php query trực tiếp DB hiện có — không cần migration.\n- Cơ chế update v2 độc lập (api/v2-update.php + v2/version.txt + build-v2.sh) để các bản cập nhật v2 sau này không phải kéo theo v1.\n- Sửa lỗi build.sh trước đây bundle nhầm file .sql dump vào zip release.",
   "min_php": "8.1",
-  "released_at": "2026-06-08"
+  "released_at": "2026-06-09"
 }

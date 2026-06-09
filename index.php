@@ -213,9 +213,9 @@ $initials = strtoupper(substr($user, 0, 2));
     </div>
 
     <div class="sidebar-footer">
-      <a href="beta/" class="btn-try-beta" title="UI mới v2.0.0 — dùng chung database" data-i18n-title="beta.try_title">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12l5 5L20 7"/></svg>
-        <span class="nav-label" data-i18n="beta.try">Thử bản beta v2.0.0</span>
+      <a href="v2/" class="btn-try-beta" title="Giao diện Zott Marketplace Analytics — dùng chung database" data-i18n-title="beta.try_title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17.5 9 11l4 4 8-9"/><path d="M21 6v5h-5"/></svg>
+        <span class="nav-label" data-i18n="beta.try">Thử giao diện mới</span>
       </a>
       <button id="btnCollapseSidebar" class="btn-collapse-sidebar">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
