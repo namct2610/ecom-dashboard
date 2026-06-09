@@ -51,6 +51,10 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-4 4"/></svg>
         <span class="nav-label">Lưu lượng</span>
       </a>
+      <a class="nav-item" data-page="plan" data-screen-label="Kế hoạch">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+        <span class="nav-label">Kế hoạch</span>
+      </a>
 
       <div class="nav-section">Hệ thống</div>
       <a class="nav-item" data-sys="reconcile">
@@ -113,7 +117,7 @@
     var root = document.getElementById('pageRoot');
     root.innerHTML = '<div style="padding:48px 24px;color:var(--ink-3);font-weight:600;text-align:center">Đang tải dữ liệu…</div>';
 
-    var V = 7; // cache-bust for assets
+    var V = 8; // cache-bust for assets
     var MODULES = [
       'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js',
       'assets/store.js?v=' + V,
@@ -122,6 +126,7 @@
       'assets/views-overview.js?v=' + V,
       'assets/views-compare.js?v=' + V,
       'assets/views-pages.js?v=' + V,
+      'assets/views-plan.js?v=' + V,
       'assets/app.js?v=' + V
     ];
 

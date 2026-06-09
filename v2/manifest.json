@@ -1,7 +1,7 @@
 {
-  "version": "2.0.2",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v2-2.0.2/release/dashboard-v2-2.0.2.zip",
-  "changelog": "- Fix lỗi \"Cannot read properties of undefined (reading 'init')\": các module store/charts/views/app đọc window.DASH ở thời điểm IIFE chạy, mà fetch chưa resolve → module crash → window.App không bao giờ được export. Giờ bootstrap fetch data trước rồi mới inject các <script> module theo thứ tự.\n- Fix shape heatmap trong /api/v2-data.php: API cũ trả ma trận int[7][24], nhưng store.js expect flat list [{weekday,hour,orders}] → đổi sang flat list để hiển thị heatmap đúng.",
+  "version": "2.1.0",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v2-2.1.0/release/dashboard-v2-2.1.0.zip",
+  "changelog": "- Batch 1/N tính năng port từ v1: thêm trang Kế hoạch (Plan) — nút \"Kế hoạch\" trong nav \"Phân tích\".\n  * 2 KPI card lớn (Doanh số / Lượt truy cập): thực tế YTD vs mục tiêu năm, % tiến độ, chênh YTD, còn phải đạt, status pill.\n  * 2 biểu đồ combo theo tháng (bar = thực tế, đường nét đứt = mục tiêu/12).\n  * Year picker (5 năm trước + năm sau) + nút \"Đặt mục tiêu\" mở modal đỏ Zott để cập nhật target năm.\n  * Cắm thẳng vào /api/plan.php sẵn có của v1 (không cần thay backend).\n- charts.js expose mk() để view tự dựng chart phức tạp vẫn nằm trong registry chung (destroyAll khi đổi trang).\n- app.js: view có thể đặt customToolbar:true để thay nguyên toolbar mặc định (platform/period/compare) bằng controls riêng.\n- theme.css: thêm bộ form input/textarea/select v2-style (sẽ dùng tiếp cho Settings / Brand rules / OAuth ở các batch sau).",
   "min_php": "8.1",
   "released_at": "2026-06-09"
 }

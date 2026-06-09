@@ -3,7 +3,7 @@
    ============================================================ */
 (function () {
   const S = window.Store, st = S.state;
-  const PAGES = ["overview", "compare", "orders", "products", "customers", "traffic"];
+  const PAGES = ["overview", "compare", "orders", "products", "customers", "traffic", "plan"];
 
   const PERIODS = [
     { key: "m:2026-05", label: "Tháng 5, 2026", sub: "mới nhất" },
@@ -76,9 +76,10 @@
     document.getElementById("headerTitle").textContent = v.title || "—";
     document.getElementById("headerEyebrow").textContent = v.eyebrow || "Báo cáo kinh doanh";
     document.querySelectorAll(".nav-item").forEach((n) => n.classList.toggle("active", n.dataset.page === st.page));
-    // controls
-    document.getElementById("controls").innerHTML = renderControls();
-    wireControls();
+    // controls — views may opt out (customToolbar:true) and render their own
+    document.getElementById("controls").innerHTML = view && view.customToolbar ? "" : renderControls();
+    if (!view || !view.customToolbar) wireControls();
+
     if (!view) { root.innerHTML = `<div class="note">${window.UI.ICON.info} Trang này thuộc ứng dụng gốc (đối soát / tải dữ liệu / cài đặt) và không nằm trong bản dựng giao diện phân tích.</div>`; return; }
     root.scrollTop = 0;
     root.innerHTML = view.render();

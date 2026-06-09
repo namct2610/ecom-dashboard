@@ -199,5 +199,5 @@
     });
   }
 
-  window.Charts = { revenueTrend, ordersTrend, monthlyRevenue, lineSeries, donut, spark, miniBars, destroy, destroyAll: () => Object.keys(reg).forEach(destroy), col };
+  window.Charts = { revenueTrend, ordersTrend, monthlyRevenue, lineSeries, donut, spark, miniBars, destroy, destroyAll: () => Object.keys(reg).forEach(destroy), col, mk };
 })();
