@@ -44,28 +44,65 @@
 
   const monthlyMap = {}; DASH.monthly.forEach((m) => (monthlyMap[m.ym] = m));
 
-  /* ---- period model ---- */
-  // periodKey: "m:2026-05" | "3m"
+  /* ---- period model ----
+     supported keys:
+       "m:YYYY-MM" — single month
+       "3m"        — last 3 months in DASH.focusMonths
+       "6m"        — last 6 months in DASH.monthly
+       "ytd"       — months in latestMonth year up to (and including) latestMonth
+       "y:YYYY"    — all months of year YYYY in dataset
+       "all"       — every month in dataset
+  */
+  const allMonths = () => DASH.monthly.map((m) => m.ym).sort();
+
   function curMonths(key) {
-    if (key === "3m") return DASH.focusMonths.slice();
-    return [key.slice(2)];
+    if (key === "3m")  return DASH.focusMonths.slice();
+    if (key === "6m")  return allMonths().slice(-6);
+    if (key === "all") return allMonths();
+    if (key === "ytd") {
+      const y = (DASH.latestMonth || allMonths().slice(-1)[0]).slice(0, 4);
+      return allMonths().filter((ym) => ym.startsWith(y) && ym <= DASH.latestMonth);
+    }
+    if (key && key.startsWith("y:")) {
+      const y = key.slice(2);
+      return allMonths().filter((ym) => ym.startsWith(y));
+    }
+    if (key && key.startsWith("m:")) return [key.slice(2)];
+    return DASH.focusMonths.slice();
   }
   function compareMonths(key, mode) {
     if (mode === "none") return null;
     const cur = curMonths(key);
+    if (!cur.length) return null;
     if (mode === "yoy") return cur.map((ym) => addMonth(ym, -12));
     // prev: shift the whole window back by its length
     const len = cur.length;
     return cur.map((ym) => addMonth(ym, -len));
   }
   function periodLabel(key) {
-    if (key === "3m") return "3 tháng gần nhất";
-    return MONTH_VI_LONG(key.slice(2));
+    if (key === "3m")  return "3 tháng gần nhất";
+    if (key === "6m")  return "6 tháng gần nhất";
+    if (key === "ytd") return "Năm nay (đến hiện tại)";
+    if (key === "all") return "Cả thời gian";
+    if (key && key.startsWith("y:")) return "Năm " + key.slice(2);
+    if (key && key.startsWith("m:")) return MONTH_VI_LONG(key.slice(2));
+    return "3 tháng gần nhất";
   }
   function compareLabel(key, mode) {
     if (mode === "none") return "";
-    if (mode === "yoy") return key === "3m" ? "cùng kỳ năm trước" : "cùng kỳ " + (+key.slice(2, 6) - 1);
-    return key === "3m" ? "3 tháng liền trước" : "tháng trước";
+    if (mode === "yoy") {
+      if (key && key.startsWith("y:")) return "cùng kỳ " + (+key.slice(2) - 1);
+      if (key && key.startsWith("m:")) return "cùng kỳ " + (+key.slice(2, 6) - 1);
+      return "cùng kỳ năm trước";
+    }
+    // prev
+    if (key === "3m")  return "3 tháng liền trước";
+    if (key === "6m")  return "6 tháng liền trước";
+    if (key === "ytd") return "cùng số tháng năm trước";
+    if (key === "all") return "";
+    if (key && key.startsWith("y:")) return "năm trước";
+    if (key && key.startsWith("m:")) return "tháng trước";
+    return "kỳ trước";
   }
 
   /* ---- aggregate over a set of months (exact, from monthly) ---- */

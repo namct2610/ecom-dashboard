@@ -113,7 +113,7 @@
     const geoRows = geo.map((g) => `
       <div class="cmp-row" style="grid-template-columns:140px 1fr auto">
         <div class="cmp-name" style="font-weight:600">${g.city}</div>
-        <div class="cmp-track"><div class="cmp-fill" style="width:${g.pct}%;background:${g.other ? "var(--ink-3)" : "var(--ink)"}"></div></div>
+        <div class="cmp-track"><div class="cmp-fill" style="width:${g.pct}%;background:${g.other ? "var(--ink-3)" : "var(--brand)"}"></div></div>
         <div class="cmp-val">${F.viInt(g.orders)} <span style="color:var(--ink-3);font-weight:600">(${F.pct(g.pct, 0)})</span></div>
       </div>`).join("");
 
@@ -131,7 +131,7 @@
       heat += `<div style="font-size:11px;font-weight:700;color:var(--ink-3)">${days[d]}</div><div class="heat-grid" style="grid-template-columns:repeat(24,1fr)">`;
       for (let h = 0; h < 24; h++) {
         const v = m[d][h], t = max ? v / max : 0;
-        const bg = v === 0 ? "var(--track)" : `color-mix(in oklch, var(--ink) ${18 + t * 72}%, var(--surface))`;
+        const bg = v === 0 ? "var(--track)" : `color-mix(in oklch, var(--brand) ${14 + t * 70}%, var(--surface))`;
         heat += `<div class="heat-cell" ${v ? `data-v="${v}"` : ""} title="${days[d]} ${h}h · ${v} đơn" style="background:${bg}"></div>`;
       }
       heat += `</div>`;

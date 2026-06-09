@@ -32,11 +32,17 @@ try {
     $endOfLatest = $latestCal->modify('last day of this month');
     $latestMonth = ($today >= $endOfLatest) ? $latestCal->format('Y-m') : $latestCal->modify('-1 month')->format('Y-m');
 
-    // 3 focus months = latest complete month + 2 preceding
+    // 3 focus months = latest complete month + 2 preceding (used for default UI period)
     $focusMonths = [];
     $fm = new DateTimeImmutable($latestMonth . '-01');
     for ($i = 2; $i >= 0; $i--) {
         $focusMonths[] = $fm->modify("-{$i} month")->format('Y-m');
+    }
+    // monthDetail covers the last 12 months so longer period selections
+    // (6m / Năm nay / Năm trước) still have product/city/heat data.
+    $detailMonths = [];
+    for ($i = 11; $i >= 0; $i--) {
+        $detailMonths[] = $fm->modify("-{$i} month")->format('Y-m');
     }
 
     // ───────── monthly aggregate ─────────
@@ -117,9 +123,9 @@ try {
     ksort($dailyAgg);
     $daily = array_values($dailyAgg);
 
-    // ───────── monthDetail (focus months only) ─────────
+    // ───────── monthDetail (last 12 months — covers 3m/6m/ytd periods) ─────────
     $monthDetail = [];
-    foreach ($focusMonths as $ym) {
+    foreach ($detailMonths as $ym) {
         $monthStart = $ym . '-01';
         $monthEnd   = (new DateTimeImmutable($monthStart))->modify('first day of next month')->format('Y-m-d');
         $bind = [':s' => $monthStart, ':e' => $monthEnd];

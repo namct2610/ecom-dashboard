@@ -5,12 +5,48 @@
   const S = window.Store, st = S.state;
   const PAGES = ["overview", "compare", "orders", "products", "customers", "traffic", "plan", "users", "settings"];
 
-  const PERIODS = [
-    { key: "m:2026-05", label: "Tháng 5, 2026", sub: "mới nhất" },
-    { key: "m:2026-04", label: "Tháng 4, 2026" },
-    { key: "m:2026-03", label: "Tháng 3, 2026" },
-    { key: "3m", label: "3 tháng gần nhất", sub: "T3–T5/2026" },
-  ];
+  /* Dynamic period list — derived from DASH.monthly so it stays in sync
+     with actual data range. Order:
+       - 4 presets (3m, 6m, năm nay, năm trước, all)
+       - Then the most recent 12 individual months */
+  function buildPeriods() {
+    const monthly = (S.DASH && S.DASH.monthly) || [];
+    if (!monthly.length) return [{ key: "3m", label: "3 tháng gần nhất" }];
+
+    const all = monthly.map((m) => m.ym).sort();           // "YYYY-MM" asc
+    const latest = S.DASH.latestMonth || all[all.length - 1];
+    const latestY = +latest.slice(0, 4);
+    const years = Array.from(new Set(all.map((ym) => ym.slice(0, 4)))).sort();
+    const monthsByYear = {};
+    years.forEach((y) => (monthsByYear[y] = all.filter((ym) => ym.startsWith(y))));
+
+    const presets = [
+      { key: "3m",  label: "3 tháng gần nhất", sub: rangeSubTail(all, 3) },
+      { key: "6m",  label: "6 tháng gần nhất", sub: rangeSubTail(all, 6) },
+      { key: "ytd", label: "Năm nay (đến hiện tại)", sub: "T1–" + S.MONTH_VI(latest).replace("Th", "T") + "/" + latestY },
+    ];
+    if (years.includes(String(latestY - 1))) {
+      presets.push({ key: "y:" + (latestY - 1), label: "Năm " + (latestY - 1) });
+    }
+    presets.push({ key: "all", label: "Cả thời gian", sub: S.MONTH_VI(all[0]) + " – " + S.MONTH_VI(all[all.length - 1]) });
+
+    // Last 12 individual months (descending: newest first)
+    const recent = all.slice(-12).reverse().map((ym, i) => ({
+      key: "m:" + ym,
+      label: S.MONTH_VI_LONG(ym),
+      sub: i === 0 ? "mới nhất" : undefined,
+    }));
+
+    return presets.concat([{ divider: true }]).concat(recent);
+  }
+
+  function rangeSubTail(all, n) {
+    if (all.length < n) return undefined;
+    const slice = all.slice(-n);
+    return S.MONTH_VI(slice[0]).replace("Th", "T") + "–" + S.MONTH_VI(slice[slice.length - 1]).replace("Th", "T") + "/" + slice[slice.length - 1].slice(0, 4);
+  }
+
+  let PERIODS = [];   // built at init time (after Store is ready)
   const COMPARES = [
     { key: "prev", label: "Kỳ liền trước" },
     { key: "yoy", label: "Cùng kỳ năm trước" },
@@ -50,7 +86,10 @@
   function popover(anchor, items, current, onPick, title) {
     closePop();
     const m = document.createElement("div"); m.className = "menu";
-    m.innerHTML = (title ? `<div class="menu-label">${title}</div>` : "") + items.map((it) => `<div class="menu-item ${it.key === current ? "sel" : ""}" data-k="${it.key}">${it.label}${it.sub ? ` <small>· ${it.sub}</small>` : ""}</div>`).join("");
+    m.innerHTML = (title ? `<div class="menu-label">${title}</div>` : "") + items.map((it) => {
+      if (it.divider) return `<div style="height:1px;background:var(--border);margin:6px 4px"></div>`;
+      return `<div class="menu-item ${it.key === current ? "sel" : ""}" data-k="${it.key}">${it.label}${it.sub ? ` <small>· ${it.sub}</small>` : ""}</div>`;
+    }).join("");
     document.body.appendChild(m);
     const r = anchor.getBoundingClientRect();
     m.style.top = (r.bottom + 6) + "px";
@@ -90,9 +129,13 @@
 
   const App = {
     init() {
+      PERIODS = buildPeriods();
+      // If the saved period is no longer valid (e.g. data updated to new range), fall back to "3m"
+      if (!PERIODS.some((p) => !p.divider && p.key === st.period)) st.period = "3m";
       applyTheme();
       if (st.collapsed) document.getElementById("app").classList.add("collapsed");
-      document.getElementById("syncDate").textContent = "Cập nhật 08/06/2026 · 15:06";
+      const sync = S.DASH && S.DASH.generatedAt ? S.DASH.generatedAt : new Date().toISOString().slice(0, 10);
+      document.getElementById("syncDate").textContent = "Cập nhật " + sync;
       // nav
       document.querySelectorAll(".nav-item[data-page]").forEach((n) => n.addEventListener("click", () => { st.page = n.dataset.page; document.getElementById("app").classList.remove("nav-open"); commit(); }));
       document.querySelectorAll(".nav-item:not([data-page])").forEach((n) => n.addEventListener("click", () => { st.page = "_system_" + (n.dataset.sys || ""); document.getElementById("app").classList.remove("nav-open"); commit(); }));

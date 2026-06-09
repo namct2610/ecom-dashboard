@@ -12,7 +12,7 @@
     h += `</div>`;
     for (let d = 0; d < 7; d++) {
       h += `<div style="font-size:11px;font-weight:700;color:var(--ink-3)">${days[d]}</div><div class="heat-grid" style="grid-template-columns:repeat(24,1fr)">`;
-      for (let x = 0; x < 24; x++) { const v = m[d][x], t = max ? v / max : 0; const bg = v === 0 ? "var(--track)" : `color-mix(in oklch, var(--ink) ${18 + t * 72}%, var(--surface))`; h += `<div class="heat-cell" ${v ? `data-v="${v}"` : ""} title="${days[d]} ${x}h · ${v} đơn" style="background:${bg}"></div>`; }
+      for (let x = 0; x < 24; x++) { const v = m[d][x], t = max ? v / max : 0; const bg = v === 0 ? "var(--track)" : `color-mix(in oklch, var(--brand) ${14 + t * 70}%, var(--surface))`; h += `<div class="heat-cell" ${v ? `data-v="${v}"` : ""} title="${days[d]} ${x}h · ${v} đơn" style="background:${bg}"></div>`; }
       h += `</div>`;
     }
     return h + `</div>`;
@@ -99,7 +99,7 @@
         <td><span class="pchip">${UI.pdot(p.platform)}${S.PLAT[p.platform].label.replace(" Shop", "")}</span></td>
         <td class="num">${F.viInt(p.qty)}</td>
         <td class="num"><b>${F.money(p.revenue)}</b></td>
-        <td class="num" style="width:120px"><div class="cmp-track"><div class="cmp-fill" style="width:${(prodMetric === "qty" ? p.qty : p.revenue) / maxV * 100}%;background:var(--ink)"></div></div></td>
+        <td class="num" style="width:120px"><div class="cmp-track"><div class="cmp-fill" style="width:${(prodMetric === "qty" ? p.qty : p.revenue) / maxV * 100}%;background:var(--brand)"></div></div></td>
       </tr>`).join("");
       const totalCatRev = cats.reduce((t, c) => t + c.revenue, 0);
       return `
@@ -135,7 +135,7 @@
       const maxG = Math.max(...geo.map((g) => g.orders), 1);
       const traf = S.trafficByPlatform(months);
       const totalNF = traf.reduce((t, p) => t + p.nf, 0);
-      const geoRows = geo.map((g) => `<tr><td>${g.city}</td><td class="num">${F.viInt(g.orders)}</td><td class="num">${F.pct(g.pct, 1)}</td><td class="num" style="width:160px"><div class="cmp-track"><div class="cmp-fill" style="width:${g.orders / maxG * 100}%;background:${g.other ? "var(--ink-3)" : "var(--ink)"}"></div></div></td></tr>`).join("");
+      const geoRows = geo.map((g) => `<tr><td>${g.city}</td><td class="num">${F.viInt(g.orders)}</td><td class="num">${F.pct(g.pct, 1)}</td><td class="num" style="width:160px"><div class="cmp-track"><div class="cmp-fill" style="width:${g.orders / maxG * 100}%;background:${g.other ? "var(--ink-3)" : "var(--brand)"}"></div></div></td></tr>`).join("");
       const fRows = traf.map((p) => `<div class="cmp-row"><div class="cmp-name">${UI.pdot(p.key)}${p.label}</div><div class="cmp-track"><div class="cmp-fill" style="width:${totalNF ? p.nf / Math.max(...traf.map((x) => x.nf), 1) * 100 : 0}%;background:var(--${p.key})"></div></div><div class="cmp-val">${F.viInt(p.nf)}</div></div>`).join("");
       return `
       <div class="note section0" style="margin-bottom:16px">${UI.ICON.info} Dữ liệu khách hàng được ẩn danh theo nguồn sàn — tập trung vào <b>phân bố khu vực</b> và <b>tăng trưởng người theo dõi</b>.</div>
