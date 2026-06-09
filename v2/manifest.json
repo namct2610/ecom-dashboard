@@ -1,7 +1,7 @@
 {
-  "version": "2.2.0",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v2-2.2.0/release/dashboard-v2-2.2.0.zip",
-  "changelog": "- Batch 2/N: thêm trang \"Cài đặt\" (Cài đặt trong nav Hệ thống).\n  * Card Tài khoản: cập nhật họ tên, đổi mật khẩu (current/new/confirm) — cắm /api/account.php (đã có CSRF + chính sách mật khẩu của v1).\n  * Card Quy ước SKU sang thương hiệu (admin-only): CRUD danh sách 3 ký tự đầu SKU → tên thương hiệu, thêm/xoá dòng inline, validate client-side trước khi gửi /api/brand-settings.php.\n  * Tài khoản không phải admin sẽ thấy card brand bị khoá kèm chú thích.\n  * Flash message ok/err in-page (không alert).\n- Còn lại theo lộ trình: Users (Batch 3), Upload Excel (Batch 4), GBS Reconciliation (Batch 5), OAuth Connectors (Batch 6).",
+  "version": "2.3.0",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v2-2.3.0/release/dashboard-v2-2.3.0.zip",
+  "changelog": "- Batch 3/N: thêm trang \"Người dùng\" (nav Hệ thống, admin only).\n  * Summary 4 ô: tổng / hoạt động / admin / lần đăng nhập gần nhất.\n  * Bảng người dùng đầy đủ (avatar 2 chữ, role pill, trạng thái, cờ phải-đổi-MK, last login).\n  * Modal tạo / sửa: username (chỉ tạo mới), họ tên, mật khẩu (sửa: trống = giữ nguyên), vai trò Staff/Admin, on/off, bắt buộc đổi MK lần kế.\n  * Xoá có confirm; không cho xoá chính mình.\n  * Cắm /api/users.php (CSRF + guard_last_admin + guard_self_disable của v1).\n- Còn lại: Upload Excel (Batch 4), GBS Reconciliation (Batch 5), OAuth Connectors (Batch 6).",
   "min_php": "8.1",
   "released_at": "2026-06-09"
 }
