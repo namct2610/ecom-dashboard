@@ -202,7 +202,9 @@ try {
             'revenue' => (float)$c['revenue'],
         ], $cityStmt->fetchAll());
 
-        // heatmap: hour 0-23 × weekday 0-6 (Monday=0 to match prototype)
+        // heatmap: hour 0-23 × weekday 0-6 (Monday=0 to match prototype).
+        // Frontend store expects FLAT list of {weekday, hour, orders} — see
+        // v2/assets/store.js heatMatrix(): DASH.monthDetail[ym].heat.forEach(h => ...).
         $heatStmt = $pdo->prepare("
             SELECT HOUR(order_created_at) AS h,
                    ((DAYOFWEEK(order_created_at) + 5) % 7) AS dow,
@@ -213,9 +215,13 @@ try {
             GROUP BY h, dow
         ");
         $heatStmt->execute($bind);
-        $heat = array_fill(0, 7, array_fill(0, 24, 0));
+        $heat = [];
         foreach ($heatStmt->fetchAll() as $r) {
-            $heat[(int)$r['dow']][(int)$r['h']] = (int)$r['orders'];
+            $heat[] = [
+                'weekday' => (int)$r['dow'],
+                'hour'    => (int)$r['h'],
+                'orders'  => (int)$r['orders'],
+            ];
         }
 
         // status totals
