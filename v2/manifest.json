@@ -1,7 +1,7 @@
 {
-  "version": "2.3.1",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v2-2.3.1/release/dashboard-v2-2.3.1.zip",
-  "changelog": "- Fix nút sửa/xoá ở trang Người dùng bị xuống dòng (do .iconbtn-sq là display:grid full-width). Bọc trong inline-flex.\n- Bỏ nút 3 gạch (hamburger) trên màn desktop — đổi specificity .iconbtn-sq.hamburger để rule display:none thắng.\n- Sửa lỗi tiếng Việt hiển thị sai (ĐĂNG NHẠP, TẸP KHÁCH...): bỏ text-transform:uppercase cho eyebrow / table header / nav-section / menu-label. Calibri/Carlito không có glyph chuẩn cho các chữ hoa có dấu tổ hợp (Ậ, Ệ...) nên trông như Ạ/Ẹ. Giờ giữ nguyên chữ thường.\n- Bộ lọc thời gian linh động: thay vì hard-code 3 tháng + \"3 tháng gần nhất\", giờ tự build từ DASH.monthly: 3m / 6m / Năm nay / Năm trước / Cả thời gian + 12 tháng gần nhất riêng lẻ.\n- API v2-data.php trả monthDetail cho 12 tháng gần nhất thay vì chỉ 3 (để khi chọn 6m/YTD vẫn có dữ liệu sản phẩm / khu vực / heatmap).\n- Heatmap & thanh ngang phân bố khu vực, sản phẩm: đổi màu var(--ink) (gần đen) sang var(--brand) (đỏ Zott) cho hợp brand & dễ phân biệt.\n- Plan target line: đổi đường nét đứt từ var(--ink) đen → var(--ink-3) xám nhạt — đúng quy tắc \"không dùng đen vẽ chart trừ TikTok\".\n- TikTok = đen (#111827) thay vì gold — phản ánh brand TikTok và là màu đen DUY NHẤT được phép trong chart. Dark mode dùng near-white để có tương phản.\n- Note section (\"Hai thị trường lớn nhất...\") không còn lỗi tách flex item: đổi sang block flow với SVG absolute, text + <b> chảy tự nhiên.",
+  "version": "2.3.2",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v2-2.3.2/release/dashboard-v2-2.3.2.zip",
+  "changelog": "- Sidebar khi thu gọn: căn giữa brand mark, các icon nav, nút Thu gọn (trước đây vẫn neo trái vì padding 11px còn nguyên).",
   "min_php": "8.1",
   "released_at": "2026-06-09"
 }
