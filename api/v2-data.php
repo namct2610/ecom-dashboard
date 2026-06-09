@@ -124,17 +124,16 @@ try {
         $monthEnd   = (new DateTimeImmutable($monthStart))->modify('first day of next month')->format('Y-m-d');
         $bind = [':s' => $monthStart, ':e' => $monthEnd];
 
-        // top products by qty / revenue
+        // Top products by qty / revenue.
+        // NOTE: query is split into 2 statements (instead of one with a correlated
+        // subquery) because PDO native prepares (ATTR_EMULATE_PREPARES=false in
+        // includes/db.php) do NOT permit the same named placeholder to appear
+        // twice — and a correlated per-row subquery would also be very slow.
         $prodStmt = $pdo->prepare("
             SELECT UPPER(TRIM(sku)) AS sku,
                    COALESCE(MAX(NULLIF(product_name,'')),'') AS name,
                    SUM(quantity) AS qty,
-                   SUM(subtotal_after_discount) AS revenue,
-                   (SELECT platform FROM orders o2
-                      WHERE UPPER(TRIM(o2.sku)) = UPPER(TRIM(orders.sku))
-                        AND o2.order_created_at >= :s AND o2.order_created_at < :e
-                        AND o2.normalized_status IN ('completed','delivered')
-                      GROUP BY platform ORDER BY SUM(o2.quantity) DESC LIMIT 1) AS plat
+                   SUM(subtotal_after_discount) AS revenue
             FROM orders
             WHERE order_created_at >= :s AND order_created_at < :e
               AND normalized_status IN ('completed','delivered')
@@ -143,6 +142,28 @@ try {
         ");
         $prodStmt->execute($bind);
         $prods = $prodStmt->fetchAll();
+
+        // Dominant platform per SKU (top platform by units within the same window).
+        $platStmt = $pdo->prepare("
+            SELECT UPPER(TRIM(sku)) AS sku, platform, SUM(quantity) AS q
+            FROM orders
+            WHERE order_created_at >= :s AND order_created_at < :e
+              AND normalized_status IN ('completed','delivered')
+              AND sku IS NOT NULL AND TRIM(sku) <> ''
+            GROUP BY UPPER(TRIM(sku)), platform
+        ");
+        $platStmt->execute($bind);
+        $domPlat = [];
+        foreach ($platStmt->fetchAll() as $r) {
+            $sku = $r['sku'];
+            if (!isset($domPlat[$sku]) || (int)$r['q'] > $domPlat[$sku][1]) {
+                $domPlat[$sku] = [$r['platform'], (int)$r['q']];
+            }
+        }
+        foreach ($prods as &$p) {
+            $p['plat'] = $domPlat[$p['sku']][0] ?? '';
+        }
+        unset($p);
 
         $topRev = $prods;
         usort($topRev, fn($a,$b) => (float)$b['revenue'] <=> (float)$a['revenue']);
