@@ -1,7 +1,7 @@
 {
-  "version": "1.5.27",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.5.27/release/dashboard-v3-1.5.27.zip",
-  "changelog": "- Bản UI mới Zott Marketplace Analytics (v2): 6 trang (Tổng quan / So sánh sàn / Đơn hàng / Sản phẩm / Khách hàng / Lưu lượng), light + dark, brand Zott (đỏ #E2001A + Calibri).\n- Truy cập qua nút \"Thử giao diện mới\" trong sidebar (đổi từ tím sang đỏ Zott).\n- Endpoint dữ liệu /api/v2-data.php query trực tiếp DB hiện có — không cần migration.\n- Cơ chế update v2 độc lập (api/v2-update.php + v2/version.txt + build-v2.sh) để các bản cập nhật v2 sau này không phải kéo theo v1.\n- Sửa lỗi build.sh trước đây bundle nhầm file .sql dump vào zip release.",
+  "version": "1.5.28",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.5.28/release/dashboard-v3-1.5.28.zip",
+  "changelog": "- Thêm card \"Cập nhật giao diện v2\" trong trang Quản trị → Hệ thống (ngay dưới card cập nhật chính): hiển thị version v2 hiện tại, kiểm tra/áp dụng update từ channel độc lập v2/manifest.json.\n- Bridge tạm thời để cập nhật v2 mà không phải curl thủ công. Sau khi cập nhật v2 lần đầu, bản v2 mới có thể tự thêm UI update riêng nếu cần.",
   "min_php": "8.1",
   "released_at": "2026-06-09"
 }
