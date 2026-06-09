@@ -28,10 +28,16 @@ class Updater
     private string $appRoot;
     private string $versionFile;
 
-    public function __construct(string $appRoot)
+    /**
+     * @param string      $appRoot         absolute path of the app (extraction target)
+     * @param string|null $versionFilePath optional override (default: $appRoot/version.txt).
+     *                                     Useful for channel/sub-app updaters (e.g. v2/version.txt)
+     *                                     so multiple update channels can coexist.
+     */
+    public function __construct(string $appRoot, ?string $versionFilePath = null)
     {
         $this->appRoot     = rtrim($appRoot, '/\\');
-        $this->versionFile = $this->appRoot . '/version.txt';
+        $this->versionFile = $versionFilePath ?? ($this->appRoot . '/version.txt');
     }
 
     // ── Version ───────────────────────────────────────────────────────────────
@@ -120,7 +126,11 @@ class Updater
                 @unlink($configBak);
             }
 
-            // 7. Stamp new version
+            // 7. Stamp new version (ensure parent dir exists for channel updaters)
+            $verDir = dirname($this->versionFile);
+            if (!is_dir($verDir)) {
+                @mkdir($verDir, 0755, true);
+            }
             file_put_contents($this->versionFile, $version . "\n");
 
         } finally {

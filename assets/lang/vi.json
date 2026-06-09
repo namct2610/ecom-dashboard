@@ -268,8 +268,8 @@
   "brand.th.sku_code": "Mã SKU 3 ký tự",
   "brand.th.brand_name": "Tên thương hiệu",
 
-  "beta.try":       "Thử bản beta v2.0.0",
-  "beta.try_title": "UI mới v2.0.0 — dùng chung database",
+  "beta.try":       "Thử giao diện mới",
+  "beta.try_title": "Giao diện Zott Marketplace Analytics — dùng chung database",
   "view_mode.title": "Hiển thị sản phẩm dạng nguyên gốc từ sàn hoặc tách thành SKU đơn lẻ",
 
   "plan.progress.title": "Tiến độ hiện tại",
