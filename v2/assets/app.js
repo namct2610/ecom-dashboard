@@ -3,7 +3,7 @@
    ============================================================ */
 (function () {
   const S = window.Store, st = S.state;
-  const PAGES = ["overview", "compare", "orders", "products", "customers", "traffic", "plan"];
+  const PAGES = ["overview", "compare", "orders", "products", "customers", "traffic", "plan", "settings"];
 
   const PERIODS = [
     { key: "m:2026-05", label: "Tháng 5, 2026", sub: "mới nhất" },
