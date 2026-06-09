@@ -104,18 +104,40 @@
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<script src="assets/store.js?v=6"></script>
-<script src="assets/charts.js?v=6"></script>
-<script src="assets/ui.js?v=6"></script>
-<script src="assets/views-overview.js?v=6"></script>
-<script src="assets/views-compare.js?v=6"></script>
-<script src="assets/views-pages.js?v=6"></script>
-<script src="assets/app.js?v=6"></script>
 <script>
+  // Bootstrap: fetch data first, then load the JS modules.
+  // The modules (store.js / charts.js / views-*.js / app.js) read window.DASH
+  // at IIFE time, so they must run AFTER the fetch resolves — otherwise their
+  // top-level code throws and window.Store/App never get exported.
   (function () {
     var root = document.getElementById('pageRoot');
     root.innerHTML = '<div style="padding:48px 24px;color:var(--ink-3);font-weight:600;text-align:center">Đang tải dữ liệu…</div>';
+
+    var V = 7; // cache-bust for assets
+    var MODULES = [
+      'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js',
+      'assets/store.js?v=' + V,
+      'assets/charts.js?v=' + V,
+      'assets/ui.js?v=' + V,
+      'assets/views-overview.js?v=' + V,
+      'assets/views-compare.js?v=' + V,
+      'assets/views-pages.js?v=' + V,
+      'assets/app.js?v=' + V
+    ];
+
+    function loadSequential(srcs) {
+      return srcs.reduce(function (p, src) {
+        return p.then(function () {
+          return new Promise(function (resolve, reject) {
+            var s = document.createElement('script');
+            s.src = src;
+            s.onload = resolve;
+            s.onerror = function () { reject(new Error('Lỗi tải script: ' + src)); };
+            document.head.appendChild(s);
+          });
+        });
+      }, Promise.resolve());
+    }
 
     fetch('../api/v2-data.php', { credentials: 'same-origin' })
       .then(function (r) {
@@ -128,6 +150,12 @@
       })
       .then(function (data) {
         window.DASH = data;
+        return loadSequential(MODULES);
+      })
+      .then(function () {
+        if (!window.App || typeof window.App.init !== 'function') {
+          throw new Error('window.App.init không có sẵn — kiểm tra v2/assets/app.js đã tải');
+        }
         window.App.init();
       })
       .catch(function (err) {

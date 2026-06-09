@@ -1,7 +1,7 @@
 {
-  "version": "2.0.1",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v2-2.0.1/release/dashboard-v2-2.0.1.zip",
-  "changelog": "- Sửa lỗi HTTP 500 ở /api/v2-data.php: tách query top-products thành 2 statement (PDO native prepares không cho phép cùng tên placeholder xuất hiện 2 lần trong correlated subquery). Đồng thời nhanh hơn nhiều — bỏ correlated per-row subquery.",
+  "version": "2.0.2",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v2-2.0.2/release/dashboard-v2-2.0.2.zip",
+  "changelog": "- Fix lỗi \"Cannot read properties of undefined (reading 'init')\": các module store/charts/views/app đọc window.DASH ở thời điểm IIFE chạy, mà fetch chưa resolve → module crash → window.App không bao giờ được export. Giờ bootstrap fetch data trước rồi mới inject các <script> module theo thứ tự.\n- Fix shape heatmap trong /api/v2-data.php: API cũ trả ma trận int[7][24], nhưng store.js expect flat list [{weekday,hour,orders}] → đổi sang flat list để hiển thị heatmap đúng.",
   "min_php": "8.1",
   "released_at": "2026-06-09"
 }
