@@ -11,13 +11,15 @@
   --brand-ink: #C00016;      /* darker red for hover/contrast */
   --brand-tint: #FCE6E8;     /* light red wash for rounded blocks */
 
-  /* platform identity — anchored to the Zott palette (red / blue / gold) */
+  /* platform identity — Zott palette + TikTok brand black.
+     Black is reserved exclusively for TikTok data in charts, per the
+     brand rule "no black on charts unless it represents TikTok". */
   --shopee: #E2001A;
   --lazada: #1F5FAE;
-  --tiktok: #E0922A;
+  --tiktok: #111827;
   --shopee-ink: #C00016;
   --lazada-ink: #184C8C;
-  --tiktok-ink: #B5731B;
+  --tiktok-ink: #000000;
 
   /* semantic deltas */
   --pos: oklch(0.60 0.13 155);
@@ -78,7 +80,7 @@
   --shadow-lg: 0 20px 50px -12px rgba(0,0,0,0.6);
   --shopee: #ff2b40;
   --lazada: #4f8fde;
-  --tiktok: #f0a945;
+  --tiktok: #E5E7EB;  /* near-white in dark mode (TikTok brand black has no contrast on dark bg) */
   --brand: #ff2b40;
   --brand-ink: #ff5566;
   --brand-tint: oklch(0.30 0.07 18);
@@ -136,12 +138,12 @@ body { transition: background .3s ease, color .3s ease; }
 .brand-mark svg { width: 21px; height: 21px; }
 .brand-text { overflow: hidden; white-space: nowrap; }
 .brand-name { font-weight: 800; font-size: 15.5px; letter-spacing: -.01em; }
-.brand-sub { font-size: 10px; color: var(--ink-3); font-weight: 600; letter-spacing: .01em; text-transform: uppercase; }
+.brand-sub { font-size: 10px; color: var(--ink-3); font-weight: 600; letter-spacing: .01em;  }
 #app.collapsed .brand-text { opacity: 0; width: 0; }
 
 .nav { flex: 1; overflow-y: auto; padding: 8px 12px; }
 .nav-section {
-  font-size: 10.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+  font-size: 10.5px; font-weight: 700; letter-spacing: .08em; 
   color: var(--ink-3); padding: 16px 10px 7px;
 }
 #app.collapsed .nav-section { opacity: 0; height: 12px; padding: 8px 0; overflow: hidden; }
@@ -194,13 +196,14 @@ body { transition: background .3s ease, color .3s ease; }
   border-bottom: 1px solid var(--border);
 }
 .header-titles { min-width: 0; }
-.header-eyebrow { font-size: 11.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--ink-3); white-space: nowrap; }
+.header-eyebrow { font-size: 11.5px; font-weight: 700; letter-spacing: .04em;  color: var(--ink-3); white-space: nowrap; }
 .header-title { font-size: 21px; font-weight: 800; letter-spacing: -.02em; line-height: 1.1; white-space: nowrap; }
 .spacer { flex: 1; }
 
 #content { padding: 24px; max-width: 1480px; width: 100%; margin: 0 auto; }
 
-.hamburger { display: none; }
+/* hamburger lives inside .iconbtn-sq (display:grid) — increase specificity so it's hidden on desktop */
+.iconbtn-sq.hamburger { display: none; }
 
 /* ============================================================
    CONTROLS
@@ -250,7 +253,7 @@ body { transition: background .3s ease, color .3s ease; }
   position: absolute; z-index: 60; background: var(--surface); border: 1px solid var(--border);
   border-radius: var(--r-ctrl); box-shadow: var(--shadow-lg); padding: 6px; min-width: 220px;
 }
-.menu-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-3); padding: 8px 10px 4px; }
+.menu-label { font-size: 10.5px; font-weight: 700;  letter-spacing: .06em; color: var(--ink-3); padding: 8px 10px 4px; }
 .menu-item {
   display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 9px;
   cursor: pointer; font-size: 13.5px; font-weight: 600; color: var(--ink-2);
@@ -275,7 +278,7 @@ body { transition: background .3s ease, color .3s ease; }
 .grid { display: grid; gap: 16px; }
 .row { display: flex; gap: 16px; }
 
-.eyebrow { font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-3); }
+.eyebrow { font-size: 11px; font-weight: 700; letter-spacing: .06em;  color: var(--ink-3); }
 
 .tag {
   display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; font-weight: 700;
@@ -311,7 +314,7 @@ body { transition: background .3s ease, color .3s ease; }
 /* tables */
 .tbl { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
 .tbl th {
-  text-align: left; font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
+  text-align: left; font-size: 11px; font-weight: 700; letter-spacing: .04em; 
   color: var(--ink-3); padding: 10px 14px; border-bottom: 1px solid var(--border); white-space: nowrap;
 }
 .tbl th.num, .tbl td.num { text-align: right; }
@@ -353,18 +356,30 @@ body { transition: background .3s ease, color .3s ease; }
 .legend-item.off { opacity: .38; }
 .legend-swatch { width: 11px; height: 11px; border-radius: 3px; }
 
-/* empty / note */
+/* empty / note — normal block flow so mixed text + <b> children flow as
+   inline text. Previously this was display:flex which made each text/<b>
+   node a separate flex item with weird gaps between words. */
 .note {
-  display: flex; gap: 10px; align-items: flex-start; padding: 11px 14px; border-radius: var(--r-ctrl);
-  background: var(--surface-2); border: 1px dashed var(--border-strong); font-size: 12.5px; color: var(--ink-2); font-weight: 600;
+  position: relative;
+  padding: 11px 14px 11px 40px;
+  border-radius: var(--r-ctrl);
+  background: var(--surface-2);
+  border: 1px dashed var(--border-strong);
+  font-size: 12.5px; color: var(--ink-2); font-weight: 600;
+  line-height: 1.55;
 }
-.note svg { width: 16px; height: 16px; flex: 0 0 16px; color: var(--ink-3); margin-top: 1px; }
+.note > svg {
+  position: absolute;
+  left: 14px; top: 12px;
+  width: 16px; height: 16px;
+  color: var(--ink-3);
+}
 
 /* donut center */
 .donut-wrap { position: relative; }
 .donut-center { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; pointer-events: none; }
 .donut-center .big { font-size: 19px; font-weight: 800; letter-spacing: -.02em; font-variant-numeric: tabular-nums; line-height: 1.1; white-space: nowrap; }
-.donut-center .small { font-size: 10.5px; font-weight: 700; color: var(--ink-3); text-transform: uppercase; letter-spacing: .03em; margin-top: 3px; white-space: nowrap; }
+.donut-center .small { font-size: 10.5px; font-weight: 700; color: var(--ink-3);  letter-spacing: .03em; margin-top: 3px; white-space: nowrap; }
 
 /* platform stat card (compare page) */
 .pcard { border-top: 4px solid var(--bd); }
@@ -427,7 +442,7 @@ body { transition: background .3s ease, color .3s ease; }
   }
   #app.nav-open #sidebar { transform: none; }
   #app.collapsed #sidebar { width: var(--sidebar-w); flex-basis: var(--sidebar-w); }
-  .hamburger { display: grid; }
+  .iconbtn-sq.hamburger { display: grid; }
   .scrim { display: block; position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 35; opacity: 0; pointer-events: none; transition: opacity .25s; }
   #app.nav-open .scrim { opacity: 1; pointer-events: auto; }
   #content { padding: 16px; }

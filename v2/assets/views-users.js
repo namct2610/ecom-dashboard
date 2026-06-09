@@ -104,13 +104,15 @@
         <td>${activePill(u.is_active)}</td>
         <td>${u.must_change_password ? `<span class="tag" style="color:var(--neg);border-color:color-mix(in oklch, var(--neg) 30%, transparent)">Phải đổi MK</span>` : "—"}</td>
         <td class="mono" style="font-size:12px;color:var(--ink-3)">${fmtDateTime(u.last_login_at)}</td>
-        <td class="num" style="text-align:right">
-          <button class="iconbtn-sq" data-action="edit-user" data-id="${u.id}" aria-label="Sửa">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
-          </button>
-          ${isSelf ? "" : `<button class="iconbtn-sq" data-action="del-user" data-id="${u.id}" aria-label="Xoá" style="color:var(--neg);margin-left:6px">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>
-          </button>`}
+        <td class="num">
+          <div style="display:inline-flex;gap:6px;align-items:center;justify-content:flex-end">
+            <button class="iconbtn-sq" data-action="edit-user" data-id="${u.id}" aria-label="Sửa">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+            </button>
+            ${isSelf ? "" : `<button class="iconbtn-sq" data-action="del-user" data-id="${u.id}" aria-label="Xoá" style="color:var(--neg)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>
+            </button>`}
+          </div>
         </td>
       </tr>`;
   }

@@ -326,7 +326,7 @@
           { type: "bar", label: "Thực tế", data: actualData,
             backgroundColor: color, borderRadius: 6, maxBarThickness: 26 },
           { type: "line", label: "Mục tiêu", data: targetData,
-            borderColor: C.col("--ink"), backgroundColor: "transparent", borderWidth: 2, tension: 0,
+            borderColor: C.col("--ink-3"), backgroundColor: "transparent", borderWidth: 2, tension: 0,
             pointRadius: 0, pointHoverRadius: 4, borderDash: [4, 4] },
         ],
       },
