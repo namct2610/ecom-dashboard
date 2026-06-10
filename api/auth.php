@@ -4,6 +4,59 @@ declare(strict_types=1);
 
 require dirname(__DIR__) . '/includes/bootstrap.php';
 
+function find_user_by_username(PDO $pdo, string $username): ?array
+{
+    $stmt = $pdo->prepare("
+        SELECT id, username, COALESCE(full_name, '') AS full_name, COALESCE(avatar_path, '') AS avatar_path,
+               password_hash, must_change_password, role, is_active
+        FROM users
+        WHERE username = ?
+        LIMIT 1
+    ");
+    $stmt->execute([$username]);
+    $user = $stmt->fetch();
+
+    return is_array($user) ? $user : null;
+}
+
+function sync_legacy_config_user(PDO $pdo, array $config, string $username, string $password): ?array
+{
+    $legacyUsername = trim((string) ($config['auth']['username'] ?? ''));
+    $legacyPassword = (string) ($config['auth']['password'] ?? '');
+
+    if ($legacyUsername === '' || $legacyPassword === '') {
+        return null;
+    }
+
+    if ($username !== $legacyUsername || !hash_equals($legacyPassword, $password)) {
+        return null;
+    }
+
+    $user = find_user_by_username($pdo, $username);
+    if ($user !== null && (int) ($user['is_active'] ?? 0) !== 1) {
+        return null;
+    }
+
+    $passwordHash = password_hash($password, PASSWORD_BCRYPT);
+
+    if ($user === null) {
+        $stmt = $pdo->prepare("
+            INSERT INTO users (username, full_name, password_hash, must_change_password, role, is_active)
+            VALUES (?, ?, ?, 0, 'admin', 1)
+        ");
+        $stmt->execute([$username, 'Administrator', $passwordHash]);
+    } else {
+        $stmt = $pdo->prepare("
+            UPDATE users
+            SET password_hash = ?, updated_at = NOW()
+            WHERE id = ?
+        ");
+        $stmt->execute([$passwordHash, (int) $user['id']]);
+    }
+
+    return find_user_by_username($pdo, $username);
+}
+
 start_session();
 $method = $_SERVER['REQUEST_METHOD'];
 
@@ -38,19 +91,18 @@ if ($method === 'POST') {
     }
 
     $pdo  = db($config);
-    $stmt = $pdo->prepare("
-        SELECT id, username, COALESCE(full_name, '') AS full_name, COALESCE(avatar_path, '') AS avatar_path,
-               password_hash, must_change_password, role, is_active
-        FROM users
-        WHERE username = ?
-        LIMIT 1
-    ");
-    $stmt->execute([$username]);
-    $user = $stmt->fetch();
+    $user = find_user_by_username($pdo, $username);
 
     $valid = is_array($user)
         && (int) ($user['is_active'] ?? 0) === 1
         && password_verify($password, (string) ($user['password_hash'] ?? ''));
+
+    if (!$valid) {
+        $user = sync_legacy_config_user($pdo, $config, $username, $password);
+        $valid = is_array($user)
+            && (int) ($user['is_active'] ?? 0) === 1
+            && password_verify($password, (string) ($user['password_hash'] ?? ''));
+    }
 
     if (!$valid) {
         log_activity('warning', 'auth', "Đăng nhập thất bại: {$username}", [
