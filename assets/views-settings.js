@@ -25,9 +25,9 @@
     local.loading = true;
     local.error = null;
     try {
-      const auth = await (await fetch("../api/auth.php", { credentials: "same-origin" })).json();
+      const auth = await (await fetch("api/auth.php", { credentials: "same-origin" })).json();
       if (!auth.logged_in) {
-        window.location.href = "../index.php#/login";
+        window.location.href = "old/index.php?legacy=1#/login";
         return;
       }
       local.user = auth.user || { username: auth.username, role: auth.role };
@@ -35,7 +35,7 @@
       local.isAdmin = (local.user.role || "") === "admin";
 
       if (local.isAdmin) {
-        const r = await fetch("../api/brand-settings.php", { credentials: "same-origin" });
+        const r = await fetch("api/brand-settings.php", { credentials: "same-origin" });
         if (r.ok) {
           const j = await r.json();
           if (j.success) local.rules = j.rules || [];
@@ -224,7 +224,7 @@
     local.update.loading = true;
     window.App.rerender();
     try {
-      const r = await fetch("../api/v2-update.php", { credentials: "same-origin" });
+      const r = await fetch("api/v2-update.php", { credentials: "same-origin" });
       const j = await r.json();
       local.update = {
         loading: false,
@@ -244,7 +244,7 @@
 
   async function checkUpdateNow() {
     try {
-      await fetch("../api/v2-update.php", {
+      await fetch("api/v2-update.php", {
         method: "POST", credentials: "same-origin",
         headers: { "Content-Type": "application/json", "X-CSRF-Token": local.csrf },
         body: JSON.stringify({ action: "check_now" }),
@@ -261,7 +261,7 @@
     local.update.installing = local.update.latest;
     window.App.rerender();
     try {
-      const r = await fetch("../api/v2-update.php", {
+      const r = await fetch("api/v2-update.php", {
         method: "POST", credentials: "same-origin",
         headers: { "Content-Type": "application/json", "X-CSRF-Token": local.csrf },
         body: JSON.stringify({ action: "apply", version: local.update.latest, download_url: local.update.download_url }),
@@ -294,7 +294,7 @@
       const fd = new FormData();
       fd.append("action", "update_profile");
       fd.append("full_name", fullName);
-      const r = await fetch("../api/account.php", {
+      const r = await fetch("api/account.php", {
         method: "POST", credentials: "same-origin",
         headers: { "X-CSRF-Token": local.csrf },
         body: fd,
@@ -321,7 +321,7 @@
     if (nw !== cf) { showMsg("err", "Xác nhận không khớp."); return; }
     local.saving = true; btn.textContent = t("settings.account.changing");
     try {
-      const r = await fetch("../api/account.php", {
+      const r = await fetch("api/account.php", {
         method: "POST", credentials: "same-origin",
         headers: { "Content-Type": "application/json", "X-CSRF-Token": local.csrf },
         body: JSON.stringify({ action: "change_password",
@@ -364,7 +364,7 @@
     }
     local.saving = true; btn.textContent = t("plan.saving");
     try {
-      const r = await fetch("../api/brand-settings.php", {
+      const r = await fetch("api/brand-settings.php", {
         method: "POST", credentials: "same-origin",
         headers: { "Content-Type": "application/json", "X-CSRF-Token": local.csrf },
         body: JSON.stringify({ action: "save", rules }),

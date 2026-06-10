@@ -28,7 +28,7 @@
   async function fetchHistory() {
     local.loadingHist = true;
     try {
-      const r = await fetch("../api/upload-history.php?limit=30", { credentials: "same-origin" });
+      const r = await fetch("api/upload-history.php?limit=30", { credentials: "same-origin" });
       const j = await r.json();
       if (j.success) local.history = j.history || [];
     } catch (e) {
@@ -200,7 +200,7 @@
         const fd = new FormData();
         fd.append("files[]", item.raw);
         try {
-          const r = await fetch("../api/upload.php", { method: "POST", credentials: "same-origin", body: fd });
+          const r = await fetch("api/upload.php", { method: "POST", credentials: "same-origin", body: fd });
           const j = await r.json();
           // upload.php returns { success, message, results: [{file, success, ...}] }
           const file = j.results && j.results[0] ? j.results[0] : { success: false, error: "Không có kết quả" };

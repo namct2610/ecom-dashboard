@@ -52,11 +52,11 @@
   async function fetchCompare(month) {
     local.loading = true; local.error = null;
     try {
-      const auth = await (await fetch("../api/auth.php", { credentials: "same-origin" })).json();
-      if (!auth.logged_in) { window.location.href = "../index.php#/login"; return; }
+      const auth = await (await fetch("api/auth.php", { credentials: "same-origin" })).json();
+      if (!auth.logged_in) { window.location.href = "old/index.php?legacy=1#/login"; return; }
       local.csrf = auth.csrf || "";
 
-      const url = "../api/gbs-reconciliation.php" + (month ? "?month=" + encodeURIComponent(month) : "");
+      const url = "api/gbs-reconciliation.php" + (month ? "?month=" + encodeURIComponent(month) : "");
       const r = await fetch(url, { credentials: "same-origin" });
       const j = await r.json();
       if (!j.success) throw new Error(j.error || "HTTP " + r.status);
@@ -72,7 +72,7 @@
 
   async function fetchFiles() {
     try {
-      const r = await fetch("../api/reconciliation-files.php", { credentials: "same-origin" });
+      const r = await fetch("api/reconciliation-files.php", { credentials: "same-origin" });
       const j = await r.json();
       if (j.success) local.files = j.files || [];
     } catch (_) { /* non-fatal */ }
@@ -303,7 +303,7 @@
     if (!local.selectedMonth || local.saving) return;
     local.saving = true; window.App.rerender();
     try {
-      const r = await fetch("../api/gbs-reconciliation.php", {
+      const r = await fetch("api/gbs-reconciliation.php", {
         method: "POST", credentials: "same-origin",
         headers: { "Content-Type": "application/json", "X-CSRF-Token": local.csrf },
         body: JSON.stringify({ action: "set_confirmed", month: local.selectedMonth, confirmed }),
@@ -324,7 +324,7 @@
 
   function exportExcel() {
     if (!local.selectedMonth) return;
-    window.location.href = "../api/gbs-reconciliation-export.php?month=" + encodeURIComponent(local.selectedMonth);
+    window.location.href = "api/gbs-reconciliation-export.php?month=" + encodeURIComponent(local.selectedMonth);
   }
 
   async function uploadGbsFile(file) {
@@ -334,7 +334,7 @@
     showMsg("ok", "Đang upload " + file.name + "...");
     try {
       const fd = new FormData(); fd.append("file", file);
-      const r = await fetch("../api/reconciliation-files.php", {
+      const r = await fetch("api/reconciliation-files.php", {
         method: "POST", credentials: "same-origin",
         headers: { "X-CSRF-Token": local.csrf },
         body: fd,
@@ -352,7 +352,7 @@
   async function deleteFile(filename) {
     if (!confirm("Xoá tệp " + filename + "?")) return;
     try {
-      const r = await fetch("../api/reconciliation-file-delete.php", {
+      const r = await fetch("api/reconciliation-file-delete.php", {
         method: "POST", credentials: "same-origin",
         headers: { "Content-Type": "application/json", "X-CSRF-Token": local.csrf },
         body: JSON.stringify({ filename }),

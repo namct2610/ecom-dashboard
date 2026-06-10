@@ -488,7 +488,7 @@ function applyAuthUI() {
 
 async function initAuth() {
   try {
-    const data = await fetch('api/auth.php').then(r => r.json());
+    const data = await fetch('../api/auth.php').then(r => r.json());
     if (data.logged_in) {
       App.csrf = data.csrf;
       App.user = data.user || null;
@@ -513,7 +513,7 @@ function setupLogin() {
     btn.textContent = t('login.logging_in');
 
     try {
-      const res = await fetch('api/auth.php', {
+      const res = await fetch('../api/auth.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -535,7 +535,7 @@ function setupLogin() {
         // v2 is the primary UI — after login, send users there unless
         // they explicitly came in with ?legacy=1 (Quay lại bản cũ).
         if (!new URLSearchParams(window.location.search).has('legacy')) {
-          window.location.href = 'v2/';
+          window.location.href = '../';
           return;
         }
         applyAuthUI();
@@ -560,7 +560,7 @@ async function logout() {
   closeUserMenu();
   closeProfileModal();
   closePasswordModal({ force: true });
-  await fetch('api/auth.php', {
+  await fetch('../api/auth.php', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': App.csrf },
     body: JSON.stringify({ action: 'logout' }),
@@ -1207,7 +1207,7 @@ async function savePlanTargets() {
   }
 
   try {
-    const res = await apiFetch('api/plan.php', {
+    const res = await apiFetch('../api/plan.php', {
       method: 'POST',
       body: JSON.stringify({
         year,
@@ -1605,7 +1605,7 @@ async function uploadReconcileManagedFile(file) {
     const formData = new FormData();
     formData.append('file', file);
 
-    const res = await fetch('api/reconciliation-files.php', {
+    const res = await fetch('../api/reconciliation-files.php', {
       method: 'POST',
       headers: { 'X-CSRF-Token': App.csrf },
       body: formData,
@@ -1649,7 +1649,7 @@ async function deleteReconcileManagedFile(filename) {
   applyReconcileUploadState();
 
   try {
-    const data = await apiFetch('api/reconciliation-file-delete.php', {
+    const data = await apiFetch('../api/reconciliation-file-delete.php', {
       method: 'POST',
       body: JSON.stringify({ filename }),
     });
@@ -2805,7 +2805,7 @@ function setupLogsPage() {
     if (!confirm(`${t('lang.delete')} log (${scope})?`)) return;
 
     try {
-      const res = await fetch('api/logs.php', {
+      const res = await fetch('../api/logs.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': App.csrf },
         body: JSON.stringify({ action: 'clear', level, category }),
@@ -2830,12 +2830,12 @@ async function loadConnectPage() {
   loadShopeeConnectPage();
 
   // Show redirect URI hint
-  const redirectUri = location.origin + location.pathname.replace(/[^/]*$/, '') + 'tiktok-oauth.php';
+  const redirectUri = location.origin + location.pathname.replace(/[^/]*$/, '').replace(/\/old\/$/, '/') + 'tiktok-oauth.php';
   const uriEl = qs('#oauthRedirectUri');
   if (uriEl) uriEl.textContent = redirectUri;
 
   try {
-    const data = await apiFetch('api/tiktok-connect.php?action=status');
+    const data = await apiFetch('../api/tiktok-connect.php?action=status');
     if (!data.success) return;
 
     if (data.app_key) qs('#tiktokAppKey').value = data.app_key;
@@ -2888,7 +2888,7 @@ function renderShopsTable(shops) {
     btn.addEventListener('click', async () => {
       if (!confirm(t('confirm.disconnect_shop'))) return;
       try {
-        const res = await apiFetch('api/tiktok-connect.php', {
+        const res = await apiFetch('../api/tiktok-connect.php', {
           method: 'POST',
           body: JSON.stringify({ action: 'disconnect', shop_id: btn.dataset.shop }),
         });
@@ -2903,7 +2903,7 @@ function renderShopsTable(shops) {
     input.addEventListener('change', async () => {
       // Save sync_from_date by updating shop record
       try {
-        await apiFetch('api/tiktok-connect.php', {
+        await apiFetch('../api/tiktok-connect.php', {
           method: 'POST',
           body: JSON.stringify({ action: 'set_sync_from', shop_id: input.dataset.shop, sync_from_date: input.value }),
         });
@@ -2918,7 +2918,7 @@ async function syncShop(shopId) {
 
   try {
     const body = shopId ? { action: 'sync', shop_id: shopId } : { action: 'sync' };
-    const res  = await apiFetch('api/tiktok-connect.php', { method: 'POST', body: JSON.stringify(body) });
+    const res  = await apiFetch('../api/tiktok-connect.php', { method: 'POST', body: JSON.stringify(body) });
 
     if (!res.success) {
       if (resultsEl) resultsEl.innerHTML = `<div style="color:var(--red,#ef4444);font-size:13px">${t('msg.error')}: ${escHtml(res.error || t('msg.unknown'))}</div>`;
@@ -2947,7 +2947,7 @@ function setupConnectPage() {
     if (!appKey) { toast(t('msg.app_key_required'), 'error'); return; }
 
     try {
-      const res = await apiFetch('api/tiktok-connect.php', {
+      const res = await apiFetch('../api/tiktok-connect.php', {
         method: 'POST',
         body: JSON.stringify({ action: 'save_credentials', app_key: appKey, app_secret: appSecret }),
       });
@@ -2961,7 +2961,7 @@ function setupConnectPage() {
     if (statusEl) statusEl.textContent = t('msg.getting_auth_url');
 
     try {
-      const res = await apiFetch('api/tiktok-connect.php', {
+      const res = await apiFetch('../api/tiktok-connect.php', {
         method: 'POST',
         body: JSON.stringify({ action: 'get_auth_url' }),
       });
@@ -3084,7 +3084,7 @@ async function loadBrandSettings() {
   setBrandSettingsResult(t('msg.loading'), 'info');
 
   try {
-    const data = await apiFetch('api/brand-settings.php', { method: 'GET' });
+    const data = await apiFetch('../api/brand-settings.php', { method: 'GET' });
     if (!data.success) throw new Error(data.error || t('brand.load_error'));
 
     BrandSettingsState.rules = Array.isArray(data.rules) ? data.rules : [];
@@ -3108,7 +3108,7 @@ async function saveBrandSettings() {
   setBrandSettingsResult(t('msg.loading'), 'info');
 
   try {
-    const res = await apiFetch('api/brand-settings.php', {
+    const res = await apiFetch('../api/brand-settings.php', {
       method: 'POST',
       body: JSON.stringify({
         action: 'save',
@@ -3374,7 +3374,7 @@ async function loadReconcileSettings() {
   setReconcileSettingsResult(t('reconcile.loading_settings'), 'info');
 
   try {
-    const data = await apiFetch('api/reconcile-settings.php', { method: 'GET' });
+    const data = await apiFetch('../api/reconcile-settings.php', { method: 'GET' });
     if (!data.success) throw new Error(data.error || t('reconcile.error.load_settings'));
 
     ReconcileSettingsState.prices = Array.isArray(data.prices) ? data.prices : [];
@@ -3406,7 +3406,7 @@ async function saveReconcileSettings() {
   setReconcileSettingsResult(t('reconcile.saving'), 'info');
 
   try {
-    const res = await apiFetch('api/reconcile-settings.php', {
+    const res = await apiFetch('../api/reconcile-settings.php', {
       method: 'POST',
       body: JSON.stringify({
         action: 'save',
@@ -3451,7 +3451,7 @@ async function importReconcileSettings(kind, file) {
     formData.append('action', kind === 'prices' ? 'import_prices' : 'import_combos');
     formData.append('file', file);
 
-    const res = await fetch('api/reconcile-settings.php', {
+    const res = await fetch('../api/reconcile-settings.php', {
       method: 'POST',
       headers: { 'X-CSRF-Token': App.csrf },
       body: formData,
@@ -3555,7 +3555,7 @@ function bindSystemPage() {
   qs('#btnCheckUpdateNow')?.addEventListener('click', async () => {
     const panel = qs('#updateStatusPanel');
     if (panel) panel.innerHTML = `<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px">${t('msg.checking')}</div>`;
-    await apiFetch('api/update.php', { method: 'POST', body: JSON.stringify({ action: 'check_now' }) });
+    await apiFetch('../api/update.php', { method: 'POST', body: JSON.stringify({ action: 'check_now' }) });
     await loadUpdateCard();
   });
 
@@ -3676,7 +3676,7 @@ async function loadAdminDbStats() {
     tbody.innerHTML = `<tr><td colspan="2" style="text-align:center;padding:20px;color:var(--text-muted)">${escHtml(t('admin.system.export.loading') || 'Đang tải...')}</td></tr>`;
   }
   try {
-    const data = await apiFetch('db-export.php?action=stats');
+    const data = await apiFetch('../db-export.php?action=stats');
     if (!data.success) throw new Error(data.error || 'API error');
 
     qs('#adminDbName').textContent = data.database || '—';
@@ -3719,7 +3719,7 @@ window.openAdminTab = function(tab = 'accounts') {
 
 async function loadAdminUsers() {
   try {
-    const data = await apiFetch('api/users.php?action=list');
+    const data = await apiFetch('../api/users.php?action=list');
     if (!data.success) throw new Error(data.error || 'API error');
 
     AdminUserState.users = data.users || [];
@@ -3860,7 +3860,7 @@ async function submitAdminUserForm(e) {
       ensurePasswordStrength(payload.password);
     }
 
-    const res = await apiFetch('api/users.php', {
+    const res = await apiFetch('../api/users.php', {
       method: 'POST',
       body: JSON.stringify(payload),
     });
@@ -3868,7 +3868,7 @@ async function submitAdminUserForm(e) {
 
     toast(isEditing ? t('admin.toast.updated') : t('admin.toast.created'), 'success');
 
-    const authData = await fetch('api/auth.php').then(r => r.json());
+    const authData = await fetch('../api/auth.php').then(r => r.json());
     if (authData.logged_in) {
       App.user = authData.user || App.user;
       App.csrf = authData.csrf || App.csrf;
@@ -3894,7 +3894,7 @@ async function deleteAdminUser(id) {
   if (!confirm(t('admin.users.delete_confirm'))) return;
 
   try {
-    const res = await apiFetch('api/users.php', {
+    const res = await apiFetch('../api/users.php', {
       method: 'POST',
       body: JSON.stringify({ action: 'delete', id }),
     });
@@ -3910,7 +3910,7 @@ async function deleteAdminUser(id) {
 
 async function loadSysInfo() {
   try {
-    const data = await apiFetch('api/admin.php?action=system_info');
+    const data = await apiFetch('../api/admin.php?action=system_info');
     if (!data.success) return;
     const i = data.info;
 
@@ -3994,7 +3994,7 @@ async function confirmReset(action, title, promptText, confirmWord) {
   }
 
   try {
-    const res = await apiFetch('api/admin.php', {
+    const res = await apiFetch('../api/admin.php', {
       method: 'POST',
       body: JSON.stringify({ action }),
     });
@@ -4016,7 +4016,7 @@ async function confirmReset(action, title, promptText, confirmWord) {
 async function checkForUpdates() {
   // Lightweight background check — only updates the nav badge
   try {
-    const data = await apiFetch('api/update.php?action=check');
+    const data = await apiFetch('../api/update.php?action=check');
     if (!data.success) return;
     const badge = qs('#adminNavBadge');
     if (badge) badge.style.display = data.has_update ? '' : 'none';
@@ -4029,7 +4029,7 @@ async function loadUpdateCard() {
   if (!panel) return;
 
   try {
-    const data = await apiFetch('api/update.php?action=check');
+    const data = await apiFetch('../api/update.php?action=check');
 
     if (urlInput) urlInput.value = data.manifest_url || '';
 
@@ -4120,7 +4120,7 @@ async function applySystemUpdate(downloadUrl, version) {
   }
 
   try {
-    const res = await apiFetch('api/update.php', {
+    const res = await apiFetch('../api/update.php', {
       method: 'POST',
       body: JSON.stringify({ action: 'apply', download_url: downloadUrl, version }),
     });
@@ -4185,12 +4185,12 @@ function switchConnectTab(tab) {
 // ── Lazada Connect page ────────────────────────────────────────────────────
 
 async function loadLazadaConnectPage() {
-  const redirectUri = location.origin + location.pathname.replace(/[^/]*$/, '') + 'lazada-oauth.php';
+  const redirectUri = location.origin + location.pathname.replace(/[^/]*$/, '').replace(/\/old\/$/, '/') + 'lazada-oauth.php';
   const uriEl = qs('#lazadaOauthRedirectUri');
   if (uriEl) uriEl.textContent = redirectUri;
 
   try {
-    const data = await apiFetch('api/lazada-connect.php?action=status');
+    const data = await apiFetch('../api/lazada-connect.php?action=status');
     if (!data.success) return;
     if (data.app_key) qs('#lazadaAppKey').value = data.app_key;
     renderLazadaAccountsTable(data.accounts || []);
@@ -4247,7 +4247,7 @@ function renderLazadaAccountsTable(accounts) {
     btn.addEventListener('click', async () => {
       if (!confirm(t('confirm.disconnect_lazada'))) return;
       try {
-        const res = await apiFetch('api/lazada-connect.php', {
+        const res = await apiFetch('../api/lazada-connect.php', {
           method: 'POST',
           body: JSON.stringify({ action: 'disconnect', account_id: btn.dataset.account }),
         });
@@ -4260,7 +4260,7 @@ function renderLazadaAccountsTable(accounts) {
   tbody.querySelectorAll('.lazada-sync-from-date').forEach(input => {
     input.addEventListener('change', async () => {
       try {
-        await apiFetch('api/lazada-connect.php', {
+        await apiFetch('../api/lazada-connect.php', {
           method: 'POST',
           body: JSON.stringify({ action: 'set_sync_from', account_id: input.dataset.account, sync_from_date: input.value }),
         });
@@ -4284,7 +4284,7 @@ async function syncLazadaAccount(accountId) {
     if (accountId) body.account_id = accountId;
     if (dateFrom)  body.date_from  = dateFrom;
     if (dateTo)    body.date_to    = dateTo;
-    const res  = await apiFetch('api/lazada-connect.php', { method: 'POST', body: JSON.stringify(body) });
+    const res  = await apiFetch('../api/lazada-connect.php', { method: 'POST', body: JSON.stringify(body) });
 
     if (!res.success) {
       if (resultsEl) resultsEl.innerHTML = `<div style="color:var(--red,#ef4444);font-size:13px">${t('msg.error')}: ${escHtml(res.error || t('msg.unknown'))}</div>`;
@@ -4311,7 +4311,7 @@ function setupLazadaConnectPage() {
     const appSecret = qs('#lazadaAppSecret')?.value.trim() || '';
     if (!appKey) { toast(t('msg.app_key_required'), 'error'); return; }
     try {
-      const res = await apiFetch('api/lazada-connect.php', {
+      const res = await apiFetch('../api/lazada-connect.php', {
         method: 'POST',
         body: JSON.stringify({ action: 'save_credentials', app_key: appKey, app_secret: appSecret }),
       });
@@ -4324,7 +4324,7 @@ function setupLazadaConnectPage() {
     const statusEl = qs('#lazadaConnectStatus');
     if (statusEl) statusEl.textContent = t('msg.getting_auth_url');
     try {
-      const res = await apiFetch('api/lazada-connect.php', {
+      const res = await apiFetch('../api/lazada-connect.php', {
         method: 'POST',
         body: JSON.stringify({ action: 'get_auth_url' }),
       });
@@ -4348,12 +4348,12 @@ function setupLazadaConnectPage() {
 // ── Shopee Connect page ────────────────────────────────────────────────────
 
 async function loadShopeeConnectPage() {
-  const redirectUri = location.origin + location.pathname.replace(/[^/]*$/, '') + 'shopee-oauth.php';
+  const redirectUri = location.origin + location.pathname.replace(/[^/]*$/, '').replace(/\/old\/$/, '/') + 'shopee-oauth.php';
   const uriEl = qs('#shopeeOauthRedirectUri');
   if (uriEl) uriEl.textContent = redirectUri;
 
   try {
-    const data = await apiFetch('api/shopee-connect.php?action=status');
+    const data = await apiFetch('../api/shopee-connect.php?action=status');
     if (!data.success) return;
 
     if (qs('#shopeePartnerId') && data.partner_id) {
@@ -4409,7 +4409,7 @@ async function syncShopeeShop(shopId) {
   if (resultsEl) resultsEl.innerHTML = `<div style="font-size:13px;color:var(--text-muted)">${t('msg.syncing')}</div>`;
 
   try {
-    const res = await apiFetch('api/shopee-connect.php', {
+    const res = await apiFetch('../api/shopee-connect.php', {
       method: 'POST',
       body: JSON.stringify({ action: 'sync', shop_id: shopId }),
     });
@@ -4431,7 +4431,7 @@ async function syncShopeeShop(shopId) {
 }
 
 async function toggleShopeeActive(shopId, active) {
-  await apiFetch('api/shopee-connect.php', {
+  await apiFetch('../api/shopee-connect.php', {
     method: 'POST',
     body: JSON.stringify({ action: 'toggle_active', shop_id: shopId, is_active: active }),
   });
@@ -4439,7 +4439,7 @@ async function toggleShopeeActive(shopId, active) {
 }
 
 async function setShopeeFromDate(shopId, date) {
-  await apiFetch('api/shopee-connect.php', {
+  await apiFetch('../api/shopee-connect.php', {
     method: 'POST',
     body: JSON.stringify({ action: 'set_sync_from', shop_id: shopId, sync_from_date: date }),
   });
@@ -4447,7 +4447,7 @@ async function setShopeeFromDate(shopId, date) {
 
 async function disconnectShopee(shopId) {
   if (!confirm(t('confirm.delete_shopee'))) return;
-  await apiFetch('api/shopee-connect.php', {
+  await apiFetch('../api/shopee-connect.php', {
     method: 'POST',
     body: JSON.stringify({ action: 'disconnect', shop_id: shopId }),
   });
@@ -4458,7 +4458,7 @@ function setupShopeeConnectPage() {
   qs('#btnShopeeSaveCredentials')?.addEventListener('click', async () => {
     const partnerId  = parseInt(qs('#shopeePartnerId')?.value  || '0', 10);
     const partnerKey = qs('#shopeePartnerKey')?.value?.trim() || '';
-    const res = await apiFetch('api/shopee-connect.php', {
+    const res = await apiFetch('../api/shopee-connect.php', {
       method: 'POST',
       body: JSON.stringify({ action: 'save_credentials', partner_id: partnerId, partner_key: partnerKey }),
     });
@@ -4469,7 +4469,7 @@ function setupShopeeConnectPage() {
     const statusEl = qs('#shopeeConnectStatus');
     if (statusEl) statusEl.textContent = t('msg.getting_auth_url');
     try {
-      const res = await apiFetch('api/shopee-connect.php', {
+      const res = await apiFetch('../api/shopee-connect.php', {
         method: 'POST',
         body: JSON.stringify({ action: 'get_auth_url' }),
       });
@@ -4502,7 +4502,7 @@ async function toggleReconcileMonthConfirmed() {
   if (!window.confirm(question)) return;
 
   try {
-    const data = await apiFetch('api/gbs-reconciliation.php', {
+    const data = await apiFetch('../api/gbs-reconciliation.php', {
       method: 'POST',
       body: JSON.stringify({
         action: 'set_confirmed',
@@ -4838,7 +4838,7 @@ function setupProfileModal() {
 
     submitBtn?.setAttribute('disabled', 'disabled');
     try {
-      const res = await fetch('api/account.php', {
+      const res = await fetch('../api/account.php', {
         method: 'POST',
         body: fd,
       }).then(r => r.json());
@@ -4923,7 +4923,7 @@ function setupPasswordModal() {
     submitBtn?.setAttribute('disabled', 'disabled');
     try {
       ensurePasswordStrength(payload.new_password);
-      const res = await apiFetch('api/account.php', {
+      const res = await apiFetch('../api/account.php', {
         method: 'POST',
         body: JSON.stringify(payload),
       });
@@ -4989,7 +4989,7 @@ async function setupLangSettings() {
     fd.append('_csrf', App.csrf);
     fd.append('lang_file', file);
     try {
-      const data = await fetch('api/lang.php', { method: 'POST', body: fd }).then(r => r.json());
+      const data = await fetch('../api/lang.php', { method: 'POST', body: fd }).then(r => r.json());
       if (!data.success) throw new Error(data.error || 'Upload failed');
       toast(data.name || t('msg.success'), 'success');
       input.value = '';
@@ -5007,7 +5007,7 @@ window.deleteLang = async function(code) {
   fd.append('_csrf', App.csrf);
   fd.append('code', code);
   try {
-    const data = await fetch('api/lang.php', { method: 'POST', body: fd }).then(r => r.json());
+    const data = await fetch('../api/lang.php', { method: 'POST', body: fd }).then(r => r.json());
     if (!data.success) throw new Error(data.error || 'Failed');
     toast(`${t('lang.delete')}: ${code}`, 'success');
     window.openAdminTab?.('system');

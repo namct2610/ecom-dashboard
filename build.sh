@@ -45,6 +45,7 @@ rsync -a \
   --exclude='*.log' \
   --exclude='.DS_Store' \
   --exclude='__MACOSX/' \
+  --exclude='old/' \
   ./ "$STAGE_ROOT/"
 
 mkdir -p "$STAGE_ROOT/uploads"
