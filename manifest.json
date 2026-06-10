@@ -1,7 +1,7 @@
 {
-  "version": "3.4.3",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.3/release/dashboard-v3-3.4.3.zip",
-  "changelog": "- So sánh cùng kỳ (YoY): tính tới cùng thời điểm, ví dụ dữ liệu đến 12/6/2026 thì so với 12/6/2025 (thay vì cả tháng/chỉnh năm).\n- Đồng nhất hiển thị delta: tất cả dùng % thay vì đpt.\n- Cho phép chọn năm 2026 trong period picker.",
+  "version": "3.4.4",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.4/release/dashboard-v3-3.4.4.zip",
+  "changelog": "- Bỏ yêu cầu đăng nhập: vào thẳng dashboard, không còn overlay login khi gặp 401.\n- Backend require_auth()/require_admin() trở thành no-op — tất cả endpoint /api/* mở public.",
   "min_php": "8.1",
   "released_at": "2026-06-11"
 }
