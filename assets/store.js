@@ -176,7 +176,15 @@
   function compareRange(key, mode) {
     if (mode === "none") return null;
     const cur = rangeFromKey(key);
-    if (mode === "yoy") return normalizeRange(shiftDateYear(cur.start, -1), shiftDateYear(cur.end, -1), cur.mode);
+    if (mode === "yoy") {
+      const cmpStart = shiftDateYear(cur.start, -1);
+      const cmpEnd = shiftDateYear(cur.end, -1);
+      const dates = allDates();
+      const latestDate = dates[dates.length - 1] || cmpEnd;
+      const latestDateLastYear = shiftDateYear(latestDate, -1);
+      const cappedEnd = cmpEnd > latestDateLastYear ? latestDateLastYear : cmpEnd;
+      return normalizeRange(cmpStart, cappedEnd, cur.mode);
+    }
     const span = diffDays(cur.start, cur.end) + 1;
     return shiftRange(cur, -span);
   }
