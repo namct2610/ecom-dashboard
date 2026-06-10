@@ -263,6 +263,7 @@
 
       form.addEventListener('submit', function (e) {
         e.preventDefault();
+        if (btn.disabled) return;
         clearError();
         var username = (u.value || '').trim();
         var password = p.value || '';
@@ -288,10 +289,12 @@
           else setError((res.body && res.body.error) || T('login.server_error'));
           btn.disabled = false;
           btn.textContent = T('login.submit');
+          p.value = '';
         }).catch(function () {
           setError(T('login.server_error'));
           btn.disabled = false;
           btn.textContent = T('login.submit');
+          p.value = '';
         });
       });
     }

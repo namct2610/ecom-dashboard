@@ -33,7 +33,7 @@
   }
   const F = { viInt, viDec, money, moneyFull, num, pct, delta };
 
-  /* ---- month helpers ---- */
+  /* ---- date/month helpers ---- */
   // MONTH_VI / MONTH_VI_LONG kept for back-compat; they delegate to i18n when
   // the active language is not Vietnamese (EN returns "5/2026" / "5/2026").
   const MONTH_VI = (ym) => {
@@ -51,8 +51,58 @@
     while (m < 1) { m += 12; y--; } while (m > 12) { m -= 12; y++; }
     return y + "-" + String(m).padStart(2, "0");
   }
+  function parseDate(s) {
+    const [y, m, d] = String(s || "").split("-").map(Number);
+    return new Date(y || 1970, (m || 1) - 1, d || 1);
+  }
+  function fmtDate(d) {
+    return [d.getFullYear(), String(d.getMonth() + 1).padStart(2, "0"), String(d.getDate()).padStart(2, "0")].join("-");
+  }
+  function fmtDateShort(s) {
+    const d = parseDate(s);
+    return String(d.getDate()).padStart(2, "0") + "/" + String(d.getMonth() + 1).padStart(2, "0") + "/" + d.getFullYear();
+  }
+  function addDays(s, days) {
+    const d = parseDate(s);
+    d.setDate(d.getDate() + days);
+    return fmtDate(d);
+  }
+  function diffDays(a, b) {
+    const ms = parseDate(b).setHours(0, 0, 0, 0) - parseDate(a).setHours(0, 0, 0, 0);
+    return Math.round(ms / 86400000);
+  }
+  function monthStart(ym) { return ym + "-01"; }
+  function monthEnd(ym) {
+    const d = parseDate(ym + "-01");
+    d.setMonth(d.getMonth() + 1, 0);
+    return fmtDate(d);
+  }
+  function yearStart(y) { return y + "-01-01"; }
+  function yearEnd(y) { return y + "-12-31"; }
+  function startOfWeek(s) {
+    const d = parseDate(s);
+    const day = (d.getDay() + 6) % 7;
+    d.setDate(d.getDate() - day);
+    return fmtDate(d);
+  }
+  function endOfWeek(s) {
+    return addDays(startOfWeek(s), 6);
+  }
+  function shiftDateYear(s, delta) {
+    const d = parseDate(s);
+    d.setFullYear(d.getFullYear() + delta);
+    return fmtDate(d);
+  }
+  function shiftRange(range, days) {
+    return { ...range, start: addDays(range.start, days), end: addDays(range.end, days) };
+  }
 
   const monthlyMap = {}; DASH.monthly.forEach((m) => (monthlyMap[m.ym] = m));
+  const dailyMap = {};
+  DASH.daily.forEach((d) => { dailyMap[d.date] = d; });
+  const allDates = () => (DASH.daily || []).map((d) => d.date).sort();
+  const rangeDetailCache = {};
+  const rangeDetailInflight = {};
 
   /* ---- period model ----
      supported keys:
@@ -65,29 +115,74 @@
   */
   const allMonths = () => DASH.monthly.map((m) => m.ym).sort();
 
-  function curMonths(key) {
-    if (key === "3m")  return DASH.focusMonths.slice();
-    if (key === "6m")  return allMonths().slice(-6);
-    if (key === "all") return allMonths();
+  function normalizeRange(start, end, mode) {
+    if (start > end) [start, end] = [end, start];
+    return { mode, start, end };
+  }
+  function rangeFromKey(key) {
+    const dates = allDates();
+    const latestDate = dates[dates.length - 1] || ((DASH.latestMonth || "2026-01") + "-01");
+    if (!key || key === "3m") {
+      const months = DASH.focusMonths && DASH.focusMonths.length ? DASH.focusMonths.slice() : allMonths().slice(-3);
+      return normalizeRange(monthStart(months[0]), monthEnd(months[months.length - 1]), "month");
+    }
+    if (key === "6m") {
+      const months = allMonths().slice(-6);
+      return normalizeRange(monthStart(months[0]), monthEnd(months[months.length - 1]), "month");
+    }
+    if (key === "all") {
+      const months = allMonths();
+      return normalizeRange(monthStart(months[0]), monthEnd(months[months.length - 1]), "custom");
+    }
     if (key === "ytd") {
       const y = (DASH.latestMonth || allMonths().slice(-1)[0]).slice(0, 4);
-      return allMonths().filter((ym) => ym.startsWith(y) && ym <= DASH.latestMonth);
+      return normalizeRange(yearStart(y), monthEnd(DASH.latestMonth), "year");
     }
-    if (key && key.startsWith("y:")) {
-      const y = key.slice(2);
-      return allMonths().filter((ym) => ym.startsWith(y));
+    if (key.startsWith("d:")) {
+      const day = key.slice(2) || latestDate;
+      return normalizeRange(day, day, "day");
     }
-    if (key && key.startsWith("m:")) return [key.slice(2)];
-    return DASH.focusMonths.slice();
+    if (key.startsWith("w:")) {
+      const day = key.slice(2) || latestDate;
+      return normalizeRange(startOfWeek(day), endOfWeek(day), "week");
+    }
+    if (key.startsWith("m:")) {
+      const ym = key.slice(2) || (DASH.latestMonth || allMonths().slice(-1)[0]);
+      return normalizeRange(monthStart(ym), monthEnd(ym), "month");
+    }
+    if (key.startsWith("y:")) {
+      const y = key.slice(2) || String(parseDate(latestDate).getFullYear());
+      return normalizeRange(yearStart(y), yearEnd(y), "year");
+    }
+    if (key.startsWith("c:")) {
+      const parts = key.slice(2).split(":");
+      return normalizeRange(parts[0] || latestDate, parts[1] || parts[0] || latestDate, "custom");
+    }
+    return normalizeRange(latestDate, latestDate, "day");
+  }
+  function monthsInRange(range) {
+    const out = [];
+    let ym = range.start.slice(0, 7);
+    const endYm = range.end.slice(0, 7);
+    while (ym <= endYm) {
+      if (monthlyMap[ym]) out.push(ym);
+      ym = addMonth(ym, 1);
+    }
+    return out;
+  }
+  function curMonths(key) {
+    return monthsInRange(rangeFromKey(key));
+  }
+  function compareRange(key, mode) {
+    if (mode === "none") return null;
+    const cur = rangeFromKey(key);
+    if (mode === "yoy") return normalizeRange(shiftDateYear(cur.start, -1), shiftDateYear(cur.end, -1), cur.mode);
+    const span = diffDays(cur.start, cur.end) + 1;
+    return shiftRange(cur, -span);
   }
   function compareMonths(key, mode) {
-    if (mode === "none") return null;
-    const cur = curMonths(key);
-    if (!cur.length) return null;
-    if (mode === "yoy") return cur.map((ym) => addMonth(ym, -12));
-    // prev: shift the whole window back by its length
-    const len = cur.length;
-    return cur.map((ym) => addMonth(ym, -len));
+    const r = compareRange(key, mode);
+    return r ? monthsInRange(r) : null;
   }
   const _T = (k, f) => (window.t ? window.t(k, f) : f || k);
   const _TF = (k, v) => (window.tf ? window.tf(k, v) : k);
@@ -97,25 +192,41 @@
     if (key === "6m")  return _T("period.6m");
     if (key === "ytd") return _T("period.ytd");
     if (key === "all") return _T("period.all");
-    if (key && key.startsWith("y:")) return _TF("period.year_n", { y: key.slice(2) });
-    if (key && key.startsWith("m:")) return MONTH_VI_LONG(key.slice(2));
-    return _T("period.3m");
+    const r = rangeFromKey(key);
+    if (r.mode === "day") return _TF("period.day_n", { date: fmtDateShort(r.start) });
+    if (r.mode === "week") return _TF("period.week_n", { start: fmtDateShort(r.start), end: fmtDateShort(r.end) });
+    if (r.mode === "month") return MONTH_VI_LONG(r.start.slice(0, 7));
+    if (r.mode === "year") return _TF("period.year_n", { y: r.start.slice(0, 4) });
+    if (r.mode === "custom") return _TF("period.custom_n", { start: fmtDateShort(r.start), end: fmtDateShort(r.end) });
+    return _T("period.all");
   }
   function compareLabel(key, mode) {
     if (mode === "none") return "";
+    const cur = rangeFromKey(key);
+    const cmp = compareRange(key, mode);
+    if (!cmp) return "";
     if (mode === "yoy") {
-      if (key && key.startsWith("y:")) return _TF("compare.yoy_year", { y: +key.slice(2) - 1 });
-      if (key && key.startsWith("m:")) return _TF("compare.yoy_year", { y: +key.slice(2, 6) - 1 });
+      if (cur.mode === "year") return _TF("compare.yoy_year", { y: cmp.start.slice(0, 4) });
       return _T("compare.yoy_short");
     }
-    // prev
-    if (key === "3m")  return _T("compare.3m_prev");
-    if (key === "6m")  return _T("compare.6m_prev");
-    if (key === "ytd") return _T("compare.ytd_prev");
-    if (key === "all") return "";
-    if (key && key.startsWith("y:")) return _T("compare.last_year");
-    if (key && key.startsWith("m:")) return _T("compare.last_month");
+    if (cur.mode === "month") return _T("compare.last_month");
+    if (cur.mode === "year") return _T("compare.last_year");
+    if (cur.mode === "week") return _T("compare.prev_week");
+    if (cur.mode === "day") return _T("compare.prev_day");
     return _T("compare.prev_short");
+  }
+
+  function periodMode(key) {
+    return rangeFromKey(key).mode;
+  }
+  function coercePeriod(key, mode) {
+    const r = rangeFromKey(key);
+    if (mode === "day") return "d:" + r.end;
+    if (mode === "week") return "w:" + r.end;
+    if (mode === "month") return "m:" + r.end.slice(0, 7);
+    if (mode === "year") return "y:" + r.end.slice(0, 4);
+    if (mode === "custom") return "c:" + r.start + ":" + r.end;
+    return key;
   }
 
   /* ---- aggregate over a set of months (exact, from monthly) ---- */
@@ -126,6 +237,36 @@
       const m = monthlyMap[ym]; if (!m) return;
       if (platform === "all") { revenue += m.revenue; orders += m.orders; completed += m.completed; cancelled += m.cancelled; }
       else { const p = m.plat[platform]; revenue += p.rev; orders += p.ord; completed += p.done; cancelled += p.canc; }
+    });
+    return {
+      revenue, orders, completed, cancelled,
+      aov: completed ? revenue / completed : 0,
+      cancelRate: orders ? cancelled / orders * 100 : 0,
+      completionRate: orders ? completed / orders * 100 : 0,
+    };
+  }
+
+  function aggRange(range, platform) {
+    if (!range) return null;
+    let revenue = 0, orders = 0, completed = 0, cancelled = 0;
+    allDates().forEach((date) => {
+      if (date < range.start || date > range.end) return;
+      const d = dailyMap[date];
+      if (!d) return;
+      const buckets = { shopee: d.s, lazada: d.l, tiktok: d.t };
+      if (platform === "all") {
+        PKEYS.forEach((k) => {
+          revenue += buckets[k][0] || 0;
+          orders += buckets[k][1] || 0;
+          completed += buckets[k][2] || 0;
+          cancelled += buckets[k][3] || 0;
+        });
+      } else if (buckets[platform]) {
+        revenue += buckets[platform][0] || 0;
+        orders += buckets[platform][1] || 0;
+        completed += buckets[platform][2] || 0;
+        cancelled += buckets[platform][3] || 0;
+      }
     });
     return {
       revenue, orders, completed, cancelled,
@@ -159,6 +300,20 @@
       };
     });
   }
+  function dailySeriesRange(range, platform) {
+    return (DASH.daily || []).filter((d) => d.date >= range.start && d.date <= range.end).map((d) => {
+      const s = d.s, l = d.l, t = d.t;
+      const rev = { shopee: s[0], lazada: l[0], tiktok: t[0] };
+      const ord = { shopee: s[1], lazada: l[1], tiktok: t[1] };
+      return {
+        date: d.date,
+        revenue: platform === "all" ? s[0] + l[0] + t[0] : rev[platform],
+        orders: platform === "all" ? s[1] + l[1] + t[1] : ord[platform],
+        shopee: s[0], lazada: l[0], tiktok: t[0],
+        o_shopee: s[1], o_lazada: l[1], o_tiktok: t[1],
+      };
+    });
+  }
 
   /* ---- monthly trend (last n months) ---- */
   function monthlyTrend(n) {
@@ -167,6 +322,52 @@
       ym: m.ym, label: MONTH_VI(m.ym), revenue: m.revenue, orders: m.orders,
       shopee: m.plat.shopee.rev, lazada: m.plat.lazada.rev, tiktok: m.plat.tiktok.rev,
       partial: m.ym === "2026-06",
+    }));
+  }
+  function businessTrend(key) {
+    const range = rangeFromKey(key);
+    if (range.mode === "year") {
+      const years = Array.from(new Set(allMonths().map((ym) => ym.slice(0, 4)))).sort();
+      return years.map((y) => {
+        const months = allMonths().filter((ym) => ym.startsWith(y));
+        return {
+          label: _TF("period.year_short", { y }),
+          shopee: aggMonths(months, "shopee").revenue,
+          lazada: aggMonths(months, "lazada").revenue,
+          tiktok: aggMonths(months, "tiktok").revenue,
+          partial: false,
+        };
+      });
+    }
+    if (range.mode === "month") {
+      const center = range.start.slice(0, 7);
+      const months = [];
+      for (let i = -6; i <= 5; i++) months.push(addMonth(center, i));
+      return months.filter((ym) => monthlyMap[ym]).map((ym) => ({
+        label: MONTH_VI(ym),
+        shopee: monthlyMap[ym].plat.shopee.rev,
+        lazada: monthlyMap[ym].plat.lazada.rev,
+        tiktok: monthlyMap[ym].plat.tiktok.rev,
+        partial: ym === DASH.latestMonth && periodMode(key) === "month",
+      }));
+    }
+    if (range.mode === "day") {
+      const from = addDays(range.end, -29);
+      return dailySeriesRange(normalizeRange(from, range.end, "day"), "all").map((d) => ({
+        label: fmtDateShort(d.date).slice(0, 5),
+        shopee: d.shopee,
+        lazada: d.lazada,
+        tiktok: d.tiktok,
+        partial: false,
+      }));
+    }
+    const data = dailySeriesRange(range, "all");
+    return data.map((d) => ({
+      label: fmtDateShort(d.date).slice(0, 5),
+      shopee: d.shopee,
+      lazada: d.lazada,
+      tiktok: d.tiktok,
+      partial: false,
     }));
   }
 
@@ -196,12 +397,55 @@
 
   function detailMonths(key) { return curMonths(key).filter((ym) => DASH.monthDetail[ym]); }
 
-  function products(key, metric) {
+  function rangeDetailKey(key, platform) {
+    return String(key) + "|" + String(platform || state.platform || "all");
+  }
+
+  function getRangeDetail(key, platform) {
+    return rangeDetailCache[rangeDetailKey(key, platform)] || null;
+  }
+  async function ensureRangeDetail(key, platform) {
+    const cacheKey = rangeDetailKey(key, platform);
+    const activePlatform = platform || state.platform || "all";
+    if (rangeDetailCache[cacheKey]) return rangeDetailCache[cacheKey];
+    if (rangeDetailInflight[cacheKey]) return rangeDetailInflight[cacheKey];
+    const range = rangeFromKey(key);
+    const url = new URL("api/v2-range-detail.php", window.location.href);
+    url.searchParams.set("date_from", range.start);
+    url.searchParams.set("date_to", range.end);
+    if (activePlatform && activePlatform !== "all") {
+      url.searchParams.set("platform", activePlatform === "tiktok" ? "tiktokshop" : activePlatform);
+    }
+    rangeDetailInflight[cacheKey] = fetch(url.toString(), { credentials: "same-origin" })
+      .then((r) => {
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        return r.json();
+      })
+      .then((data) => {
+        rangeDetailCache[cacheKey] = data;
+        delete rangeDetailInflight[cacheKey];
+        return data;
+      })
+      .catch((err) => {
+        delete rangeDetailInflight[cacheKey];
+        throw err;
+      });
+    return rangeDetailInflight[cacheKey];
+  }
+
+  function products(key, metric, platform) {
+    const activePlatform = platform || state.platform;
+    const cached = getRangeDetail(key, activePlatform);
+    if (cached && (cached.topRev || cached.topQty)) {
+      const src = metric === "qty" ? (cached.topQty || []) : (cached.topRev || []);
+      return src.map((p) => ({ ...p, cat: categoryOf(p.sku, p.name), cleanName: cleanName(p.name) }));
+    }
     const months = detailMonths(key);
     const merged = {};
     months.forEach((ym) => {
       const list = DASH.monthDetail[ym][metric === "qty" ? "topQty" : "topRev"];
       list.forEach((p) => {
+        if (activePlatform && activePlatform !== "all" && p.platform !== activePlatform) return;
         const e = merged[p.sku] || (merged[p.sku] = { sku: p.sku, name: p.name, qty: 0, revenue: 0, platform: p.platform });
         e.qty += p.qty; e.revenue += p.revenue;
       });
@@ -211,8 +455,8 @@
     return arr;
   }
 
-  function categoryBreakdown(key) {
-    const arr = products(key, "rev");
+  function categoryBreakdown(key, platform) {
+    const arr = products(key, "rev", platform);
     const map = {};
     arr.forEach((p) => {
       const c = p.cat; const e = map[c] || (map[c] = { cat: c, ...CAT[c], revenue: 0, qty: 0, count: 0 });
@@ -221,7 +465,16 @@
     return Object.values(map).sort((a, b) => b.revenue - a.revenue);
   }
 
-  function cityDistribution(key) {
+  function cityDistribution(key, platform) {
+    const activePlatform = platform || state.platform;
+    const cached = getRangeDetail(key, activePlatform);
+    if (cached && Array.isArray(cached.city)) {
+      const total = cached.city.reduce((t, r) => t + (r.orders || 0), 0);
+      const top = cached.city.filter((r) => r.city !== "Khác").slice(0, 6);
+      const known = top.reduce((t, r) => t + r.orders, 0);
+      if (total - known > 0) top.push({ city: "Khác", orders: total - known, other: true, revenue: 0 });
+      return top.map((r) => ({ ...r, pct: total ? r.orders / total * 100 : 0 }));
+    }
     const months = detailMonths(key); const agg = {};
     months.forEach((ym) => DASH.monthDetail[ym].city.forEach((c) => (agg[c.city] = (agg[c.city] || 0) + c.orders)));
     const total = Object.values(agg).reduce((t, v) => t + v, 0);
@@ -232,7 +485,14 @@
     return top.map((r) => ({ ...r, pct: total ? r.orders / total * 100 : 0 }));
   }
 
-  function heatMatrix(key) {
+  function heatMatrix(key, platform) {
+    const activePlatform = platform || state.platform;
+    const cached = getRangeDetail(key, activePlatform);
+    if (cached && Array.isArray(cached.heat)) {
+      const m = Array.from({ length: 7 }, () => Array(24).fill(0)); let max = 0;
+      cached.heat.forEach((h) => { m[h.weekday][h.hour] += h.orders; if (m[h.weekday][h.hour] > max) max = m[h.weekday][h.hour]; });
+      return { m, max };
+    }
     const months = detailMonths(key);
     const m = Array.from({ length: 7 }, () => Array(24).fill(0)); let max = 0;
     months.forEach((ym) => DASH.monthDetail[ym].heat.forEach((h) => { m[h.weekday][h.hour] += h.orders; }));
@@ -240,7 +500,10 @@
     return { m, max };
   }
 
-  function statusBreakdown(key) {
+  function statusBreakdown(key, platform) {
+    const activePlatform = platform || state.platform;
+    const cached = getRangeDetail(key, activePlatform);
+    if (cached && cached.status) return cached.status;
     const months = detailMonths(key); const st = { completed: 0, delivered: 0, cancelled: 0, pending: 0 };
     months.forEach((ym) => { const s = DASH.monthDetail[ym].status; Object.keys(st).forEach((k) => (st[k] += s[k] || 0)); });
     return st;
@@ -253,6 +516,18 @@
       const get = (k) => (platform === "all" ? PKEYS.reduce((t, p) => t + ((d[p] && d[p][k]) || 0), 0) : (d[platform] ? d[platform][k] : 0));
       return { date: d.date, pv: get("pv"), visits: get("visits"), nf: get("nf") };
     });
+  }
+  function trafficSeriesRange(range, platform) {
+    return (DASH.trafficDaily || []).filter((d) => d.date >= range.start && d.date <= range.end).map((d) => {
+      const get = (k) => (platform === "all" ? PKEYS.reduce((t, p) => t + ((d[p] && d[p][k]) || 0), 0) : (d[platform] ? d[platform][k] : 0));
+      return { date: d.date, pv: get("pv"), visits: get("visits"), nf: get("nf") };
+    });
+  }
+  function trafficAggRange(range, platform) {
+    const s = trafficSeriesRange(range, platform);
+    const pv = s.reduce((t, d) => t + d.pv, 0), visits = s.reduce((t, d) => t + d.visits, 0), nf = s.reduce((t, d) => t + d.nf, 0);
+    const ord = aggRange(range, platform);
+    return { pv, visits, nf, orders: ord.orders, completed: ord.completed, conv: visits ? ord.completed / visits * 100 : 0 };
   }
   function trafficAgg(months, platform) {
     const s = trafficSeries(months, platform);
@@ -269,7 +544,7 @@
   const state = {
     page: saved.page || "overview",
     platform: saved.platform || "all",
-    period: saved.period || "m:2026-05",
+    period: saved.period || (DASH.latestMonth ? "m:" + DASH.latestMonth : "3m"),
     compare: saved.compare || "prev", // prev | yoy | none
     theme: saved.theme || "light",
     collapsed: saved.collapsed || false,
@@ -278,13 +553,15 @@
 
   window.Store = {
     DASH, PLAT, PKEYS, CAT, state, save, F,
-    MONTH_VI, MONTH_VI_LONG, addMonth,
-    curMonths, compareMonths, periodLabel, compareLabel,
-    aggMonths, platformMetrics, dailySeries, monthlyTrend,
-    products, categoryBreakdown, cityDistribution, heatMatrix, statusBreakdown, categoryOf,
-    trafficSeries, trafficAgg, trafficByPlatform,
+    MONTH_VI, MONTH_VI_LONG, addMonth, parseDate, fmtDate, fmtDateShort,
+    curMonths, compareMonths, periodLabel, compareLabel, periodMode, rangeFromKey, compareRange, coercePeriod,
+    aggMonths, aggRange, platformMetrics, dailySeries, dailySeriesRange, monthlyTrend, businessTrend,
+    products, categoryBreakdown, cityDistribution, heatMatrix, statusBreakdown, categoryOf, ensureRangeDetail, getRangeDetail,
+    trafficSeries, trafficSeriesRange, trafficAgg, trafficAggRange, trafficByPlatform,
     cur: () => curMonths(state.period),
     cmp: () => compareMonths(state.period, state.compare),
+    currentRange: () => rangeFromKey(state.period),
+    compareCurrentRange: () => compareRange(state.period, state.compare),
   };
   window.F = F;
 })();
