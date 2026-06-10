@@ -16,38 +16,21 @@
     const [y, m] = ym.split("-");
     return TF("period.month_short", { n: +m, y });
   }
-  function fmtDateInput(s) {
-    return s || "";
+  function newestDate() {
+    const daily = (S.DASH && S.DASH.daily) || [];
+    return daily.length ? daily[daily.length - 1].date : ((S.DASH.latestMonth || "2026-01") + "-01");
   }
   function escHtml(s) {
     return String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\"/g, "&quot;");
   }
-  function mondayOfISOWeek(year, week) {
-    const d = new Date(year, 0, 4);
-    const dow = d.getDay();
-    const offset = dow === 0 ? -6 : 1 - dow;
-    d.setDate(d.getDate() + offset + (week - 1) * 7);
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, "0");
-    const dd = String(d.getDate()).padStart(2, "0");
-    return y + "-" + m + "-" + dd;
-  }
-  function weekValueOf(dateStr) {
-    const d = new Date(dateStr + "T00:00:00");
-    const dayNum = d.getDay() || 7;
-    d.setDate(d.getDate() + 4 - dayNum);
-    const yearStart = new Date(d.getFullYear(), 0, 1);
-    const weekNum = Math.ceil(((d - yearStart) / 86400000 + 1) / 7);
-    return d.getFullYear() + "-W" + String(weekNum).padStart(2, "0");
-  }
-
-  function latestDate() {
-    const daily = (S.DASH && S.DASH.daily) || [];
-    return daily.length ? daily[daily.length - 1].date : ((S.DASH.latestMonth || "2026-01") + "-01");
-  }
+  const CAL_M = ["jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec"];
+  const CAL_D = ["mon","tue","wed","thu","fri","sat","sun"];
+  function fmtISODate(d) { return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+  function parseISODate(s) { const p = String(s||"").split("-").map(Number); return new Date(p[0]||1970,(p[1]||1)-1,p[2]||1); }
+  function calMondayOf(s) { const d = parseISODate(s); d.setDate(d.getDate()-((d.getDay()+6)%7)); return d; }
 
   function buildPeriods() {
-    const latest = latestDate();
+    const latest = newestDate();
     const range = S.currentRange();
     const currentMode = S.periodMode(st.period);
     return {
@@ -128,38 +111,23 @@
   function periodPopover(anchor) {
     closePop();
     const cfg = buildPeriods();
-    const years = Array.from(new Set((S.DASH && S.DASH.monthly || []).map(function(m) { return m.ym.slice(0,4); }))).sort();
-    if (!years.length) years.push(String(new Date().getFullYear()));
-    const selectedYear = cfg.range.end.slice(0, 4);
-    const yearOpts = years.map(function(y) { return '<option value="' + y + '"' + (y === selectedYear ? ' selected' : '') + '>' + y + '</option>'; }).join("");
+    const years = Array.from(new Set((S.DASH&&S.DASH.monthly||[]).map(function(m){return m.ym.slice(0,4)}))).sort();
+    if(!years.length) years.push(String(new Date().getFullYear()));
     const m = document.createElement("div");
     m.className = "menu period-pop";
     m.innerHTML = `
       <div class="menu-label">${T("period.title")}</div>
       <div class="period-pop-body">
         <div class="miniseg period-mode-seg">
-          ${cfg.modes.map((it) => `<button type="button" class="${it.key === cfg.currentMode ? "active" : ""}" data-mode="${it.key}">${it.label}</button>`).join("")}
+          ${cfg.modes.map(function(it){return '<button type="button" class="'+(it.key===cfg.currentMode?"active":"")+'" data-mode="'+it.key+'">'+it.label+'</button>';}).join("")}
         </div>
         <div class="period-fields">
-          <div class="field-row" data-mode-fields="day">
-            <input id="periodDayInput" class="v2-input" type="date" value="${cfg.range.end}" />
-          </div>
-          <div class="field-row" data-mode-fields="week">
-            <input id="periodWeekInput" class="v2-input" type="week" value="${weekValueOf(cfg.range.end)}" />
-          </div>
-          <div class="field-row" data-mode-fields="month">
-            <input id="periodMonthInput" class="v2-input" type="month" value="${cfg.range.end.slice(0, 7)}" />
-          </div>
           <div class="field-row" data-mode-fields="year">
-            <select id="periodYearInput" class="v2-select">${yearOpts}</select>
+            <select id="periodYearInput" class="v2-select">${
+              years.map(function(y){return '<option value="'+y+'"'+(y===cfg.range.end.slice(0,4)?' selected':'')+'>'+y+'</option>';}).join("")
+            }</select>
           </div>
-          <div class="field-row" data-mode-fields="custom">
-            <div class="period-custom-range">
-              <input id="periodFromInput" class="v2-input" type="date" value="${cfg.range.start}" />
-              <span class="period-range-sep">→</span>
-              <input id="periodToInput" class="v2-input" type="date" value="${cfg.range.end}" />
-            </div>
-          </div>
+          <div id="periodCal"></div>
           <div class="period-preview">${escHtml(S.periodLabel(st.period))}</div>
         </div>
         <div class="period-pop-actions">
@@ -168,61 +136,155 @@
         </div>
       </div>`;
     document.body.appendChild(m);
-    const r = anchor.getBoundingClientRect();
-    m.style.top = (r.bottom + 6) + "px";
-    m.style.left = Math.max(12, Math.min(r.left, window.innerWidth - m.offsetWidth - 12)) + "px";
+    const rect = anchor.getBoundingClientRect();
+    m.style.top = (rect.bottom+6)+"px";
+    m.style.left = Math.max(12,Math.min(rect.left,window.innerWidth-m.offsetWidth-12))+"px";
 
     let mode = cfg.currentMode;
-    const dayInput   = m.querySelector("#periodDayInput");
-    const weekInput  = m.querySelector("#periodWeekInput");
-    const monthInput = m.querySelector("#periodMonthInput");
-    const yearInput  = m.querySelector("#periodYearInput");
-    const fromInput  = m.querySelector("#periodFromInput");
-    const toInput    = m.querySelector("#periodToInput");
-    const preview    = m.querySelector(".period-preview");
+    let calView = parseISODate(cfg.range.end);
+    calView.setDate(1);
+    let calStart = cfg.range.start;
+    let calEnd = cfg.range.end;
+    const calEl = m.querySelector("#periodCal");
+    const yearSel = m.querySelector("#periodYearInput");
+    const preview = m.querySelector(".period-preview");
+    const today = fmtISODate(new Date());
 
     function buildKey() {
-      if (mode === "day") return "d:" + ((dayInput && dayInput.value) || cfg.latest);
-      if (mode === "week") {
-        const v = (weekInput && weekInput.value) || "";
-        if (v && v.includes("-W")) {
-          const parts = v.split("-W");
-          return "w:" + mondayOfISOWeek(+parts[0], +parts[1]);
-        }
-        return "w:" + cfg.latest;
-      }
-      if (mode === "month") return "m:" + ((monthInput && monthInput.value) || cfg.latest.slice(0, 7));
-      if (mode === "year") return "y:" + ((yearInput && yearInput.value) || selectedYear);
-      const from = (fromInput && fromInput.value) || cfg.latest;
-      const to   = (toInput && toInput.value) || cfg.latest;
-      return "c:" + from + ":" + to;
-    }
-    function syncFields() {
-      m.querySelectorAll("[data-mode-fields]").forEach((row) => {
-        const show = row.getAttribute("data-mode-fields").split(/\s+/).includes(mode);
-        row.style.display = show ? "grid" : "none";
-      });
-      m.querySelectorAll("[data-mode]").forEach((btn) => btn.classList.toggle("active", btn.dataset.mode === mode));
-      preview.textContent = S.periodLabel(buildKey());
+      if(mode==="day") return "d:"+calEnd;
+      if(mode==="week"){var md=calMondayOf(calEnd);return "w:"+fmtISODate(md);}
+      if(mode==="month") return "m:"+calEnd.slice(0,7);
+      if(mode==="year") return "y:"+((yearSel&&yearSel.value)||cfg.range.end.slice(0,4));
+      var a=calStart,b=calEnd;if(a>b){var t=a;a=b;b=t;}
+      return "c:"+a+":"+b;
     }
 
-    m.querySelector(".period-mode-seg")?.addEventListener("click", (e) => {
-      const btn = e.target.closest("button[data-mode]");
-      if (!btn) return;
-      mode = btn.dataset.mode;
-      syncFields();
+    function renderCal() {
+      var h='<div class="cal-panel">';
+      if(mode!=="year"){
+        var titleMon=calView.getMonth(), titleYr=calView.getFullYear();
+        h+='<div class="cal-navbar">';
+        h+='<button class="cal-nav-btn" data-nav="-1">&lsaquo;</button>';
+        h+='<div class="cal-nav-title">'+T("period.cal."+CAL_M[titleMon])+' '+titleYr+'</div>';
+        h+='<button class="cal-nav-btn" data-nav="1">&rsaquo;</button>';
+        h+='</div>';
+      }
+      if(mode==="month"){
+        h+='<div class="cal-grid cal-months">';
+        for(var mi=0;mi<12;mi++){
+          var ym=calView.getFullYear()+"-"+String(mi+1).padStart(2,"0");
+          var sel=ym===calEnd.slice(0,7)?" sel":"";
+          h+='<button class="cal-month'+sel+'" data-pick="m:'+ym+'">'+T("period.cal."+CAL_M[mi])+'</button>';
+        }
+        h+='</div>';
+      } else if(mode==="year"){
+        var dc=Math.floor(calView.getFullYear()/10)*10;
+        h+='<div class="cal-navbar">';
+        h+='<button class="cal-nav-btn" data-nav="-10">&laquo;</button>';
+        h+='<div class="cal-nav-title">'+dc+' – '+(dc+9)+'</div>';
+        h+='<button class="cal-nav-btn" data-nav="10">&raquo;</button>';
+        h+='</div>';
+        h+='<div class="cal-grid cal-years">';
+        for(var yi=dc-1;yi<=dc+10;yi++){
+          var sy=String(yi);
+          var sely=sy===calEnd.slice(0,4)?" sel":"";
+          h+='<button class="cal-year'+sely+'" data-pick="y:'+sy+'">'+sy+'</button>';
+        }
+        h+='</div>';
+      } else {
+        var first=new Date(calView.getFullYear(),calView.getMonth(),1);
+        var startDow=(first.getDay()+6)%7;
+        h+='<div class="cal-grid cal-days">';
+        for(var di=0;di<7;di++) h+='<div class="cal-dow">'+T("period.cal."+CAL_D[di])+'</div>';
+        var cursor=new Date(first);cursor.setDate(cursor.getDate()-startDow);
+        for(var w=0;w<6;w++){
+          for(var dd=0;dd<7;dd++){
+            var ds=fmtISODate(cursor), cls="cal-day";
+            if(cursor.getMonth()!==calView.getMonth()) cls+=" out";
+            if(ds===today) cls+=" today";
+            if(mode==="custom"){
+              if(ds===calStart||ds===calEnd) cls+=ds===calStart?" sel-start":" sel-end";
+              else if(calStart&&calEnd&&ds>calStart&&ds<calEnd) cls+=" in-range";
+            } else if(mode==="week"){
+              var monday=calMondayOf(calEnd);
+              var sunday=new Date(monday);sunday.setDate(monday.getDate()+6);
+              if(ds===fmtISODate(monday)||ds===fmtISODate(sunday)) cls+=" sel-start";
+              else if(ds>fmtISODate(monday)&&ds<fmtISODate(sunday)) cls+=" in-range";
+            } else {
+              if(ds===calEnd) cls+=" sel";
+            }
+            h+='<button class="'+cls+'" data-pick="d:'+ds+'">'+cursor.getDate()+'</button>';
+            cursor.setDate(cursor.getDate()+1);
+          }
+        }
+        h+='</div>';
+      }
+      h+='</div>';
+      calEl.innerHTML=h;
+      preview.textContent=S.periodLabel(buildKey());
+    }
+
+    function syncModeUI(){
+      m.querySelectorAll("[data-mode]").forEach(function(b){b.classList.toggle("active",b.dataset.mode===mode);});
+      m.querySelectorAll("[data-mode-fields]").forEach(function(r){
+        r.style.display=r.getAttribute("data-mode-fields").split(/\s+/).includes(mode)?"grid":"none";
+      });
+    }
+
+    calEl.addEventListener("click",function(e){
+      var btn=e.target.closest("[data-pick]");
+      if(btn){
+        var pk=btn.dataset.pick;
+        if(pk.startsWith("d:")){
+          var d=pk.slice(2);
+          if(mode==="custom"){
+            if(!calStart||(calStart&&calEnd)){calStart=d;calEnd="";}
+            else {calEnd=d;}
+          } else {calEnd=d;}
+          renderCal();
+        } else if(pk.startsWith("m:")){
+          calEnd=pk.slice(2)+"-01";
+          if(mode==="month"){renderCal();}
+        } else if(pk.startsWith("y:")){
+          calEnd=pk.slice(2)+"-01-01";
+          calView=parseISODate(calEnd);calView.setDate(1);
+          renderCal();
+        }
+      }
+      var nav=e.target.closest("[data-nav]");
+      if(nav){
+        var amt=+nav.dataset.nav;
+        if(mode==="year"){
+          calView.setFullYear(calView.getFullYear()+amt);
+        } else {
+          calView.setMonth(calView.getMonth()+amt);
+        }
+        if(mode==="month"){calEnd=calView.getFullYear()+"-"+String(calView.getMonth()+1).padStart(2,"0")+"-01";}
+        renderCal();
+      }
     });
-    [dayInput, weekInput, monthInput, yearInput, fromInput, toInput].forEach((el) => el && el.addEventListener("input", syncFields));
-    if (yearInput) yearInput.addEventListener("change", syncFields);
-    m.querySelector('[data-act="cancel"]')?.addEventListener("click", closePop);
-    m.querySelector('[data-act="apply"]')?.addEventListener("click", () => {
-      st.period = buildKey();
-      commit();
-      closePop();
+
+    m.querySelector(".period-mode-seg")?.addEventListener("click",function(e){
+      var btn=e.target.closest("button[data-mode]");
+      if(!btn)return;
+      mode=btn.dataset.mode;
+      syncModeUI();
+      renderCal();
     });
-    syncFields();
-    openPop = m;
-    setTimeout(() => document.addEventListener("click", outside, true), 0);
+
+    yearSel&&yearSel.addEventListener("change",function(){
+      calEnd=yearSel.value+"-01-01";renderCal();
+    });
+
+    m.querySelector('[data-act="cancel"]')?.addEventListener("click",closePop);
+    m.querySelector('[data-act="apply"]')?.addEventListener("click",function(){
+      st.period=buildKey();commit();closePop();
+    });
+
+    syncModeUI();
+    renderCal();
+    openPop=m;
+    setTimeout(function(){document.addEventListener("click",outside,true);},0);
   }
 
   function wireControls() {
