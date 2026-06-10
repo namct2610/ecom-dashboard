@@ -1,7 +1,7 @@
 {
-  "version": "3.4.6",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.6/release/dashboard-v3-3.4.6.zip",
-  "changelog": "- Biểu đồ cột xếp chồng: đỉnh cột bo tròn đều giữa các cột bằng plugin clip-path mới — không còn ridges giữa các lớp, lớp trên cùng dù rất mỏng vẫn có cap bo tròn đẹp.\n- Hàng 'So sánh sàn + Phân bổ khu vực' đổi từ 7/5 sang 8/4, thẳng hàng với layout phía trên (xu hướng doanh thu, xu hướng đơn).",
+  "version": "3.4.7",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.7/release/dashboard-v3-3.4.7.zip",
+  "changelog": "- Lọc kỳ năm 2024 (và bất kỳ tháng cũ) giờ hiển thị được dữ liệu: backend bỏ giới hạn 17 tháng, load daily aggregate đầy đủ theo monthly.\n- Đổi font hệ thống sang Be Vietnam Pro — dấu thanh tiếng Việt sắc nét hơn nhiều, render đồng nhất giữa hệ điều hành.\n- Tăng tốc các trang Khách hàng, Đối soát, Đơn hàng, Sản phẩm: bỏ wrap DATE()/YEAR()/DATE_FORMAT() trong WHERE → MySQL dùng được index trên order_created_at, query nhanh hơn nhiều lần (đặc biệt khi DB lớn).",
   "min_php": "8.1",
   "released_at": "2026-06-11"
 }
