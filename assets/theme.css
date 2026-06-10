@@ -390,25 +390,75 @@ body { transition: background .3s ease, color .3s ease; }
   justify-content: flex-end;
   gap: 8px;
 }
+.v2-input[type="date"],
+.v2-input[type="week"],
+.v2-input[type="month"] {
+  color-scheme: light;
+  min-height: 42px;
+  padding-right: 38px;
+}
+[data-theme="dark"] .v2-input[type="date"],
+[data-theme="dark"] .v2-input[type="week"],
+[data-theme="dark"] .v2-input[type="month"] {
+  color-scheme: dark;
+}
+.v2-input[type="date"]::-webkit-datetime-edit,
+.v2-input[type="week"]::-webkit-datetime-edit,
+.v2-input[type="month"]::-webkit-datetime-edit {
+  font-family: var(--font-ui);
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--ink);
+  padding: 0;
+}
+.v2-input[type="date"]::-webkit-datetime-edit-fields-wrapper,
+.v2-input[type="week"]::-webkit-datetime-edit-fields-wrapper,
+.v2-input[type="month"]::-webkit-datetime-edit-fields-wrapper {
+  padding: 0;
+}
+.v2-input[type="date"]::-webkit-datetime-edit-text,
+.v2-input[type="week"]::-webkit-datetime-edit-text,
+.v2-input[type="month"]::-webkit-datetime-edit-text {
+  color: var(--ink-3);
+  padding: 0 1px;
+}
+.v2-input[type="date"]::-webkit-datetime-edit-month-field:focus,
+.v2-input[type="date"]::-webkit-datetime-edit-day-field:focus,
+.v2-input[type="date"]::-webkit-datetime-edit-year-field:focus,
+.v2-input[type="week"]::-webkit-datetime-edit-week-field:focus,
+.v2-input[type="week"]::-webkit-datetime-edit-year-field:focus,
+.v2-input[type="month"]::-webkit-datetime-edit-month-field:focus,
+.v2-input[type="month"]::-webkit-datetime-edit-year-field:focus {
+  color: var(--brand);
+  background-color: color-mix(in oklch, var(--brand) 15%, transparent);
+  border-radius: 3px;
+}
 .v2-input[type="date"]::-webkit-calendar-picker-indicator,
 .v2-input[type="week"]::-webkit-calendar-picker-indicator,
 .v2-input[type="month"]::-webkit-calendar-picker-indicator {
   cursor: pointer;
-  opacity: .82;
-  padding: 4px;
-  border-radius: 4px;
-  transition: background .15s;
+  opacity: .68;
+  padding: 7px;
+  border-radius: var(--r-ctrl);
+  transition: opacity .15s, background .15s;
 }
 .v2-input[type="date"]::-webkit-calendar-picker-indicator:hover,
 .v2-input[type="week"]::-webkit-calendar-picker-indicator:hover,
 .v2-input[type="month"]::-webkit-calendar-picker-indicator:hover {
+  opacity: .92;
   background: var(--surface-3);
 }
 [data-theme="dark"] .v2-input[type="date"]::-webkit-calendar-picker-indicator,
 [data-theme="dark"] .v2-input[type="week"]::-webkit-calendar-picker-indicator,
 [data-theme="dark"] .v2-input[type="month"]::-webkit-calendar-picker-indicator {
-  filter: invert(0.88);
-  opacity: .92;
+  filter: invert(0.92);
+  opacity: .84;
+}
+[data-theme="dark"] .v2-input[type="date"]::-webkit-calendar-picker-indicator:hover,
+[data-theme="dark"] .v2-input[type="week"]::-webkit-calendar-picker-indicator:hover,
+[data-theme="dark"] .v2-input[type="month"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+  background: var(--surface-3);
 }
 
 /* ============================================================
