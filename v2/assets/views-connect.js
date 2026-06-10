@@ -146,7 +146,7 @@
               </div>`;
           }).join("")}
           <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:4px">
-            <button class="ctrl-btn on" data-action="save-creds" style="background:var(--brand);border-color:var(--brand);color:#fff">Lưu thông tin</button>
+            <button class="ctrl-btn on" data-action="save-creds" style="background:var(--brand);border-color:var(--brand);color:#fff">${t("connect.save_btn")}</button>
             <button class="ctrl-btn" data-action="get-auth-url">Cấp quyền (OAuth)</button>
           </div>
           <div class="field-hint" style="margin-top:10px">${cfg.oauthHint}</div>
@@ -179,7 +179,7 @@
               <th>Hết hạn token</th>
               <th>Đồng bộ từ</th>
               <th>Lần đồng bộ cuối</th>
-              <th>Trạng thái</th>
+              <th>${t("th.status")}</th>
               <th></th>
             </tr></thead>
             <tbody>
@@ -217,11 +217,11 @@
 
   function platformPane(platformKey) {
     if (local.loading[platformKey] && !local.data[platformKey]) {
-      return `<div class="card card-pad" style="text-align:center;color:var(--ink-3);font-weight:600">Đang tải...</div>`;
+      return `<div class="card card-pad" style="text-align:center;color:var(--ink-3);font-weight:600">${t("common.loading")}</div>`;
     }
     const d = local.data[platformKey];
     if (d && d._error) {
-      return `<div class="card card-pad" style="color:var(--neg);font-weight:700">Lỗi: ${d._error}</div>`;
+      return `<div class="card card-pad" style="color:var(--neg);font-weight:700">${t("common.error")}: ${d._error}</div>`;
     }
     return credentialsCard(platformKey) + connectionsCard(platformKey);
   }
@@ -248,7 +248,7 @@
       await fetchStatus(local.tab);
       window.App.rerender();
     } catch (e) {
-      showMsg("err", "Lỗi: " + (e.message || e));
+      showMsg("err", "${t("common.error")}: " + (e.message || e));
     } finally { local.saving = false; }
   }
 
@@ -263,7 +263,7 @@
         showMsg("err", "Không nhận được URL cấp quyền.");
       }
     } catch (e) {
-      showMsg("err", "Lỗi: " + (e.message || e));
+      showMsg("err", "${t("common.error")}: " + (e.message || e));
     }
   }
 
@@ -290,7 +290,7 @@
         const j = await postAction(local.tab, { action: "sync", [idF]: id });
         const r = (j.results || [])[0];
         if (r && r.success) showMsg("ok", "Đã đồng bộ.");
-        else showMsg("err", "Lỗi: " + ((r && r.error) || "không rõ"));
+        else showMsg("err", "${t("common.error")}: " + ((r && r.error) || "không rõ"));
       } else if (action === "disconnect") {
         if (!confirm("Ngắt kết nối " + id + "?")) return;
         await postAction(local.tab, { action: "disconnect", [idF]: id });
@@ -299,7 +299,7 @@
       await fetchStatus(local.tab);
       window.App.rerender();
     } catch (e) {
-      showMsg("err", "Lỗi: " + (e.message || e));
+      showMsg("err", "${t("common.error")}: " + (e.message || e));
     }
   }
 
@@ -310,7 +310,7 @@
       await fetchStatus(local.tab);
       window.App.rerender();
     } catch (e) {
-      showMsg("err", "Lỗi: " + (e.message || e));
+      showMsg("err", "${t("common.error")}: " + (e.message || e));
     }
   }
 
@@ -321,7 +321,7 @@
       await postAction(local.tab, { action: "set_sync_from", [idF]: +row.dataset.id, sync_from_date: value });
       showMsg("ok", "Đã cập nhật ngày đồng bộ.");
     } catch (e) {
-      showMsg("err", "Lỗi: " + (e.message || e));
+      showMsg("err", "${t("common.error")}: " + (e.message || e));
     }
   }
 
@@ -355,8 +355,8 @@
   }
 
   window.Views.connect = {
-    title: "Kết nối sàn",
-    eyebrow: "Shopee · Lazada · TikTok Shop",
+    titleKey: "page.connect.title",
+    eyebrowKey: "page.connect.eyebrow",
     customToolbar: true,
     render,
     mount,

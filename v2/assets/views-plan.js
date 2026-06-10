@@ -111,7 +111,7 @@
               <div class="card-title">Đặt mục tiêu năm ${local.year}</div>
               <div class="card-sub">Mục tiêu được chia đều 12 tháng để tính tiến độ.</div>
             </div>
-            <button class="iconbtn-sq" id="planModalClose" aria-label="Đóng">
+            <button class="iconbtn-sq" id="planModalClose" aria-label="${t("common.close")}">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
             </button>
           </div>
@@ -129,15 +129,15 @@
           </div>
 
           <div style="margin-top:22px;display:flex;justify-content:flex-end;gap:10px">
-            <button class="ctrl-btn" id="planCancelBtn">Huỷ</button>
-            <button class="ctrl-btn on" id="planSaveBtn" style="background:var(--brand);border-color:var(--brand);color:#fff">Lưu mục tiêu</button>
+            <button class="ctrl-btn" id="planCancelBtn">${t("common.cancel")}</button>
+            <button class="ctrl-btn on" id="planSaveBtn" style="background:var(--brand);border-color:var(--brand);color:#fff">${t("plan.save_target")}</button>
           </div>
         </div>
       </div>`;
   }
 
   function loadingCard(msg) {
-    return `<div class="card card-pad" style="text-align:center;color:var(--ink-3);font-weight:600">${msg || "Đang tải..."}</div>`;
+    return `<div class="card card-pad" style="text-align:center;color:var(--ink-3);font-weight:600">${msg || "${t("common.loading")}"}</div>`;
   }
 
   function errorCard(msg) {
@@ -251,7 +251,7 @@
     saveBtn?.addEventListener("click", async () => {
       if (local.saving) return;
       local.saving = true;
-      saveBtn.textContent = "Đang lưu...";
+      saveBtn.textContent = "${t("plan.saving")}";
       try {
         const revenue_target = +String(revIn.value).replace(/[^\d]/g, "") || 0;
         const visits_target  = +String(visIn.value).replace(/[^\d]/g, "") || 0;
@@ -269,8 +269,8 @@
         await fetchData();
         window.App.rerender();
       } catch (err) {
-        saveBtn.textContent = "Lưu mục tiêu";
-        alert("Lỗi: " + (err.message || err));
+        saveBtn.textContent = "${t("plan.save_target")}";
+        alert("${t("common.error")}: " + (err.message || err));
       } finally {
         local.saving = false;
       }
@@ -369,8 +369,8 @@
   }
 
   window.Views.plan = {
-    title: "Kế hoạch",
-    eyebrow: "Mục tiêu năm & tiến độ",
+    titleKey: "page.plan.title",
+    eyebrowKey: "page.plan.eyebrow",
     customToolbar: true,
     render,
     mount,

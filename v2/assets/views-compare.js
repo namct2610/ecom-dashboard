@@ -70,7 +70,7 @@
     <div class="card section-gap">
       <div class="card-head"><div><div class="card-title">Bảng so sánh chi tiết</div><div class="card-sub">${S.periodLabel(st.period).toLowerCase()}</div></div></div>
       <div class="card-pad" style="overflow-x:auto;padding:6px">
-        <table class="tbl"><thead><tr><th>Sàn</th><th class="num">Doanh thu</th><th class="num">Δ ${st.compare === "yoy" ? "cùng kỳ" : st.compare === "prev" ? "kỳ trước" : ""}</th><th class="num">Đơn</th><th class="num">% HT</th><th class="num">% Huỷ</th><th class="num">AOV</th><th class="num">Truy cập</th><th class="num">% CĐ</th><th class="num">Thị phần</th></tr></thead><tbody>${tblRows}</tbody></table>
+        <table class="tbl"><thead><tr><th>Sàn</th><th class="num">Doanh thu</th><th class="num">Δ ${st.compare === "yoy" ? "cùng kỳ" : st.compare === "prev" ? "kỳ trước" : ""}</th><th class="num">Đơn</th><th class="num">% HT</th><th class="num">% ${t("common.cancel")}</th><th class="num">AOV</th><th class="num">Truy cập</th><th class="num">% CĐ</th><th class="num">Thị phần</th></tr></thead><tbody>${tblRows}</tbody></table>
       </div>
     </div>`;
   }
@@ -81,5 +81,5 @@
     if (tc) C.lineSeries(tc, trend.map((t) => t.label), S.PKEYS.map((k) => ({ label: S.PLAT[k].label, data: trend.map((t) => t[k]), color: "--" + k })), { money: true });
   }
 
-  window.Views.compare = { title: "So sánh sàn", eyebrow: "Phân tích đối chiếu", render, mount };
+  window.Views.compare = { titleKey: "page.compare.title", eyebrowKey: "page.compare.eyebrow", render, mount };
 })();

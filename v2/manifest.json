@@ -1,7 +1,7 @@
 {
-  "version": "2.6.0",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v2-2.6.0/release/dashboard-v2-2.6.0.zip",
-  "changelog": "- Batch 6/6 (cuối): thêm trang \"Kết nối sàn\" (nav Hệ thống) — Shopee / Lazada / TikTok Shop với 3 tab.\n  * Mỗi tab: form thông tin ứng dụng (Partner ID/Key cho Shopee, App Key/Secret cho Lazada+TikTok), nút Lưu + Cấp quyền (OAuth) mở tab mới.\n  * Bảng shop/account đã kết nối: ID + tên, ngày hết hạn token, ngày bắt đầu đồng bộ (input date), lần đồng bộ cuối, on/off, nút Đồng bộ + Ngắt kết nối.\n  * Nút \"Đồng bộ tất cả\" cho từng sàn.\n  * Lazy-load mỗi tab khi click lần đầu.\n  * Cắm sẵn 3 endpoint: /api/{shopee,lazada,tiktok}-connect.php (status / save_credentials / get_auth_url / sync / toggle_active / set_sync_from / disconnect).\n\nVới batch này, v2 đã hoàn thành toàn bộ tính năng của v1:\n  Tổng quan · So sánh sàn · Đơn hàng · Sản phẩm · Khách hàng · Lưu lượng · Kế hoạch · Tải dữ liệu · Đối soát GBS · Kết nối sàn · Người dùng · Cài đặt.",
+  "version": "2.7.0",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v2-2.7.0/release/dashboard-v2-2.7.0.zip",
+  "changelog": "- Batch 7: thêm tính năng đa ngôn ngữ Việt/Anh (i18n) cho v2.\n  * Module i18n.js inline dict ~250 keys × 2 ngôn ngữ — không cần fetch JSON.\n  * Nút VI/EN trên header (cạnh nút theme), nhớ lựa chọn trong localStorage.\n  * Sidebar (nav items, sections, brand sub, sync card, Thu gọn) tự đổi qua data-i18n attrs.\n  * Header title + eyebrow đổi theo trang qua titleKey/eyebrowKey trên view.\n  * Period picker (3 tháng / 6 tháng / Năm nay / Năm trước / Cả thời gian / 12 tháng riêng) + Compare (Kỳ liền trước / Cùng kỳ / Không) đổi ngôn ngữ tự động.\n  * store.js periodLabel/compareLabel + MONTH_VI/MONTH_VI_LONG honor active language.\n  * Bootstrap loader thông báo \"Đang tải dữ liệu\" / loading errors đa ngôn ngữ.\n  * Một số chuỗi chung trong views (loading, common buttons, status pills) đã chuyển sang t() — phần lớn chrome thấy ngay khi đổi language. Còn 1 số chuỗi chi tiết trong card content vẫn cố định tiếng Việt — sẽ refactor tiếp ở patch sau khi cần.",
   "min_php": "8.1",
-  "released_at": "2026-06-09"
+  "released_at": "2026-06-10"
 }

@@ -69,30 +69,30 @@
         </div>
         <div class="card-pad">
           <div class="field-row">
-            <label class="field-label">Họ tên</label>
+            <label class="field-label">${t("settings.account.full_name")}</label>
             <input id="accFullName" class="v2-input" type="text" value="${(u.full_name || "").replace(/"/g, '&quot;')}" placeholder="Họ và tên đầy đủ" maxlength="120" />
           </div>
           <div style="display:flex;justify-content:flex-end;margin-bottom:24px">
-            <button class="ctrl-btn on" id="btnSaveProfile" style="background:var(--brand);border-color:var(--brand);color:#fff">Lưu hồ sơ</button>
+            <button class="ctrl-btn on" id="btnSaveProfile" style="background:var(--brand);border-color:var(--brand);color:#fff">${t("settings.account.save_profile")}</button>
           </div>
 
           <div style="border-top:1px solid var(--border);padding-top:18px">
-            <div style="font-weight:800;font-size:14px;margin-bottom:14px">Đổi mật khẩu</div>
+            <div style="font-weight:800;font-size:14px;margin-bottom:14px">${t("settings.account.change_pwd")}</div>
             <div class="field-row">
-              <label class="field-label">Mật khẩu hiện tại</label>
+              <label class="field-label">${t("settings.account.cur_pwd")}</label>
               <input id="accCurPwd" class="v2-input" type="password" autocomplete="current-password" />
             </div>
             <div class="field-row">
-              <label class="field-label">Mật khẩu mới</label>
+              <label class="field-label">${t("settings.account.new_pwd")}</label>
               <input id="accNewPwd" class="v2-input" type="password" autocomplete="new-password" />
               <div class="field-hint">Tối thiểu 8 ký tự, nên kết hợp chữ + số.</div>
             </div>
             <div class="field-row">
-              <label class="field-label">Xác nhận mật khẩu mới</label>
+              <label class="field-label">${t("settings.account.confirm_pwd")}</label>
               <input id="accConfirmPwd" class="v2-input" type="password" autocomplete="new-password" />
             </div>
             <div style="display:flex;justify-content:flex-end">
-              <button class="ctrl-btn on" id="btnChangePwd" style="background:var(--brand);border-color:var(--brand);color:#fff">Đổi mật khẩu</button>
+              <button class="ctrl-btn on" id="btnChangePwd" style="background:var(--brand);border-color:var(--brand);color:#fff">${t("settings.account.change_pwd")}</button>
             </div>
           </div>
         </div>
@@ -136,7 +136,7 @@
           <div id="brandRulesList">${list}</div>
           <div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
             <span class="field-hint">Mã 3 ký tự, viết hoa. Trùng prefix sẽ bị gộp khi lưu.</span>
-            <button class="ctrl-btn on" id="btnSaveRules" style="background:var(--brand);border-color:var(--brand);color:#fff">Lưu quy ước</button>
+            <button class="ctrl-btn on" id="btnSaveRules" style="background:var(--brand);border-color:var(--brand);color:#fff">${t("settings.brand.save_rules")}</button>
           </div>
         </div>
       </div>`;
@@ -144,10 +144,10 @@
 
   function render() {
     if (local.loading) {
-      return `<div class="card card-pad" style="text-align:center;color:var(--ink-3);font-weight:600">Đang tải...</div>`;
+      return `<div class="card card-pad" style="text-align:center;color:var(--ink-3);font-weight:600">${t("common.loading")}</div>`;
     }
     if (local.error) {
-      return `<div class="card card-pad" style="text-align:center;color:var(--neg);font-weight:700">Lỗi: ${local.error}</div>`;
+      return `<div class="card card-pad" style="text-align:center;color:var(--neg);font-weight:700">${t("common.error")}: ${local.error}</div>`;
     }
     return `
       ${flashMsg()}
@@ -169,7 +169,7 @@
     const fullName = document.getElementById("accFullName").value.trim();
     const btn = document.getElementById("btnSaveProfile");
     if (!btn || local.saving) return;
-    local.saving = true; btn.textContent = "Đang lưu...";
+    local.saving = true; btn.textContent = "${t("plan.saving")}";
     try {
       const fd = new FormData();
       fd.append("action", "update_profile");
@@ -184,7 +184,7 @@
       local.user = j.user;
       showMsg("ok", "Đã lưu hồ sơ.");
     } catch (e) {
-      btn.textContent = "Lưu hồ sơ";
+      btn.textContent = "${t("settings.account.save_profile")}";
       showMsg("err", "Lỗi lưu hồ sơ: " + (e.message || e));
     } finally {
       local.saving = false;
@@ -199,7 +199,7 @@
     if (!btn || local.saving) return;
     if (!cur || !nw || !cf) { showMsg("err", "Vui lòng nhập đủ 3 trường mật khẩu."); return; }
     if (nw !== cf) { showMsg("err", "Xác nhận không khớp."); return; }
-    local.saving = true; btn.textContent = "Đang đổi...";
+    local.saving = true; btn.textContent = "${t("settings.account.changing")}";
     try {
       const r = await fetch("../api/account.php", {
         method: "POST", credentials: "same-origin",
@@ -212,9 +212,9 @@
       document.getElementById("accCurPwd").value = "";
       document.getElementById("accNewPwd").value = "";
       document.getElementById("accConfirmPwd").value = "";
-      showMsg("ok", "Đổi mật khẩu thành công.");
+      showMsg("ok", "${t("settings.account.change_pwd")} thành công.");
     } catch (e) {
-      btn.textContent = "Đổi mật khẩu";
+      btn.textContent = "${t("settings.account.change_pwd")}";
       showMsg("err", "Lỗi đổi mật khẩu: " + (e.message || e));
     } finally {
       local.saving = false;
@@ -242,7 +242,7 @@
       if (r.prefix.length !== 3) { showMsg("err", `Mã "${r.prefix || "(rỗng)"}" phải đúng 3 ký tự.`); return; }
       if (!r.brand_name) { showMsg("err", `Mã ${r.prefix} chưa có tên thương hiệu.`); return; }
     }
-    local.saving = true; btn.textContent = "Đang lưu...";
+    local.saving = true; btn.textContent = "${t("plan.saving")}";
     try {
       const r = await fetch("../api/brand-settings.php", {
         method: "POST", credentials: "same-origin",
@@ -255,7 +255,7 @@
       showMsg("ok", j.message || "Đã lưu quy ước thương hiệu.");
       window.App.rerender();
     } catch (e) {
-      btn.textContent = "Lưu quy ước";
+      btn.textContent = "${t("settings.brand.save_rules")}";
       showMsg("err", "Lỗi lưu quy ước: " + (e.message || e));
     } finally {
       local.saving = false;
@@ -298,8 +298,8 @@
   }
 
   window.Views.settings = {
-    title: "Cài đặt",
-    eyebrow: "Tài khoản & cấu hình hệ thống",
+    titleKey: "page.settings.title",
+    eyebrowKey: "page.settings.eyebrow",
     customToolbar: true,
     render,
     mount,
