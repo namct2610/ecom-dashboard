@@ -22,6 +22,24 @@
   function escHtml(s) {
     return String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\"/g, "&quot;");
   }
+  function mondayOfISOWeek(year, week) {
+    const d = new Date(year, 0, 4);
+    const dow = d.getDay();
+    const offset = dow === 0 ? -6 : 1 - dow;
+    d.setDate(d.getDate() + offset + (week - 1) * 7);
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const dd = String(d.getDate()).padStart(2, "0");
+    return y + "-" + m + "-" + dd;
+  }
+  function weekValueOf(dateStr) {
+    const d = new Date(dateStr + "T00:00:00");
+    const dayNum = d.getDay() || 7;
+    d.setDate(d.getDate() + 4 - dayNum);
+    const yearStart = new Date(d.getFullYear(), 0, 1);
+    const weekNum = Math.ceil(((d - yearStart) / 86400000 + 1) / 7);
+    return d.getFullYear() + "-W" + String(weekNum).padStart(2, "0");
+  }
 
   function latestDate() {
     const daily = (S.DASH && S.DASH.daily) || [];
@@ -110,6 +128,10 @@
   function periodPopover(anchor) {
     closePop();
     const cfg = buildPeriods();
+    const years = Array.from(new Set((S.DASH && S.DASH.monthly || []).map(function(m) { return m.ym.slice(0,4); }))).sort();
+    if (!years.length) years.push(String(new Date().getFullYear()));
+    const selectedYear = cfg.range.end.slice(0, 4);
+    const yearOpts = years.map(function(y) { return '<option value="' + y + '"' + (y === selectedYear ? ' selected' : '') + '>' + y + '</option>'; }).join("");
     const m = document.createElement("div");
     m.className = "menu period-pop";
     m.innerHTML = `
@@ -119,17 +141,24 @@
           ${cfg.modes.map((it) => `<button type="button" class="${it.key === cfg.currentMode ? "active" : ""}" data-mode="${it.key}">${it.label}</button>`).join("")}
         </div>
         <div class="period-fields">
-          <div class="field-row" data-mode-fields="day week month year custom">
-            <label class="field-label">${T("period.anchor_date", "Ngày mốc")}</label>
-            <input id="periodAnchorInput" class="v2-input" type="date" value="${fmtDateInput(cfg.range.end)}" />
+          <div class="field-row" data-mode-fields="day">
+            <input id="periodDayInput" class="v2-input" type="date" value="${cfg.range.end}" />
+          </div>
+          <div class="field-row" data-mode-fields="week">
+            <input id="periodWeekInput" class="v2-input" type="week" value="${weekValueOf(cfg.range.end)}" />
+          </div>
+          <div class="field-row" data-mode-fields="month">
+            <input id="periodMonthInput" class="v2-input" type="month" value="${cfg.range.end.slice(0, 7)}" />
+          </div>
+          <div class="field-row" data-mode-fields="year">
+            <select id="periodYearInput" class="v2-select">${yearOpts}</select>
           </div>
           <div class="field-row" data-mode-fields="custom">
-            <label class="field-label">${T("period.from", "Từ ngày")}</label>
-            <input id="periodFromInput" class="v2-input" type="date" value="${fmtDateInput(cfg.range.start)}" />
-          </div>
-          <div class="field-row" data-mode-fields="custom">
-            <label class="field-label">${T("period.to", "Đến ngày")}</label>
-            <input id="periodToInput" class="v2-input" type="date" value="${fmtDateInput(cfg.range.end)}" />
+            <div class="period-custom-range">
+              <input id="periodFromInput" class="v2-input" type="date" value="${cfg.range.start}" />
+              <span class="period-range-sep">→</span>
+              <input id="periodToInput" class="v2-input" type="date" value="${cfg.range.end}" />
+            </div>
           </div>
           <div class="period-preview">${escHtml(S.periodLabel(st.period))}</div>
         </div>
@@ -144,20 +173,29 @@
     m.style.left = Math.max(12, Math.min(r.left, window.innerWidth - m.offsetWidth - 12)) + "px";
 
     let mode = cfg.currentMode;
-    const anchorInput = m.querySelector("#periodAnchorInput");
-    const fromInput = m.querySelector("#periodFromInput");
-    const toInput = m.querySelector("#periodToInput");
-    const preview = m.querySelector(".period-preview");
+    const dayInput   = m.querySelector("#periodDayInput");
+    const weekInput  = m.querySelector("#periodWeekInput");
+    const monthInput = m.querySelector("#periodMonthInput");
+    const yearInput  = m.querySelector("#periodYearInput");
+    const fromInput  = m.querySelector("#periodFromInput");
+    const toInput    = m.querySelector("#periodToInput");
+    const preview    = m.querySelector(".period-preview");
 
     function buildKey() {
-      const anchorDate = (anchorInput && anchorInput.value) || cfg.latest;
-      if (mode === "day") return "d:" + anchorDate;
-      if (mode === "week") return "w:" + anchorDate;
-      if (mode === "month") return "m:" + anchorDate.slice(0, 7);
-      if (mode === "year") return "y:" + anchorDate.slice(0, 4);
-      const from = (fromInput && fromInput.value) || anchorDate;
-      const to = (toInput && toInput.value) || anchorDate;
-      return S.coercePeriod("c:" + from + ":" + to, "custom");
+      if (mode === "day") return "d:" + ((dayInput && dayInput.value) || cfg.latest);
+      if (mode === "week") {
+        const v = (weekInput && weekInput.value) || "";
+        if (v && v.includes("-W")) {
+          const parts = v.split("-W");
+          return "w:" + mondayOfISOWeek(+parts[0], +parts[1]);
+        }
+        return "w:" + cfg.latest;
+      }
+      if (mode === "month") return "m:" + ((monthInput && monthInput.value) || cfg.latest.slice(0, 7));
+      if (mode === "year") return "y:" + ((yearInput && yearInput.value) || selectedYear);
+      const from = (fromInput && fromInput.value) || cfg.latest;
+      const to   = (toInput && toInput.value) || cfg.latest;
+      return "c:" + from + ":" + to;
     }
     function syncFields() {
       m.querySelectorAll("[data-mode-fields]").forEach((row) => {
@@ -174,7 +212,8 @@
       mode = btn.dataset.mode;
       syncFields();
     });
-    [anchorInput, fromInput, toInput].forEach((el) => el && el.addEventListener("input", syncFields));
+    [dayInput, weekInput, monthInput, yearInput, fromInput, toInput].forEach((el) => el && el.addEventListener("input", syncFields));
+    if (yearInput) yearInput.addEventListener("change", syncFields);
     m.querySelector('[data-act="cancel"]')?.addEventListener("click", closePop);
     m.querySelector('[data-act="apply"]')?.addEventListener("click", () => {
       st.period = buildKey();

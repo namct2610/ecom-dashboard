@@ -335,7 +335,7 @@ body { transition: background .3s ease, color .3s ease; }
 .menu-item small { color: var(--ink-3); font-weight: 600; }
 
 .period-pop {
-  width: min(360px, calc(100vw - 24px));
+  width: min(420px, calc(100vw - 24px));
   padding: 0;
   overflow: hidden;
 }
@@ -359,6 +359,22 @@ body { transition: background .3s ease, color .3s ease; }
   flex-direction: column;
   gap: 0;
 }
+.period-custom-range {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.period-custom-range .v2-input {
+  flex: 1;
+  min-width: 0;
+}
+.period-range-sep {
+  color: var(--ink-3);
+  font-weight: 700;
+  font-size: 14px;
+  flex: 0 0 auto;
+  user-select: none;
+}
 .period-preview {
   margin-top: 4px;
   padding: 11px 12px;
@@ -374,10 +390,25 @@ body { transition: background .3s ease, color .3s ease; }
   justify-content: flex-end;
   gap: 8px;
 }
-.v2-input::-webkit-calendar-picker-indicator {
+.v2-input[type="date"]::-webkit-calendar-picker-indicator,
+.v2-input[type="week"]::-webkit-calendar-picker-indicator,
+.v2-input[type="month"]::-webkit-calendar-picker-indicator {
   cursor: pointer;
-  opacity: .78;
-  filter: saturate(.2);
+  opacity: .82;
+  padding: 4px;
+  border-radius: 4px;
+  transition: background .15s;
+}
+.v2-input[type="date"]::-webkit-calendar-picker-indicator:hover,
+.v2-input[type="week"]::-webkit-calendar-picker-indicator:hover,
+.v2-input[type="month"]::-webkit-calendar-picker-indicator:hover {
+  background: var(--surface-3);
+}
+[data-theme="dark"] .v2-input[type="date"]::-webkit-calendar-picker-indicator,
+[data-theme="dark"] .v2-input[type="week"]::-webkit-calendar-picker-indicator,
+[data-theme="dark"] .v2-input[type="month"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.88);
+  opacity: .92;
 }
 
 /* ============================================================

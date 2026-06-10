@@ -1,7 +1,7 @@
 {
-  "version": "3.2.0",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.2.0/release/dashboard-v3-3.2.0.zip",
-  "changelog": "- Làm mới bộ lọc thời gian cho v2: hỗ trợ xem theo ngày, tuần, tháng, năm hoặc tùy chỉnh với date picker đồng bộ giao diện hiện tại.\n- Cập nhật phần Tổng quan: tiêu đề biểu đồ chính thành `Tình hình kinh doanh`; chọn tháng sẽ xem cửa sổ 12 tháng (6 trước + tháng chọn + 5 sau), chọn năm xem theo năm, chọn ngày xem 30 ngày gần nhất.\n- Bổ sung endpoint chi tiết theo khoảng ngày cho v2 để top sản phẩm, danh mục, khu vực, heatmap và trạng thái đơn phản ánh đúng khoảng lọc mới.\n- Siết lại login v2: chặn submit trùng, xóa password khi lỗi, và không lưu query string nhạy cảm vào app logs.",
+  "version": "3.2.1",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.2.1/release/dashboard-v3-3.2.1.zip",
+  "changelog": "- Cải thiện UX date picker: chọn ngày dùng type=date, chọn tuần dùng type=week (hiển thị thứ 2 - chủ nhật), chọn tháng dùng type=month, chọn năm dùng select, tùy chỉnh hiển thị 2 ô date chọn ngày đầu và cuối cạnh nhau.\n- Tùy biến CSS cho calendar picker indicator đồng bộ cả theme sáng và tối.",
   "min_php": "8.1",
   "released_at": "2026-06-10"
 }
