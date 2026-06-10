@@ -61,7 +61,7 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h6v6M10 20H4v-6M20 4l-7 7M4 20l7-7"/></svg>
         <span class="nav-label">Đối soát GBS</span>
       </a>
-      <a class="nav-item" data-sys="upload">
+      <a class="nav-item" data-page="upload" data-screen-label="Tải dữ liệu">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5M12 15V3"/></svg>
         <span class="nav-label">Tải dữ liệu</span>
       </a>
@@ -121,7 +121,7 @@
     var root = document.getElementById('pageRoot');
     root.innerHTML = '<div style="padding:48px 24px;color:var(--ink-3);font-weight:600;text-align:center">Đang tải dữ liệu…</div>';
 
-    var V = 13; // cache-bust for assets
+    var V = 14; // cache-bust for assets
     var MODULES = [
       'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js',
       'assets/store.js?v=' + V,
@@ -133,6 +133,7 @@
       'assets/views-plan.js?v=' + V,
       'assets/views-settings.js?v=' + V,
       'assets/views-users.js?v=' + V,
+      'assets/views-upload.js?v=' + V,
       'assets/app.js?v=' + V
     ];
 

@@ -1,7 +1,7 @@
 {
-  "version": "2.3.3",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v2-2.3.3/release/dashboard-v2-2.3.3.zip",
-  "changelog": "- Sidebar thu gọn (hoàn chỉnh): icon nav giờ thật sự nằm giữa rail. Bản 2.3.2 chỉ thêm justify-content:center nhưng .nav-label vẫn có flex:1 nên giãn ra đẩy icon sang trái. Fix bằng display:none cho .nav-label/.brand-text khi collapsed.",
+  "version": "2.4.0",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v2-2.4.0/release/dashboard-v2-2.4.0.zip",
+  "changelog": "- Batch 4/N: thêm trang \"Tải dữ liệu\" (nav Hệ thống).\n  * Drag & drop hoặc click chọn file Excel (.xlsx/.xls), nhiều file cùng lúc, tối đa 50MB/file.\n  * Tự nhận diện sàn (Shopee/Lazada/TikTok) + loại (đơn hàng / lưu lượng) — không cần khai báo.\n  * Hàng đợi hiển thị từng file (Chờ → Đang gửi → ✓ X dòng / ✗ Lỗi).\n  * Bảng lịch sử 30 lần upload gần nhất (file, sàn, loại, đã nhập, bỏ qua, trạng thái, thời điểm) + nút Tải lại.\n  * Cắm /api/upload.php + /api/upload-history.php sẵn có.\n- Còn lại: GBS Reconciliation (Batch 5), OAuth Connectors Shopee/Lazada/TikTok (Batch 6).",
   "min_php": "8.1",
   "released_at": "2026-06-09"
 }
