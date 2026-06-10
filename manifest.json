@@ -1,7 +1,7 @@
 {
-  "version": "3.0.2",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.0.2/release/dashboard-v3-3.0.2.zip",
-  "changelog": "- Tách dev tooling khỏi root production: build.sh + build-old.sh + note.md đã chuyển vào dev/. Production bundle giờ không kèm script build hay tài liệu nội bộ.\n- build.sh exclude thêm dev/ (cùng với /old/ đã có) — bản main thực sự gọn.\n- Xoá 82 zip release cũ khỏi main HEAD (vẫn còn trong từng tag tương ứng nếu cần khôi phục). Working tree còn lại đúng 2 file: dashboard-v3-3.0.1.zip + dashboard-old-1.6.1.zip.\n- Cách chạy build từ giờ: ./dev/build.sh (hoặc dev/build-old.sh) — script tự climb lên root.",
+  "version": "3.0.3",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.0.3/release/dashboard-v3-3.0.3.zip",
+  "changelog": "- Fix 404 trên fresh install: main bundle nay bao gồm /old/ để khi v2 redirect tới ../old/index.php?legacy=1#/login (lúc chưa đăng nhập) vẫn có trang mở ra.\n- Updater giờ preserve có điều kiện: chỉ skip top-level path nếu nó đã tồn tại ở đích. Net-new path (vd /old/ trên máy chưa có) được copy bình thường. Subsequent updates vẫn không clobber /old/ (legacy channel quản lý).\n- api/v2-update.php truyền preservedPaths kèm 'old' để channel chính không đụng tới legacy app.",
   "min_php": "8.1",
   "released_at": "2026-06-10"
 }
