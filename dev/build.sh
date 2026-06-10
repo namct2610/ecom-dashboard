@@ -48,11 +48,9 @@ rsync -a \
   --exclude='.DS_Store' \
   --exclude='__MACOSX/' \
   --exclude='dev/' \
+  --exclude='old/' \
   ./ "$STAGE_ROOT/"
-# Note: /old/ IS included in the main bundle so a fresh install has the
-# legacy fallback page wired up (v2 falls back there on 401). Subsequent
-# main updates preserve /old/ via Updater's preservedPaths list, so the
-# legacy channel can still independently manage it.
+# /old/ no longer shipped — v2 is the only production interface.
 
 mkdir -p "$STAGE_ROOT/uploads"
 if [[ -f "$ROOT_DIR/uploads/.htaccess" ]]; then
