@@ -1,7 +1,7 @@
 {
-  "version": "2.7.1",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v2-2.7.1/release/dashboard-v2-2.7.1.zip",
-  "changelog": "- Hotfix cho 2.7.0: sửa lỗi \"window.App.init không có sẵn\" khiến nhiều trang không truy cập được.\n  * Nguyên nhân: bulk-replace ở 2.7.0 đã đặt `${t(\"key\")}` vào trong string nháy kép thường (không phải template literal) → JS parser nuốt dấu \" trong key làm cú pháp gãy → IIFE của các view crash → window.App / window.Store không export → bootstrap báo App.init missing.\n  * Fix: scan toàn bộ view, chuyển các pattern \"${t(\"...\")}\" sang t(\"...\") thuần JS (hoặc t() + concat). Verify cả 14 file JS parse sạch bằng node --check và new Function() trong preview.",
+  "version": "2.8.0",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v2-2.8.0/release/dashboard-v2-2.8.0.zip",
+  "changelog": "- v2 trở thành giao diện chính: sau khi đăng nhập user được đưa thẳng sang /v2/. Có thể quay về v1 bất cứ lúc nào qua nút \"Quay lại bản cũ\".\n- Banner mảnh trên cùng v2: \"Bạn đang dùng giao diện mới (v2). Có thể quay lại giao diện cũ nếu cần\" + nút Quay lại bản cũ → /index.php?legacy=1.\n- Card cập nhật v2 chuyển hẳn vào v2: trang Cài đặt → \"Phiên bản v2\" (admin only). Có nút Kiểm tra ngay + Cập nhật ngay + Reload sau khi xong. Bridge cũ trong v1 admin đã được gỡ.\n- Đồng nhất giao diện:\n  * Toàn bộ chart cột (revenueTrend / ordersTrend / monthlyRevenue / spark / Plan combo) dùng cùng borderRadius:6.\n  * Chart tròn (donut) thêm borderRadius:6 + spacing giữa slice → các phần bo tròn nhẹ thay vì vuông sắc.\n  * Sửa lỗi donut danh mục (Sản phẩm) hiển thị màu mặc định: store.js CAT.color dùng dạng raw \"--shopee\" thay vì \"var(--shopee)\" (Chart.js không hiểu var()).\n  * Topbar: .segment / .period / .ctrl-btn / .iconbtn-sq / .avatar đều bằng 38px, nền + bo góc thống nhất theo --r-ctrl.\n  * Font: bỏ font-family:inherit, set rõ var(--font-ui) (Calibri / Carlito) cho .iconbtn-sq, .segment button, .period, .ctrl-btn.",
   "min_php": "8.1",
   "released_at": "2026-06-10"
 }

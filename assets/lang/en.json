@@ -598,11 +598,6 @@
   "update.manifest_url_hint": "— JSON file with the latest version information",
   "update.production_manifest_note": "Production uses only this manifest. No version-tagged URL is required.",
 
-  "v2update.title":         "Update v2 UI",
-  "v2update.sub":           "Independent channel — updates touch only v2/ and api/v2-*.php, leaving v1 unaffected.",
-  "v2update.new_version":   "New v2 release:",
-  "v2update.current_label": "current v2",
-  "v2update.open":          "Open v2 UI",
 
   "btn.sync":       "Sync",
   "btn.disconnect": "Disconnect",

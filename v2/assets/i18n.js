@@ -403,6 +403,22 @@
     "connect.placeholder.lazada_app_secret": "App Secret",
     "connect.placeholder.tiktok_app_key": "App Key từ TikTok Partner Center",
     "connect.placeholder.tiktok_app_secret": "App Secret",
+    /* Banner + v2 self-update */
+    "banner.v2_new": "Bạn đang dùng giao diện mới (v2).",
+    "banner.v2_sub": "Có thể quay lại giao diện cũ nếu cần.",
+    "banner.back_to_v1": "Quay lại bản cũ",
+    "v2up.card.title": "Phiên bản v2",
+    "v2up.card.sub": "Kiểm tra & cập nhật giao diện v2 độc lập với hệ thống chính.",
+    "v2up.current": "Phiên bản hiện tại",
+    "v2up.check_now": "Kiểm tra ngay",
+    "v2up.up_to_date": "Đang dùng phiên bản mới nhất",
+    "v2up.has_update": "Có bản cập nhật v2 mới",
+    "v2up.apply": "Cập nhật ngay",
+    "v2up.installing": "Đang cài đặt",
+    "v2up.success": "Đã cập nhật xong. Reload trang để áp dụng.",
+    "v2up.reload": "Reload trang",
+    "v2up.checked_at": "Kiểm tra lúc",
+    "v2up.changelog": "Thay đổi",
   };
 
   const EN = {
@@ -796,6 +812,22 @@
     "connect.placeholder.lazada_app_secret": "App Secret",
     "connect.placeholder.tiktok_app_key": "App Key from TikTok Partner Center",
     "connect.placeholder.tiktok_app_secret": "App Secret",
+    /* Banner + v2 self-update */
+    "banner.v2_new": "You're on the new UI (v2).",
+    "banner.v2_sub": "You can switch back to the old UI at any time.",
+    "banner.back_to_v1": "Back to v1",
+    "v2up.card.title": "v2 version",
+    "v2up.card.sub": "Check & update the v2 UI independently of the main app.",
+    "v2up.current": "Current version",
+    "v2up.check_now": "Check now",
+    "v2up.up_to_date": "Up to date",
+    "v2up.has_update": "New v2 update available",
+    "v2up.apply": "Update now",
+    "v2up.installing": "Installing",
+    "v2up.success": "Update applied. Reload to use the new version.",
+    "v2up.reload": "Reload",
+    "v2up.checked_at": "Checked at",
+    "v2up.changelog": "Changes",
   };
 
   const STORAGE_KEY = "zm_lang_v2";

@@ -3,6 +3,18 @@ require_once __DIR__ . '/includes/bootstrap.php';
 
 start_session();
 
+// v2 is the new primary UI. Redirect logged-in users to /v2/ unless
+// they explicitly asked for the legacy interface with ?legacy=1.
+// Login flow stays at /index.php (so 401 from /v2/ can still redirect
+// here for auth). The "Quay lại bản cũ" button in v2 links here with
+// ?legacy=1 to bypass this redirect.
+if (current_user() !== null && !isset($_GET['legacy'])) {
+    $scriptPath = (string) ($_SERVER['SCRIPT_NAME'] ?? '/index.php');
+    $base = rtrim(str_replace('\\', '/', dirname($scriptPath)), '/');
+    header('Location: ' . $base . '/v2/');
+    exit;
+}
+
 // Generate CSRF token
 $csrf = generate_csrf();
 
@@ -2120,24 +2132,6 @@ $initials = strtoupper(substr($user, 0, 2));
             <div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px" data-i18n="msg.loading">Đang tải...</div>
           </div>
         </div><!-- /auto update -->
-
-        <!-- v2 UI update (independent channel) -->
-        <div class="card mb-4">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-            <div>
-              <div class="card-title" style="margin-bottom:4px" data-i18n="v2update.title">Cập nhật giao diện v2</div>
-              <div class="card-subtitle" style="font-size:12px;color:var(--text-muted)" data-i18n="v2update.sub">Channel độc lập — bản cập nhật chỉ thay file trong v2/ và api/v2-*.php, không ảnh hưởng v1.</div>
-            </div>
-            <button id="btnV2CheckUpdateNow" class="btn btn-secondary btn-sm">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 0 1-15.5 6.2"/><path d="M3 12A9 9 0 0 1 18.5 5.8"/><path d="M18 2v5h-5"/><path d="M6 22v-5h5"/></svg>
-              <span data-i18n="update.check_now">Kiểm tra ngay</span>
-            </button>
-          </div>
-
-          <div id="v2UpdateStatusPanel">
-            <div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px" data-i18n="msg.loading">Đang tải...</div>
-          </div>
-        </div><!-- /v2 update -->
 
         <!-- SKU brand settings -->
         <div class="card mb-4" id="brandSettingsCard">

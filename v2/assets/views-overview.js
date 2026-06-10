@@ -199,7 +199,7 @@
         <div class="card-pad">
           <div class="donut-wrap" style="height:150px"><canvas id="catDonut"></canvas></div>
           <div style="margin-top:12px;display:flex;flex-direction:column;gap:8px">
-            ${cats.map((c) => `<div style="display:flex;align-items:center;gap:9px;font-size:12.5px"><span class="legend-swatch" style="background:${c.color}"></span>${c.label}<span style="margin-left:auto;font-weight:800" class="tnum">${F.money(c.revenue)}</span></div>`).join("")}
+            ${cats.map((c) => `<div style="display:flex;align-items:center;gap:9px;font-size:12.5px"><span class="legend-swatch" style="background:${UI.cssColor(c.color)}"></span>${c.label}<span style="margin-left:auto;font-weight:800" class="tnum">${F.money(c.revenue)}</span></div>`).join("")}
           </div>
         </div>
       </div>

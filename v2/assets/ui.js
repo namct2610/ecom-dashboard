@@ -40,6 +40,14 @@
   // spark canvas placeholder; charts mounted later by view
   function sparkCanvas(id) { return `<canvas class="kpi-spark" id="${id}" width="88" height="30"></canvas>`; }
 
-  window.UI = { ICON, deltaChip, pdot, pchip, platLogo, sparkCanvas };
+  // Convert a chart-style color token ("--shopee") into a CSS-usable value
+  // ("var(--shopee)"). Plain hex codes pass through.
+  function cssColor(c) {
+    if (!c) return "transparent";
+    if (typeof c === "string" && c.startsWith("--")) return "var(" + c + ")";
+    return c;
+  }
+
+  window.UI = { ICON, deltaChip, pdot, pchip, platLogo, sparkCanvas, cssColor };
   window.Views = window.Views || {};
 })();

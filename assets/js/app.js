@@ -532,6 +532,12 @@ function setupLogin() {
       if (res.ok && data.success) {
         App.csrf = data.csrf;
         App.user = data.user || null;
+        // v2 is the primary UI — after login, send users there unless
+        // they explicitly came in with ?legacy=1 (Quay lại bản cũ).
+        if (!new URLSearchParams(window.location.search).has('legacy')) {
+          window.location.href = 'v2/';
+          return;
+        }
         applyAuthUI();
         hideAuth();
         setupAppShell();
@@ -3533,7 +3539,7 @@ function deleteReconcileComboRow(index) {
 
 async function loadSystemPage() {
   bindSystemPage();
-  await Promise.all([loadSysInfo(), loadUpdateCard(), loadV2UpdateCard(), loadBrandSettings()]);
+  await Promise.all([loadSysInfo(), loadUpdateCard(), loadBrandSettings()]);
 }
 
 async function loadSettingsLang() {
@@ -3551,13 +3557,6 @@ function bindSystemPage() {
     if (panel) panel.innerHTML = `<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px">${t('msg.checking')}</div>`;
     await apiFetch('api/update.php', { method: 'POST', body: JSON.stringify({ action: 'check_now' }) });
     await loadUpdateCard();
-  });
-
-  qs('#btnV2CheckUpdateNow')?.addEventListener('click', async () => {
-    const panel = qs('#v2UpdateStatusPanel');
-    if (panel) panel.innerHTML = `<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px">${t('msg.checking')}</div>`;
-    await apiFetch('api/v2-update.php', { method: 'POST', body: JSON.stringify({ action: 'check_now' }) });
-    await loadV2UpdateCard();
   });
 
   qs('#btnReloadBrandSettings')?.addEventListener('click', loadBrandSettings);
@@ -4156,131 +4155,6 @@ async function applySystemUpdate(downloadUrl, version) {
           <div style="color:#dc2626;margin-bottom:6px">${t('update.conn_error')}</div>
           <div style="font-size:13px">${escHtml(e.message)}</div>
           <button class="btn btn-secondary btn-sm" style="margin-top:12px" onclick="loadUpdateCard()">${t('update.retry')}</button>
-        </div>`;
-    }
-  }
-}
-
-// ── v2 UI update channel (bridged through v1 admin UI) ────────────────────
-
-async function loadV2UpdateCard() {
-  const panel = qs('#v2UpdateStatusPanel');
-  if (!panel) return;
-
-  try {
-    const data = await apiFetch('api/v2-update.php');
-
-    if (data.fetch_error && !data.latest) {
-      panel.innerHTML = `
-        <div style="padding:14px 16px;background:#fef9c3;border-radius:10px;font-size:13px;color:#92400e">
-          ${t('update.manifest_error')} ${escHtml(data.fetch_error)}
-        </div>`;
-      return;
-    }
-
-    const currentLabel = `${t('v2update.current_label')} v${escHtml(data.current || '—')}`;
-
-    if (data.has_update) {
-      panel.innerHTML = `
-        <div style="padding:16px;background:#fff5f6;border-radius:10px;border:1px solid #fecdd3">
-          <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px">
-            <div>
-              <div style="font-weight:700;color:#E2001A;font-size:15px;margin-bottom:4px">
-                ${t('v2update.new_version')} v${escHtml(data.latest)}
-              </div>
-              <div style="font-size:12px;color:var(--text-muted)">
-                ${currentLabel}
-                ${data.released_at ? ' · ' + t('update.released') + ' ' + escHtml(data.released_at) : ''}
-                ${data.min_php ? ' · ' + t('update.min_php') + ' ' + escHtml(data.min_php) + '+' : ''}
-              </div>
-            </div>
-            <button class="btn btn-sm" id="btnApplyV2Update"
-                    style="background:#E2001A;color:#fff;border-color:#E2001A;white-space:nowrap">
-              ${t('update.btn')}
-            </button>
-          </div>
-          ${data.changelog ? `
-          <div style="margin-top:12px;padding:10px 14px;background:#fff;border-radius:8px;font-size:12px;white-space:pre-wrap;line-height:1.7;border:1px solid #fecdd3">
-${escHtml(data.changelog)}
-          </div>` : ''}
-        </div>`;
-
-      qs('#btnApplyV2Update')?.addEventListener('click', () => {
-        applyV2Update(data.download_url, data.latest);
-      });
-
-    } else if (data.latest) {
-      panel.innerHTML = `
-        <div style="padding:14px 16px;background:#f0fdf4;border-radius:10px;display:flex;align-items:center;gap:14px">
-          <div style="font-size:20px;flex-shrink:0">${iconSvg('check', 'icon-status-success')}</div>
-          <div>
-            <div style="font-weight:600;color:#166534;font-size:13px">${t('update.up_to_date')} (${currentLabel})</div>
-            <div style="font-size:12px;color:var(--text-muted);margin-top:2px">
-              ${t('update.checked_at')} ${escHtml(data.last_checked || '—')}
-            </div>
-          </div>
-        </div>`;
-    } else {
-      panel.innerHTML = `
-        <div style="padding:14px 16px;background:#fef9c3;border-radius:10px;font-size:13px;color:#92400e">
-          ${t('update.no_info')}
-        </div>`;
-    }
-  } catch (e) {
-    if (panel) panel.innerHTML = `<div style="color:var(--red,#ef4444);font-size:13px;padding:12px">${t('msg.error')}: ${escHtml(e.message)}</div>`;
-  }
-}
-
-async function applyV2Update(downloadUrl, version) {
-  const panel = qs('#v2UpdateStatusPanel');
-
-  if (!confirm(`${t('v2update.new_version')} v${version}${t('update.confirm_body')}`)) return;
-
-  if (panel) {
-    panel.innerHTML = `
-      <div style="padding:24px;text-align:center;color:var(--text-muted)">
-        <div style="margin-bottom:10px">${iconSvg('loader', 'icon-lg')}</div>
-        <div style="font-weight:600;font-size:14px">${t('update.installing')} v${escHtml(version)}</div>
-        <div style="font-size:12px;margin-top:6px">${t('update.wait')}</div>
-      </div>`;
-  }
-
-  try {
-    const res = await apiFetch('api/v2-update.php', {
-      method: 'POST',
-      body: JSON.stringify({ action: 'apply', download_url: downloadUrl, version }),
-    });
-
-    if (res.success) {
-      if (panel) {
-        panel.innerHTML = `
-          <div style="padding:20px;background:#f0fdf4;border-radius:10px;text-align:center">
-            <div style="margin-bottom:8px;color:#16a34a">${iconSvg('check', 'icon-lg')}</div>
-            <div style="font-weight:700;color:#166534;font-size:15px">${t('update.success')}</div>
-            <div style="font-size:13px;color:var(--text-muted);margin-top:4px">${escHtml(res.message)}</div>
-            <a href="v2/" class="btn btn-sm" style="margin-top:16px;background:#E2001A;color:#fff;border-color:#E2001A;display:inline-block">
-              ${t('v2update.open')}
-            </a>
-          </div>`;
-      }
-      toast(t('update.success'), 'success');
-    } else {
-      if (panel) {
-        panel.innerHTML = `
-          <div style="padding:16px;background:#fef2f2;border-radius:10px">
-            <div style="font-weight:600;color:#dc2626;margin-bottom:6px">${t('update.failed')}</div>
-            <div style="font-size:13px">${escHtml(res.error || t('msg.unknown'))}</div>
-            <button class="btn btn-secondary btn-sm" style="margin-top:12px" onclick="loadV2UpdateCard()">${t('update.retry')}</button>
-          </div>`;
-      }
-    }
-  } catch (e) {
-    if (panel) {
-      panel.innerHTML = `
-        <div style="padding:16px;background:#fef2f2;border-radius:10px">
-          <div style="color:#dc2626;margin-bottom:6px">${t('update.conn_error')}</div>
-          <div style="font-size:13px">${escHtml(e.message)}</div>
-          <button class="btn btn-secondary btn-sm" style="margin-top:12px" onclick="loadV2UpdateCard()">${t('update.retry')}</button>
         </div>`;
     }
   }

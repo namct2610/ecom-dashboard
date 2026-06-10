@@ -1,7 +1,7 @@
 {
-  "version": "1.5.28",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.5.28/release/dashboard-v3-1.5.28.zip",
-  "changelog": "- Thêm card \"Cập nhật giao diện v2\" trong trang Quản trị → Hệ thống (ngay dưới card cập nhật chính): hiển thị version v2 hiện tại, kiểm tra/áp dụng update từ channel độc lập v2/manifest.json.\n- Bridge tạm thời để cập nhật v2 mà không phải curl thủ công. Sau khi cập nhật v2 lần đầu, bản v2 mới có thể tự thêm UI update riêng nếu cần.",
+  "version": "1.5.29",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.5.29/release/dashboard-v3-1.5.29.zip",
+  "changelog": "- v2 là giao diện chính: index.php redirect logged-in user sang /v2/ (trừ khi vào với ?legacy=1). Đăng nhập thành công cũng tự đưa sang /v2/.\n- Gỡ card \"Cập nhật giao diện v2\" khỏi trang Quản trị → Hệ thống (đã chuyển hẳn vào v2 → Cài đặt). Xoá toàn bộ JS / i18n key v2update.* trong v1.\n- API /api/v2-update.php giữ nguyên — v2 vẫn dùng channel này, chỉ chuyển nơi gọi.",
   "min_php": "8.1",
-  "released_at": "2026-06-09"
+  "released_at": "2026-06-10"
 }

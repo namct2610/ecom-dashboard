@@ -86,10 +86,10 @@
     if (stacked) {
       datasets = ["shopee", "lazada", "tiktok"].map((k) => ({
         label: window.Store.PLAT[k].label, data: series.map((s) => s["o_" + k]),
-        backgroundColor: col("--" + k), borderRadius: 3, stack: "o", maxBarThickness: 18,
+        backgroundColor: col("--" + k), borderRadius: 6, stack: "o", maxBarThickness: 18,
       }));
     } else {
-      datasets = [{ label: "Đơn", data: series.map((s) => s.orders), backgroundColor: col("--" + opt.platform), borderRadius: 4, maxBarThickness: 18 }];
+      datasets = [{ label: "Đơn", data: series.map((s) => s.orders), backgroundColor: col("--" + opt.platform), borderRadius: 6, maxBarThickness: 18 }];
     }
     return mk(canvas, {
       type: "bar", data: { labels, datasets },
@@ -110,7 +110,14 @@
       type: "doughnut",
       data: {
         labels: items.map((i) => i.label),
-        datasets: [{ data: items.map((i) => i.value), backgroundColor: items.map((i) => col(i.color)), borderColor: surface(), borderWidth: 3, hoverOffset: 5 }],
+        datasets: [{
+          data: items.map((i) => i.value),
+          backgroundColor: items.map((i) => col(i.color)),
+          borderColor: surface(), borderWidth: 3,
+          borderRadius: 6,  // rounded slice edges — matches the rest of the UI
+          spacing: 2,
+          hoverOffset: 6,
+        }],
       },
       options: {
         cutout: "70%",
@@ -126,7 +133,7 @@
     const w = canvas.width || 88, h = canvas.height || 30;
     return mk(canvas, {
       type: type || "line",
-      data: { labels: values.map((_, i) => i), datasets: [{ data: values, borderColor: c, backgroundColor: type === "bar" ? c : grad(canvas, hexA(c, 0.3), hexA(c, 0)), borderWidth: 2, fill: type !== "bar", tension: 0.4, pointRadius: 0, borderRadius: 2, maxBarThickness: 5 }] },
+      data: { labels: values.map((_, i) => i), datasets: [{ data: values, borderColor: c, backgroundColor: type === "bar" ? c : grad(canvas, hexA(c, 0.3), hexA(c, 0)), borderWidth: 2, fill: type !== "bar", tension: 0.4, pointRadius: 0, borderRadius: 6, maxBarThickness: 5 }] },
       options: { responsive: false, maintainAspectRatio: false, animation: false, scales: { x: { display: false }, y: { display: false, min: 0 } }, plugins: { tooltip: { enabled: false } } },
     });
   }
@@ -163,11 +170,11 @@
       datasets = ["shopee", "lazada", "tiktok"].map((k) => ({
         label: window.Store.PLAT[k].label, data: trend.map((t) => t[k]),
         backgroundColor: trend.map((t) => t.partial ? hexA(col("--" + k), 0.4) : col("--" + k)),
-        borderRadius: 3, stack: "rev", maxBarThickness: 38,
+        borderRadius: 6, stack: "rev", maxBarThickness: 38,
       }));
     } else {
       const c = col("--" + opt.platform);
-      datasets = [{ label: window.Store.PLAT[opt.platform].label, data: trend.map((t) => t[opt.platform]), backgroundColor: trend.map((t) => t.partial ? hexA(c, 0.4) : c), borderRadius: 4, maxBarThickness: 38 }];
+      datasets = [{ label: window.Store.PLAT[opt.platform].label, data: trend.map((t) => t[opt.platform]), backgroundColor: trend.map((t) => t.partial ? hexA(c, 0.4) : c), borderRadius: 6, maxBarThickness: 38 }];
     }
     return mk(canvas, {
       type: "bar", data: { labels, datasets },
