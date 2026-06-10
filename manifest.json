@@ -1,7 +1,7 @@
 {
-  "version": "3.0.3",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.0.3/release/dashboard-v3-3.0.3.zip",
-  "changelog": "- Fix 404 trên fresh install: main bundle nay bao gồm /old/ để khi v2 redirect tới ../old/index.php?legacy=1#/login (lúc chưa đăng nhập) vẫn có trang mở ra.\n- Updater giờ preserve có điều kiện: chỉ skip top-level path nếu nó đã tồn tại ở đích. Net-new path (vd /old/ trên máy chưa có) được copy bình thường. Subsequent updates vẫn không clobber /old/ (legacy channel quản lý).\n- api/v2-update.php truyền preservedPaths kèm 'old' để channel chính không đụng tới legacy app.",
+  "version": "3.1.0",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.1.0/release/dashboard-v3-3.1.0.zip",
+  "changelog": "- v2 giờ có form đăng nhập riêng — không còn redirect sang /old/index.php khi 401 nữa. Truy cập root chưa login sẽ thấy overlay login đẹp, đúng phong cách v2. Sau khi submit, page reload và bootstrap chạy lại với session hợp lệ.\n- Avatar ZM ở header thành nút dropdown: hiển thị username + nút Đăng xuất (POST /api/auth.php action=logout, sau đó reload → overlay login).\n- Vẫn giữ link \"Dùng giao diện cũ (dự phòng)\" trong overlay + nút \"Quay lại bản cũ\" trên banner để v1 vẫn dùng được khi cần.\n- Thêm i18n keys login.* và menu.* cho VI/EN.",
   "min_php": "8.1",
   "released_at": "2026-06-10"
 }

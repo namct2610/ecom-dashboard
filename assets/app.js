@@ -157,6 +157,57 @@
 
   function commit() { S.save(); renderPage(); }
 
+  /* ---- avatar dropdown (signed-in-as + logout) ---- */
+  let avatarUser = null;
+  async function fetchAvatarUser() {
+    if (avatarUser) return avatarUser;
+    try {
+      const r = await fetch("api/auth.php", { credentials: "same-origin" });
+      const j = await r.json();
+      if (j && j.logged_in) avatarUser = j;
+    } catch (_) { /* leave null */ }
+    return avatarUser;
+  }
+  function bindAvatarMenu() {
+    const av = document.querySelector(".avatar");
+    if (!av) return;
+    av.style.cursor = "pointer";
+    av.setAttribute("role", "button");
+    av.setAttribute("tabindex", "0");
+    av.addEventListener("click", async (e) => {
+      e.stopPropagation();
+      closePop();
+      const u = (await fetchAvatarUser()) || {};
+      const items = [];
+      const userLine = `<div class="menu-label">${T("menu.signed_in_as")}: <b>${(u.username || "—").replace(/</g, "&lt;")}</b></div>`;
+      const m = document.createElement("div"); m.className = "menu";
+      m.innerHTML = userLine +
+        `<div class="menu-item" data-act="logout" style="color:var(--neg)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5M21 12H9"/></svg>
+          ${T("menu.logout")}
+        </div>`;
+      document.body.appendChild(m);
+      const r = av.getBoundingClientRect();
+      // Right-align under the avatar
+      m.style.top = (r.bottom + 6) + "px";
+      m.style.left = Math.max(8, Math.min(r.right - m.offsetWidth, window.innerWidth - m.offsetWidth - 12)) + "px";
+      m.querySelector('[data-act="logout"]').addEventListener("click", async () => {
+        if (!confirm(T("menu.logout_confirm"))) { closePop(); return; }
+        try {
+          const csrf = (avatarUser && avatarUser.csrf) || "";
+          await fetch("api/auth.php", {
+            method: "POST", credentials: "same-origin",
+            headers: { "Content-Type": "application/json", "X-CSRF-Token": csrf },
+            body: JSON.stringify({ action: "logout" }),
+          });
+        } catch (_) { /* ignore — reload below will re-prompt login */ }
+        window.location.reload();
+      });
+      openPop = m;
+      setTimeout(() => document.addEventListener("click", outside, true), 0);
+    });
+  }
+
   const App = {
     init() {
       PERIODS = buildPeriods();
@@ -179,6 +230,8 @@
         // refresh sync-date string in active language
         document.getElementById("syncDate").textContent = TF("nav.side.synced_at", { date: sync });
       });
+      // avatar → user menu (logout)
+      bindAvatarMenu();
       // collapse
       document.getElementById("collapseBtn").addEventListener("click", () => { st.collapsed = !st.collapsed; document.getElementById("app").classList.toggle("collapsed"); S.save(); });
       // mobile nav

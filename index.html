@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Carlito:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/theme.css?v=19">
+<link rel="stylesheet" href="assets/theme.css?v=20">
 </head>
 <body>
 <div id="app">
@@ -124,7 +124,35 @@
   </div>
 </div>
 
-<script src="assets/i18n.js?v=17"></script>
+<!-- ════ Login overlay (shown on 401 from /api/v2-data.php) ════ -->
+<div id="loginOverlay" class="login-overlay" hidden>
+  <form id="loginCard" class="login-card" autocomplete="on">
+    <div class="login-brand">
+      <div class="brand-mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17.5 9 11l4 4 8-9"/><path d="M21 6v5h-5"/></svg></div>
+      <div>
+        <div class="login-title" data-i18n="login.title">Đăng nhập</div>
+        <div class="login-sub" data-i18n="login.sub">Zott Monte · Marketplace Analytics</div>
+      </div>
+    </div>
+
+    <div class="field-row">
+      <label class="field-label" data-i18n="login.username">Tên đăng nhập</label>
+      <input id="loginUsername" class="v2-input" type="text" name="username" autocomplete="username" required />
+    </div>
+    <div class="field-row">
+      <label class="field-label" data-i18n="login.password">Mật khẩu</label>
+      <input id="loginPassword" class="v2-input" type="password" name="password" autocomplete="current-password" required />
+    </div>
+
+    <div id="loginError" class="login-error" hidden></div>
+
+    <button id="loginSubmit" type="submit" class="ctrl-btn on" style="background:var(--brand);border-color:var(--brand);color:#fff;height:42px;width:100%;justify-content:center;margin-top:6px" data-i18n="login.submit">Đăng nhập</button>
+
+    <a href="old/index.php?legacy=1#/login" class="login-fallback" data-i18n="login.legacy_fallback">Dùng giao diện cũ (dự phòng)</a>
+  </form>
+</div>
+
+<script src="assets/i18n.js?v=20"></script>
 <script>
   // i18n.js loads synchronously above — t() must be available before any view
   // IIFE runs. Apply translations to the static markup immediately so the
@@ -140,7 +168,7 @@
     var root = document.getElementById('pageRoot');
     root.innerHTML = '<div style="padding:48px 24px;color:var(--ink-3);font-weight:600;text-align:center">' + (window.t ? window.t('boot.loading_data') : 'Đang tải dữ liệu…') + '</div>';
 
-    var V = 19; // cache-bust for assets
+    var V = 20; // cache-bust for assets
     var MODULES = [
       'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js',
       'assets/store.js?v=' + V,
@@ -175,7 +203,7 @@
     fetch('api/v2-data.php', { credentials: 'same-origin' })
       .then(function (r) {
         if (r.status === 401) {
-          window.location.href = 'old/index.php?legacy=1#/login';
+          showLoginOverlay();
           throw new Error('unauthenticated');
         }
         if (!r.ok) throw new Error('HTTP ' + r.status);
@@ -192,9 +220,70 @@
         window.App.init();
       })
       .catch(function (err) {
+        if (err && err.message === 'unauthenticated') return; // overlay already shown
         var prefix = window.t ? window.t('boot.load_failed') : 'Không tải được dữ liệu';
         root.innerHTML = '<div style="padding:48px 24px;color:var(--neg);font-weight:700;text-align:center">' + prefix + ': ' + (err && err.message ? err.message : err) + '</div>';
       });
+
+    /* ── Login overlay ─────────────────────────────────────────
+       Shown when fetch above returns 401. Posts credentials to
+       /api/auth.php and reloads on success so bootstrap re-runs
+       with a fresh session. */
+    function showLoginOverlay() {
+      var T = window.t || function (k, f) { return f || k; };
+      var overlay = document.getElementById('loginOverlay');
+      var form    = document.getElementById('loginCard');
+      var btn     = document.getElementById('loginSubmit');
+      var err     = document.getElementById('loginError');
+      var u       = document.getElementById('loginUsername');
+      var p       = document.getElementById('loginPassword');
+      if (!overlay || !form) return;
+
+      // hide loading text, show overlay
+      root.innerHTML = '';
+      overlay.removeAttribute('hidden');
+      if (window.I18n) window.I18n.applyDom(overlay);
+      setTimeout(function () { u && u.focus(); }, 30);
+
+      function setError(msg) {
+        err.textContent = msg;
+        err.removeAttribute('hidden');
+      }
+      function clearError() { err.setAttribute('hidden', ''); err.textContent = ''; }
+
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        clearError();
+        var username = (u.value || '').trim();
+        var password = p.value || '';
+        if (!username || !password) { setError(T('login.empty')); return; }
+        btn.disabled = true;
+        btn.textContent = T('login.submitting');
+        fetch('api/auth.php', {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: username, password: password })
+        }).then(function (r) {
+          return r.json().then(function (j) { return { ok: r.ok, status: r.status, body: j }; });
+        }).then(function (res) {
+          if (res.ok && res.body && res.body.success) {
+            // Session cookie is set — reload so the bootstrap re-fetches
+            // /api/v2-data.php with auth and renders the dashboard.
+            window.location.reload();
+            return;
+          }
+          if (res.status === 401) setError(T('login.bad_creds'));
+          else setError((res.body && res.body.error) || T('login.server_error'));
+          btn.disabled = false;
+          btn.textContent = T('login.submit');
+        }).catch(function () {
+          setError(T('login.server_error'));
+          btn.disabled = false;
+          btn.textContent = T('login.submit');
+        });
+      });
+    }
   })();
 </script>
 </body>
