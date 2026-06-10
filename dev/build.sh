@@ -2,7 +2,9 @@
 
 set -euo pipefail
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Lives in dev/; climb one level for the actual repo root.
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 cd "$ROOT_DIR"
 
 VERSION="${1:-$(tr -d '\r\n' < version.txt)}"
@@ -46,6 +48,7 @@ rsync -a \
   --exclude='.DS_Store' \
   --exclude='__MACOSX/' \
   --exclude='old/' \
+  --exclude='dev/' \
   ./ "$STAGE_ROOT/"
 
 mkdir -p "$STAGE_ROOT/uploads"
