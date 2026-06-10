@@ -1,7 +1,7 @@
 {
-  "version": "1.5.29",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v1.5.29/release/dashboard-v3-1.5.29.zip",
-  "changelog": "- v2 là giao diện chính: index.php redirect logged-in user sang /v2/ (trừ khi vào với ?legacy=1). Đăng nhập thành công cũng tự đưa sang /v2/.\n- Gỡ card \"Cập nhật giao diện v2\" khỏi trang Quản trị → Hệ thống (đã chuyển hẳn vào v2 → Cài đặt). Xoá toàn bộ JS / i18n key v2update.* trong v1.\n- API /api/v2-update.php giữ nguyên — v2 vẫn dùng channel này, chỉ chuyển nơi gọi.",
+  "version": "3.0.0",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.0.0/release/dashboard-v3-3.0.0.zip",
+  "changelog": "- v2 trở thành code chính ở repo root. Code v1 cũ chuyển vào /old/.\n- Mọi đường dẫn relative đã được điều chỉnh: /index.html không còn cần ../api/, /old/index.php phải climb lên một cấp để dùng api/ + includes/ + OAuth callback.\n- /api/v2-update.php giờ là channel chính (đọc /manifest.json + /version.txt).\n- /api/update.php giờ là channel legacy của /old/ (đọc /old/manifest.json + /old/version.txt). Đường dẫn manifest URL trên GitHub đã chuyển sang main/old/manifest.json.\n- build.sh exclude /old/ — v2 update không đụng vào legacy app.\n- build-old.sh mới: chỉ đóng gói /old/ cho channel legacy.",
   "min_php": "8.1",
   "released_at": "2026-06-10"
 }

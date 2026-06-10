@@ -1,17 +1,18 @@
 <?php
-require_once __DIR__ . '/includes/bootstrap.php';
+// Legacy v1 entry — lives in /old/. Shared backend (api/, includes/, vendor/,
+// uploads/, config.php, OAuth callbacks) stays at repo root, one level up.
+require_once __DIR__ . '/../includes/bootstrap.php';
 
 start_session();
 
-// v2 is the new primary UI. Redirect logged-in users to /v2/ unless
-// they explicitly asked for the legacy interface with ?legacy=1.
-// Login flow stays at /index.php (so 401 from /v2/ can still redirect
-// here for auth). The "Quay lại bản cũ" button in v2 links here with
-// ?legacy=1 to bypass this redirect.
+// v2 (root) is the primary UI now. If a user is signed in and didn't ask
+// for the legacy interface (?legacy=1), bounce them up to root.
 if (current_user() !== null && !isset($_GET['legacy'])) {
-    $scriptPath = (string) ($_SERVER['SCRIPT_NAME'] ?? '/index.php');
+    $scriptPath = (string) ($_SERVER['SCRIPT_NAME'] ?? '/old/index.php');
+    // strip "/old" suffix off the dirname so the Location lands on root, not /old/..
     $base = rtrim(str_replace('\\', '/', dirname($scriptPath)), '/');
-    header('Location: ' . $base . '/v2/');
+    if (preg_match('#/old$#', $base)) $base = substr($base, 0, -4);
+    header('Location: ' . ($base === '' ? '/' : $base . '/'));
     exit;
 }
 
@@ -225,7 +226,7 @@ $initials = strtoupper(substr($user, 0, 2));
     </div>
 
     <div class="sidebar-footer">
-      <a href="v2/" class="btn-try-beta" title="Giao diện Zott Marketplace Analytics — dùng chung database" data-i18n-title="beta.try_title">
+      <a href="../" class="btn-try-beta" title="Giao diện Zott Marketplace Analytics — dùng chung database" data-i18n-title="beta.try_title">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17.5 9 11l4 4 8-9"/><path d="M21 6v5h-5"/></svg>
         <span class="nav-label" data-i18n="beta.try">Thử giao diện mới</span>
       </a>

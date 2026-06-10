@@ -10,9 +10,14 @@ use Dashboard\Updater;
 require_admin();
 
 $pdo     = db($config);
-$updater = new Updater(__DIR__ . '/..');
 
-const PRODUCTION_MANIFEST_URL = 'https://raw.githubusercontent.com/namct2610/ecom-dashboard/main/manifest.json';
+// Legacy v1 channel — v1 now lives under /old/. The Updater is anchored at
+// repo root (so a zip containing old/index.php, old/assets/..., etc. drops
+// straight in) but reads/writes the version stamp from old/version.txt.
+$appRoot = __DIR__ . '/..';
+$updater = new Updater($appRoot, $appRoot . '/old/version.txt');
+
+const PRODUCTION_MANIFEST_URL = 'https://raw.githubusercontent.com/namct2610/ecom-dashboard/main/old/manifest.json';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 

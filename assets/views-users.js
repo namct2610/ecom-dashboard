@@ -19,13 +19,13 @@
   async function fetchInitial() {
     local.loading = true; local.error = null;
     try {
-      const auth = await (await fetch("../api/auth.php", { credentials: "same-origin" })).json();
-      if (!auth.logged_in) { window.location.href = "../index.php#/login"; return; }
+      const auth = await (await fetch("api/auth.php", { credentials: "same-origin" })).json();
+      if (!auth.logged_in) { window.location.href = "old/index.php?legacy=1#/login"; return; }
       local.csrf = auth.csrf || "";
       local.isAdmin = (auth.user && auth.user.role === "admin") || auth.role === "admin";
       if (!local.isAdmin) return;
 
-      const r = await fetch("../api/users.php", { credentials: "same-origin" });
+      const r = await fetch("api/users.php", { credentials: "same-origin" });
       const j = await r.json();
       if (!j.success) throw new Error(j.error || "HTTP " + r.status);
       local.users = j.users || [];
@@ -243,7 +243,7 @@
       const body = isEdit
         ? { action: "update", id: local.edit.user.id, full_name, role, is_active, must_change_password, password }
         : { action: "create", username, full_name, role, is_active, must_change_password, password };
-      const r = await fetch("../api/users.php", {
+      const r = await fetch("api/users.php", {
         method: "POST", credentials: "same-origin",
         headers: { "Content-Type": "application/json", "X-CSRF-Token": local.csrf },
         body: JSON.stringify(body),
@@ -267,7 +267,7 @@
     if (!u) return;
     if (!confirm(`Xoá tài khoản "${u.username}"? Hành động này không thể hoàn tác.`)) return;
     try {
-      const r = await fetch("../api/users.php", {
+      const r = await fetch("api/users.php", {
         method: "POST", credentials: "same-origin",
         headers: { "Content-Type": "application/json", "X-CSRF-Token": local.csrf },
         body: JSON.stringify({ action: "delete", id }),

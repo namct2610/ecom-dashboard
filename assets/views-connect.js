@@ -9,7 +9,7 @@
     shopee: {
       label: "Shopee",
       colorVar: "--shopee",
-      api: "../api/shopee-connect.php",
+      api: "api/shopee-connect.php",
       credentials: [
         { key: "partner_id", label: "Partner ID", type: "number", placeholder: "Mã số nguyên do Shopee cấp" },
         { key: "partner_key", label: "Partner Key", type: "password", placeholder: "Chuỗi bí mật" },
@@ -22,7 +22,7 @@
     lazada: {
       label: "Lazada",
       colorVar: "--lazada",
-      api: "../api/lazada-connect.php",
+      api: "api/lazada-connect.php",
       credentials: [
         { key: "app_key",    label: "App Key",    type: "text",     placeholder: "App Key từ Lazada Open Platform" },
         { key: "app_secret", label: "App Secret", type: "password", placeholder: "App Secret" },
@@ -35,7 +35,7 @@
     tiktokshop: {
       label: "TikTok Shop",
       colorVar: "--tiktok",
-      api: "../api/tiktok-connect.php",
+      api: "api/tiktok-connect.php",
       credentials: [
         { key: "app_key",    label: "App Key",    type: "text",     placeholder: "App Key từ TikTok Partner Center" },
         { key: "app_secret", label: "App Secret", type: "password", placeholder: "App Secret" },
@@ -77,8 +77,8 @@
 
   async function ensureAuth() {
     if (local.csrf) return true;
-    const auth = await (await fetch("../api/auth.php", { credentials: "same-origin" })).json();
-    if (!auth.logged_in) { window.location.href = "../index.php#/login"; return false; }
+    const auth = await (await fetch("api/auth.php", { credentials: "same-origin" })).json();
+    if (!auth.logged_in) { window.location.href = "old/index.php?legacy=1#/login"; return false; }
     local.csrf = auth.csrf || "";
     return true;
   }

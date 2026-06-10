@@ -256,7 +256,7 @@
         const revenue_target = +String(revIn.value).replace(/[^\d]/g, "") || 0;
         const visits_target  = +String(visIn.value).replace(/[^\d]/g, "") || 0;
         const csrf = await ensureCsrf();
-        const res = await fetch("../api/plan.php", {
+        const res = await fetch("api/plan.php", {
           method: "POST",
           credentials: "same-origin",
           headers: { "Content-Type": "application/json", "X-CSRF-Token": csrf },
@@ -282,7 +282,7 @@
   async function ensureCsrf() {
     if (csrfCache) return csrfCache;
     try {
-      const r = await fetch("../api/auth.php?action=status", { credentials: "same-origin" });
+      const r = await fetch("api/auth.php?action=status", { credentials: "same-origin" });
       const j = await r.json();
       csrfCache = j.csrf_token || j.csrf || "";
     } catch (_) { csrfCache = ""; }
@@ -294,7 +294,7 @@
     local.loading = true;
     local.error = null;
     try {
-      const r = await fetch("../api/plan.php?year=" + local.year, { credentials: "same-origin" });
+      const r = await fetch("api/plan.php?year=" + local.year, { credentials: "same-origin" });
       if (!r.ok) throw new Error("HTTP " + r.status);
       const j = await r.json();
       if (!j.success) throw new Error(j.error || "Phản hồi không hợp lệ");

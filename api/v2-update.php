@@ -25,12 +25,12 @@ require_admin();
 
 $pdo = db($config);
 
-// Updater installs files into the dashboard root (zip paths are repo-relative,
-// e.g. v2/index.html, api/v2-data.php) but tracks version in v2/version.txt.
+// Primary (v2) channel — v2 is now the root app. Updater anchors at repo
+// root with the canonical version.txt at the root.
 $appRoot = dirname(__DIR__);
-$updater = new Updater($appRoot, $appRoot . '/v2/version.txt');
+$updater = new Updater($appRoot);
 
-const V2_MANIFEST_URL = 'https://raw.githubusercontent.com/namct2610/ecom-dashboard/main/v2/manifest.json';
+const V2_MANIFEST_URL = 'https://raw.githubusercontent.com/namct2610/ecom-dashboard/main/manifest.json';
 
 function v2_update_get_setting(PDO $pdo, string $key, string $default = ''): string
 {

@@ -1,0 +1,7 @@
+{
+  "version": "1.6.0",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/old-1.6.0/release/dashboard-old-1.6.0.zip",
+  "changelog": "- v1 đã chuyển vào thư mục /old/ trong code chính.\n- Sửa toàn bộ đường dẫn relative trong index.php và assets/js để climb lên một cấp tới shared backend (api/, includes/, lazada-oauth.php, ...).\n- Sau khi đăng nhập, redirect sang root (../) — nơi v2 đang chạy. Bấm \"Thử giao diện mới\" trong sidebar cũ cũng dẫn về root.\n- OAuth callback URL tính lại đúng (drop /old/ khỏi pathname) — không cần đăng ký lại với sàn.",
+  "min_php": "8.1",
+  "released_at": "2026-06-10"
+}
