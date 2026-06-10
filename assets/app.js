@@ -16,41 +16,34 @@
     const [y, m] = ym.split("-");
     return TF("period.month_short", { n: +m, y });
   }
+  function fmtDateInput(s) {
+    return s || "";
+  }
+  function escHtml(s) {
+    return String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\"/g, "&quot;");
+  }
 
-  /* Dynamic period list — derived from DASH.monthly. Built fresh on every
-     access so labels follow the active language. */
+  function latestDate() {
+    const daily = (S.DASH && S.DASH.daily) || [];
+    return daily.length ? daily[daily.length - 1].date : ((S.DASH.latestMonth || "2026-01") + "-01");
+  }
+
   function buildPeriods() {
-    const monthly = (S.DASH && S.DASH.monthly) || [];
-    if (!monthly.length) return [{ key: "3m", label: T("period.3m") }];
-
-    const all = monthly.map((m) => m.ym).sort();
-    const latest = S.DASH.latestMonth || all[all.length - 1];
-    const latestY = +latest.slice(0, 4);
-    const years = Array.from(new Set(all.map((ym) => ym.slice(0, 4)))).sort();
-
-    const tailSub = (n) => {
-      if (all.length < n) return undefined;
-      const slice = all.slice(-n);
-      return fmtMonthShort(slice[0]) + "–" + fmtMonthShort(slice[slice.length - 1]);
+    const latest = latestDate();
+    const range = S.currentRange();
+    const currentMode = S.periodMode(st.period);
+    return {
+      modes: [
+        { key: "day", label: T("period.mode.day", "Ngày") },
+        { key: "week", label: T("period.mode.week", "Tuần") },
+        { key: "month", label: T("period.mode.month", "Tháng") },
+        { key: "year", label: T("period.mode.year", "Năm") },
+        { key: "custom", label: T("period.mode.custom", "Tùy chỉnh") },
+      ],
+      currentMode,
+      latest,
+      range,
     };
-
-    const presets = [
-      { key: "3m",  label: T("period.3m"), sub: tailSub(3) },
-      { key: "6m",  label: T("period.6m"), sub: tailSub(6) },
-      { key: "ytd", label: T("period.ytd"), sub: fmtMonthShort(latest.slice(0,4) + "-01") + "–" + fmtMonthShort(latest) },
-    ];
-    if (years.includes(String(latestY - 1))) {
-      presets.push({ key: "y:" + (latestY - 1), label: TF("period.year_n", { y: latestY - 1 }) });
-    }
-    presets.push({ key: "all", label: T("period.all"), sub: fmtMonthShort(all[0]) + " – " + fmtMonthShort(all[all.length - 1]) });
-
-    const recent = all.slice(-12).reverse().map((ym, i) => ({
-      key: "m:" + ym,
-      label: fmtMonthLong(ym),
-      sub: i === 0 ? T("period.recent") : undefined,
-    }));
-
-    return presets.concat([{ divider: true }]).concat(recent);
   }
 
   function buildCompares() {
@@ -83,13 +76,13 @@
   }
 
   function renderControls() {
-    const per = PERIODS.find((p) => p.key === st.period) || PERIODS[0];
+    const periodLabel = S.periodLabel(st.period);
     return `
       <div class="segment hide-sm" id="platSeg">
         <button class="${st.platform === "all" ? "active" : ""}" data-p="all">${T("common.all")}</button>
         ${S.PKEYS.map((k) => `<button class="${st.platform === k ? "active" : ""}" data-p="${k}"><span class="pdot" style="background:var(--${k})"></span>${S.PLAT[k].label.replace(" Shop", "")}</button>`).join("")}
       </div>
-      <button class="period" id="periodBtn">${ICON.cal}<span class="ptxt">${per ? per.label : ""}</span><span class="pcaret">▾</span></button>
+      <button class="period" id="periodBtn">${ICON.cal}<span class="ptxt">${periodLabel}</span><span class="pcaret">▾</span></button>
       <button class="ctrl-btn hide-sm ${st.compare !== "none" ? "on" : ""}" id="compareBtn">${ICON.cmp}<span>${(COMPARES.find((c) => c.key === st.compare) || COMPARES[0]).label}</span><span class="pcaret">▾</span></button>
     `;
   }
@@ -114,9 +107,88 @@
     setTimeout(() => document.addEventListener("click", outside, true), 0);
   }
 
+  function periodPopover(anchor) {
+    closePop();
+    const cfg = buildPeriods();
+    const m = document.createElement("div");
+    m.className = "menu period-pop";
+    m.innerHTML = `
+      <div class="menu-label">${T("period.title")}</div>
+      <div class="period-pop-body">
+        <div class="miniseg period-mode-seg">
+          ${cfg.modes.map((it) => `<button type="button" class="${it.key === cfg.currentMode ? "active" : ""}" data-mode="${it.key}">${it.label}</button>`).join("")}
+        </div>
+        <div class="period-fields">
+          <div class="field-row" data-mode-fields="day week month year custom">
+            <label class="field-label">${T("period.anchor_date", "Ngày mốc")}</label>
+            <input id="periodAnchorInput" class="v2-input" type="date" value="${fmtDateInput(cfg.range.end)}" />
+          </div>
+          <div class="field-row" data-mode-fields="custom">
+            <label class="field-label">${T("period.from", "Từ ngày")}</label>
+            <input id="periodFromInput" class="v2-input" type="date" value="${fmtDateInput(cfg.range.start)}" />
+          </div>
+          <div class="field-row" data-mode-fields="custom">
+            <label class="field-label">${T("period.to", "Đến ngày")}</label>
+            <input id="periodToInput" class="v2-input" type="date" value="${fmtDateInput(cfg.range.end)}" />
+          </div>
+          <div class="period-preview">${escHtml(S.periodLabel(st.period))}</div>
+        </div>
+        <div class="period-pop-actions">
+          <button type="button" class="ctrl-btn" data-act="cancel">${T("common.cancel")}</button>
+          <button type="button" class="ctrl-btn on" data-act="apply">${T("common.confirm")}</button>
+        </div>
+      </div>`;
+    document.body.appendChild(m);
+    const r = anchor.getBoundingClientRect();
+    m.style.top = (r.bottom + 6) + "px";
+    m.style.left = Math.max(12, Math.min(r.left, window.innerWidth - m.offsetWidth - 12)) + "px";
+
+    let mode = cfg.currentMode;
+    const anchorInput = m.querySelector("#periodAnchorInput");
+    const fromInput = m.querySelector("#periodFromInput");
+    const toInput = m.querySelector("#periodToInput");
+    const preview = m.querySelector(".period-preview");
+
+    function buildKey() {
+      const anchorDate = (anchorInput && anchorInput.value) || cfg.latest;
+      if (mode === "day") return "d:" + anchorDate;
+      if (mode === "week") return "w:" + anchorDate;
+      if (mode === "month") return "m:" + anchorDate.slice(0, 7);
+      if (mode === "year") return "y:" + anchorDate.slice(0, 4);
+      const from = (fromInput && fromInput.value) || anchorDate;
+      const to = (toInput && toInput.value) || anchorDate;
+      return S.coercePeriod("c:" + from + ":" + to, "custom");
+    }
+    function syncFields() {
+      m.querySelectorAll("[data-mode-fields]").forEach((row) => {
+        const show = row.getAttribute("data-mode-fields").split(/\s+/).includes(mode);
+        row.style.display = show ? "grid" : "none";
+      });
+      m.querySelectorAll("[data-mode]").forEach((btn) => btn.classList.toggle("active", btn.dataset.mode === mode));
+      preview.textContent = S.periodLabel(buildKey());
+    }
+
+    m.querySelector(".period-mode-seg")?.addEventListener("click", (e) => {
+      const btn = e.target.closest("button[data-mode]");
+      if (!btn) return;
+      mode = btn.dataset.mode;
+      syncFields();
+    });
+    [anchorInput, fromInput, toInput].forEach((el) => el && el.addEventListener("input", syncFields));
+    m.querySelector('[data-act="cancel"]')?.addEventListener("click", closePop);
+    m.querySelector('[data-act="apply"]')?.addEventListener("click", () => {
+      st.period = buildKey();
+      commit();
+      closePop();
+    });
+    syncFields();
+    openPop = m;
+    setTimeout(() => document.addEventListener("click", outside, true), 0);
+  }
+
   function wireControls() {
     document.getElementById("platSeg")?.addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) { st.platform = b.dataset.p; commit(); } });
-    document.getElementById("periodBtn")?.addEventListener("click", (e) => { e.stopPropagation(); popover(e.currentTarget, PERIODS, st.period, (k) => { st.period = k; commit(); }, T("period.title")); });
+    document.getElementById("periodBtn")?.addEventListener("click", (e) => { e.stopPropagation(); periodPopover(e.currentTarget); });
     document.getElementById("compareBtn")?.addEventListener("click", (e) => { e.stopPropagation(); popover(e.currentTarget, COMPARES, st.compare, (k) => { st.compare = k; commit(); }, T("period.compare.title")); });
   }
 
@@ -212,7 +284,6 @@
     init() {
       PERIODS = buildPeriods();
       COMPARES = buildCompares();
-      if (!PERIODS.some((p) => !p.divider && p.key === st.period)) st.period = "3m";
       applyTheme();
       applyLangBtn();
       if (st.collapsed) document.getElementById("app").classList.add("collapsed");

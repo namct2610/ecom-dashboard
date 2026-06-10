@@ -3,21 +3,24 @@
    ============================================================ */
 (function () {
   const S = window.Store, F = window.F, UI = window.UI, C = window.Charts;
+  let detailLoadingKey = null;
 
   function render() {
     const st = S.state;
-    const months = S.cur();
-    const cmpMonths = S.cmp();
+    const range = S.currentRange();
+    const cmpRange = S.compareCurrentRange();
     const cmpLab = S.compareLabel(st.period, st.compare);
-    const pm = S.platformMetrics(months);
-    const traf = S.trafficByPlatform(months);
+    const pm = S.PKEYS.map((k) => ({ key: k, ...S.PLAT[k], ...S.aggRange(range, k) }));
+    const totalRev = pm.reduce((t, p) => t + p.revenue, 0);
+    pm.forEach((p) => { p.share = totalRev ? p.revenue / totalRev * 100 : 0; });
+    const traf = S.PKEYS.map((k) => ({ key: k, ...S.PLAT[k], ...S.trafficAggRange(range, k) }));
     const trafMap = {}; traf.forEach((t) => (trafMap[t.key] = t));
     const dd = (c, p, inv) => UI.deltaChip(F.delta(c, p), inv);
 
     // platform cards
     const cards = pm.map((p) => {
-      const pc = cmpMonths ? S.aggMonths(cmpMonths, p.key) : null;
-      const tp = S.products(st.period, "rev").filter((x) => x.platform === p.key)[0];
+      const pc = cmpRange ? S.aggRange(cmpRange, p.key) : null;
+      const tp = S.products(st.period, "rev", "all").filter((x) => x.platform === p.key)[0];
       const tf = trafMap[p.key];
       const rows = [
         ["Đơn hàng", F.viInt(p.orders), pc ? dd(p.orders, pc.orders) : ""],
@@ -36,16 +39,16 @@
     }).join("");
 
     // monthly multi-line trajectory
-    const trend = S.monthlyTrend(12);
+    const trend = S.businessTrend(st.period);
 
     // matrix
     const tblRows = pm.map((p) => {
-      const pc = cmpMonths ? S.aggMonths(cmpMonths, p.key) : null;
+      const pc = cmpRange ? S.aggRange(cmpRange, p.key) : null;
       const tf = trafMap[p.key];
       return `<tr>
         <td><span class="pchip">${UI.pdot(p.key)}<b>${p.label}</b></span></td>
         <td class="num"><b>${F.money(p.revenue)}</b></td>
-        <td class="num">${cmpMonths ? dd(p.revenue, pc.revenue) : "—"}</td>
+        <td class="num">${cmpRange ? dd(p.revenue, pc.revenue) : "—"}</td>
         <td class="num">${F.viInt(p.orders)}</td>
         <td class="num">${F.pct(p.completionRate)}</td>
         <td class="num" style="color:${p.cancelRate > 16 ? "var(--neg)" : "var(--ink-2)"}">${F.pct(p.cancelRate)}</td>
@@ -61,7 +64,7 @@
     <div class="g12">${cards}</div>
 
     <div class="card section-gap">
-      <div class="card-head"><div><div class="card-title">Quỹ đạo doanh thu theo tháng</div><div class="card-sub">12 tháng gần nhất · mỗi đường một sàn</div></div>
+      <div class="card-head"><div><div class="card-title">Tình hình kinh doanh</div><div class="card-sub">${S.periodLabel(st.period).toLowerCase()} · mỗi đường một sàn</div></div>
         <div class="legend">${S.PKEYS.map((k) => `<span class="legend-item"><span class="legend-swatch" style="background:var(--${k})"></span>${S.PLAT[k].label}</span>`).join("")}</div>
       </div>
       <div class="card-pad" style="padding-top:14px"><div class="chart-wrap" style="height:300px"><canvas id="trajChart"></canvas></div></div>
@@ -76,9 +79,18 @@
   }
 
   function mount(root) {
-    const trend = S.monthlyTrend(12);
+    const trend = S.businessTrend(S.state.period);
     const tc = root.querySelector("#trajChart");
     if (tc) C.lineSeries(tc, trend.map((t) => t.label), S.PKEYS.map((k) => ({ label: S.PLAT[k].label, data: trend.map((t) => t[k]), color: "--" + k })), { money: true });
+    const cacheKey = S.state.period + "|all";
+    if (!S.getRangeDetail(S.state.period, "all") && detailLoadingKey !== cacheKey) {
+      detailLoadingKey = cacheKey;
+      S.ensureRangeDetail(S.state.period, "all").then(() => {
+        if (detailLoadingKey === cacheKey) window.App.rerender();
+      }).catch(() => {}).finally(() => {
+        if (detailLoadingKey === cacheKey) detailLoadingKey = null;
+      });
+    }
   }
 
   window.Views.compare = { titleKey: "page.compare.title", eyebrowKey: "page.compare.eyebrow", render, mount };

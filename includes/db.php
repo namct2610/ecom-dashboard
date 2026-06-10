@@ -808,6 +808,8 @@ function log_activity(string $level, string $category, string $message, array $c
     try {
         global $config;
         if (empty($config)) return;
+        $requestUri = (string) ($_SERVER['REQUEST_URI'] ?? '');
+        $requestPath = parse_url($requestUri, PHP_URL_PATH);
         $pdo = db($config);
         $pdo->prepare(
             "INSERT INTO app_logs (level, category, message, context, request_uri, ip_address)
@@ -817,7 +819,7 @@ function log_activity(string $level, string $category, string $message, array $c
             $category,
             mb_substr($message, 0, 1000),
             empty($context) ? null : json_encode($context, JSON_UNESCAPED_UNICODE | JSON_PARTIAL_OUTPUT_ON_ERROR),
-            mb_substr($_SERVER['REQUEST_URI'] ?? '', 0, 500),
+            mb_substr((string) ($requestPath ?: $requestUri), 0, 500),
             $_SERVER['REMOTE_ADDR'] ?? null,
         ]);
     } catch (\Throwable $e) {

@@ -1,7 +1,7 @@
 {
-  "version": "3.1.4",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.1.4/release/dashboard-v3-3.1.4.zip",
-  "changelog": "- Hotfix UI cho login overlay v2: khi bootstrap thành công, overlay luôn bị ẩn để không che dashboard dù session đã hợp lệ.\n- Sau khi đăng nhập thành công, app dùng `location.replace(...)` để quay lại URL sạch và khởi động lại từ trạng thái DOM mới, tránh giữ lại overlay cũ.\n- Giữ nguyên hotfix session production của 3.1.3 cho môi trường chạy sau reverse proxy/CDN.",
+  "version": "3.2.0",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.2.0/release/dashboard-v3-3.2.0.zip",
+  "changelog": "- Làm mới bộ lọc thời gian cho v2: hỗ trợ xem theo ngày, tuần, tháng, năm hoặc tùy chỉnh với date picker đồng bộ giao diện hiện tại.\n- Cập nhật phần Tổng quan: tiêu đề biểu đồ chính thành `Tình hình kinh doanh`; chọn tháng sẽ xem cửa sổ 12 tháng (6 trước + tháng chọn + 5 sau), chọn năm xem theo năm, chọn ngày xem 30 ngày gần nhất.\n- Bổ sung endpoint chi tiết theo khoảng ngày cho v2 để top sản phẩm, danh mục, khu vực, heatmap và trạng thái đơn phản ánh đúng khoảng lọc mới.\n- Siết lại login v2: chặn submit trùng, xóa password khi lỗi, và không lưu query string nhạy cảm vào app logs.",
   "min_php": "8.1",
   "released_at": "2026-06-10"
 }

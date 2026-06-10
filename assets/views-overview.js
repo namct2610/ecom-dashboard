@@ -3,6 +3,7 @@
    ============================================================ */
 (function () {
   const S = window.Store, F = window.F, UI = window.UI, C = window.Charts;
+  let detailLoadingKey = null;
 
   let cmpMetric = "revenue";
   let hideShopee = false;
@@ -27,11 +28,11 @@
 
   function render() {
     const st = S.state;
-    const months = S.cur();
-    const cmpMonths = S.cmp();
+    const range = S.currentRange();
+    const cmpRange = S.compareCurrentRange();
     const plat = st.platform;
-    const cur = S.aggMonths(months, plat);
-    const cmp = cmpMonths ? S.aggMonths(cmpMonths, plat) : null;
+    const cur = S.aggRange(range, plat);
+    const cmp = cmpRange ? S.aggRange(cmpRange, plat) : null;
     const cmpLab = S.compareLabel(st.period, st.compare);
     const cmpShort = "";  // comparison mode is shown in the toolbar; keep KPI footers short
 
@@ -68,11 +69,21 @@
       }),
     ].map((c) => `<div data-collapse style="grid-column:span 3">${c}</div>`).join("");
 
-    // monthly trend (13 months)
-    const trend = S.monthlyTrend(13);
+    const trend = S.businessTrend(st.period);
+    const trendModeName = S.periodMode(st.period);
+    const trendTitle = trendModeName === "month" ? "Tình hình kinh doanh" : trendModeName === "year" ? "Tình hình kinh doanh" : "Tình hình kinh doanh";
+    const trendSub = trendModeName === "month"
+      ? `12 tháng xoay quanh ${S.periodLabel(st.period).toLowerCase()} · ${plat === "all" ? "xếp chồng theo sàn" : S.PLAT[plat].label}`
+      : trendModeName === "year"
+        ? `theo năm · ${plat === "all" ? "xếp chồng theo sàn" : S.PLAT[plat].label}`
+        : trendModeName === "day"
+          ? `30 ngày gần nhất · ${plat === "all" ? "xếp chồng theo sàn" : S.PLAT[plat].label}`
+          : `${S.periodLabel(st.period).toLowerCase()} · ${plat === "all" ? "xếp chồng theo sàn" : S.PLAT[plat].label}`;
 
     // platform comparison
-    const pmAll = S.platformMetrics(months);
+    const pmAll = S.PKEYS.map((k) => ({ key: k, ...S.PLAT[k], ...S.aggRange(range, k) }));
+    const totalRev = pmAll.reduce((t, p) => t + p.revenue, 0);
+    pmAll.forEach((p) => { p.share = totalRev ? p.revenue / totalRev * 100 : 0; });
     const pm = hideShopee ? pmAll.filter((p) => p.key !== "shopee") : pmAll;
     const accessor = { revenue: (p) => p.revenue, orders: (p) => p.orders, aov: (p) => p.aov }[cmpMetric];
     const fmt = { revenue: (v) => F.money(v), orders: (v) => F.viInt(v), aov: (v) => F.money(v) }[cmpMetric];
@@ -87,11 +98,11 @@
 
     // comparison table with YoY/prev delta per platform
     const tblRows = pmAll.map((p) => {
-      const pc = cmpMonths ? S.aggMonths(cmpMonths, p.key) : null;
+      const pc = cmpRange ? S.aggRange(cmpRange, p.key) : null;
       return `<tr>
         <td><span class="pchip">${UI.pdot(p.key)}<b>${p.label}</b></span></td>
         <td class="num"><b>${F.money(p.revenue)}</b></td>
-        <td class="num">${cmpMonths ? dd(p.revenue, pc.revenue) : "—"}</td>
+        <td class="num">${cmpRange ? dd(p.revenue, pc.revenue) : "—"}</td>
         <td class="num">${F.viInt(p.orders)}</td>
         <td class="num">${F.money(p.aov)}</td>
         <td class="num" style="color:${p.cancelRate > 16 ? "var(--neg)" : "var(--ink-2)"}">${F.pct(p.cancelRate)}</td>
@@ -100,7 +111,7 @@
     }).join("");
 
     // top products
-    const prods = S.products(st.period, "rev").slice(0, 7);
+    const prods = S.products(st.period, "rev", plat).slice(0, 7);
     const prodRows = prods.map((p, i) => `
       <tr>
         <td><div class="prod"><span class="rank">${i + 1}</span><div style="min-width:0"><div class="pname">${p.cleanName}</div><div class="psku">${p.sku} · ${UI.pchip(p.platform)}</div></div></div></td>
@@ -109,7 +120,7 @@
       </tr>`).join("");
 
     // geo
-    const geo = S.cityDistribution(st.period);
+    const geo = S.cityDistribution(st.period, plat);
     const geoRows = geo.map((g) => `
       <div class="cmp-row" style="grid-template-columns:140px 1fr auto">
         <div class="cmp-name" style="font-weight:600">${g.city}</div>
@@ -118,10 +129,10 @@
       </div>`).join("");
 
     // category donut
-    const cats = S.categoryBreakdown(st.period).filter((c) => c.revenue > 0);
+    const cats = S.categoryBreakdown(st.period, plat).filter((c) => c.revenue > 0);
 
     // heatmap
-    const { m, max } = S.heatMatrix(st.period);
+    const { m, max } = S.heatMatrix(st.period, plat);
     const days = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"];
     let heat = `<div style="display:grid;grid-template-columns:30px 1fr;gap:6px;align-items:center;min-width:560px">`;
     heat += `<div></div><div style="display:grid;grid-template-columns:repeat(24,1fr);gap:3px;font-size:9.5px;color:var(--ink-3);font-weight:700">`;
@@ -142,11 +153,11 @@
     <div class="g12">${cards}</div>
 
     <div class="g12 section-gap">
-      <div data-collapse style="grid-column:span 8" class="card">
-        <div class="card-head">
-          <div><div class="card-title">Tình hình kinh doanh theo tháng</div><div class="card-sub">13 tháng gần nhất · ${plat === "all" ? "xếp chồng theo sàn" : S.PLAT[plat].label} · Th6 chưa trọn tháng</div></div>
-          ${plat === "all" ? `<div class="legend">${S.PKEYS.map((k) => `<span class="legend-item"><span class="legend-swatch" style="background:var(--${k})"></span>${S.PLAT[k].label}</span>`).join("")}</div>` : ""}
-        </div>
+        <div data-collapse style="grid-column:span 8" class="card">
+          <div class="card-head">
+            <div><div class="card-title">${trendTitle}</div><div class="card-sub">${trendSub}</div></div>
+            ${plat === "all" ? `<div class="legend">${S.PKEYS.map((k) => `<span class="legend-item"><span class="legend-swatch" style="background:var(--${k})"></span>${S.PLAT[k].label}</span>`).join("")}</div>` : ""}
+          </div>
         <div class="card-pad" style="padding-top:14px"><div class="chart-wrap" style="height:280px"><canvas id="monthlyChart"></canvas></div></div>
       </div>
       <div data-collapse style="grid-column:span 4" class="card">
@@ -223,22 +234,34 @@
   }
 
   function mount(root) {
-    const st = S.state, months = S.cur(), plat = st.platform;
-    const ds = S.dailySeries(months, plat);
+    const st = S.state, range = S.currentRange(), plat = st.platform;
+    const ds = S.dailySeriesRange(range, plat);
 
-    const mc = root.querySelector("#monthlyChart"); if (mc) C.monthlyRevenue(mc, S.monthlyTrend(13), { platform: plat });
+    const mc = root.querySelector("#monthlyChart"); if (mc) C.monthlyRevenue(mc, S.businessTrend(st.period), { platform: plat });
     const dc = root.querySelector("#dailyChart"); if (dc) (trendMode === "revenue" ? C.revenueTrend : C.ordersTrend)(dc, ds, { platform: plat });
 
-    const pmAll = S.platformMetrics(months);
+    const pmAll = S.PKEYS.map((k) => ({ key: k, ...S.PLAT[k], ...S.aggRange(range, k) }));
+    const totalRev = pmAll.reduce((t, p) => t + p.revenue, 0);
+    pmAll.forEach((p) => { p.share = totalRev ? p.revenue / totalRev * 100 : 0; });
     const pm = hideShopee ? pmAll.filter((p) => p.key !== "shopee") : pmAll;
     const dn = root.querySelector("#shareDonut"); if (dn) C.donut(dn, pm.map((p) => ({ label: p.label, value: p.revenue, color: "--" + p.key })));
     const cn = root.querySelector("#catDonut");
-    if (cn) { const cats = S.categoryBreakdown(st.period).filter((c) => c.revenue > 0); C.donut(cn, cats.map((c) => ({ label: c.label, value: c.revenue, color: c.color }))); }
+    if (cn) { const cats = S.categoryBreakdown(st.period, plat).filter((c) => c.revenue > 0); C.donut(cn, cats.map((c) => ({ label: c.label, value: c.revenue, color: c.color }))); }
 
     root.querySelector("#trendSeg")?.addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) { trendMode = b.dataset.m; window.App.rerender(); } });
     root.querySelector("#cmpSeg")?.addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) { cmpMetric = b.dataset.m; window.App.rerender(); } });
     root.querySelector("#hideShopeeBtn")?.addEventListener("click", () => { hideShopee = !hideShopee; window.App.rerender(); });
     root.querySelectorAll("[data-nav]").forEach((a) => a.addEventListener("click", () => window.App.go(a.dataset.nav)));
+
+    const cacheKey = st.period + "|" + st.platform;
+    if (!S.getRangeDetail(st.period, st.platform) && detailLoadingKey !== cacheKey) {
+      detailLoadingKey = cacheKey;
+      S.ensureRangeDetail(st.period, st.platform).then(() => {
+        if (detailLoadingKey === cacheKey) window.App.rerender();
+      }).catch(() => {}).finally(() => {
+        if (detailLoadingKey === cacheKey) detailLoadingKey = null;
+      });
+    }
   }
 
   window.Views.overview = { titleKey: "page.overview.title", eyebrowKey: "page.overview.eyebrow", render, mount };
