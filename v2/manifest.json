@@ -1,7 +1,7 @@
 {
-  "version": "2.4.0",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v2-2.4.0/release/dashboard-v2-2.4.0.zip",
-  "changelog": "- Batch 4/N: thêm trang \"Tải dữ liệu\" (nav Hệ thống).\n  * Drag & drop hoặc click chọn file Excel (.xlsx/.xls), nhiều file cùng lúc, tối đa 50MB/file.\n  * Tự nhận diện sàn (Shopee/Lazada/TikTok) + loại (đơn hàng / lưu lượng) — không cần khai báo.\n  * Hàng đợi hiển thị từng file (Chờ → Đang gửi → ✓ X dòng / ✗ Lỗi).\n  * Bảng lịch sử 30 lần upload gần nhất (file, sàn, loại, đã nhập, bỏ qua, trạng thái, thời điểm) + nút Tải lại.\n  * Cắm /api/upload.php + /api/upload-history.php sẵn có.\n- Còn lại: GBS Reconciliation (Batch 5), OAuth Connectors Shopee/Lazada/TikTok (Batch 6).",
+  "version": "2.5.0",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v2-2.5.0/release/dashboard-v2-2.5.0.zip",
+  "changelog": "- Batch 5/N: thêm trang \"Đối soát GBS\" (nav Hệ thống).\n  * Month picker từ danh sách tháng đã có dữ liệu GBS, đánh dấu ✓ tháng đã đối soát.\n  * 6 KPI tile: Đơn GBS, Đơn sàn, Khớp + %, Lệch, Thiếu GBS, Thiếu sàn.\n  * 3 thẻ sàn (Shopee/Lazada/TikTok) với viền đỏ/xanh/đen, mini-bảng từng metric.\n  * Ghi chú đối soát (insights bullets từ service).\n  * Bảng đơn lệch top 50 + nút \"Tải Excel\" để export đầy đủ.\n  * Quản lý tệp GBS: upload .xlsx, list, xoá.\n  * Checkbox \"Đã đối soát tháng này\" lưu confirmation cho từng tháng.\n  * Cắm /api/gbs-reconciliation.php + /api/reconciliation-files.php + /api/reconciliation-file-delete.php + /api/gbs-reconciliation-export.php.\n- Còn lại: OAuth Connectors Shopee/Lazada/TikTok (Batch 6).",
   "min_php": "8.1",
   "released_at": "2026-06-09"
 }
