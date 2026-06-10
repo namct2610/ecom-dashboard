@@ -29,6 +29,64 @@
   Chart.defaults.animation = false;
   Chart.defaults.maintainAspectRatio = false;
 
+  /* Stacked bar rounded-top plugin.
+     Default Chart.js applies borderRadius per-segment, so inner stack
+     segments show ridges on every layer. This plugin clips drawing to a
+     rounded-top shape spanning the FULL stack column — so the top corners
+     are consistent regardless of how thin the topmost layer is. */
+  const StackedRoundedTopPlugin = {
+    id: 'stackedRoundedTop',
+    beforeDatasetsDraw(chart, _args, opts) {
+      if (!opts || !opts.enabled) return;
+      const radius = opts.radius || 6;
+      const { ctx } = chart;
+      const datasets = chart.data.datasets;
+      if (!datasets.length) return;
+      const len = (datasets[0].data || []).length;
+      if (!len) return;
+      ctx.save();
+      ctx.beginPath();
+      let any = false;
+      for (let i = 0; i < len; i++) {
+        let topY = Infinity, bottomY = -Infinity, x = null, w = null;
+        for (let dsIdx = 0; dsIdx < datasets.length; dsIdx++) {
+          const v = +datasets[dsIdx].data[i];
+          if (!v) continue;
+          const meta = chart.getDatasetMeta(dsIdx);
+          if (meta.hidden) continue;
+          const bar = meta.data[i];
+          if (!bar) continue;
+          if (bar.y < topY) topY = bar.y;
+          if (bar.base > bottomY) bottomY = bar.base;
+          x = bar.x - bar.width / 2;
+          w = bar.width;
+        }
+        if (x == null || !isFinite(topY) || !isFinite(bottomY)) continue;
+        const h = Math.abs(bottomY - topY);
+        const r = Math.min(radius, w / 2, h);
+        ctx.moveTo(x, topY + r);
+        ctx.quadraticCurveTo(x, topY, x + r, topY);
+        ctx.lineTo(x + w - r, topY);
+        ctx.quadraticCurveTo(x + w, topY, x + w, topY + r);
+        ctx.lineTo(x + w, bottomY);
+        ctx.lineTo(x, bottomY);
+        ctx.closePath();
+        any = true;
+      }
+      if (any) ctx.clip();
+      else ctx.restore();
+      chart.$srtClipped = any;
+    },
+    afterDatasetsDraw(chart, _args, opts) {
+      if (!opts || !opts.enabled) return;
+      if (chart.$srtClipped) {
+        chart.ctx.restore();
+        chart.$srtClipped = false;
+      }
+    },
+  };
+  Chart.register(StackedRoundedTopPlugin);
+
   function tip() {
     return {
       backgroundColor: col("--invert-bg"),
@@ -86,7 +144,7 @@
     if (stacked) {
       datasets = ["shopee", "lazada", "tiktok"].map((k) => ({
         label: window.Store.PLAT[k].label, data: series.map((s) => s["o_" + k]),
-        backgroundColor: col("--" + k), borderRadius: 6, borderSkipped: "bottom", borderWidth: 0, stack: "o", maxBarThickness: 18,
+        backgroundColor: col("--" + k), borderRadius: 0, borderSkipped: false, borderWidth: 0, stack: "o", maxBarThickness: 18,
       }));
     } else {
       datasets = [{ label: "Đơn", data: series.map((s) => s.orders), backgroundColor: col("--" + opt.platform), borderRadius: 6, borderSkipped: "bottom", borderWidth: 0, maxBarThickness: 18 }];
@@ -99,7 +157,10 @@
           x: { stacked, grid: { display: false }, ticks: { color: ink3(), font: { size: 11 }, autoSkip: true, maxTicksLimit: 10 }, border: { display: false } },
           y: { stacked, grid: { color: gridc(), drawTicks: false }, ticks: { color: ink3(), font: { size: 11 } }, border: { display: false } },
         },
-        plugins: { tooltip: { ...tip(), callbacks: { label: (c) => " " + c.dataset.label + ": " + window.F.viInt(c.raw) + " đơn" } } },
+        plugins: {
+          tooltip: { ...tip(), callbacks: { label: (c) => " " + c.dataset.label + ": " + window.F.viInt(c.raw) + " đơn" } },
+          stackedRoundedTop: { enabled: stacked, radius: 6 },
+        },
       },
     });
   }
@@ -170,7 +231,7 @@
       datasets = ["shopee", "lazada", "tiktok"].map((k) => ({
         label: window.Store.PLAT[k].label, data: trend.map((t) => t[k]),
         backgroundColor: trend.map((t) => t.partial ? hexA(col("--" + k), 0.4) : col("--" + k)),
-        borderRadius: 6, borderSkipped: "bottom", borderWidth: 0, stack: "rev", maxBarThickness: 38,
+        borderRadius: 0, borderSkipped: false, borderWidth: 0, stack: "rev", maxBarThickness: 38,
       }));
     } else {
       const c = col("--" + opt.platform);
@@ -184,7 +245,10 @@
           x: { stacked, grid: { display: false }, ticks: { color: ink3(), font: { size: 10.5 }, maxRotation: 0, autoSkip: true, maxTicksLimit: 13 }, border: { display: false } },
           y: { stacked, grid: { color: gridc(), drawTicks: false }, ticks: { color: ink3(), font: { size: 11 }, callback: (v) => window.F.money(v) }, border: { display: false } },
         },
-        plugins: { tooltip: { ...tip(), callbacks: { label: (c) => " " + c.dataset.label + ": " + window.F.moneyFull(c.raw), footer: (items) => "Tổng: " + window.F.moneyFull(items.reduce((t, i) => t + i.raw, 0)) } } },
+        plugins: {
+          tooltip: { ...tip(), callbacks: { label: (c) => " " + c.dataset.label + ": " + window.F.moneyFull(c.raw), footer: (items) => "Tổng: " + window.F.moneyFull(items.reduce((t, i) => t + i.raw, 0)) } },
+          stackedRoundedTop: { enabled: stacked, radius: 6 },
+        },
       },
     });
   }

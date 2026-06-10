@@ -193,7 +193,7 @@
 
     <!-- Row 4: Platform comparison + Geo distribution -->
     <div class="g12 section-gap">
-      <div data-collapse style="grid-column:span 7" class="card">
+      <div data-collapse style="grid-column:span 8" class="card">
         <div class="card-head">
           <div><div class="card-title">${_t("ovw.cmp.title")}</div><div class="card-sub">${_t("ovw.cmp.metric_label")} <b>${metricLabel}</b> · ${S.periodLabel(st.period).toLowerCase()}</div></div>
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
@@ -216,7 +216,7 @@
           </div>
         </div>
       </div>
-      <div data-collapse style="grid-column:span 5" class="card">
+      <div data-collapse style="grid-column:span 4" class="card">
         <div class="card-head"><div><div class="card-title">${_t("ovw.geo.title")}</div><div class="card-sub">${_t("ovw.geo.by_orders")}</div></div></div>
         <div class="card-pad" style="display:flex;flex-direction:column;gap:2px">${geoRows}</div>
       </div>
