@@ -388,19 +388,27 @@ function sql_filters(array &$params, string $dateCol = 'order_created_at', bool 
     $platform = $_GET['platform']  ?? 'all';
     $dateRange = request_date_range();
 
-    // Date range takes priority over mode/period
+    // Range-based date filters: keep the column un-wrapped so MySQL can use
+    // indexes on order_created_at / order_completed_at. DATE()/YEAR()/
+    // DATE_FORMAT() wrappers force a full table scan.
     if ($dateRange !== null) {
         [$dateFrom, $dateTo] = $dateRange;
-        $conditions[] = "DATE($dateCol) BETWEEN :date_from AND :date_to";
-        $params[':date_from'] = $dateFrom;
-        $params[':date_to']   = $dateTo;
+        $dateToExclusive = (new DateTimeImmutable($dateTo))->modify('+1 day')->format('Y-m-d');
+        $conditions[] = "$dateCol >= :date_from AND $dateCol < :date_to_excl";
+        $params[':date_from']    = $dateFrom . ' 00:00:00';
+        $params[':date_to_excl'] = $dateToExclusive . ' 00:00:00';
     } elseif ($period !== '') {
         if ($mode === 'year' && preg_match('/^\d{4}$/', $period)) {
-            $conditions[] = "YEAR($dateCol) = :year";
-            $params[':year'] = (int) $period;
+            $year = (int) $period;
+            $conditions[] = "$dateCol >= :year_start AND $dateCol < :year_end";
+            $params[':year_start'] = sprintf('%04d-01-01 00:00:00', $year);
+            $params[':year_end']   = sprintf('%04d-01-01 00:00:00', $year + 1);
         } elseif ($mode === 'month' && preg_match('/^\d{4}-\d{2}$/', $period)) {
-            $conditions[] = "DATE_FORMAT($dateCol, '%Y-%m') = :month";
-            $params[':month'] = $period;
+            $monthStart = $period . '-01';
+            $monthEnd   = (new DateTimeImmutable($monthStart))->modify('+1 month')->format('Y-m-d');
+            $conditions[] = "$dateCol >= :month_start AND $dateCol < :month_end";
+            $params[':month_start'] = $monthStart . ' 00:00:00';
+            $params[':month_end']   = $monthEnd . ' 00:00:00';
         }
     }
 
@@ -423,16 +431,22 @@ function sql_filters_traffic(array &$params): string
 
     if ($dateRange !== null) {
         [$dateFrom, $dateTo] = $dateRange;
+        // traffic_date is a DATE column — inclusive BETWEEN is index-friendly.
         $conditions[] = "traffic_date BETWEEN :date_from AND :date_to";
         $params[':date_from'] = $dateFrom;
         $params[':date_to']   = $dateTo;
     } elseif ($period !== '') {
         if ($mode === 'year' && preg_match('/^\d{4}$/', $period)) {
-            $conditions[] = 'YEAR(traffic_date) = :year';
-            $params[':year'] = (int) $period;
+            $year = (int) $period;
+            $conditions[] = "traffic_date >= :year_start AND traffic_date < :year_end";
+            $params[':year_start'] = sprintf('%04d-01-01', $year);
+            $params[':year_end']   = sprintf('%04d-01-01', $year + 1);
         } elseif ($mode === 'month' && preg_match('/^\d{4}-\d{2}$/', $period)) {
-            $conditions[] = "DATE_FORMAT(traffic_date, '%Y-%m') = :month";
-            $params[':month'] = $period;
+            $monthStart = $period . '-01';
+            $monthEnd   = (new DateTimeImmutable($monthStart))->modify('+1 month')->format('Y-m-d');
+            $conditions[] = "traffic_date >= :month_start AND traffic_date < :month_end";
+            $params[':month_start'] = $monthStart;
+            $params[':month_end']   = $monthEnd;
         }
     }
 

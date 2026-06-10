@@ -98,8 +98,11 @@ try {
     ksort($monthlyAgg);
     $monthly = array_values($monthlyAgg);
 
-    // ───────── daily aggregate (recent ~18 months for chart range) ─────────
-    $dailyFrom = (new DateTimeImmutable($rangeEnd . '-01'))->modify('-17 months')->format('Y-m-d');
+    // ───────── daily aggregate (all months that exist in monthly) ─────────
+    // Previously capped at the last 17 months which hid 2024 data when the
+    // user selected an older period. Load from the earliest month present.
+    $dailyFromYm = $monthly[0]['ym'] ?? ((new DateTimeImmutable($rangeEnd . '-01'))->modify('-23 months')->format('Y-m'));
+    $dailyFrom   = $dailyFromYm . '-01';
     $dailyOrdStmt = $pdo->prepare("
         SELECT DATE(order_created_at) AS d, platform,
                COUNT(DISTINCT order_id) AS ord,

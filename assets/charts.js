@@ -23,7 +23,7 @@
     return reg[id];
   }
 
-  Chart.defaults.font.family = "'Calibri','Carlito','Segoe UI',sans-serif";
+  Chart.defaults.font.family = "'Be Vietnam Pro','Segoe UI',sans-serif";
   Chart.defaults.font.weight = 600;
   Chart.defaults.plugins.legend.display = false;
   Chart.defaults.animation = false;
