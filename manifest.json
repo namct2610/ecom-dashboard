@@ -1,7 +1,7 @@
 {
-  "version": "3.1.2",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.1.2/release/dashboard-v3-3.1.2.zip",
-  "changelog": "- Khôi phục form đăng nhập riêng cho giao diện v2 ở root app. Khi `api/v2-data.php` trả 401, hệ thống hiển thị overlay đăng nhập thay vì chuyển sang legacy login.\n- Sau khi đăng nhập thành công, trang reload để bootstrap lại session và dựng dashboard v2.\n- Đăng xuất từ avatar dropdown quay lại trạng thái overlay đăng nhập của v2. Link dự phòng sang legacy login vẫn được giữ nguyên.",
+  "version": "3.1.3",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.1.3/release/dashboard-v3-3.1.3.zip",
+  "changelog": "- Hotfix session/login cho production chạy sau reverse proxy hoặc CDN: nhận diện HTTPS qua cả `HTTPS`, `X-Forwarded-Proto`, `X-Forwarded-SSL`, `X-HTTPS`, và port 443 trước khi set cookie session.\n- Sau khi đăng nhập thành công ở giao diện v2, URL được dọn query string nhạy cảm trước khi reload, tránh giữ lại `username`/`password` trên thanh địa chỉ.\n- Giữ nguyên luồng đăng nhập overlay của v2 và các API auth hiện có.",
   "min_php": "8.1",
   "released_at": "2026-06-10"
 }

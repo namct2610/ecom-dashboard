@@ -7,10 +7,24 @@ declare(strict_types=1);
 function start_session(): void
 {
     if (session_status() === PHP_SESSION_NONE) {
+        $https = !empty($_SERVER['HTTPS'])
+            && strtolower((string) $_SERVER['HTTPS']) !== 'off';
+
+        if (!$https) {
+            $forwardedProto = strtolower(trim((string) ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '')));
+            $forwardedSsl = strtolower(trim((string) ($_SERVER['HTTP_X_FORWARDED_SSL'] ?? '')));
+            $forwardedHttps = strtolower(trim((string) ($_SERVER['HTTP_X_HTTPS'] ?? '')));
+
+            $https = $forwardedProto === 'https'
+                || $forwardedSsl === 'on'
+                || $forwardedHttps === 'on'
+                || (string) ($_SERVER['SERVER_PORT'] ?? '') === '443';
+        }
+
         session_set_cookie_params([
             'lifetime' => 86400 * 7,
             'path'     => '/',
-            'secure'   => isset($_SERVER['HTTPS']),
+            'secure'   => $https,
             'httponly' => true,
             'samesite' => 'Lax',
         ]);
