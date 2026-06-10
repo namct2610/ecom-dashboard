@@ -4,6 +4,8 @@
    ============================================================ */
 (function () {
   const F = window.F, UI = window.UI, C = window.Charts, S = window.Store;
+  const _t = (k, f) => (window.t ? window.t(k, f) : (f || k));
+  const _tf = (k, v) => (window.tf ? window.tf(k, v) : k);
 
   // Module-local UI state
   const local = {
@@ -14,14 +16,14 @@
     saving: false,
   };
 
-  const monthLabel = (ym) => "Th" + (+ym.split("-")[1]);
+  const monthLabel = (ym) => { const [y, m] = ym.split("-"); return _tf("period.month_short", { n: +m, y }); };
 
   function fmtMoney(n) { return F.money(n); }
   function fmtVisits(n) { return F.num(n); }
 
   function statusPill(s) {
-    if (s === "on_track") return `<span class="status-pill st-done">Đúng kế hoạch</span>`;
-    return `<span class="status-pill st-cancel">Chậm tiến độ</span>`;
+    if (s === "on_track") return `<span class="status-pill st-done">${_t("status.on_track")}</span>`;
+    return `<span class="status-pill st-cancel">${_t("status.behind")}</span>`;
   }
 
   function rateBar(ratePct, color) {
@@ -36,21 +38,21 @@
         <div class="card-head">
           <div>
             <div class="card-title">${m.label}</div>
-            <div class="card-sub">Mục tiêu ${local.year} · Đã chạy ${local.data.elapsed_months}/12 tháng</div>
+            <div class="card-sub">${_tf("plan.sub", { year: local.year, elapsed: local.data.elapsed_months })}</div>
           </div>
           ${statusPill(m.status)}
         </div>
         <div class="card-pad">
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px">
             <div>
-              <div class="eyebrow">Thực tế YTD</div>
+              <div class="eyebrow">${_t("plan.actual_ytd")}</div>
               <div class="kpi-value tnum" style="margin-top:4px">${fmt(m.actual)}</div>
               <div style="font-size:12.5px;color:var(--ink-3);font-weight:600;margin-top:2px">
                 ${m.elapsed_months > 0 ? F.viDec(m.ytd_rate, 1) + "% so với mục tiêu YTD" : "Chưa có dữ liệu"}
               </div>
             </div>
             <div>
-              <div class="eyebrow">Mục tiêu năm</div>
+              <div class="eyebrow">${_t("plan.year_target")}</div>
               <div class="kpi-value tnum" style="margin-top:4px">${fmt(m.target)}</div>
               <div style="font-size:12.5px;color:var(--ink-3);font-weight:600;margin-top:2px">
                 ${m.target > 0 ? F.viDec(m.target_rate, 1) + "% đã đạt" : "Chưa đặt mục tiêu"}
@@ -60,7 +62,7 @@
 
           <div style="margin-top:18px">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-              <span class="eyebrow">Tiến độ</span>
+              <span class="eyebrow">${_t("plan.progress")}</span>
               <span style="font-size:12px;font-weight:700;color:${isOnTrack ? 'var(--pos)' : 'var(--neg)'}">
                 ${m.target > 0 ? F.viDec(m.target_rate, 1) + "%" : "—"}
               </span>

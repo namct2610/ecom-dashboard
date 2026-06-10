@@ -386,14 +386,19 @@
   // Previously "var(--shopee)" form fell through unparsed, so donut
   // slices for categories rendered with Chart.js's default palette.
   const CAT = {
-    monte: { label: "Váng sữa Monte", color: "--shopee" },
-    yogurt: { label: "Sữa chua Montinis", color: "--lazada" },
-    freshcheese: { label: "Phô mai tươi", color: "#2A9D8F" },
-    slices: { label: "Phô mai lát", color: "--tiktok" },
-    gift: { label: "Quà tặng (0đ)", color: "--ink-3" },
-    other: { label: "Khác", color: "--border-strong" },
+    monte: { label: "Váng sữa Monte", color: "--shopee", i18n: "cat.monte" },
+    yogurt: { label: "Sữa chua Montinis", color: "--lazada", i18n: "cat.yogurt" },
+    freshcheese: { label: "Phô mai tươi", color: "#2A9D8F", i18n: "cat.freshcheese" },
+    slices: { label: "Phô mai lát", color: "--tiktok", i18n: "cat.slices" },
+    gift: { label: "Quà tặng (0đ)", color: "--ink-3", i18n: "cat.gift" },
+    other: { label: "Khác", color: "--border-strong", i18n: "cat.other" },
   };
   const cleanName = (n) => (n || "").replace(/^\[.*?\]\s*/, "").replace(/\s*-\s*HÀNG TẶNG.*$/i, "").trim();
+
+  function catLabel(cat) {
+    const _t = (k, f) => (window.t ? window.t(k, f) : f || k);
+    return _t(CAT[cat] && CAT[cat].i18n, CAT[cat] ? CAT[cat].label : cat);
+  }
 
   function detailMonths(key) { return curMonths(key).filter((ym) => DASH.monthDetail[ym]); }
 
@@ -509,6 +514,38 @@
     return st;
   }
 
+  /* ---- customer data ---- */
+  const customerCache = {};
+  let customerInflight = null;
+
+  function fetchCustomers() {
+    const range = rangeFromKey(state.period);
+    const cacheKey = state.period + "|" + state.platform;
+    if (customerCache[cacheKey]) return Promise.resolve(customerCache[cacheKey]);
+    if (customerInflight) return customerInflight;
+    const url = new URL("api/customers.php", window.location.href);
+    url.searchParams.set("date_from", range.start);
+    url.searchParams.set("date_to", range.end);
+    if (state.platform !== "all") url.searchParams.set("platform", state.platform === "tiktok" ? "tiktokshop" : state.platform);
+    customerInflight = fetch(url.toString(), { credentials: "same-origin" })
+      .then((r) => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+      .then((data) => { customerCache[cacheKey] = data; customerInflight = null; return data; })
+      .catch((err) => { customerInflight = null; throw err; });
+    return customerInflight;
+  }
+
+  function fetchCustomerDetail(buyerUsername) {
+    const range = rangeFromKey(state.period);
+    const url = new URL("api/customers.php", window.location.href);
+    url.searchParams.set("action", "detail");
+    url.searchParams.set("buyer_username", buyerUsername);
+    url.searchParams.set("date_from", range.start);
+    url.searchParams.set("date_to", range.end);
+    if (state.platform !== "all") url.searchParams.set("platform", state.platform === "tiktok" ? "tiktokshop" : state.platform);
+    return fetch(url.toString(), { credentials: "same-origin" })
+      .then((r) => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); });
+  }
+
   /* ---- traffic ---- */
   function trafficSeries(months, platform) {
     const set = new Set(months);
@@ -553,11 +590,12 @@
 
   window.Store = {
     DASH, PLAT, PKEYS, CAT, state, save, F,
-    MONTH_VI, MONTH_VI_LONG, addMonth, parseDate, fmtDate, fmtDateShort,
+    MONTH_VI, MONTH_VI_LONG, addMonth, parseDate, fmtDate, fmtDateShort, catLabel,
     curMonths, compareMonths, periodLabel, compareLabel, periodMode, rangeFromKey, compareRange, coercePeriod,
     aggMonths, aggRange, platformMetrics, dailySeries, dailySeriesRange, monthlyTrend, businessTrend,
     products, categoryBreakdown, cityDistribution, heatMatrix, statusBreakdown, categoryOf, ensureRangeDetail, getRangeDetail,
     trafficSeries, trafficSeriesRange, trafficAgg, trafficAggRange, trafficByPlatform,
+    fetchCustomers, fetchCustomerDetail,
     cur: () => curMonths(state.period),
     cmp: () => compareMonths(state.period, state.compare),
     currentRange: () => rangeFromKey(state.period),

@@ -1,7 +1,7 @@
 {
-  "version": "3.3.0",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.3.0/release/dashboard-v3-3.3.0.zip",
-  "changelog": "- Đồng bộ kích thước calendar cell ngày/tháng/năm, tách CSS riêng cho từng loại.\n- Sửa lỗi nháy login overlay khi hard refresh: ẩn bằng CSS `[hidden]`.\n- Bỏ banner thông báo giao diện mới và bỏ hoàn toàn /old/ (v1) khỏi production.\n- Bo tròn tất cả cột biểu đồ (stack bar): thêm `borderSkipped: false` + tăng borderRadius lên 8.\n- Giảm bo tròn biểu đồ donut xuống `borderRadius: 3` + `spacing: 1`.",
+  "version": "3.4.0",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.0/release/dashboard-v3-3.4.0.zip",
+  "changelog": "- Thu gọn calendar ngày/tuần cho đồng bộ kích thước với tháng/năm (bỏ aspect-ratio, height 34px).\n- Sửa bo góc biểu đồ cột: chỉ bo trên đỉnh, thêm borderSkipped: 'bottom' cho stacked bar.\n- Rà soát i18n: thêm ~60 key VI/EN mới cho overview, compare, orders, products, customers, traffic, plan.\n- Danh mục sản phẩm, ngày trong heat map, status pill, tiêu đề sections đều dùng t()/tf().\n- Bổ sung phần chi tiết khách hàng: hiển thị top buyers, segment mới/quay lại/tiềm năng, click xem chi tiết đơn hàng.\n- Gọi api/customers.php để lấy dữ liệu khách hàng thay vì chỉ dùng static data.",
   "min_php": "8.1",
-  "released_at": "2026-06-10"
+  "released_at": "2026-06-11"
 }
