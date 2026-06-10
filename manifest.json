@@ -1,7 +1,7 @@
 {
-  "version": "3.0.0",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.0.0/release/dashboard-v3-3.0.0.zip",
-  "changelog": "- v2 trở thành code chính ở repo root. Code v1 cũ chuyển vào /old/.\n- Mọi đường dẫn relative đã được điều chỉnh: /index.html không còn cần ../api/, /old/index.php phải climb lên một cấp để dùng api/ + includes/ + OAuth callback.\n- /api/v2-update.php giờ là channel chính (đọc /manifest.json + /version.txt).\n- /api/update.php giờ là channel legacy của /old/ (đọc /old/manifest.json + /old/version.txt). Đường dẫn manifest URL trên GitHub đã chuyển sang main/old/manifest.json.\n- build.sh exclude /old/ — v2 update không đụng vào legacy app.\n- build-old.sh mới: chỉ đóng gói /old/ cho channel legacy.",
+  "version": "3.0.1",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.0.1/release/dashboard-v3-3.0.1.zip",
+  "changelog": "- Cleanup sau khi restructure: gỡ api/beta-update.php (dead code, không còn endpoint nào gọi tới).\n- Sửa text các chuỗi i18n cũ kẹt mã \"v2/assets/...\" → \"assets/...\"; \"Phiên bản v2\" trong Settings đổi thành \"Phiên bản hệ thống\".\n- Comment trong includes/Updater.php và api/v2-data.php / api/v2-update.php đã cập nhật theo layout mới.\n- note.md viết lại phần Tổng quan + Cấu trúc file để khớp layout root + /old/.",
   "min_php": "8.1",
   "released_at": "2026-06-10"
 }

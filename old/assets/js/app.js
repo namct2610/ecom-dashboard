@@ -3676,7 +3676,7 @@ async function loadAdminDbStats() {
     tbody.innerHTML = `<tr><td colspan="2" style="text-align:center;padding:20px;color:var(--text-muted)">${escHtml(t('admin.system.export.loading') || 'Đang tải...')}</td></tr>`;
   }
   try {
-    const data = await apiFetch('../db-export.php?action=stats');
+    const data = await apiFetch('db-export.php?action=stats');
     if (!data.success) throw new Error(data.error || 'API error');
 
     qs('#adminDbName').textContent = data.database || '—';

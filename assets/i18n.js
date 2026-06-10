@@ -93,7 +93,7 @@
     /* Bootstrap */
     "boot.loading_data": "Đang tải dữ liệu…",
     "boot.load_failed": "Không tải được dữ liệu",
-    "boot.app_missing": "window.App.init không có sẵn — kiểm tra v2/assets/app.js đã tải",
+    "boot.app_missing": "window.App.init không có sẵn — kiểm tra assets/app.js đã tải",
 
     /* Page titles + eyebrows */
     "page.overview.title": "Tổng quan",
@@ -407,12 +407,12 @@
     "banner.v2_new": "Bạn đang dùng giao diện mới (v2).",
     "banner.v2_sub": "Có thể quay lại giao diện cũ nếu cần.",
     "banner.back_to_v1": "Quay lại bản cũ",
-    "v2up.card.title": "Phiên bản v2",
-    "v2up.card.sub": "Kiểm tra & cập nhật giao diện v2 độc lập với hệ thống chính.",
+    "v2up.card.title": "Phiên bản hệ thống",
+    "v2up.card.sub": "Kiểm tra & cập nhật code chính. Bản cập nhật không đụng tới /old (bản cũ).",
     "v2up.current": "Phiên bản hiện tại",
     "v2up.check_now": "Kiểm tra ngay",
     "v2up.up_to_date": "Đang dùng phiên bản mới nhất",
-    "v2up.has_update": "Có bản cập nhật v2 mới",
+    "v2up.has_update": "Có bản cập nhật mới",
     "v2up.apply": "Cập nhật ngay",
     "v2up.installing": "Đang cài đặt",
     "v2up.success": "Đã cập nhật xong. Reload trang để áp dụng.",
@@ -503,7 +503,7 @@
     /* Bootstrap */
     "boot.loading_data": "Loading data…",
     "boot.load_failed": "Failed to load data",
-    "boot.app_missing": "window.App.init is missing — check that v2/assets/app.js loaded",
+    "boot.app_missing": "window.App.init is missing — check that assets/app.js loaded",
 
     /* Page titles */
     "page.overview.title": "Overview",
@@ -816,12 +816,12 @@
     "banner.v2_new": "You're on the new UI (v2).",
     "banner.v2_sub": "You can switch back to the old UI at any time.",
     "banner.back_to_v1": "Back to v1",
-    "v2up.card.title": "v2 version",
-    "v2up.card.sub": "Check & update the v2 UI independently of the main app.",
+    "v2up.card.title": "System version",
+    "v2up.card.sub": "Check & update the main app. Updates leave /old (legacy UI) untouched.",
     "v2up.current": "Current version",
     "v2up.check_now": "Check now",
     "v2up.up_to_date": "Up to date",
-    "v2up.has_update": "New v2 update available",
+    "v2up.has_update": "New update available",
     "v2up.apply": "Update now",
     "v2up.installing": "Installing",
     "v2up.success": "Update applied. Reload to use the new version.",

@@ -2,7 +2,8 @@
 
 declare(strict_types=1);
 
-require_once __DIR__ . '/includes/bootstrap.php';
+// Shared backend lives at repo root, /old/db-export.php → ../includes/...
+require_once __DIR__ . '/../includes/bootstrap.php';
 
 start_session();
 

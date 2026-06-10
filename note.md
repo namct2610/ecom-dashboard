@@ -4,45 +4,51 @@
 
 - Repo: dashboard PHP/MySQL chạy kiểu shared-hosting.
 - Stack chính:
-  - PHP + PDO + MySQL
+  - PHP + PDO + MySQL (shared backend trong `api/`, `includes/`, `vendor/`)
   - PhpSpreadsheet để đọc Excel
-  - Frontend thuần `index.php` + JS/CSS tách file
+  - **Main UI (v2/3.x)** tại repo root: HTML/JS thuần — `index.html` + `assets/*.js`, dữ liệu fetch qua `api/v2-data.php`.
+  - **Legacy UI (v1.x)** ở `/old/`: SPA cũ — `old/index.php` + `old/assets/js/app.js`. Truy cập qua `/old/index.php?legacy=1` hoặc qua nút "Quay lại bản cũ" trên main.
 - Timezone mặc định: `Asia/Ho_Chi_Minh`
-- Entry backend chung: [includes/bootstrap.php](/Users/etecman/Documents/dashboard-v3/includes/bootstrap.php:1)
-- Entry UI chính: [index.php](/Users/etecman/Documents/dashboard-v3/index.php:1)
+- Entry backend chung: [includes/bootstrap.php](includes/bootstrap.php)
 
 ## 2. Cấu trúc file quan trọng
 
-- [index.php](/Users/etecman/Documents/dashboard-v3/index.php:1)
-  - Chứa shell UI, sidebar, page markup, modal, admin form.
-- [assets/js/app.js](/Users/etecman/Documents/dashboard-v3/assets/js/app.js:1)
-  - Router, auth UI, dashboard pages, admin UI, profile/password modal.
-- [assets/js/upload.js](/Users/etecman/Documents/dashboard-v3/assets/js/upload.js:1)
-  - UI upload batch.
-- [assets/js/charts.js](/Users/etecman/Documents/dashboard-v3/assets/js/charts.js:1)
-  - Render chart.
-- [assets/js/i18n.js](/Users/etecman/Documents/dashboard-v3/assets/js/i18n.js:1)
-  - i18n runtime + fallback VI inline.
-- [includes/helpers.php](/Users/etecman/Documents/dashboard-v3/includes/helpers.php:1)
+**Main app (v2 tại root):**
+- [index.html](index.html) — shell UI, sidebar, header, bootstrap loader
+- [assets/i18n.js](assets/i18n.js) — i18n VI/EN inline dict
+- [assets/app.js](assets/app.js) — router + period/compare/lang controls
+- [assets/store.js](assets/store.js) — state + selectors trên window.DASH
+- [assets/charts.js](assets/charts.js) — Chart.js wrappers
+- [assets/views-*.js](assets/) — 12 trang (overview, compare, orders, products, customers, traffic, plan, upload, reconcile, connect, users, settings)
+- [assets/theme.css](assets/theme.css) — design tokens + components
+
+**Legacy app (v1 tại /old/):**
+- [old/index.php](old/index.php) — shell PHP SPA
+- [old/assets/js/app.js](old/assets/js/app.js) — router, auth UI, dashboard pages, admin UI
+- [old/assets/js/upload.js](old/assets/js/upload.js) — UI upload batch
+- [old/assets/js/charts.js](old/assets/js/charts.js) — render chart
+- [old/assets/js/i18n.js](old/assets/js/i18n.js) — i18n runtime + fallback VI inline
+- [old/db-export.php](old/db-export.php) — v1 admin DB export
+- [includes/helpers.php](includes/helpers.php:1)
   - Auth/session, CSRF, JSON helpers, date filters, password policy.
-- [includes/db.php](/Users/etecman/Documents/dashboard-v3/includes/db.php:1)
+- [includes/db.php](includes/db.php:1)
   - Kết nối DB, `ensure_schema()`, upsert, parser factory, nhận diện file upload.
-- [includes/Parsers/](/Users/etecman/Documents/dashboard-v3/includes/Parsers)
+- [includes/Parsers/](includes/Parsers)
   - Parser đơn hàng và traffic.
-- [api/](/Users/etecman/Documents/dashboard-v3/api)
+- [api/](api)
   - Các endpoint JSON cho dashboard/admin/upload/update.
-- [build.sh](/Users/etecman/Documents/dashboard-v3/build.sh:1)
+- [build.sh](build.sh:1)
   - Build gói zip phát hành.
-- [manifest.json](/Users/etecman/Documents/dashboard-v3/manifest.json:1)
+- [manifest.json](manifest.json:1)
   - Manifest update public.
-- [version.txt](/Users/etecman/Documents/dashboard-v3/version.txt:1)
+- [version.txt](version.txt:1)
   - Phiên bản app hiện tại.
 
 ## 3. Auth, user, admin
 
 - Tất cả API dashboard thường gọi `require_auth()`.
 - API nhạy cảm gọi `require_admin()`.
-- Session user được quản lý trong [includes/helpers.php](/Users/etecman/Documents/dashboard-v3/includes/helpers.php:1).
+- Session user được quản lý trong [includes/helpers.php](includes/helpers.php:1).
 - Bảng `users` hiện có các trường quan trọng:
   - `username`
   - `full_name`
@@ -74,7 +80,7 @@
 - Logic dùng chung nằm ở:
   - `evaluate_password_strength()`
   - `ensure_password_meets_policy()`
-  - trong [includes/helpers.php](/Users/etecman/Documents/dashboard-v3/includes/helpers.php:1)
+  - trong [includes/helpers.php](includes/helpers.php:1)
 - UI meter có ở:
   - form admin tạo/sửa tài khoản
   - modal đổi mật khẩu user
@@ -83,7 +89,7 @@
 
 ### 5.1. Tổng quan
 
-- Endpoint upload: [api/upload.php](/Users/etecman/Documents/dashboard-v3/api/upload.php:1)
+- Endpoint upload: [api/upload.php](api/upload.php:1)
 - Upload dùng `files[]` hoặc `file`.
 - Chỉ nhận `.xlsx` và `.xls`.
 - Sau khi upload:
@@ -119,7 +125,7 @@
 - Shopee traffic **chỉ lấy dữ liệu từ sheet `Tất cả`**.
 - Không fallback sang `Máy tính` hoặc `Ứng dụng`.
 - Nếu file Shopee không có sheet `Tất cả`, parser sẽ báo lỗi và dừng import.
-- Logic này nằm ở [includes/Parsers/TrafficParser.php](/Users/etecman/Documents/dashboard-v3/includes/Parsers/TrafficParser.php:1).
+- Logic này nằm ở [includes/Parsers/TrafficParser.php](includes/Parsers/TrafficParser.php:1).
 
 ### 5.5. Đặc điểm mẫu traffic từng sàn
 
@@ -135,7 +141,7 @@
 ## 6. Schema và migration
 
 - Không có hệ migration framework riêng.
-- Mọi thay đổi schema được vá bằng `ensure_schema()` trong [includes/db.php](/Users/etecman/Documents/dashboard-v3/includes/db.php:31).
+- Mọi thay đổi schema được vá bằng `ensure_schema()` trong [includes/db.php](includes/db.php:31).
 - `db()` luôn gọi `ensure_schema()`.
 - Sau update hệ thống, `api/update.php` cũng gọi lại `ensure_schema()`.
 - Nếu thêm cột/bảng mới, phải cập nhật ít nhất:
@@ -144,7 +150,7 @@
 
 ## 7. Update system / release system
 
-- Updater class: [includes/Updater.php](/Users/etecman/Documents/dashboard-v3/includes/Updater.php:1)
+- Updater class: [includes/Updater.php](includes/Updater.php:1)
 - Manifest cần các trường:
   - `version`
   - `download_url`
@@ -159,7 +165,7 @@
 
 ### Build release
 
-- Script build: [build.sh](/Users/etecman/Documents/dashboard-v3/build.sh:1)
+- Script build: [build.sh](build.sh:1)
 - Script hiện loại khỏi zip:
   - `.git`, `.github`, `.idea`, `.vscode`, `.claude`
   - `others/`
