@@ -380,6 +380,11 @@ body { transition: background .3s ease, color .3s ease; }
   border-radius: var(--r-ctrl);
   background: var(--surface);
   overflow: hidden;
+  /* Fixed min-height so the popup doesn't resize when switching
+     between day/week/month/year modes. */
+  min-height: 296px;
+  display: flex;
+  flex-direction: column;
 }
 
 .cal-navbar {
@@ -389,6 +394,7 @@ body { transition: background .3s ease, color .3s ease; }
   padding: 8px 10px;
   border-bottom: 1px solid var(--border);
   background: var(--surface-2);
+  flex: 0 0 auto;
 }
 
 .cal-nav-btn {
@@ -433,18 +439,21 @@ body { transition: background .3s ease, color .3s ease; }
   padding: 8px;
 }
 
+/* Day grid: no horizontal gap so range fill is seamless. */
 .cal-grid.cal-days {
   grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 2px 0;
+  flex: 1;
+  align-content: start;
 }
 
-.cal-grid.cal-months {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 4px;
-}
-
+/* Months / years: fewer items, so center vertically to match day-mode height. */
+.cal-grid.cal-months,
 .cal-grid.cal-years {
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 4px;
+  gap: 6px;
+  flex: 1;
+  align-content: center;
 }
 
 .cal-dow {
@@ -471,15 +480,17 @@ body { transition: background .3s ease, color .3s ease; }
   border: none;
   background: transparent;
   -webkit-appearance: none; appearance: none;
+  position: relative;
 }
 
+/* Bigger month/year tiles so all four modes feel visually balanced. */
 .cal-month,
 .cal-year {
   display: grid;
   place-items: center;
   border-radius: var(--r-ctrl);
   font-family: var(--font-ui);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
   color: var(--ink);
   cursor: pointer;
@@ -488,8 +499,7 @@ body { transition: background .3s ease, color .3s ease; }
   border: none;
   background: transparent;
   -webkit-appearance: none; appearance: none;
-  padding: 10px 6px;
-  min-height: 38px;
+  min-height: 52px;
 }
 
 .cal-day:hover,
@@ -505,7 +515,7 @@ body { transition: background .3s ease, color .3s ease; }
 }
 
 .cal-day.today {
-  box-shadow: inset 0 0 0 2px var(--brand);
+  box-shadow: inset 0 0 0 1.5px var(--brand);
   color: var(--brand);
   font-weight: 800;
 }
@@ -516,6 +526,7 @@ body { transition: background .3s ease, color .3s ease; }
   background: var(--brand);
   color: #fff;
   font-weight: 800;
+  box-shadow: none;
 }
 .cal-day.sel:hover,
 .cal-month.sel:hover,
@@ -524,13 +535,15 @@ body { transition: background .3s ease, color .3s ease; }
   color: #fff;
 }
 
+/* Range fill is one continuous band: in-range cells touch edge-to-edge,
+   only the start/end caps round on the outer side. */
 .cal-day.in-range {
-  background: color-mix(in oklch, var(--brand) 16%, var(--surface));
+  background: color-mix(in oklch, var(--brand) 14%, var(--surface));
   border-radius: 0;
   color: var(--ink);
 }
 .cal-day.in-range:hover {
-  background: color-mix(in oklch, var(--brand) 24%, var(--surface));
+  background: color-mix(in oklch, var(--brand) 22%, var(--surface));
 }
 
 .cal-day.sel-start,
@@ -538,7 +551,30 @@ body { transition: background .3s ease, color .3s ease; }
   background: var(--brand);
   color: #fff;
   font-weight: 800;
+  box-shadow: none;
+}
+.cal-day.sel-start {
+  border-radius: var(--r-ctrl) 0 0 var(--r-ctrl);
+}
+.cal-day.sel-end {
+  border-radius: 0 var(--r-ctrl) var(--r-ctrl) 0;
+}
+.cal-day.sel-start.sel-end,
+.cal-day.sel {
   border-radius: var(--r-ctrl);
+}
+
+/* When a row starts mid-range, soften the leading edge so the band doesn't
+   slam into the grid wall. Same for the trailing edge. */
+.cal-grid.cal-days .cal-day.in-range:nth-child(7n + 1),
+.cal-grid.cal-days .cal-day.sel-end:nth-child(7n + 1) {
+  border-top-left-radius: var(--r-ctrl);
+  border-bottom-left-radius: var(--r-ctrl);
+}
+.cal-grid.cal-days .cal-day.in-range:nth-child(7n),
+.cal-grid.cal-days .cal-day.sel-start:nth-child(7n) {
+  border-top-right-radius: var(--r-ctrl);
+  border-bottom-right-radius: var(--r-ctrl);
 }
 
 /* ============================================================

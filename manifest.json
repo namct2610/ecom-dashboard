@@ -1,7 +1,7 @@
 {
-  "version": "3.4.4",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.4/release/dashboard-v3-3.4.4.zip",
-  "changelog": "- Bỏ yêu cầu đăng nhập: vào thẳng dashboard, không còn overlay login khi gặp 401.\n- Backend require_auth()/require_admin() trở thành no-op — tất cả endpoint /api/* mở public.",
+  "version": "3.4.5",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.5/release/dashboard-v3-3.4.5.zip",
+  "changelog": "- Date picker đồng nhất kích thước: panel cao bằng nhau trên cả 4 mode (Ngày/Tuần/Tháng/Năm) — không còn nhảy khi đổi mode.\n- Tile tháng/năm lớn hơn, căn giữa theo chiều dọc cho cân với mode Ngày.\n- Vùng range (tuần + tùy chỉnh) liền mạch: pink band không gap, đầu/cuối bo tròn một bên, tự bo ở mép hàng.\n- Bỏ yêu cầu đăng nhập (gộp từ 3.4.4): vào thẳng dashboard.",
   "min_php": "8.1",
   "released_at": "2026-06-11"
 }
