@@ -30,3 +30,6 @@ Thumbs.db
 .idea/
 *.swp
 .claude/
+
+# Database dumps (never commit — may contain customer data)
+*.sql
