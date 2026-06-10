@@ -200,8 +200,8 @@
             headers: { "Content-Type": "application/json", "X-CSRF-Token": csrf },
             body: JSON.stringify({ action: "logout" }),
           });
-        } catch (_) { /* ignore — redirect below will still send user to login */ }
-        window.location.href = "old/index.php#/login";
+        } catch (_) { /* ignore — reload below will re-prompt login */ }
+        window.location.reload();
       });
       openPop = m;
       setTimeout(() => document.addEventListener("click", outside, true), 0);
