@@ -31,8 +31,9 @@ class Updater
     /**
      * @param string      $appRoot         absolute path of the app (extraction target)
      * @param string|null $versionFilePath optional override (default: $appRoot/version.txt).
-     *                                     Useful for channel/sub-app updaters (e.g. v2/version.txt)
-     *                                     so multiple update channels can coexist.
+     *                                     Useful for channel/sub-app updaters (e.g. old/version.txt
+     *                                     for the legacy v1 channel) so multiple update channels
+     *                                     can coexist.
      */
     public function __construct(string $appRoot, ?string $versionFilePath = null)
     {

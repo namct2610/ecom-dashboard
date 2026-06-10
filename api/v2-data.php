@@ -3,9 +3,9 @@
 declare(strict_types=1);
 
 /**
- * V2 dashboard data endpoint.
- * Returns the full dataset shape consumed by /v2/ frontend
- * (matches the prototype's window.DASH schema).
+ * Main dashboard data endpoint.
+ * Returns the full dataset shape consumed by the v2 frontend at root
+ * (matches the window.DASH schema in assets/store.js).
  */
 
 require dirname(__DIR__) . '/includes/bootstrap.php';
@@ -210,7 +210,7 @@ try {
 
         // heatmap: hour 0-23 × weekday 0-6 (Monday=0 to match prototype).
         // Frontend store expects FLAT list of {weekday, hour, orders} — see
-        // v2/assets/store.js heatMatrix(): DASH.monthDetail[ym].heat.forEach(h => ...).
+        // assets/store.js heatMatrix(): DASH.monthDetail[ym].heat.forEach(h => ...).
         $heatStmt = $pdo->prepare("
             SELECT HOUR(order_created_at) AS h,
                    ((DAYOFWEEK(order_created_at) + 5) % 7) AS dow,

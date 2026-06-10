@@ -3,17 +3,18 @@
 declare(strict_types=1);
 
 /**
- * V2 UI self-update endpoint.
+ * Main self-update endpoint (the v2-named file is kept for URL stability
+ * across the v3.0.0 restructure — the in-app Settings → "Phiên bản v2"
+ * card already POSTs here, so renaming would break existing deployments).
  *
- * Independent of the main app's update channel:
- *   • Reads / writes v2/version.txt (NOT root version.txt)
- *   • Pulls a separate manifest URL (v2/manifest.json on the public repo)
- *   • Update zips include only v2-related files (v2/* + api/v2-*.php) so
- *     applying an update never touches v1.
+ *   • Reads / writes the root version.txt
+ *   • Pulls manifest.json at repo root (the public main manifest)
+ *   • build.sh excludes /old/ from the zip so updates never touch the
+ *     legacy v1 app — that has its own channel via /api/update.php.
  *
- * Manifest schema = same as core (Updater::fetchManifest):
- *   { "version":"2.0.1", "download_url":"...zip", "changelog":"…",
- *     "min_php":"8.1", "released_at":"2026-06-10" }
+ * Manifest schema (Updater::fetchManifest):
+ *   { "version":"3.0.0", "download_url":"...zip", "changelog":"…",
+ *     "min_php":"8.1", "released_at":"YYYY-MM-DD" }
  */
 
 require dirname(__DIR__) . '/includes/bootstrap.php';
@@ -120,7 +121,7 @@ try {
         log_activity('info', 'system', "Cập nhật v2 thành công lên v{$version}");
         json_response([
             'success' => true,
-            'message' => "Đã cập nhật giao diện v2 thành công lên v{$version}! Tải lại /v2/ để áp dụng.",
+            'message' => "Đã cập nhật thành công lên v{$version}! Tải lại trang để áp dụng.",
         ]);
     }
 
