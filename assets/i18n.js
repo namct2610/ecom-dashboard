@@ -419,6 +419,23 @@
     "v2up.reload": "Reload trang",
     "v2up.checked_at": "Kiểm tra lúc",
     "v2up.changelog": "Thay đổi",
+
+    /* Login overlay */
+    "login.title": "Đăng nhập",
+    "login.sub": "Zott Monte · Marketplace Analytics",
+    "login.username": "Tên đăng nhập",
+    "login.password": "Mật khẩu",
+    "login.submit": "Đăng nhập",
+    "login.submitting": "Đang đăng nhập…",
+    "login.empty": "Vui lòng nhập đủ tên đăng nhập và mật khẩu.",
+    "login.bad_creds": "Tên đăng nhập hoặc mật khẩu không đúng.",
+    "login.server_error": "Lỗi máy chủ, vui lòng thử lại.",
+    "login.legacy_fallback": "Dùng giao diện cũ (dự phòng)",
+
+    /* User menu */
+    "menu.signed_in_as": "Đăng nhập bằng",
+    "menu.logout": "Đăng xuất",
+    "menu.logout_confirm": "Đăng xuất khỏi tài khoản?",
   };
 
   const EN = {
@@ -828,6 +845,23 @@
     "v2up.reload": "Reload",
     "v2up.checked_at": "Checked at",
     "v2up.changelog": "Changes",
+
+    /* Login overlay */
+    "login.title": "Sign in",
+    "login.sub": "Zott Monte · Marketplace Analytics",
+    "login.username": "Username",
+    "login.password": "Password",
+    "login.submit": "Sign in",
+    "login.submitting": "Signing in…",
+    "login.empty": "Please enter both username and password.",
+    "login.bad_creds": "Wrong username or password.",
+    "login.server_error": "Server error, please try again.",
+    "login.legacy_fallback": "Use the old UI (fallback)",
+
+    /* User menu */
+    "menu.signed_in_as": "Signed in as",
+    "menu.logout": "Sign out",
+    "menu.logout_confirm": "Sign out of this account?",
   };
 
   const STORAGE_KEY = "zm_lang_v2";
