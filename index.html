@@ -200,6 +200,13 @@
       }, Promise.resolve());
     }
 
+    function hideLoginOverlay() {
+      var overlay = document.getElementById('loginOverlay');
+      if (!overlay) return;
+      overlay.setAttribute('hidden', '');
+      overlay.style.display = 'none';
+    }
+
     fetch('api/v2-data.php', { credentials: 'same-origin' })
       .then(function (r) {
         if (r.status === 401) {
@@ -210,10 +217,12 @@
         return r.json();
       })
       .then(function (data) {
+        hideLoginOverlay();
         window.DASH = data;
         return loadSequential(MODULES);
       })
       .then(function () {
+        hideLoginOverlay();
         if (!window.App || typeof window.App.init !== 'function') {
           throw new Error(window.t ? window.t('boot.app_missing') : 'window.App.init missing');
         }
@@ -241,6 +250,7 @@
 
       // hide loading text, show overlay
       root.innerHTML = '';
+      overlay.style.display = 'flex';
       overlay.removeAttribute('hidden');
       if (window.I18n) window.I18n.applyDom(overlay);
       setTimeout(function () { u && u.focus(); }, 30);
@@ -268,12 +278,10 @@
           return r.json().then(function (j) { return { ok: r.ok, status: r.status, body: j }; });
         }).then(function (res) {
           if (res.ok && res.body && res.body.success) {
-            if (window.history && window.history.replaceState) {
-              window.history.replaceState({}, '', window.location.pathname + window.location.hash);
-            }
-            // Session cookie is set — reload so the bootstrap re-fetches
-            // /api/v2-data.php with auth and renders the dashboard.
-            window.location.reload();
+            hideLoginOverlay();
+            // Session cookie is set — replace the URL so any sensitive query
+            // params disappear and the app boots from a clean state.
+            window.location.replace(window.location.pathname + window.location.hash);
             return;
           }
           if (res.status === 401) setError(T('login.bad_creds'));

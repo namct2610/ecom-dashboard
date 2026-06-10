@@ -1,7 +1,7 @@
 {
-  "version": "3.1.3",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.1.3/release/dashboard-v3-3.1.3.zip",
-  "changelog": "- Hotfix session/login cho production chạy sau reverse proxy hoặc CDN: nhận diện HTTPS qua cả `HTTPS`, `X-Forwarded-Proto`, `X-Forwarded-SSL`, `X-HTTPS`, và port 443 trước khi set cookie session.\n- Sau khi đăng nhập thành công ở giao diện v2, URL được dọn query string nhạy cảm trước khi reload, tránh giữ lại `username`/`password` trên thanh địa chỉ.\n- Giữ nguyên luồng đăng nhập overlay của v2 và các API auth hiện có.",
+  "version": "3.1.4",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.1.4/release/dashboard-v3-3.1.4.zip",
+  "changelog": "- Hotfix UI cho login overlay v2: khi bootstrap thành công, overlay luôn bị ẩn để không che dashboard dù session đã hợp lệ.\n- Sau khi đăng nhập thành công, app dùng `location.replace(...)` để quay lại URL sạch và khởi động lại từ trạng thái DOM mới, tránh giữ lại overlay cũ.\n- Giữ nguyên hotfix session production của 3.1.3 cho môi trường chạy sau reverse proxy/CDN.",
   "min_php": "8.1",
   "released_at": "2026-06-10"
 }
