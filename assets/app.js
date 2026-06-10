@@ -111,8 +111,10 @@
   function periodPopover(anchor) {
     closePop();
     const cfg = buildPeriods();
-    const years = Array.from(new Set((S.DASH&&S.DASH.monthly||[]).map(function(m){return m.ym.slice(0,4)}))).sort();
-    if(!years.length) years.push(String(new Date().getFullYear()));
+    const years = Array.from(new Set((S.DASH&&S.DASH.monthly||[]).map(function(m){return m.ym.slice(0,4)})));
+    var curYear = String(new Date().getFullYear());
+    if(years.indexOf(curYear)===-1) years.push(curYear);
+    years.sort();
     const m = document.createElement("div");
     m.className = "menu period-pop";
     m.innerHTML = `
