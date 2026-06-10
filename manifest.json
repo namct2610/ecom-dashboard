@@ -1,7 +1,7 @@
 {
-  "version": "3.0.1",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.0.1/release/dashboard-v3-3.0.1.zip",
-  "changelog": "- Cleanup sau khi restructure: gỡ api/beta-update.php (dead code, không còn endpoint nào gọi tới).\n- Sửa text các chuỗi i18n cũ kẹt mã \"v2/assets/...\" → \"assets/...\"; \"Phiên bản v2\" trong Settings đổi thành \"Phiên bản hệ thống\".\n- Comment trong includes/Updater.php và api/v2-data.php / api/v2-update.php đã cập nhật theo layout mới.\n- note.md viết lại phần Tổng quan + Cấu trúc file để khớp layout root + /old/.",
+  "version": "3.0.2",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.0.2/release/dashboard-v3-3.0.2.zip",
+  "changelog": "- Tách dev tooling khỏi root production: build.sh + build-old.sh + note.md đã chuyển vào dev/. Production bundle giờ không kèm script build hay tài liệu nội bộ.\n- build.sh exclude thêm dev/ (cùng với /old/ đã có) — bản main thực sự gọn.\n- Xoá 82 zip release cũ khỏi main HEAD (vẫn còn trong từng tag tương ứng nếu cần khôi phục). Working tree còn lại đúng 2 file: dashboard-v3-3.0.1.zip + dashboard-old-1.6.1.zip.\n- Cách chạy build từ giờ: ./dev/build.sh (hoặc dev/build-old.sh) — script tự climb lên root.",
   "min_php": "8.1",
   "released_at": "2026-06-10"
 }
