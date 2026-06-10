@@ -100,9 +100,31 @@ try {
     $action = (string) ($body['action'] ?? '');
 
     if ($action === 'check_now') {
+        // Force-refresh: bypass BOTH caches (server-side DB cache + GitHub raw
+        // CDN's 5-minute cache) by appending a cache-buster to the manifest URL.
         v2_update_set_setting($pdo, 'v2_update_last_check', '');
         v2_update_set_setting($pdo, 'v2_update_cached_data', '');
-        json_response(['success' => true]);
+
+        $bustUrl = V2_MANIFEST_URL . (strpos(V2_MANIFEST_URL, '?') === false ? '?' : '&') . '_=' . time();
+        try {
+            $manifest = $updater->fetchManifest($bustUrl);
+            v2_update_set_setting($pdo, 'v2_update_last_check', (string) time());
+            v2_update_set_setting($pdo, 'v2_update_cached_data', json_encode($manifest) ?: '');
+            $latestVer = $manifest['version'] ?? null;
+            json_response([
+                'success'      => true,
+                'current'      => $updater->getCurrentVersion(),
+                'latest'       => $latestVer,
+                'has_update'   => $latestVer ? $updater->hasUpdate($latestVer) : false,
+                'changelog'    => $manifest['changelog'] ?? null,
+                'download_url' => $manifest['download_url'] ?? null,
+                'released_at'  => $manifest['released_at'] ?? null,
+                'min_php'      => $manifest['min_php'] ?? null,
+                'last_checked' => date('d/m/Y H:i'),
+            ]);
+        } catch (\Throwable $e) {
+            json_response(['success' => true, 'fetch_error' => $e->getMessage()]);
+        }
     }
 
     if ($action === 'apply') {

@@ -1,7 +1,7 @@
 {
-  "version": "3.4.7",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.7/release/dashboard-v3-3.4.7.zip",
-  "changelog": "- Lọc kỳ năm 2024 (và bất kỳ tháng cũ) giờ hiển thị được dữ liệu: backend bỏ giới hạn 17 tháng, load daily aggregate đầy đủ theo monthly.\n- Đổi font hệ thống sang Be Vietnam Pro — dấu thanh tiếng Việt sắc nét hơn nhiều, render đồng nhất giữa hệ điều hành.\n- Tăng tốc các trang Khách hàng, Đối soát, Đơn hàng, Sản phẩm: bỏ wrap DATE()/YEAR()/DATE_FORMAT() trong WHERE → MySQL dùng được index trên order_created_at, query nhanh hơn nhiều lần (đặc biệt khi DB lớn).",
+  "version": "3.4.8",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.8/release/dashboard-v3-3.4.8.zip",
+  "changelog": "- Nút 'Kiểm tra ngay' trong Cài đặt → Phiên bản hệ thống giờ force-refresh thật sự: bỏ qua cả cache DB phía server (30 phút) lẫn cache CDN của GitHub (5 phút) bằng cache-buster query param.\n- Kết quả manifest mới trả về inline ngay trong response của check_now — không cần round-trip thứ hai có thể bị hit cache.",
   "min_php": "8.1",
   "released_at": "2026-06-11"
 }

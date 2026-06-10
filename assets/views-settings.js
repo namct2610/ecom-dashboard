@@ -243,15 +243,37 @@
   }
 
   async function checkUpdateNow() {
+    local.update = local.update || {};
+    local.update.loading = true;
+    window.App.rerender();
     try {
-      await fetch("api/v2-update.php", {
+      const r = await fetch("api/v2-update.php", {
         method: "POST", credentials: "same-origin",
         headers: { "Content-Type": "application/json", "X-CSRF-Token": local.csrf },
         body: JSON.stringify({ action: "check_now" }),
       });
-      await fetchUpdateStatus();
+      const j = await r.json();
+      // Backend now returns the fresh manifest inline (cache-buster bypasses
+      // both server cache and GitHub raw CDN). Apply directly — no second
+      // round-trip that could re-hit the stale CDN.
+      if (j && (j.latest || j.current)) {
+        local.update = {
+          loading: false,
+          current: j.current,
+          latest: j.latest,
+          has_update: !!j.has_update,
+          changelog: j.changelog,
+          download_url: j.download_url,
+          last_checked: j.last_checked,
+          fetch_error: j.fetch_error,
+        };
+        window.App.rerender();
+      } else {
+        await fetchUpdateStatus();
+      }
     } catch (e) {
-      showMsg("err", e.message || String(e));
+      local.update = { loading: false, fetch_error: e.message || String(e) };
+      window.App.rerender();
     }
   }
 
