@@ -20,7 +20,7 @@
 
   function statusInfo(s) {
     if (s === "cancelled") return ["Đã huỷ", "st-cancel"];
-    if (s === "pending") return ["${t("status.processing")}", "st-ship"];
+    if (s === "pending") return [t("status.processing"), "st-ship"];
     return ["Hoàn thành", "st-done"];
   }
   const dtShort = (s) => { const [d, t] = s.split(" "); const p = d.split("-"); return p[2] + "/" + p[1] + " " + t.slice(0, 5); };
@@ -43,7 +43,7 @@
         { label: "Tổng đơn", ico: `<span class="kpi-ico">${UI.ICON.orders}</span>`, value: F.viInt(cur.orders), unit: " đơn", delta: cmp ? dd(cur.orders, cmp.orders) : "", foot: cmp ? `vs ${F.viInt(cmp.orders)} · ${cmpLab}` : S.periodLabel(st.period).toLowerCase() },
         { label: "Hoàn thành", ico: `<span class="kpi-ico">${UI.ICON.check}</span>`, value: F.viInt(cur.completed), delta: `<span class="tag" style="color:var(--pos)">${F.pct(cur.completionRate)}</span>`, foot: "đơn giao thành công" },
         { label: "Đã huỷ", ico: `<span class="kpi-ico">${UI.ICON.cancel}</span>`, value: F.viInt(cur.cancelled), delta: `<span class="tag" style="color:var(--neg)">${F.pct(cur.cancelRate)}</span>`, foot: "đơn bị huỷ" },
-        { label: "${t("status.processing")}", ico: `<span class="kpi-ico">${UI.ICON.orders}</span>`, value: F.viInt(pending), foot: "chờ hoàn tất (kỳ chi tiết)" },
+        { label: t("status.processing"), ico: `<span class="kpi-ico">${UI.ICON.orders}</span>`, value: F.viInt(pending), foot: "chờ hoàn tất (kỳ chi tiết)" },
       ]);
       // recent (filter by platform if not all)
       const recent = S.DASH.recentOrders.filter((o) => plat === "all" || o.platform === plat).slice(0, 40);

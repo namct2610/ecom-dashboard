@@ -248,7 +248,7 @@
       await fetchStatus(local.tab);
       window.App.rerender();
     } catch (e) {
-      showMsg("err", "${t("common.error")}: " + (e.message || e));
+      showMsg("err", t("common.error") + ": " + (e.message || e));
     } finally { local.saving = false; }
   }
 
@@ -263,7 +263,7 @@
         showMsg("err", "Không nhận được URL cấp quyền.");
       }
     } catch (e) {
-      showMsg("err", "${t("common.error")}: " + (e.message || e));
+      showMsg("err", t("common.error") + ": " + (e.message || e));
     }
   }
 
@@ -290,7 +290,7 @@
         const j = await postAction(local.tab, { action: "sync", [idF]: id });
         const r = (j.results || [])[0];
         if (r && r.success) showMsg("ok", "Đã đồng bộ.");
-        else showMsg("err", "${t("common.error")}: " + ((r && r.error) || "không rõ"));
+        else showMsg("err", t("common.error") + ": " + ((r && r.error) || "không rõ"));
       } else if (action === "disconnect") {
         if (!confirm("Ngắt kết nối " + id + "?")) return;
         await postAction(local.tab, { action: "disconnect", [idF]: id });
@@ -299,7 +299,7 @@
       await fetchStatus(local.tab);
       window.App.rerender();
     } catch (e) {
-      showMsg("err", "${t("common.error")}: " + (e.message || e));
+      showMsg("err", t("common.error") + ": " + (e.message || e));
     }
   }
 
@@ -310,7 +310,7 @@
       await fetchStatus(local.tab);
       window.App.rerender();
     } catch (e) {
-      showMsg("err", "${t("common.error")}: " + (e.message || e));
+      showMsg("err", t("common.error") + ": " + (e.message || e));
     }
   }
 
@@ -321,7 +321,7 @@
       await postAction(local.tab, { action: "set_sync_from", [idF]: +row.dataset.id, sync_from_date: value });
       showMsg("ok", "Đã cập nhật ngày đồng bộ.");
     } catch (e) {
-      showMsg("err", "${t("common.error")}: " + (e.message || e));
+      showMsg("err", t("common.error") + ": " + (e.message || e));
     }
   }
 

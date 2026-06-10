@@ -140,7 +140,7 @@
               <div class="card-title">${isEdit ? "Sửa tài khoản" : "Tạo tài khoản mới"}</div>
               <div class="card-sub">${isEdit ? "Chỉ những trường được điền sẽ bị thay đổi (mật khẩu trống = giữ nguyên)." : "Tài khoản mới có thể đăng nhập ngay sau khi tạo."}</div>
             </div>
-            <button class="iconbtn-sq" id="userModalClose" aria-label="${t("common.close")}">
+            <button class="iconbtn-sq" id="userModalClose" aria-label=t("common.close")>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
             </button>
           </div>
@@ -181,7 +181,7 @@
 
           <div style="margin-top:22px;display:flex;justify-content:flex-end;gap:10px">
             <button class="ctrl-btn" id="userModalCancel">${t("common.cancel")}</button>
-            <button class="ctrl-btn on" id="userModalSave" style="background:var(--brand);border-color:var(--brand);color:#fff">${isEdit ? "${t("users.modal.save_btn")}" : "Tạo tài khoản"}</button>
+            <button class="ctrl-btn on" id="userModalSave" style="background:var(--brand);border-color:var(--brand);color:#fff">${isEdit ? t("users.modal.save_btn") : "Tạo tài khoản"}</button>
           </div>
         </div>
       </div>`;
@@ -238,7 +238,7 @@
 
     local.saving = true;
     const btn = document.getElementById("userModalSave");
-    if (btn) btn.textContent = "${t("plan.saving")}";
+    if (btn) btn.textContent = t("plan.saving");
     try {
       const body = isEdit
         ? { action: "update", id: local.edit.user.id, full_name, role, is_active, must_change_password, password }
@@ -255,7 +255,7 @@
       showMsg("ok", isEdit ? "Đã cập nhật tài khoản." : "Đã tạo tài khoản.");
       window.App.rerender();
     } catch (e) {
-      if (btn) btn.textContent = isEdit ? "${t("users.modal.save_btn")}" : "Tạo tài khoản";
+      if (btn) btn.textContent = isEdit ? t("users.modal.save_btn") : "Tạo tài khoản";
       showMsg("err", e.message || String(e));
     } finally {
       local.saving = false;

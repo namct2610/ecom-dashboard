@@ -169,7 +169,7 @@
     const fullName = document.getElementById("accFullName").value.trim();
     const btn = document.getElementById("btnSaveProfile");
     if (!btn || local.saving) return;
-    local.saving = true; btn.textContent = "${t("plan.saving")}";
+    local.saving = true; btn.textContent = t("plan.saving");
     try {
       const fd = new FormData();
       fd.append("action", "update_profile");
@@ -184,7 +184,7 @@
       local.user = j.user;
       showMsg("ok", "Đã lưu hồ sơ.");
     } catch (e) {
-      btn.textContent = "${t("settings.account.save_profile")}";
+      btn.textContent = t("settings.account.save_profile");
       showMsg("err", "Lỗi lưu hồ sơ: " + (e.message || e));
     } finally {
       local.saving = false;
@@ -199,7 +199,7 @@
     if (!btn || local.saving) return;
     if (!cur || !nw || !cf) { showMsg("err", "Vui lòng nhập đủ 3 trường mật khẩu."); return; }
     if (nw !== cf) { showMsg("err", "Xác nhận không khớp."); return; }
-    local.saving = true; btn.textContent = "${t("settings.account.changing")}";
+    local.saving = true; btn.textContent = t("settings.account.changing");
     try {
       const r = await fetch("../api/account.php", {
         method: "POST", credentials: "same-origin",
@@ -212,9 +212,9 @@
       document.getElementById("accCurPwd").value = "";
       document.getElementById("accNewPwd").value = "";
       document.getElementById("accConfirmPwd").value = "";
-      showMsg("ok", "${t("settings.account.change_pwd")} thành công.");
+      showMsg("ok", t("settings.account.change_pwd") + " thành công.");
     } catch (e) {
-      btn.textContent = "${t("settings.account.change_pwd")}";
+      btn.textContent = t("settings.account.change_pwd");
       showMsg("err", "Lỗi đổi mật khẩu: " + (e.message || e));
     } finally {
       local.saving = false;
@@ -242,7 +242,7 @@
       if (r.prefix.length !== 3) { showMsg("err", `Mã "${r.prefix || "(rỗng)"}" phải đúng 3 ký tự.`); return; }
       if (!r.brand_name) { showMsg("err", `Mã ${r.prefix} chưa có tên thương hiệu.`); return; }
     }
-    local.saving = true; btn.textContent = "${t("plan.saving")}";
+    local.saving = true; btn.textContent = t("plan.saving");
     try {
       const r = await fetch("../api/brand-settings.php", {
         method: "POST", credentials: "same-origin",
@@ -255,7 +255,7 @@
       showMsg("ok", j.message || "Đã lưu quy ước thương hiệu.");
       window.App.rerender();
     } catch (e) {
-      btn.textContent = "${t("settings.brand.save_rules")}";
+      btn.textContent = t("settings.brand.save_rules");
       showMsg("err", "Lỗi lưu quy ước: " + (e.message || e));
     } finally {
       local.saving = false;

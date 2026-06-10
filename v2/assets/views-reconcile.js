@@ -316,7 +316,7 @@
       }
       showMsg("ok", confirmed ? "Đã đánh dấu tháng đối soát xong." : "Đã bỏ trạng thái đối soát.");
     } catch (e) {
-      showMsg("err", "${t("common.error")}: " + (e.message || e));
+      showMsg("err", t("common.error") + ": " + (e.message || e));
     } finally {
       local.saving = false; window.App.rerender();
     }
