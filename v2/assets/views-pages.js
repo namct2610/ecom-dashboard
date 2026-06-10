@@ -20,7 +20,7 @@
 
   function statusInfo(s) {
     if (s === "cancelled") return ["Đã huỷ", "st-cancel"];
-    if (s === "pending") return ["Đang xử lý", "st-ship"];
+    if (s === "pending") return ["${t("status.processing")}", "st-ship"];
     return ["Hoàn thành", "st-done"];
   }
   const dtShort = (s) => { const [d, t] = s.split(" "); const p = d.split("-"); return p[2] + "/" + p[1] + " " + t.slice(0, 5); };
@@ -31,7 +31,7 @@
 
   /* ===================== ORDERS ===================== */
   window.Views.orders = {
-    title: "Đơn hàng", eyebrow: "Vận hành đơn", 
+    titleKey: "page.orders.title", eyebrowKey: "page.orders.eyebrow", 
     render() {
       const st = S.state, months = S.cur(), cmpMonths = S.cmp(), plat = st.platform;
       const cur = S.aggMonths(months, plat), cmp = cmpMonths ? S.aggMonths(cmpMonths, plat) : null;
@@ -43,7 +43,7 @@
         { label: "Tổng đơn", ico: `<span class="kpi-ico">${UI.ICON.orders}</span>`, value: F.viInt(cur.orders), unit: " đơn", delta: cmp ? dd(cur.orders, cmp.orders) : "", foot: cmp ? `vs ${F.viInt(cmp.orders)} · ${cmpLab}` : S.periodLabel(st.period).toLowerCase() },
         { label: "Hoàn thành", ico: `<span class="kpi-ico">${UI.ICON.check}</span>`, value: F.viInt(cur.completed), delta: `<span class="tag" style="color:var(--pos)">${F.pct(cur.completionRate)}</span>`, foot: "đơn giao thành công" },
         { label: "Đã huỷ", ico: `<span class="kpi-ico">${UI.ICON.cancel}</span>`, value: F.viInt(cur.cancelled), delta: `<span class="tag" style="color:var(--neg)">${F.pct(cur.cancelRate)}</span>`, foot: "đơn bị huỷ" },
-        { label: "Đang xử lý", ico: `<span class="kpi-ico">${UI.ICON.orders}</span>`, value: F.viInt(pending), foot: "chờ hoàn tất (kỳ chi tiết)" },
+        { label: "${t("status.processing")}", ico: `<span class="kpi-ico">${UI.ICON.orders}</span>`, value: F.viInt(pending), foot: "chờ hoàn tất (kỳ chi tiết)" },
       ]);
       // recent (filter by platform if not all)
       const recent = S.DASH.recentOrders.filter((o) => plat === "all" || o.platform === plat).slice(0, 40);
@@ -63,7 +63,7 @@
           <div class="card-pad" style="padding-top:14px"><div class="chart-wrap" style="height:250px"><canvas id="ordChart"></canvas></div></div>
         </div>
         <div data-collapse style="grid-column:span 4" class="card">
-          <div class="card-head"><div><div class="card-title">Trạng thái đơn</div><div class="card-sub">${S.periodLabel(st.period).toLowerCase()}</div></div></div>
+          <div class="card-head"><div><div class="card-title">${t("th.status")} đơn</div><div class="card-sub">${S.periodLabel(st.period).toLowerCase()}</div></div></div>
           <div class="card-pad"><div class="donut-wrap" style="height:170px"><canvas id="statusDonut"></canvas>
             <div class="donut-center"><div><div class="big tnum">${F.viInt(cur.orders)}</div><div class="small">đơn</div></div></div></div>
             <div style="margin-top:14px;display:flex;flex-direction:column;gap:9px">
@@ -74,7 +74,7 @@
       </div>
       <div class="card section-gap"><div class="card-head"><div><div class="card-title">Khung giờ đặt đơn</div><div class="card-sub">thứ × giờ · ${S.periodLabel(st.period).toLowerCase()}</div></div></div><div class="card-pad" style="overflow-x:auto">${heatHTML(st.period)}</div></div>
       <div class="card section-gap"><div class="card-head"><div><div class="card-title">Đơn gần đây</div><div class="card-sub">${recent.length} đơn mới nhất${plat !== "all" ? " · " + S.PLAT[plat].label : ""}</div></div></div>
-        <div class="card-pad" style="padding:6px;overflow-x:auto"><table class="tbl"><thead><tr><th>Mã đơn</th><th>Sàn</th><th>Sản phẩm</th><th>Khu vực</th><th class="num">Giá trị</th><th>Trạng thái</th><th class="hide-md">Thời gian</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
+        <div class="card-pad" style="padding:6px;overflow-x:auto"><table class="tbl"><thead><tr><th>Mã đơn</th><th>Sàn</th><th>Sản phẩm</th><th>Khu vực</th><th class="num">Giá trị</th><th>${t("th.status")}</th><th class="hide-md">Thời gian</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
     },
     mount(root) {
       const st = S.state, months = S.cur(), plat = st.platform;
@@ -87,7 +87,7 @@
   /* ===================== PRODUCTS ===================== */
   let prodMetric = "rev";
   window.Views.products = {
-    title: "Sản phẩm", eyebrow: "Danh mục & hiệu suất",
+    titleKey: "page.products.title", eyebrowKey: "page.products.eyebrow",
     render() {
       const st = S.state;
       const cats = S.categoryBreakdown(st.period).filter((c) => c.revenue > 0);
@@ -128,7 +128,7 @@
 
   /* ===================== CUSTOMERS ===================== */
   window.Views.customers = {
-    title: "Khách hàng & Khu vực", eyebrow: "Phân bố & tệp khách",
+    titleKey: "page.customers.title", eyebrowKey: "page.customers.eyebrow",
     render() {
       const st = S.state, months = S.cur();
       const geo = S.cityDistribution(st.period);
@@ -156,7 +156,7 @@
 
   /* ===================== TRAFFIC ===================== */
   window.Views.traffic = {
-    title: "Lưu lượng", eyebrow: "Traffic & chuyển đổi",
+    titleKey: "page.traffic.title", eyebrowKey: "page.traffic.eyebrow",
     render() {
       const st = S.state, months = S.cur(), cmpMonths = S.cmp(), plat = st.platform;
       const cur = S.trafficAgg(months, plat), cmp = cmpMonths ? S.trafficAgg(cmpMonths, plat) : null;

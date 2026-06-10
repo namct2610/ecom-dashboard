@@ -60,9 +60,9 @@
   }
 
   function statusPill(s) {
-    if (s === "completed") return `<span class="status-pill st-done">Hoàn tất</span>`;
-    if (s === "failed")    return `<span class="status-pill st-cancel">Thất bại</span>`;
-    if (s === "processing") return `<span class="status-pill st-ship">Đang xử lý</span>`;
+    if (s === "completed") return `<span class="status-pill st-done">${t("status.completed")}</span>`;
+    if (s === "failed")    return `<span class="status-pill st-cancel">${t("status.failed")}</span>`;
+    if (s === "processing") return `<span class="status-pill st-ship">${t("status.processing")}</span>`;
     return `<span class="status-pill">${s || "—"}</span>`;
   }
 
@@ -121,7 +121,7 @@
         <div class="card-pad">
           ${dropZone()}
           ${local.queue.length ? `<div style="margin-top:6px">${local.queue.map(queueItem).join("")}</div>` : ""}
-          ${local.queue.length && !local.uploading ? `<div style="margin-top:14px;display:flex;justify-content:flex-end"><button class="ctrl-btn" id="btnClearQueue">Xoá danh sách</button></div>` : ""}
+          ${local.queue.length && !local.uploading ? `<div style="margin-top:14px;display:flex;justify-content:flex-end"><button class="ctrl-btn" id="btnClearQueue">${t("upload.clear_queue")}</button></div>` : ""}
         </div>
       </div>`;
   }
@@ -134,7 +134,7 @@
         <thead><tr>
           <th>File</th><th>Sàn</th><th>Loại</th>
           <th class="num">Đã nhập</th><th class="num">Bỏ qua</th>
-          <th>Trạng thái</th><th>Lúc</th>
+          <th>${t("th.status")}</th><th>Lúc</th>
         </tr></thead>
         <tbody>
           ${local.history.map((h) => `
@@ -161,7 +161,7 @@
             <div class="card-title">Lịch sử upload</div>
             <div class="card-sub">30 lần gần nhất.</div>
           </div>
-          <button class="ctrl-btn" id="btnReloadHist">Tải lại</button>
+          <button class="ctrl-btn" id="btnReloadHist">${t("common.reload")}</button>
         </div>
         ${historyTable()}
       </div>`;
@@ -275,8 +275,8 @@
   }
 
   window.Views.upload = {
-    title: "Tải dữ liệu",
-    eyebrow: "Import Excel · cập nhật báo cáo",
+    titleKey: "page.upload.title",
+    eyebrowKey: "page.upload.eyebrow",
     customToolbar: true,
     render,
     mount,

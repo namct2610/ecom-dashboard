@@ -179,7 +179,7 @@
         <div style="display:flex;flex-direction:column;gap:2px;margin-bottom:8px">${cmpRows}</div>
         <div style="overflow-x:auto;margin-top:8px">
           <table class="tbl">
-            <thead><tr><th>Sàn</th><th class="num">Doanh thu</th><th class="num">${cmpLab ? "Δ " + (st.compare === "yoy" ? "cùng kỳ" : "kỳ trước") : "Δ"}</th><th class="num">Đơn</th><th class="num">AOV</th><th class="num">% Huỷ</th><th class="num">Thị phần</th></tr></thead>
+            <thead><tr><th>Sàn</th><th class="num">Doanh thu</th><th class="num">${cmpLab ? "Δ " + (st.compare === "yoy" ? "cùng kỳ" : "kỳ trước") : "Δ"}</th><th class="num">Đơn</th><th class="num">AOV</th><th class="num">% ${t("common.cancel")}</th><th class="num">Thị phần</th></tr></thead>
             <tbody>${tblRows}</tbody>
           </table>
         </div>
@@ -241,5 +241,5 @@
     root.querySelectorAll("[data-nav]").forEach((a) => a.addEventListener("click", () => window.App.go(a.dataset.nav)));
   }
 
-  window.Views.overview = { title: "Tổng quan", eyebrow: "Báo cáo kinh doanh", render, mount };
+  window.Views.overview = { titleKey: "page.overview.title", eyebrowKey: "page.overview.eyebrow", render, mount };
 })();

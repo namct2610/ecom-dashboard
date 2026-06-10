@@ -34,8 +34,18 @@
   const F = { viInt, viDec, money, moneyFull, num, pct, delta };
 
   /* ---- month helpers ---- */
-  const MONTH_VI = (ym) => { const [y, m] = ym.split("-"); return "Th" + (+m) + "/" + y; };
-  const MONTH_VI_LONG = (ym) => { const [y, m] = ym.split("-"); return "Tháng " + (+m) + ", " + y; };
+  // MONTH_VI / MONTH_VI_LONG kept for back-compat; they delegate to i18n when
+  // the active language is not Vietnamese (EN returns "5/2026" / "5/2026").
+  const MONTH_VI = (ym) => {
+    const [y, m] = ym.split("-");
+    if (window.tf) return window.tf("period.month_short", { n: +m, y });
+    return "Th" + (+m) + "/" + y;
+  };
+  const MONTH_VI_LONG = (ym) => {
+    const [y, m] = ym.split("-");
+    if (window.tf) return window.tf("period.month_n", { n: +m, y });
+    return "Tháng " + (+m) + ", " + y;
+  };
   function addMonth(ym, delta) {
     let [y, m] = ym.split("-").map(Number); m += delta;
     while (m < 1) { m += 12; y--; } while (m > 12) { m -= 12; y++; }
@@ -79,30 +89,33 @@
     const len = cur.length;
     return cur.map((ym) => addMonth(ym, -len));
   }
+  const _T = (k, f) => (window.t ? window.t(k, f) : f || k);
+  const _TF = (k, v) => (window.tf ? window.tf(k, v) : k);
+
   function periodLabel(key) {
-    if (key === "3m")  return "3 tháng gần nhất";
-    if (key === "6m")  return "6 tháng gần nhất";
-    if (key === "ytd") return "Năm nay (đến hiện tại)";
-    if (key === "all") return "Cả thời gian";
-    if (key && key.startsWith("y:")) return "Năm " + key.slice(2);
+    if (key === "3m")  return _T("period.3m");
+    if (key === "6m")  return _T("period.6m");
+    if (key === "ytd") return _T("period.ytd");
+    if (key === "all") return _T("period.all");
+    if (key && key.startsWith("y:")) return _TF("period.year_n", { y: key.slice(2) });
     if (key && key.startsWith("m:")) return MONTH_VI_LONG(key.slice(2));
-    return "3 tháng gần nhất";
+    return _T("period.3m");
   }
   function compareLabel(key, mode) {
     if (mode === "none") return "";
     if (mode === "yoy") {
-      if (key && key.startsWith("y:")) return "cùng kỳ " + (+key.slice(2) - 1);
-      if (key && key.startsWith("m:")) return "cùng kỳ " + (+key.slice(2, 6) - 1);
-      return "cùng kỳ năm trước";
+      if (key && key.startsWith("y:")) return _TF("compare.yoy_year", { y: +key.slice(2) - 1 });
+      if (key && key.startsWith("m:")) return _TF("compare.yoy_year", { y: +key.slice(2, 6) - 1 });
+      return _T("compare.yoy_short");
     }
     // prev
-    if (key === "3m")  return "3 tháng liền trước";
-    if (key === "6m")  return "6 tháng liền trước";
-    if (key === "ytd") return "cùng số tháng năm trước";
+    if (key === "3m")  return _T("compare.3m_prev");
+    if (key === "6m")  return _T("compare.6m_prev");
+    if (key === "ytd") return _T("compare.ytd_prev");
     if (key === "all") return "";
-    if (key && key.startsWith("y:")) return "năm trước";
-    if (key && key.startsWith("m:")) return "tháng trước";
-    return "kỳ trước";
+    if (key && key.startsWith("y:")) return _T("compare.last_year");
+    if (key && key.startsWith("m:")) return _T("compare.last_month");
+    return _T("compare.prev_short");
   }
 
   /* ---- aggregate over a set of months (exact, from monthly) ---- */

@@ -4,54 +4,65 @@
 (function () {
   const S = window.Store, st = S.state;
   const PAGES = ["overview", "compare", "orders", "products", "customers", "traffic", "plan", "upload", "reconcile", "connect", "users", "settings"];
+  const T = window.t || ((k, f) => f || k);
+  const TF = window.tf || ((k, v) => k);
 
-  /* Dynamic period list — derived from DASH.monthly so it stays in sync
-     with actual data range. Order:
-       - 4 presets (3m, 6m, năm nay, năm trước, all)
-       - Then the most recent 12 individual months */
+  // Pretty "Tháng N, YYYY" / EN "N/YYYY"
+  function fmtMonthLong(ym) {
+    const [y, m] = ym.split("-");
+    return TF("period.month_n", { n: +m, y });
+  }
+  function fmtMonthShort(ym) {
+    const [y, m] = ym.split("-");
+    return TF("period.month_short", { n: +m, y });
+  }
+
+  /* Dynamic period list — derived from DASH.monthly. Built fresh on every
+     access so labels follow the active language. */
   function buildPeriods() {
     const monthly = (S.DASH && S.DASH.monthly) || [];
-    if (!monthly.length) return [{ key: "3m", label: "3 tháng gần nhất" }];
+    if (!monthly.length) return [{ key: "3m", label: T("period.3m") }];
 
-    const all = monthly.map((m) => m.ym).sort();           // "YYYY-MM" asc
+    const all = monthly.map((m) => m.ym).sort();
     const latest = S.DASH.latestMonth || all[all.length - 1];
     const latestY = +latest.slice(0, 4);
     const years = Array.from(new Set(all.map((ym) => ym.slice(0, 4)))).sort();
-    const monthsByYear = {};
-    years.forEach((y) => (monthsByYear[y] = all.filter((ym) => ym.startsWith(y))));
+
+    const tailSub = (n) => {
+      if (all.length < n) return undefined;
+      const slice = all.slice(-n);
+      return fmtMonthShort(slice[0]) + "–" + fmtMonthShort(slice[slice.length - 1]);
+    };
 
     const presets = [
-      { key: "3m",  label: "3 tháng gần nhất", sub: rangeSubTail(all, 3) },
-      { key: "6m",  label: "6 tháng gần nhất", sub: rangeSubTail(all, 6) },
-      { key: "ytd", label: "Năm nay (đến hiện tại)", sub: "T1–" + S.MONTH_VI(latest).replace("Th", "T") + "/" + latestY },
+      { key: "3m",  label: T("period.3m"), sub: tailSub(3) },
+      { key: "6m",  label: T("period.6m"), sub: tailSub(6) },
+      { key: "ytd", label: T("period.ytd"), sub: fmtMonthShort(latest.slice(0,4) + "-01") + "–" + fmtMonthShort(latest) },
     ];
     if (years.includes(String(latestY - 1))) {
-      presets.push({ key: "y:" + (latestY - 1), label: "Năm " + (latestY - 1) });
+      presets.push({ key: "y:" + (latestY - 1), label: TF("period.year_n", { y: latestY - 1 }) });
     }
-    presets.push({ key: "all", label: "Cả thời gian", sub: S.MONTH_VI(all[0]) + " – " + S.MONTH_VI(all[all.length - 1]) });
+    presets.push({ key: "all", label: T("period.all"), sub: fmtMonthShort(all[0]) + " – " + fmtMonthShort(all[all.length - 1]) });
 
-    // Last 12 individual months (descending: newest first)
     const recent = all.slice(-12).reverse().map((ym, i) => ({
       key: "m:" + ym,
-      label: S.MONTH_VI_LONG(ym),
-      sub: i === 0 ? "mới nhất" : undefined,
+      label: fmtMonthLong(ym),
+      sub: i === 0 ? T("period.recent") : undefined,
     }));
 
     return presets.concat([{ divider: true }]).concat(recent);
   }
 
-  function rangeSubTail(all, n) {
-    if (all.length < n) return undefined;
-    const slice = all.slice(-n);
-    return S.MONTH_VI(slice[0]).replace("Th", "T") + "–" + S.MONTH_VI(slice[slice.length - 1]).replace("Th", "T") + "/" + slice[slice.length - 1].slice(0, 4);
+  function buildCompares() {
+    return [
+      { key: "prev", label: T("compare.prev") },
+      { key: "yoy",  label: T("compare.yoy") },
+      { key: "none", label: T("compare.none") },
+    ];
   }
 
-  let PERIODS = [];   // built at init time (after Store is ready)
-  const COMPARES = [
-    { key: "prev", label: "Kỳ liền trước" },
-    { key: "yoy", label: "Cùng kỳ năm trước" },
-    { key: "none", label: "Không so sánh" },
-  ];
+  let PERIODS = [];
+  let COMPARES = [];
 
   const ICON = {
     sun: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>',
@@ -66,15 +77,19 @@
     if (i) i.innerHTML = st.theme === "dark" ? ICON.sun : ICON.moon;
   }
 
-  /* ---- header controls ---- */
+  function applyLangBtn() {
+    const txt = document.getElementById("langText");
+    if (txt) txt.textContent = (window.I18n && window.I18n.getLang() === "en") ? "EN" : "VI";
+  }
+
   function renderControls() {
     const per = PERIODS.find((p) => p.key === st.period) || PERIODS[0];
     return `
       <div class="segment hide-sm" id="platSeg">
-        <button class="${st.platform === "all" ? "active" : ""}" data-p="all">Tất cả</button>
+        <button class="${st.platform === "all" ? "active" : ""}" data-p="all">${T("common.all")}</button>
         ${S.PKEYS.map((k) => `<button class="${st.platform === k ? "active" : ""}" data-p="${k}"><span class="pdot" style="background:var(--${k})"></span>${S.PLAT[k].label.replace(" Shop", "")}</button>`).join("")}
       </div>
-      <button class="period" id="periodBtn">${ICON.cal}<span class="ptxt">${per.label}</span><span class="pcaret">▾</span></button>
+      <button class="period" id="periodBtn">${ICON.cal}<span class="ptxt">${per ? per.label : ""}</span><span class="pcaret">▾</span></button>
       <button class="ctrl-btn hide-sm ${st.compare !== "none" ? "on" : ""}" id="compareBtn">${ICON.cmp}<span>${(COMPARES.find((c) => c.key === st.compare) || COMPARES[0]).label}</span><span class="pcaret">▾</span></button>
     `;
   }
@@ -101,28 +116,43 @@
 
   function wireControls() {
     document.getElementById("platSeg")?.addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) { st.platform = b.dataset.p; commit(); } });
-    document.getElementById("periodBtn")?.addEventListener("click", (e) => { e.stopPropagation(); popover(e.currentTarget, PERIODS, st.period, (k) => { st.period = k; commit(); }, "Khoảng thời gian"); });
-    document.getElementById("compareBtn")?.addEventListener("click", (e) => { e.stopPropagation(); popover(e.currentTarget, COMPARES, st.compare, (k) => { st.compare = k; commit(); }, "So sánh với"); });
+    document.getElementById("periodBtn")?.addEventListener("click", (e) => { e.stopPropagation(); popover(e.currentTarget, PERIODS, st.period, (k) => { st.period = k; commit(); }, T("period.title")); });
+    document.getElementById("compareBtn")?.addEventListener("click", (e) => { e.stopPropagation(); popover(e.currentTarget, COMPARES, st.compare, (k) => { st.compare = k; commit(); }, T("period.compare.title")); });
   }
 
   /* ---- render page ---- */
   function renderPage() {
+    // Rebuild localized lists in case language changed
+    PERIODS = buildPeriods();
+    COMPARES = buildCompares();
+
     const root = document.getElementById("pageRoot");
     const view = window.Views[st.page];
     window.Charts.destroyAll();
-    // header
+
     const v = view || {};
-    document.getElementById("headerTitle").textContent = v.title || "—";
-    document.getElementById("headerEyebrow").textContent = v.eyebrow || "Báo cáo kinh doanh";
+    // Views may export titleKey/eyebrowKey to opt into i18n. Else use the
+    // literal .title / .eyebrow (which may itself already be an i18n key
+    // string — t() returns the key when missing).
+    const titleText = v.titleKey ? T(v.titleKey) : T(v.title || "", v.title || "—");
+    const eyebrowText = v.eyebrowKey ? T(v.eyebrowKey) : T(v.eyebrow || "", v.eyebrow || T("header.eyebrow.default"));
+    document.getElementById("headerTitle").textContent = titleText;
+    document.getElementById("headerEyebrow").textContent = eyebrowText;
     document.querySelectorAll(".nav-item").forEach((n) => n.classList.toggle("active", n.dataset.page === st.page));
-    // controls — views may opt out (customToolbar:true) and render their own
+
     document.getElementById("controls").innerHTML = view && view.customToolbar ? "" : renderControls();
     if (!view || !view.customToolbar) wireControls();
 
-    if (!view) { root.innerHTML = `<div class="note">${window.UI.ICON.info} Trang này thuộc ứng dụng gốc (đối soát / tải dữ liệu / cài đặt) và không nằm trong bản dựng giao diện phân tích.</div>`; return; }
+    if (!view) {
+      root.innerHTML = `<div class="note">${window.UI.ICON.info}<span>${T("boot.app_missing", "Trang chưa được dựng.")}</span></div>`;
+      return;
+    }
     root.scrollTop = 0;
     root.innerHTML = view.render();
     view.mount && view.mount(root);
+
+    // Apply translations to any data-i18n nodes the view rendered + static chrome
+    if (window.I18n) window.I18n.applyDom();
   }
 
   function commit() { S.save(); renderPage(); }
@@ -130,23 +160,33 @@
   const App = {
     init() {
       PERIODS = buildPeriods();
-      // If the saved period is no longer valid (e.g. data updated to new range), fall back to "3m"
+      COMPARES = buildCompares();
       if (!PERIODS.some((p) => !p.divider && p.key === st.period)) st.period = "3m";
       applyTheme();
+      applyLangBtn();
       if (st.collapsed) document.getElementById("app").classList.add("collapsed");
       const sync = S.DASH && S.DASH.generatedAt ? S.DASH.generatedAt : new Date().toISOString().slice(0, 10);
-      document.getElementById("syncDate").textContent = "Cập nhật " + sync;
+      document.getElementById("syncDate").textContent = TF("nav.side.synced_at", { date: sync });
       // nav
       document.querySelectorAll(".nav-item[data-page]").forEach((n) => n.addEventListener("click", () => { st.page = n.dataset.page; document.getElementById("app").classList.remove("nav-open"); commit(); }));
       document.querySelectorAll(".nav-item:not([data-page])").forEach((n) => n.addEventListener("click", () => { st.page = "_system_" + (n.dataset.sys || ""); document.getElementById("app").classList.remove("nav-open"); commit(); }));
       // theme
       document.getElementById("themeBtn").addEventListener("click", () => { st.theme = st.theme === "dark" ? "light" : "dark"; applyTheme(); commit(); });
+      // language
+      document.getElementById("langBtn")?.addEventListener("click", () => {
+        if (window.I18n) window.I18n.toggle();
+        applyLangBtn();
+        // refresh sync-date string in active language
+        document.getElementById("syncDate").textContent = TF("nav.side.synced_at", { date: sync });
+      });
       // collapse
       document.getElementById("collapseBtn").addEventListener("click", () => { st.collapsed = !st.collapsed; document.getElementById("app").classList.toggle("collapsed"); S.save(); });
       // mobile nav
       document.getElementById("hamburger").addEventListener("click", () => document.getElementById("app").classList.toggle("nav-open"));
       document.getElementById("scrim").addEventListener("click", () => document.getElementById("app").classList.remove("nav-open"));
       window.addEventListener("resize", () => { if (openPop) closePop(); });
+
+      if (window.I18n) window.I18n.applyDom();
       renderPage();
     },
     go(page) { st.page = page; commit(); },

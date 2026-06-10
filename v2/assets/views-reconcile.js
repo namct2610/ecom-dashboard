@@ -179,7 +179,7 @@
     return `
       <table class="tbl">
         <thead><tr>
-          <th>Order ID</th><th>Sàn</th><th>Trạng thái</th>
+          <th>Order ID</th><th>Sàn</th><th>${t("th.status")}</th>
           <th class="num">SL sàn</th><th class="num">SL GBS</th>
           <th class="num">NMV sàn</th><th class="num">NMV GBS</th>
           <th>Ghi chú</th>
@@ -254,7 +254,7 @@
 
   function render() {
     if (local.loading && !local.data) return `<div class="card card-pad" style="text-align:center;color:var(--ink-3);font-weight:600">Đang tải dữ liệu đối soát…</div>`;
-    if (local.error) return `<div class="card card-pad" style="text-align:center;color:var(--neg);font-weight:700">Lỗi: ${local.error}</div>`;
+    if (local.error) return `<div class="card card-pad" style="text-align:center;color:var(--neg);font-weight:700">${t("common.error")}: ${local.error}</div>`;
     const noMonth = !local.selectedMonth;
     return `
       ${flashMsg()}
@@ -316,7 +316,7 @@
       }
       showMsg("ok", confirmed ? "Đã đánh dấu tháng đối soát xong." : "Đã bỏ trạng thái đối soát.");
     } catch (e) {
-      showMsg("err", "Lỗi: " + (e.message || e));
+      showMsg("err", "${t("common.error")}: " + (e.message || e));
     } finally {
       local.saving = false; window.App.rerender();
     }
@@ -397,8 +397,8 @@
   }
 
   window.Views.reconcile = {
-    title: "Đối soát GBS",
-    eyebrow: "So khớp doanh thu sàn với báo cáo GBS",
+    titleKey: "page.reconcile.title",
+    eyebrowKey: "page.reconcile.eyebrow",
     customToolbar: true,
     render,
     mount,
