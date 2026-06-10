@@ -3,6 +3,8 @@
    ============================================================ */
 (function () {
   const S = window.Store, F = window.F, UI = window.UI, C = window.Charts;
+  const _t = (k, f) => (window.t ? window.t(k, f) : (f || k));
+  const _tf = (k, v) => (window.tf ? window.tf(k, v) : k);
   let detailLoadingKey = null;
 
   function render() {
@@ -20,21 +22,20 @@
     // platform cards
     const cards = pm.map((p) => {
       const pc = cmpRange ? S.aggRange(cmpRange, p.key) : null;
-      const tp = S.products(st.period, "rev", "all").filter((x) => x.platform === p.key)[0];
-      const tf = trafMap[p.key];
+      const tp = trafMap[p.key];
       const rows = [
-        ["Đơn hàng", F.viInt(p.orders), pc ? dd(p.orders, pc.orders) : ""],
-        ["Hoàn thành", F.viInt(p.completed), pc ? dd(p.completed, pc.completed) : ""],
-        ["Giá trị đơn TB", F.money(p.aov), pc ? dd(p.aov, pc.aov) : ""],
-        ["Tỷ lệ huỷ", F.pct(p.cancelRate), ""],
-        ["Lượt truy cập", F.viInt(tf.visits), ""],
-        ["Tỷ lệ chuyển đổi", F.pct(tf.conv), ""],
+        [_t("kpi.orders"), F.viInt(p.orders), pc ? dd(p.orders, pc.orders) : ""],
+        [_t("kpi.completed"), F.viInt(p.completed), pc ? dd(p.completed, pc.completed) : ""],
+        [_t("kpi.aov"), F.money(p.aov), pc ? dd(p.aov, pc.aov) : ""],
+        [_t("kpi.cancel_rate"), F.pct(p.cancelRate), ""],
+        [_t("kpi.visits"), F.viInt(tp.visits), ""],
+        [_t("kpi.conversion"), F.pct(tp.conv), ""],
       ];
       return `<div data-collapse style="grid-column:span 4;--bd:var(--${p.key})" class="card pcard reveal">
-        <div class="phead">${UI.platLogo(p.key)}<div><div style="font-weight:800;font-size:15px">${p.label}</div><div style="font-size:12px;color:var(--ink-3);font-weight:600">${F.pct(p.share)} thị phần</div></div></div>
-        <div style="padding:0 18px 8px"><div style="font-size:26px;font-weight:800;letter-spacing:-.02em" class="tnum">${F.money(p.revenue)}</div><div style="display:flex;align-items:center;gap:7px;font-size:12px;color:var(--ink-3);font-weight:600;margin-top:2px">${pc ? dd(p.revenue, pc.revenue) : ""}<span>${pc ? "vs " + F.money(pc.revenue) + " · " + cmpLab : "doanh thu kỳ này"}</span></div></div>
+        <div class="phead">${UI.platLogo(p.key)}<div><div style="font-weight:800;font-size:15px">${p.label}</div><div style="font-size:12px;color:var(--ink-3);font-weight:600">${F.pct(p.share)} ${_t("compare.share")}</div></div></div>
+        <div style="padding:0 18px 8px"><div style="font-size:26px;font-weight:800;letter-spacing:-.02em" class="tnum">${F.money(p.revenue)}</div><div style="display:flex;align-items:center;gap:7px;font-size:12px;color:var(--ink-3);font-weight:600;margin-top:2px">${pc ? dd(p.revenue, pc.revenue) : ""}<span>${pc ? "vs " + F.money(pc.revenue) + " · " + cmpLab : _t("compare.revenue_period")}</span></div></div>
         ${rows.map((r) => `<div class="pmetric"><span class="lab">${r[0]}</span><span style="display:flex;align-items:center;gap:8px">${r[2]}<span class="val tnum">${r[1]}</span></span></div>`).join("")}
-        <div class="pmetric" style="flex-direction:column;align-items:flex-start;gap:5px"><span class="lab">Sản phẩm bán chạy nhất</span><span style="font-weight:600;font-size:13px;line-height:1.3">${tp ? tp.cleanName : "—"}</span></div>
+        <div class="pmetric" style="flex-direction:column;align-items:flex-start;gap:5px"><span class="lab">${_t("compare.metric.top_product")}</span><span style="font-weight:600;font-size:13px;line-height:1.3">${tp ? (S.products(st.period, "rev", "all").filter((x) => x.platform === p.key)[0] || {}).cleanName || "—" : "—"}</span></div>
       </div>`;
     }).join("");
 
@@ -60,20 +61,20 @@
     }).join("");
 
     return `
-    <div class="note section0" style="margin-bottom:16px">${UI.ICON.info} Đang so sánh <b>${S.periodLabel(st.period)}</b>${cmpLab ? ` với <b>${cmpLab}</b>` : ""}. Đổi kỳ &amp; kiểu so sánh ở thanh trên.</div>
+    <div class="note section0" style="margin-bottom:16px">${UI.ICON.info} ${_t("compare.note")} <b>${S.periodLabel(st.period)}</b>${cmpLab ? ` ${_t("compare.note")} <b>${cmpLab}</b>` : ""}. ${_t("compare.note_sub")}</div>
     <div class="g12">${cards}</div>
 
     <div class="card section-gap">
-      <div class="card-head"><div><div class="card-title">Tình hình kinh doanh</div><div class="card-sub">${S.periodLabel(st.period).toLowerCase()} · mỗi đường một sàn</div></div>
+      <div class="card-head"><div><div class="card-title">${_t("compare.trend.title")}</div><div class="card-sub">${S.periodLabel(st.period).toLowerCase()} · ${_t("compare.trend.sub")}</div></div>
         <div class="legend">${S.PKEYS.map((k) => `<span class="legend-item"><span class="legend-swatch" style="background:var(--${k})"></span>${S.PLAT[k].label}</span>`).join("")}</div>
       </div>
       <div class="card-pad" style="padding-top:14px"><div class="chart-wrap" style="height:300px"><canvas id="trajChart"></canvas></div></div>
     </div>
 
     <div class="card section-gap">
-      <div class="card-head"><div><div class="card-title">Bảng so sánh chi tiết</div><div class="card-sub">${S.periodLabel(st.period).toLowerCase()}</div></div></div>
+      <div class="card-head"><div><div class="card-title">${_t("compare.detail.title")}</div><div class="card-sub">${S.periodLabel(st.period).toLowerCase()}</div></div></div>
       <div class="card-pad" style="overflow-x:auto;padding:6px">
-        <table class="tbl"><thead><tr><th>Sàn</th><th class="num">Doanh thu</th><th class="num">Δ ${st.compare === "yoy" ? "cùng kỳ" : st.compare === "prev" ? "kỳ trước" : ""}</th><th class="num">Đơn</th><th class="num">% HT</th><th class="num">% ${t("common.cancel")}</th><th class="num">AOV</th><th class="num">Truy cập</th><th class="num">% CĐ</th><th class="num">Thị phần</th></tr></thead><tbody>${tblRows}</tbody></table>
+        <table class="tbl"><thead><tr><th>${_t("th.platform")}</th><th class="num">${_t("th.revenue")}</th><th class="num">Δ ${st.compare === "yoy" ? _t("compare.yoy_short") : st.compare === "prev" ? _t("compare.prev_short") : ""}</th><th class="num">${_t("th.orders")}</th><th class="num">% HT</th><th class="num">% ${_t("common.cancel")}</th><th class="num">${_t("kpi.aov")}</th><th class="num">${_t("kpi.visits")}</th><th class="num">% ${_t("kpi.conversion").charAt(0)}</th><th class="num">${_t("th.share")}</th></tr></thead><tbody>${tblRows}</tbody></table>
       </div>
     </div>`;
   }
