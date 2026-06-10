@@ -180,13 +180,17 @@
     if (s.startsWith("MON") || n.includes("váng sữa")) return "monte";
     return "other";
   }
+  // Color keys here MUST be raw CSS-var names ("--shopee") or hex —
+  // charts.js col() only resolves keys that startsWith("--").
+  // Previously "var(--shopee)" form fell through unparsed, so donut
+  // slices for categories rendered with Chart.js's default palette.
   const CAT = {
-    monte: { label: "Váng sữa Monte", color: "var(--shopee)" },
-    yogurt: { label: "Sữa chua Montinis", color: "var(--lazada)" },
+    monte: { label: "Váng sữa Monte", color: "--shopee" },
+    yogurt: { label: "Sữa chua Montinis", color: "--lazada" },
     freshcheese: { label: "Phô mai tươi", color: "#2A9D8F" },
-    slices: { label: "Phô mai lát", color: "var(--tiktok)" },
-    gift: { label: "Quà tặng (0đ)", color: "var(--ink-3)" },
-    other: { label: "Khác", color: "var(--border-strong)" },
+    slices: { label: "Phô mai lát", color: "--tiktok" },
+    gift: { label: "Quà tặng (0đ)", color: "--ink-3" },
+    other: { label: "Khác", color: "--border-strong" },
   };
   const cleanName = (n) => (n || "").replace(/^\[.*?\]\s*/, "").replace(/\s*-\s*HÀNG TẶNG.*$/i, "").trim();
 

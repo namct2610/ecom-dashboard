@@ -108,7 +108,7 @@
           <div class="card-head"><div><div class="card-title">Cơ cấu nhóm sản phẩm</div><div class="card-sub">theo doanh thu · ${S.periodLabel(st.period).toLowerCase()}</div></div></div>
           <div class="card-pad"><div class="donut-wrap" style="height:180px"><canvas id="catDonut2"></canvas><div class="donut-center"><div><div class="big tnum">${F.money(totalCatRev)}</div><div class="small">top SP</div></div></div></div>
             <div style="margin-top:14px;display:flex;flex-direction:column;gap:10px">
-              ${cats.map((c) => `<div><div style="display:flex;align-items:center;gap:9px;font-size:13px;margin-bottom:4px"><span class="legend-swatch" style="background:${c.color}"></span><b>${c.label}</b><span style="margin-left:auto;font-weight:800" class="tnum">${F.money(c.revenue)}</span></div><div class="cmp-track"><div class="cmp-fill" style="width:${c.revenue / (cats[0].revenue || 1) * 100}%;background:${c.color}"></div></div></div>`).join("")}
+              ${cats.map((c) => `<div><div style="display:flex;align-items:center;gap:9px;font-size:13px;margin-bottom:4px"><span class="legend-swatch" style="background:${UI.cssColor(c.color)}"></span><b>${c.label}</b><span style="margin-left:auto;font-weight:800" class="tnum">${F.money(c.revenue)}</span></div><div class="cmp-track"><div class="cmp-fill" style="width:${c.revenue / (cats[0].revenue || 1) * 100}%;background:${UI.cssColor(c.color)}"></div></div></div>`).join("")}
             </div></div>
         </div>
         <div data-collapse style="grid-column:span 7" class="card">

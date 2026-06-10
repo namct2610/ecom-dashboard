@@ -18,6 +18,7 @@
     isAdmin: false,
     saving: false,
     msg: null,       // { kind:"ok"|"err", text }
+    update: null,    // { loading, current, latest, has_update, changelog, download_url, last_checked, fetch_error, installing }
   };
 
   async function fetchInitial() {
@@ -142,6 +143,64 @@
       </div>`;
   }
 
+  function updateCard() {
+    if (!local.isAdmin) return "";
+    const u = local.update || {};
+    let body;
+    if (u.installing) {
+      body = `<div style="text-align:center;color:var(--ink-2);font-weight:700">${t("v2up.installing")} v${u.installing}…</div>`;
+    } else if (u.success) {
+      body = `<div style="text-align:center">
+        <div style="color:var(--pos);font-weight:700;margin-bottom:8px">${t("v2up.success")}</div>
+        <button class="ctrl-btn on" id="btnV2UpReload" style="background:var(--brand);border-color:var(--brand);color:#fff">${t("v2up.reload")}</button>
+      </div>`;
+    } else if (u.fetch_error && !u.latest) {
+      body = `<div style="padding:10px 14px;border-radius:var(--r-ctrl);background:color-mix(in oklch, #f0a945 18%, transparent);color:#92400e;font-weight:600;font-size:13px">${u.fetch_error}</div>`;
+    } else if (u.has_update) {
+      body = `
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px">
+          <div>
+            <div style="color:var(--brand);font-weight:800;font-size:15px">${t("v2up.has_update")}: v${u.latest}</div>
+            <div style="font-size:12.5px;color:var(--ink-3);font-weight:600;margin-top:3px">
+              ${t("v2up.current")} v${u.current}
+              ${u.last_checked ? ` · ${t("v2up.checked_at")} ${u.last_checked}` : ""}
+            </div>
+          </div>
+          <button class="ctrl-btn on" id="btnV2UpApply" style="background:var(--brand);border-color:var(--brand);color:#fff">${t("v2up.apply")}</button>
+        </div>
+        ${u.changelog ? `<div style="margin-top:12px;padding:10px 14px;background:var(--surface-2);border-radius:var(--r-ctrl);font-size:12.5px;white-space:pre-wrap;line-height:1.7;color:var(--ink-2)">${escapeHtml(u.changelog)}</div>` : ""}`;
+    } else {
+      body = `
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+          <div>
+            <div style="font-weight:700;color:var(--pos)">✓ ${t("v2up.up_to_date")} (v${u.current || "—"})</div>
+            <div style="font-size:12.5px;color:var(--ink-3);font-weight:600;margin-top:3px">${u.last_checked ? `${t("v2up.checked_at")} ${u.last_checked}` : ""}</div>
+          </div>
+        </div>`;
+    }
+
+    return `
+      <div class="card section-gap">
+        <div class="card-head">
+          <div>
+            <div class="card-title">${t("v2up.card.title")}</div>
+            <div class="card-sub">${t("v2up.card.sub")}</div>
+          </div>
+          <button class="ctrl-btn" id="btnV2UpCheck">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 0 1-15.5 6.2"/><path d="M3 12A9 9 0 0 1 18.5 5.8"/><path d="M18 2v5h-5"/><path d="M6 22v-5h5"/></svg>
+            ${t("v2up.check_now")}
+          </button>
+        </div>
+        <div class="card-pad">
+          ${u.loading ? `<div style="text-align:center;color:var(--ink-3);font-weight:600">${t("common.loading")}</div>` : body}
+        </div>
+      </div>`;
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+  }
+
   function render() {
     if (local.loading) {
       return `<div class="card card-pad" style="text-align:center;color:var(--ink-3);font-weight:600">${t("common.loading")}</div>`;
@@ -154,7 +213,68 @@
       <div class="g12" style="grid-template-columns:repeat(12,1fr);gap:16px">
         <div style="grid-column:span 6" data-collapse>${accountCard()}</div>
         <div style="grid-column:span 6" data-collapse>${brandCard()}</div>
-      </div>`;
+      </div>
+      ${updateCard()}`;
+  }
+
+  /* ── v2 self-update ───────────────────────────────────────── */
+
+  async function fetchUpdateStatus() {
+    local.update = local.update || {};
+    local.update.loading = true;
+    window.App.rerender();
+    try {
+      const r = await fetch("../api/v2-update.php", { credentials: "same-origin" });
+      const j = await r.json();
+      local.update = {
+        loading: false,
+        current: j.current,
+        latest: j.latest,
+        has_update: j.has_update,
+        changelog: j.changelog,
+        download_url: j.download_url,
+        last_checked: j.last_checked,
+        fetch_error: j.fetch_error,
+      };
+    } catch (e) {
+      local.update = { loading: false, fetch_error: e.message || String(e) };
+    }
+    window.App.rerender();
+  }
+
+  async function checkUpdateNow() {
+    try {
+      await fetch("../api/v2-update.php", {
+        method: "POST", credentials: "same-origin",
+        headers: { "Content-Type": "application/json", "X-CSRF-Token": local.csrf },
+        body: JSON.stringify({ action: "check_now" }),
+      });
+      await fetchUpdateStatus();
+    } catch (e) {
+      showMsg("err", e.message || String(e));
+    }
+  }
+
+  async function applyV2Update() {
+    if (!local.update || !local.update.download_url || !local.update.latest) return;
+    if (!confirm(t("v2up.has_update") + ": v" + local.update.latest + "?")) return;
+    local.update.installing = local.update.latest;
+    window.App.rerender();
+    try {
+      const r = await fetch("../api/v2-update.php", {
+        method: "POST", credentials: "same-origin",
+        headers: { "Content-Type": "application/json", "X-CSRF-Token": local.csrf },
+        body: JSON.stringify({ action: "apply", version: local.update.latest, download_url: local.update.download_url }),
+      });
+      const j = await r.json();
+      if (!j.success) throw new Error(j.error || "HTTP " + r.status);
+      local.update.installing = null;
+      local.update.success = true;
+      window.App.rerender();
+    } catch (e) {
+      local.update.installing = null;
+      showMsg("err", "Update failed: " + (e.message || e));
+    }
   }
 
   /* ── interactions ───────────────────────────────────────────── */
@@ -287,14 +407,24 @@
     document.querySelectorAll('.brand-rule-row [data-field="prefix"]').forEach((inp) => {
       inp.addEventListener("input", () => { inp.value = inp.value.toUpperCase().slice(0, 3); });
     });
+    // v2 update card
+    document.getElementById("btnV2UpCheck")?.addEventListener("click", checkUpdateNow);
+    document.getElementById("btnV2UpApply")?.addEventListener("click", applyV2Update);
+    document.getElementById("btnV2UpReload")?.addEventListener("click", () => location.reload());
   }
 
   function mount(root) {
     if (local.loading) {
-      fetchInitial().then(() => window.App.rerender());
+      fetchInitial().then(() => {
+        window.App.rerender();
+        // lazy-load the update status only for admins, after the page renders
+        if (local.isAdmin && !local.update) fetchUpdateStatus();
+      });
       return;
     }
     bind(root);
+    // lazy-load update on the first mount if not yet fetched
+    if (local.isAdmin && !local.update) fetchUpdateStatus();
   }
 
   window.Views.settings = {

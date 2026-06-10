@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Carlito:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/theme.css?v=5">
+<link rel="stylesheet" href="assets/theme.css?v=19">
 </head>
 <body>
 <div id="app">
@@ -113,6 +113,11 @@
     </header>
 
     <main id="content">
+      <div id="v2Banner" class="v2-banner">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2 4 7v5c0 5 3.5 9 8 10 4.5-1 8-5 8-10V7l-8-5Z"/><path d="m9 12 2 2 4-4"/></svg>
+        <span class="v2-banner-text"><b data-i18n="banner.v2_new">Bạn đang dùng giao diện mới (v2).</b> <span data-i18n="banner.v2_sub">Có thể quay lại giao diện cũ nếu cần.</span></span>
+        <a class="ctrl-btn" id="goLegacyBtn" href="../index.php?legacy=1" data-i18n="banner.back_to_v1">Quay lại bản cũ</a>
+      </div>
       <div id="pageRoot"></div>
       <div style="height:8px"></div>
     </main>
@@ -135,7 +140,7 @@
     var root = document.getElementById('pageRoot');
     root.innerHTML = '<div style="padding:48px 24px;color:var(--ink-3);font-weight:600;text-align:center">' + (window.t ? window.t('boot.loading_data') : 'Đang tải dữ liệu…') + '</div>';
 
-    var V = 18; // cache-bust for assets
+    var V = 19; // cache-bust for assets
     var MODULES = [
       'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js',
       'assets/store.js?v=' + V,

@@ -275,8 +275,6 @@ const I18n = (() => {
     'update.failed':'Cập nhật thất bại','update.retry':'Thử lại','update.conn_error':'Lỗi kết nối',
     'update.confirm_body':'?\n\nCác file mới sẽ được cài đặt. config.php và uploads/ sẽ được giữ nguyên.\nVui lòng backup trước nếu cần.',
     'update.check_now':'Kiểm tra ngay','update.manifest_url':'URL Manifest cập nhật',
-    'v2update.title':'Cập nhật giao diện v2','v2update.sub':'Channel độc lập — bản cập nhật chỉ thay file trong v2/ và api/v2-*.php, không ảnh hưởng v1.',
-    'v2update.new_version':'Có bản cập nhật v2 mới:','v2update.current_label':'v2 hiện tại','v2update.open':'Mở giao diện v2',
     'update.manifest_url_hint':'— file JSON chứa thông tin phiên bản mới nhất',
     'update.production_manifest_note':'Production chỉ sử dụng duy nhất manifest này. Không cần nhập URL theo tag phiên bản.',
     'btn.sync':'Đồng bộ','btn.disconnect':'Ngắt kết nối','btn.date_from':'Từ ngày','btn.date_to':'Đến ngày',

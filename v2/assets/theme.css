@@ -209,19 +209,39 @@ body { transition: background .3s ease, color .3s ease; }
 
 #content { padding: 24px; max-width: 1480px; width: 100%; margin: 0 auto; }
 
+/* "you're on v2 — go back to v1" thin banner */
+.v2-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  margin-bottom: 16px;
+  border-radius: var(--r-ctrl);
+  background: color-mix(in oklch, var(--brand) 8%, var(--surface));
+  border: 1px solid color-mix(in oklch, var(--brand) 22%, transparent);
+  font-size: 13px; color: var(--ink-2); font-weight: 600;
+}
+.v2-banner svg { width: 18px; height: 18px; flex: 0 0 18px; color: var(--brand); }
+.v2-banner-text { flex: 1; min-width: 0; }
+.v2-banner-text b { color: var(--ink); }
+.v2-banner .ctrl-btn { flex: 0 0 auto; text-decoration: none; font-size: 12.5px; padding: 7px 12px; }
+
 /* hamburger lives inside .iconbtn-sq (display:grid) — increase specificity so it's hidden on desktop */
 .iconbtn-sq.hamburger { display: none; }
 
 /* ============================================================
    CONTROLS
    ============================================================ */
+/* All top-of-page controls share the same 38px height so the topbar reads
+   as a single horizontal band. */
 .segment {
   display: inline-flex; background: var(--surface-2); border: 1px solid var(--border);
   border-radius: var(--r-pill); padding: 3px; gap: 2px;
+  height: 38px; align-items: center;
 }
 .segment button {
   border: none; background: transparent; color: var(--ink-2); cursor: pointer;
-  font-family: inherit; font-weight: 600; font-size: 13px; padding: 6px 13px; border-radius: var(--r-pill);
+  font-family: var(--font-ui); font-weight: 600; font-size: 13px; padding: 6px 13px; border-radius: var(--r-pill);
   display: inline-flex; align-items: center; gap: 7px; transition: background .15s, color .15s; white-space: nowrap;
 }
 .segment button:hover { color: var(--ink); }
@@ -232,6 +252,7 @@ body { transition: background .3s ease, color .3s ease; }
   width: 38px; height: 38px; flex: 0 0 38px; border-radius: var(--r-ctrl);
   display: grid; place-items: center; cursor: pointer;
   background: var(--surface-2); border: 1px solid var(--border); color: var(--ink-2);
+  font-family: var(--font-ui); font-weight: 700;
   transition: background .15s, color .15s;
 }
 .iconbtn-sq:hover { background: var(--surface-3); color: var(--ink); }
@@ -240,7 +261,8 @@ body { transition: background .3s ease, color .3s ease; }
 .period, .ctrl-btn {
   display: inline-flex; align-items: center; gap: 9px; white-space: nowrap;
   background: var(--surface); border: 1px solid var(--border-strong); color: var(--ink);
-  padding: 8px 13px; border-radius: var(--r-ctrl); cursor: pointer; font-weight: 700; font-size: 13px; font-family: inherit;
+  height: 38px; padding: 0 14px; border-radius: var(--r-ctrl);
+  cursor: pointer; font-weight: 700; font-size: 13px; font-family: var(--font-ui);
   transition: border-color .15s, background .15s;
 }
 .period:hover, .ctrl-btn:hover { border-color: var(--ink-3); }
