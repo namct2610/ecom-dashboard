@@ -86,10 +86,10 @@
     if (stacked) {
       datasets = ["shopee", "lazada", "tiktok"].map((k) => ({
         label: window.Store.PLAT[k].label, data: series.map((s) => s["o_" + k]),
-        backgroundColor: col("--" + k), borderRadius: 6, stack: "o", maxBarThickness: 18,
+        backgroundColor: col("--" + k), borderRadius: 8, borderSkipped: false, borderWidth: 0, stack: "o", maxBarThickness: 18,
       }));
     } else {
-      datasets = [{ label: "Đơn", data: series.map((s) => s.orders), backgroundColor: col("--" + opt.platform), borderRadius: 6, maxBarThickness: 18 }];
+      datasets = [{ label: "Đơn", data: series.map((s) => s.orders), backgroundColor: col("--" + opt.platform), borderRadius: 8, borderSkipped: false, borderWidth: 0, maxBarThickness: 18 }];
     }
     return mk(canvas, {
       type: "bar", data: { labels, datasets },
@@ -114,8 +114,8 @@
           data: items.map((i) => i.value),
           backgroundColor: items.map((i) => col(i.color)),
           borderColor: surface(), borderWidth: 3,
-          borderRadius: 6,  // rounded slice edges — matches the rest of the UI
-          spacing: 2,
+          borderRadius: 3,
+          spacing: 1,
           hoverOffset: 6,
         }],
       },
@@ -170,11 +170,11 @@
       datasets = ["shopee", "lazada", "tiktok"].map((k) => ({
         label: window.Store.PLAT[k].label, data: trend.map((t) => t[k]),
         backgroundColor: trend.map((t) => t.partial ? hexA(col("--" + k), 0.4) : col("--" + k)),
-        borderRadius: 6, stack: "rev", maxBarThickness: 38,
+        borderRadius: 8, borderSkipped: false, borderWidth: 0, stack: "rev", maxBarThickness: 38,
       }));
     } else {
       const c = col("--" + opt.platform);
-      datasets = [{ label: window.Store.PLAT[opt.platform].label, data: trend.map((t) => t[opt.platform]), backgroundColor: trend.map((t) => t.partial ? hexA(c, 0.4) : c), borderRadius: 6, maxBarThickness: 38 }];
+      datasets = [{ label: window.Store.PLAT[opt.platform].label, data: trend.map((t) => t[opt.platform]), backgroundColor: trend.map((t) => t.partial ? hexA(c, 0.4) : c), borderRadius: 8, borderSkipped: false, borderWidth: 0, maxBarThickness: 38 }];
     }
     return mk(canvas, {
       type: "bar", data: { labels, datasets },

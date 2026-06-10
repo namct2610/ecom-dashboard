@@ -1,7 +1,7 @@
 {
-  "version": "3.2.3",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.2.3/release/dashboard-v3-3.2.3.zip",
-  "changelog": "- Thay toàn bộ date picker bằng calendar component tùy chỉnh, CSS đồng bộ theme v2.\n- Hỗ trợ i18n đầy đủ VI/EN cho tên tháng, tên thứ, không còn lẫn lộn ngôn ngữ như native input.\n- Chế độ Ngày: lịch tháng click chọn ngày. Chế độ Tuần: click ngày chọn cả tuần (thứ 2 - CN), highlight dải tuần. Chế độ Tháng: lưới 12 tháng. Chế độ Năm: select + lưới năm. Chế độ Tùy chỉnh: click chọn ngày đầu rồi ngày cuối, highlight dải ngày.",
+  "version": "3.3.0",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.3.0/release/dashboard-v3-3.3.0.zip",
+  "changelog": "- Đồng bộ kích thước calendar cell ngày/tháng/năm, tách CSS riêng cho từng loại.\n- Sửa lỗi nháy login overlay khi hard refresh: ẩn bằng CSS `[hidden]`.\n- Bỏ banner thông báo giao diện mới và bỏ hoàn toàn /old/ (v1) khỏi production.\n- Bo tròn tất cả cột biểu đồ (stack bar): thêm `borderSkipped: false` + tăng borderRadius lên 8.\n- Giảm bo tròn biểu đồ donut xuống `borderRadius: 3` + `spacing: 1`.",
   "min_php": "8.1",
   "released_at": "2026-06-10"
 }

@@ -209,23 +209,6 @@ body { transition: background .3s ease, color .3s ease; }
 
 #content { padding: 24px; max-width: 1480px; width: 100%; margin: 0 auto; }
 
-/* "you're on v2 — go back to v1" thin banner */
-.v2-banner {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 14px;
-  margin-bottom: 16px;
-  border-radius: var(--r-ctrl);
-  background: color-mix(in oklch, var(--brand) 8%, var(--surface));
-  border: 1px solid color-mix(in oklch, var(--brand) 22%, transparent);
-  font-size: 13px; color: var(--ink-2); font-weight: 600;
-}
-.v2-banner svg { width: 18px; height: 18px; flex: 0 0 18px; color: var(--brand); }
-.v2-banner-text { flex: 1; min-width: 0; }
-.v2-banner-text b { color: var(--ink); }
-.v2-banner .ctrl-btn { flex: 0 0 auto; text-decoration: none; font-size: 12.5px; padding: 7px 12px; }
-
 /* ============================================================
    LOGIN OVERLAY
    Shown when /api/v2-data.php returns 401. The form posts to
@@ -238,6 +221,7 @@ body { transition: background .3s ease, color .3s ease; }
   backdrop-filter: blur(8px) saturate(1.2);
   display: grid; place-items: center; padding: 24px;
 }
+.login-overlay[hidden] { display: none !important; }
 .login-card {
   width: 100%; max-width: 380px;
   background: var(--surface);
@@ -472,9 +456,7 @@ body { transition: background .3s ease, color .3s ease; }
   letter-spacing: .04em;
 }
 
-.cal-day,
-.cal-month,
-.cal-year {
+.cal-day {
   display: grid;
   place-items: center;
   aspect-ratio: 1;
@@ -489,6 +471,25 @@ body { transition: background .3s ease, color .3s ease; }
   border: none;
   background: transparent;
   -webkit-appearance: none; appearance: none;
+}
+
+.cal-month,
+.cal-year {
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-ctrl);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink);
+  cursor: pointer;
+  transition: background .12s, color .12s;
+  user-select: none;
+  border: none;
+  background: transparent;
+  -webkit-appearance: none; appearance: none;
+  padding: 10px 6px;
+  min-height: 38px;
 }
 
 .cal-day:hover,
@@ -538,13 +539,6 @@ body { transition: background .3s ease, color .3s ease; }
   color: #fff;
   font-weight: 800;
   border-radius: var(--r-ctrl);
-}
-
-.cal-month,
-.cal-year {
-  aspect-ratio: auto;
-  padding: 9px 6px;
-  font-size: 12px;
 }
 
 /* ============================================================
