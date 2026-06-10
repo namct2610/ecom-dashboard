@@ -1,7 +1,7 @@
 {
-  "version": "3.4.1",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.1/release/dashboard-v3-3.4.1.zip",
-  "changelog": "- Sắp xếp lại layout Tổng quan: Xu hướng doanh thu + Thị phần → Xu hướng đơn hàng + Doanh thu danh mục → So sánh sàn + Phân bổ khu vực → Sản phẩm bán chạy (top 3) + Khung giờ đặt đơn.\n- Đổi tên: 'Doanh thu theo ngày' → 'Xu hướng doanh thu', 'Xu hướng theo ngày' → 'Xu hướng đơn hàng' (i18n VI/EN).\n- Sản phẩm bán chạy chỉ hiển thị top 3 thay vì top 7.\n- So sánh sàn và Phân bổ khu vực đặt cạnh nhau (7:5).\n- Cập nhật i18n cho tất cả thay đổi.",
+  "version": "3.4.2",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.2/release/dashboard-v3-3.4.2.zip",
+  "changelog": "- Đồng bộ hiển thị delta: tất cả dùng % thay vì đpt.\n- Cho phép chọn năm 2026 trong period picker (luôn có năm hiện tại).\n- Dữ liệu năm 2026 tổng hợp cho đến tháng mới nhất có sẵn.",
   "min_php": "8.1",
   "released_at": "2026-06-11"
 }

@@ -17,7 +17,7 @@
     let dir = Math.abs(pp) < 0.05 ? "flat" : pp > 0 ? "up" : "down";
     let cls = invert ? (dir === "up" ? "down" : dir === "down" ? "up" : "flat") : dir;
     const arrow = dir === "up" ? UI.ICON.up : dir === "down" ? UI.ICON.down : "";
-    return `<span class="delta ${cls}">${arrow}${pp > 0 ? "+" : ""}${F.viDec(pp, 1)} đpt</span>`;
+    return `<span class="delta ${cls}">${arrow}${pp > 0 ? "+" : ""}${F.viDec(pp, 1)}%</span>`;
   }
 
   function kpiCard(o) {
