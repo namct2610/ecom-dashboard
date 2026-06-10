@@ -1,7 +1,7 @@
 {
-  "version": "2.5.0",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v2-2.5.0/release/dashboard-v2-2.5.0.zip",
-  "changelog": "- Batch 5/N: thêm trang \"Đối soát GBS\" (nav Hệ thống).\n  * Month picker từ danh sách tháng đã có dữ liệu GBS, đánh dấu ✓ tháng đã đối soát.\n  * 6 KPI tile: Đơn GBS, Đơn sàn, Khớp + %, Lệch, Thiếu GBS, Thiếu sàn.\n  * 3 thẻ sàn (Shopee/Lazada/TikTok) với viền đỏ/xanh/đen, mini-bảng từng metric.\n  * Ghi chú đối soát (insights bullets từ service).\n  * Bảng đơn lệch top 50 + nút \"Tải Excel\" để export đầy đủ.\n  * Quản lý tệp GBS: upload .xlsx, list, xoá.\n  * Checkbox \"Đã đối soát tháng này\" lưu confirmation cho từng tháng.\n  * Cắm /api/gbs-reconciliation.php + /api/reconciliation-files.php + /api/reconciliation-file-delete.php + /api/gbs-reconciliation-export.php.\n- Còn lại: OAuth Connectors Shopee/Lazada/TikTok (Batch 6).",
+  "version": "2.6.0",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v2-2.6.0/release/dashboard-v2-2.6.0.zip",
+  "changelog": "- Batch 6/6 (cuối): thêm trang \"Kết nối sàn\" (nav Hệ thống) — Shopee / Lazada / TikTok Shop với 3 tab.\n  * Mỗi tab: form thông tin ứng dụng (Partner ID/Key cho Shopee, App Key/Secret cho Lazada+TikTok), nút Lưu + Cấp quyền (OAuth) mở tab mới.\n  * Bảng shop/account đã kết nối: ID + tên, ngày hết hạn token, ngày bắt đầu đồng bộ (input date), lần đồng bộ cuối, on/off, nút Đồng bộ + Ngắt kết nối.\n  * Nút \"Đồng bộ tất cả\" cho từng sàn.\n  * Lazy-load mỗi tab khi click lần đầu.\n  * Cắm sẵn 3 endpoint: /api/{shopee,lazada,tiktok}-connect.php (status / save_credentials / get_auth_url / sync / toggle_active / set_sync_from / disconnect).\n\nVới batch này, v2 đã hoàn thành toàn bộ tính năng của v1:\n  Tổng quan · So sánh sàn · Đơn hàng · Sản phẩm · Khách hàng · Lưu lượng · Kế hoạch · Tải dữ liệu · Đối soát GBS · Kết nối sàn · Người dùng · Cài đặt.",
   "min_php": "8.1",
   "released_at": "2026-06-09"
 }

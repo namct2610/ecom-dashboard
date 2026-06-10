@@ -3,7 +3,7 @@
    ============================================================ */
 (function () {
   const S = window.Store, st = S.state;
-  const PAGES = ["overview", "compare", "orders", "products", "customers", "traffic", "plan", "upload", "reconcile", "users", "settings"];
+  const PAGES = ["overview", "compare", "orders", "products", "customers", "traffic", "plan", "upload", "reconcile", "connect", "users", "settings"];
 
   /* Dynamic period list — derived from DASH.monthly so it stays in sync
      with actual data range. Order:
