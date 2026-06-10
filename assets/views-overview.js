@@ -66,6 +66,7 @@
       }),
     ].map((c) => `<div data-collapse style="grid-column:span 3">${c}</div>`).join("");
 
+    // ── Row 2: Revenue trend + Share donut ──
     const trend = S.businessTrend(st.period);
     const trendModeName = S.periodMode(st.period);
     const trendSub = trendModeName === "month"
@@ -74,11 +75,14 @@
         ? `${_t("ovw.trend.title").toLowerCase()} · ${plat === "all" ? _t("ovw.trend.all_platforms") : S.PLAT[plat].label}`
         : `${S.periodLabel(st.period).toLowerCase()} · ${plat === "all" ? _t("ovw.trend.all_platforms") : S.PLAT[plat].label}`;
 
-    // platform comparison
     const pmAll = S.PKEYS.map((k) => ({ key: k, ...S.PLAT[k], ...S.aggRange(range, k) }));
     const totalRev = pmAll.reduce((t, p) => t + p.revenue, 0);
     pmAll.forEach((p) => { p.share = totalRev ? p.revenue / totalRev * 100 : 0; });
     const pm = hideShopee ? pmAll.filter((p) => p.key !== "shopee") : pmAll;
+
+    // ── Row 3: Order trend + Category donut ──
+
+    // ── Row 4: Platform comparison + Geo distribution ──
     const metricLabel = { revenue: _t("ovw.cmp.revenue"), orders: _t("ovw.cmp.orders"), aov: _t("ovw.cmp.aov") }[cmpMetric];
     const accessor = { revenue: (p) => p.revenue, orders: (p) => p.orders, aov: (p) => p.aov }[cmpMetric];
     const fmt = { revenue: (v) => F.money(v), orders: (v) => F.viInt(v), aov: (v) => F.money(v) }[cmpMetric];
@@ -90,7 +94,6 @@
         <div class="cmp-val">${fmt(accessor(p))}</div>
       </div>`).join("");
 
-    // comparison table with YoY/prev delta per platform
     const tblRows = pmAll.map((p) => {
       const pc = cmpRange ? S.aggRange(cmpRange, p.key) : null;
       return `<tr>
@@ -104,15 +107,6 @@
       </tr>`;
     }).join("");
 
-    // top products
-    const prods = S.products(st.period, "rev", plat).slice(0, 7);
-    const prodRows = prods.map((p, i) => `
-      <tr>
-        <td><div class="prod"><span class="rank">${i + 1}</span><div style="min-width:0"><div class="pname">${p.cleanName}</div><div class="psku">${p.sku} · ${UI.pchip(p.platform)}</div></div></div></td>
-        <td class="num">${F.viInt(p.qty)}</td>
-        <td class="num"><b>${F.money(p.revenue)}</b></td>
-      </tr>`).join("");
-
     // geo
     const geo = S.cityDistribution(st.period, plat);
     const geoRows = geo.map((g) => `
@@ -124,7 +118,15 @@
 
     // category donut
     const cats = S.categoryBreakdown(st.period, plat).filter((c) => c.revenue > 0);
-    const totalCatRev = cats.reduce((t, c) => t + c.revenue, 0);
+
+    // ── Row 5: Top 3 products + Heatmap ──
+    const prods = S.products(st.period, "rev", plat).slice(0, 3);
+    const prodRows = prods.map((p, i) => `
+      <tr>
+        <td><div class="prod"><span class="rank">${i + 1}</span><div style="min-width:0"><div class="pname">${p.cleanName}</div><div class="psku">${p.sku} · ${UI.pchip(p.platform)}</div></div></div></td>
+        <td class="num">${F.viInt(p.qty)}</td>
+        <td class="num"><b>${F.money(p.revenue)}</b></td>
+      </tr>`).join("");
 
     // heatmap
     const { m, max } = S.heatMatrix(st.period, plat);
@@ -144,12 +146,10 @@
     }
     heat += `</div>`;
 
-    const recentSource = (S.getRangeDetail(st.period, plat) || {}).recentOrders || [];
-    const recent = recentSource.filter((o) => plat === "all" || o.platform === plat).slice(0, 8);
-
     return `
     <div class="g12">${cards}</div>
 
+    <!-- Row 2: Revenue trend + Share donut -->
     <div class="g12 section-gap">
         <div data-collapse style="grid-column:span 8" class="card">
           <div class="card-head">
@@ -171,30 +171,7 @@
       </div>
     </div>
 
-    <div class="card section-gap">
-      <div class="card-head">
-        <div><div class="card-title">${_t("ovw.cmp.title")}</div><div class="card-sub">${_t("ovw.cmp.metric_label")} <b>${metricLabel}</b> · ${S.periodLabel(st.period).toLowerCase()}</div></div>
-        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-          <div class="miniseg" id="cmpSeg">
-            <button class="${cmpMetric === "revenue" ? "active" : ""}" data-m="revenue">${_t("ovw.cmp.revenue")}</button>
-            <button class="${cmpMetric === "orders" ? "active" : ""}" data-m="orders">${_t("ovw.cmp.orders")}</button>
-            <button class="${cmpMetric === "aov" ? "active" : ""}" data-m="aov">${_t("ovw.cmp.aov")}</button>
-          </div>
-          <button class="ctrl-btn ${hideShopee ? "on" : ""}" id="hideShopeeBtn" style="padding:6px 11px;font-size:12.5px">${UI.ICON.eye}<span>${hideShopee ? _t("ovw.cmp.show_shopee") : _t("ovw.cmp.hide_shopee")}</span></button>
-        </div>
-      </div>
-      <div class="card-pad" style="padding-top:14px">
-        ${hideShopee ? `<div class="note" style="margin-bottom:14px">${UI.ICON.info} ${_tf("ovw.cmp.hiding_note", { pct: F.pct(pmAll[0].share) })}</div>` : ""}
-        <div style="display:flex;flex-direction:column;gap:2px;margin-bottom:8px">${cmpRows}</div>
-        <div style="overflow-x:auto;margin-top:8px">
-          <table class="tbl">
-            <thead><tr><th>${_t("th.platform")}</th><th class="num">${_t("th.revenue")}</th><th class="num">${cmpLab ? "Δ " + (st.compare === "yoy" ? _t("compare.yoy_short") : _t("compare.prev_short")) : "Δ"}</th><th class="num">${_t("th.orders")}</th><th class="num">${_t("kpi.aov")}</th><th class="num">% ${_t("common.cancel")}</th><th class="num">${_t("th.share")}</th></tr></thead>
-            <tbody>${tblRows}</tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
+    <!-- Row 3: Order trend + Category donut -->
     <div class="g12 section-gap">
       <div data-collapse style="grid-column:span 8" class="card">
         <div class="card-head">
@@ -214,10 +191,30 @@
       </div>
     </div>
 
+    <!-- Row 4: Platform comparison + Geo distribution -->
     <div class="g12 section-gap">
       <div data-collapse style="grid-column:span 7" class="card">
-        <div class="card-head"><div><div class="card-title">${_t("ovw.top_products.title")}</div><div class="card-sub">${S.periodLabel(st.period).toLowerCase()}</div></div><a class="tag" data-nav="products" style="cursor:pointer">${_t("ovw.top_products.view_all")}</a></div>
-        <div class="card-pad" style="padding:6px 6px 8px"><table class="tbl"><thead><tr><th>${_t("th.product")}</th><th class="num">${_t("th.qty_sold")}</th><th class="num">${_t("th.revenue")}</th></tr></thead><tbody>${prodRows}</tbody></table></div>
+        <div class="card-head">
+          <div><div class="card-title">${_t("ovw.cmp.title")}</div><div class="card-sub">${_t("ovw.cmp.metric_label")} <b>${metricLabel}</b> · ${S.periodLabel(st.period).toLowerCase()}</div></div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <div class="miniseg" id="cmpSeg">
+              <button class="${cmpMetric === "revenue" ? "active" : ""}" data-m="revenue">${_t("ovw.cmp.revenue")}</button>
+              <button class="${cmpMetric === "orders" ? "active" : ""}" data-m="orders">${_t("ovw.cmp.orders")}</button>
+              <button class="${cmpMetric === "aov" ? "active" : ""}" data-m="aov">${_t("ovw.cmp.aov")}</button>
+            </div>
+            <button class="ctrl-btn ${hideShopee ? "on" : ""}" id="hideShopeeBtn" style="padding:6px 11px;font-size:12.5px">${UI.ICON.eye}<span>${hideShopee ? _t("ovw.cmp.show_shopee") : _t("ovw.cmp.hide_shopee")}</span></button>
+          </div>
+        </div>
+        <div class="card-pad" style="padding-top:14px">
+          ${hideShopee ? `<div class="note" style="margin-bottom:14px">${UI.ICON.info} ${_tf("ovw.cmp.hiding_note", { pct: F.pct(pmAll[0].share) })}</div>` : ""}
+          <div style="display:flex;flex-direction:column;gap:2px;margin-bottom:8px">${cmpRows}</div>
+          <div style="overflow-x:auto;margin-top:8px">
+            <table class="tbl">
+              <thead><tr><th>${_t("th.platform")}</th><th class="num">${_t("th.revenue")}</th><th class="num">${cmpLab ? "Δ " + (st.compare === "yoy" ? _t("compare.yoy_short") : _t("compare.prev_short")) : "Δ"}</th><th class="num">${_t("th.orders")}</th><th class="num">${_t("kpi.aov")}</th><th class="num">% ${_t("common.cancel")}</th><th class="num">${_t("th.share")}</th></tr></thead>
+              <tbody>${tblRows}</tbody>
+            </table>
+          </div>
+        </div>
       </div>
       <div data-collapse style="grid-column:span 5" class="card">
         <div class="card-head"><div><div class="card-title">${_t("ovw.geo.title")}</div><div class="card-sub">${_t("ovw.geo.by_orders")}</div></div></div>
@@ -225,9 +222,16 @@
       </div>
     </div>
 
-    <div class="card section-gap">
-      <div class="card-head"><div><div class="card-title">${_t("ovw.heat.title")}</div><div class="card-sub">${_t("ovw.heat.density")} · ${_t("period.cal.mon")} × h · ${S.periodLabel(st.period).toLowerCase()}</div></div></div>
-      <div class="card-pad" style="overflow-x:auto">${heat}</div>
+    <!-- Row 5: Top 3 products + Heatmap -->
+    <div class="g12 section-gap">
+      <div data-collapse style="grid-column:span 5" class="card">
+        <div class="card-head"><div><div class="card-title">${_t("ovw.top_products.title")}</div><div class="card-sub">${S.periodLabel(st.period).toLowerCase()}</div></div><a class="tag" data-nav="products" style="cursor:pointer">${_t("ovw.top_products.view_all")}</a></div>
+        <div class="card-pad" style="padding:6px 6px 8px"><table class="tbl"><thead><tr><th>${_t("th.product")}</th><th class="num">${_t("th.qty_sold")}</th><th class="num">${_t("th.revenue")}</th></tr></thead><tbody>${prodRows}</tbody></table></div>
+      </div>
+      <div data-collapse style="grid-column:span 7" class="card">
+        <div class="card-head"><div><div class="card-title">${_t("ovw.heat.title")}</div><div class="card-sub">${_t("ovw.heat.density")} · ${_t("period.cal.mon")} × h · ${S.periodLabel(st.period).toLowerCase()}</div></div></div>
+        <div class="card-pad" style="overflow-x:auto">${heat}</div>
+      </div>
     </div>`;
   }
 
@@ -241,11 +245,11 @@
     const mc = root.querySelector("#monthlyChart"); if (mc) C.monthlyRevenue(mc, S.businessTrend(st.period), { platform: plat });
     const dc = root.querySelector("#dailyChart"); if (dc) (trendMode === "revenue" ? C.revenueTrend : C.ordersTrend)(dc, ds, { platform: plat });
 
-    const pmAll = S.PKEYS.map((k) => ({ key: k, ...S.PLAT[k], ...S.aggRange(range, k) }));
-    const totalRev = pmAll.reduce((t, p) => t + p.revenue, 0);
-    pmAll.forEach((p) => { p.share = totalRev ? p.revenue / totalRev * 100 : 0; });
-    const pm = hideShopee ? pmAll.filter((p) => p.key !== "shopee") : pmAll;
-    const dn = root.querySelector("#shareDonut"); if (dn) C.donut(dn, pm.map((p) => ({ label: p.label, value: p.revenue, color: "--" + p.key })));
+    const pmAll2 = S.PKEYS.map((k) => ({ key: k, ...S.PLAT[k], ...S.aggRange(range, k) }));
+    const totalRev2 = pmAll2.reduce((t, p) => t + p.revenue, 0);
+    pmAll2.forEach((p) => { p.share = totalRev2 ? p.revenue / totalRev2 * 100 : 0; });
+    const pm2 = hideShopee ? pmAll2.filter((p) => p.key !== "shopee") : pmAll2;
+    const dn = root.querySelector("#shareDonut"); if (dn) C.donut(dn, pm2.map((p) => ({ label: p.label, value: p.revenue, color: "--" + p.key })));
     const cn = root.querySelector("#catDonut");
     if (cn) { const cats = S.categoryBreakdown(st.period, plat).filter((c) => c.revenue > 0); C.donut(cn, cats.map((c) => ({ label: S.catLabel(c.cat), value: c.revenue, color: c.color }))); }
 

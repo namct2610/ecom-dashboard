@@ -1,7 +1,7 @@
 {
-  "version": "3.4.0",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.0/release/dashboard-v3-3.4.0.zip",
-  "changelog": "- Thu gọn calendar ngày/tuần cho đồng bộ kích thước với tháng/năm (bỏ aspect-ratio, height 34px).\n- Sửa bo góc biểu đồ cột: chỉ bo trên đỉnh, thêm borderSkipped: 'bottom' cho stacked bar.\n- Rà soát i18n: thêm ~60 key VI/EN mới cho overview, compare, orders, products, customers, traffic, plan.\n- Danh mục sản phẩm, ngày trong heat map, status pill, tiêu đề sections đều dùng t()/tf().\n- Bổ sung phần chi tiết khách hàng: hiển thị top buyers, segment mới/quay lại/tiềm năng, click xem chi tiết đơn hàng.\n- Gọi api/customers.php để lấy dữ liệu khách hàng thay vì chỉ dùng static data.",
+  "version": "3.4.1",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.1/release/dashboard-v3-3.4.1.zip",
+  "changelog": "- Sắp xếp lại layout Tổng quan: Xu hướng doanh thu + Thị phần → Xu hướng đơn hàng + Doanh thu danh mục → So sánh sàn + Phân bổ khu vực → Sản phẩm bán chạy (top 3) + Khung giờ đặt đơn.\n- Đổi tên: 'Doanh thu theo ngày' → 'Xu hướng doanh thu', 'Xu hướng theo ngày' → 'Xu hướng đơn hàng' (i18n VI/EN).\n- Sản phẩm bán chạy chỉ hiển thị top 3 thay vì top 7.\n- So sánh sàn và Phân bổ khu vực đặt cạnh nhau (7:5).\n- Cập nhật i18n cho tất cả thay đổi.",
   "min_php": "8.1",
   "released_at": "2026-06-11"
 }
