@@ -27,9 +27,16 @@ require_admin();
 $pdo = db($config);
 
 // Primary (v2) channel — v2 is now the root app. Updater anchors at repo
-// root with the canonical version.txt at the root.
+// root with the canonical version.txt at the root. Add `old` to the
+// preservedPaths list so main updates never clobber the legacy app
+// already installed under /old/ — that has its own channel via
+// api/update.php.
 $appRoot = dirname(__DIR__);
-$updater = new Updater($appRoot);
+$updater = new Updater(
+    $appRoot,
+    null,
+    ['config.php', 'uploads', '.installed', 'config.local.php', 'old']
+);
 
 const V2_MANIFEST_URL = 'https://raw.githubusercontent.com/namct2610/ecom-dashboard/main/manifest.json';
 

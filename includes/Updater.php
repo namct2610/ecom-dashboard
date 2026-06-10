@@ -27,18 +27,25 @@ class Updater
 {
     private string $appRoot;
     private string $versionFile;
+    /** @var string[] */
+    private array $preservedPaths;
 
     /**
-     * @param string      $appRoot         absolute path of the app (extraction target)
-     * @param string|null $versionFilePath optional override (default: $appRoot/version.txt).
-     *                                     Useful for channel/sub-app updaters (e.g. old/version.txt
-     *                                     for the legacy v1 channel) so multiple update channels
-     *                                     can coexist.
+     * @param string        $appRoot          absolute path of the app (extraction target)
+     * @param string|null   $versionFilePath  optional override (default: $appRoot/version.txt).
+     *                                        Useful for channel/sub-app updaters (e.g. old/version.txt
+     *                                        for the legacy v1 channel) so multiple update channels
+     *                                        can coexist.
+     * @param string[]|null $preservedPaths   top-level names that won't be overwritten — but only
+     *                                        if they already exist in the target. Net-new paths
+     *                                        (e.g. /old/ on a fresh install) are still copied.
+     *                                        Default: config.php, uploads, .installed, config.local.php.
      */
-    public function __construct(string $appRoot, ?string $versionFilePath = null)
+    public function __construct(string $appRoot, ?string $versionFilePath = null, ?array $preservedPaths = null)
     {
         $this->appRoot     = rtrim($appRoot, '/\\');
         $this->versionFile = $versionFilePath ?? ($this->appRoot . '/version.txt');
+        $this->preservedPaths = $preservedPaths ?? ['config.php', 'uploads', '.installed', 'config.local.php'];
     }
 
     // ── Version ───────────────────────────────────────────────────────────────
@@ -142,24 +149,29 @@ class Updater
 
     // ── Private helpers ───────────────────────────────────────────────────────
 
-    /** Paths at app root that are NEVER replaced during an update. */
+    /** Paths at app root preserved during an update (see __construct). */
     private function preservedPaths(): array
     {
-        return ['config.php', 'uploads', '.installed', 'config.local.php'];
+        return $this->preservedPaths;
     }
 
     /**
      * Recursively copy $src into $dest.
-     * $skipNames: basenames to skip (only enforced at the top level call).
+     * $skipNames: basenames to preserve — only skipped if a file/dir with the
+     * same name already exists in $dest. This way a fresh install (e.g. one
+     * that lays down /old/ for the first time via the main bundle) still gets
+     * the directory, while subsequent updates leave it alone.
      */
     private function copyRecursive(string $src, string $dest, array $skipNames): void
     {
         $items = array_diff((array) scandir($src), ['.', '..']);
         foreach ($items as $item) {
-            if (in_array($item, $skipNames, true)) continue;
-
             $srcPath  = $src  . '/' . $item;
             $destPath = $dest . '/' . $item;
+
+            if (in_array($item, $skipNames, true) && file_exists($destPath)) {
+                continue;
+            }
 
             if (is_dir($srcPath)) {
                 if (!is_dir($destPath)) mkdir($destPath, 0755, true);
