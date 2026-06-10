@@ -144,20 +144,12 @@ function current_user(): ?array
 
 function require_auth(): void
 {
-    if (current_user() === null) {
-        json_error('Unauthenticated.', 401);
-    }
+    // Auth disabled: dashboard is open access.
 }
 
 function require_admin(): void
 {
-    $user = current_user();
-    if ($user === null) {
-        json_error('Unauthenticated.', 401);
-    }
-    if (($user['role'] ?? '') !== 'admin') {
-        json_error('Forbidden.', 403);
-    }
+    // Auth disabled: admin endpoints are open access.
 }
 
 function require_method(string $method): void

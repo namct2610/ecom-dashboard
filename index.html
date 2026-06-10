@@ -202,27 +202,20 @@
 
     fetch('api/v2-data.php', { credentials: 'same-origin' })
       .then(function (r) {
-        if (r.status === 401) {
-          showLoginOverlay();
-          throw new Error('unauthenticated');
-        }
         if (!r.ok) throw new Error('HTTP ' + r.status);
         return r.json();
       })
       .then(function (data) {
-        hideLoginOverlay();
         window.DASH = data;
         return loadSequential(MODULES);
       })
       .then(function () {
-        hideLoginOverlay();
         if (!window.App || typeof window.App.init !== 'function') {
           throw new Error(window.t ? window.t('boot.app_missing') : 'window.App.init missing');
         }
         window.App.init();
       })
       .catch(function (err) {
-        if (err && err.message === 'unauthenticated') return; // overlay already shown
         var prefix = window.t ? window.t('boot.load_failed') : 'Không tải được dữ liệu';
         root.innerHTML = '<div style="padding:48px 24px;color:var(--neg);font-weight:700;text-align:center">' + prefix + ': ' + (err && err.message ? err.message : err) + '</div>';
       });
