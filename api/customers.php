@@ -55,6 +55,7 @@ function build_customers_overview(PDO $pdo): array
 
     $buyerStmt = $pdo->query("
         SELECT buyer_username,
+               COALESCE(NULLIF(MAX(buyer_name), ''), buyer_username) AS buyer_name,
                COUNT(*) AS order_count,
                COALESCE(SUM(item_qty), 0) AS item_qty,
                COALESCE(SUM(order_revenue), 0) AS revenue
@@ -66,6 +67,7 @@ function build_customers_overview(PDO $pdo): array
     ");
     $buyerStats = array_map(static fn(array $row): array => [
         'buyer_username' => (string) $row['buyer_username'],
+        'buyer_name'     => (string) $row['buyer_name'],
         'order_count'    => (int) $row['order_count'],
         'item_qty'       => (int) $row['item_qty'],
         'revenue'        => (float) $row['revenue'],
@@ -73,9 +75,9 @@ function build_customers_overview(PDO $pdo): array
 
     $totalOrders = (int) ($summary['total_orders'] ?? 0);
 
-    // Total orders that actually carry city data (Lazada excluded — no address data)
     $totalWithCity = (int) $pdo->query("
-        SELECT COUNT(*) FROM tmp_customer_orders
+        SELECT COUNT(*)
+        FROM tmp_customer_orders
         WHERE shipping_city != '' AND platform != 'lazada'
     ")->fetchColumn();
 
@@ -91,9 +93,8 @@ function build_customers_overview(PDO $pdo): array
     ");
     $cities = $cityStmt->fetchAll();
 
-    // Orders not captured by the top-12 list (remaining provinces)
-    $topCityOrders  = array_sum(array_column($cities, 'orders'));
-    $othersOrders   = max(0, $totalWithCity - $topCityOrders);
+    $topCityOrders = array_sum(array_column($cities, 'orders'));
+    $othersOrders  = max(0, $totalWithCity - $topCityOrders);
 
     $cityList = array_map(static fn(array $c): array => [
         'city'       => (string) $c['city'],
@@ -135,12 +136,6 @@ function build_customers_overview(PDO $pdo): array
         LIMIT 8
     ");
 
-    // New vs Returning — derive entirely from the period temp table.
-    // Previously we JOINed the full `orders` table for "lifetime" counts,
-    // which scanned millions of rows and timed out PHP on large DBs.
-    // Semantics now: within the selected period, buyers with 1 order are
-    // "new", buyers with 2+ orders are "returning". This is more useful
-    // for period analytics anyway.
     $segStmt = $pdo->query("
         SELECT
             SUM(CASE WHEN cnt = 1 THEN 1 ELSE 0 END) AS new_buyers,
@@ -154,20 +149,20 @@ function build_customers_overview(PDO $pdo): array
     ");
     $seg = $segStmt->fetch() ?: [];
 
-    // Potential buyers = buyers who bought BEFORE this period but not IN it.
-    // Bound the lookup to a year before the period start to keep the scan
-    // cheap and let the order_created_at index be used.
+    $potParams = potential_lookback_bounds();
     $potStmt = $pdo->prepare("
         SELECT COUNT(DISTINCT o.buyer_username) AS potential_buyers
         FROM orders o
-        LEFT JOIN tmp_current_buyers cb ON cb.buyer_username = o.buyer_username
         WHERE o.normalized_status IN ('completed','delivered')
           AND o.buyer_username IS NOT NULL AND o.buyer_username != ''
           AND o.order_created_at >= :since
           AND o.order_created_at < :until
-          AND cb.buyer_username IS NULL
+          AND NOT EXISTS (
+              SELECT 1
+              FROM tmp_current_buyers cb
+              WHERE cb.buyer_username = o.buyer_username
+          )
     ");
-    $potParams = potential_lookback_bounds();
     $potStmt->execute($potParams);
     $pot = $potStmt->fetch() ?: [];
 
@@ -212,9 +207,31 @@ function build_customer_snapshot_tables(PDO $pdo, string $where, array $params):
 {
     $pdo->exec("DROP TEMPORARY TABLE IF EXISTS tmp_current_buyers");
     $pdo->exec("DROP TEMPORARY TABLE IF EXISTS tmp_customer_orders");
+    $pdo->exec("
+        CREATE TEMPORARY TABLE tmp_customer_orders (
+            platform VARCHAR(20) NOT NULL,
+            order_id VARCHAR(100) NOT NULL,
+            buyer_username VARCHAR(255) NOT NULL DEFAULT '',
+            buyer_name VARCHAR(255) NOT NULL DEFAULT '',
+            order_created_at DATETIME NOT NULL,
+            item_qty INT NOT NULL DEFAULT 0,
+            order_revenue DECIMAL(15,2) NOT NULL DEFAULT 0,
+            shipping_address VARCHAR(500) NOT NULL DEFAULT '',
+            shipping_district VARCHAR(100) NOT NULL DEFAULT '',
+            shipping_city VARCHAR(100) NOT NULL DEFAULT '',
+            payment_method VARCHAR(100) NOT NULL DEFAULT '',
+            PRIMARY KEY (platform, order_id),
+            INDEX idx_tmp_customer_buyer (buyer_username),
+            INDEX idx_tmp_customer_city (shipping_city, shipping_district)
+        ) ENGINE=MEMORY DEFAULT CHARSET=utf8mb4
+    ");
 
     $tmpOrdersStmt = $pdo->prepare("
-        CREATE TEMPORARY TABLE tmp_customer_orders AS
+        INSERT INTO tmp_customer_orders (
+            platform, order_id, buyer_username, buyer_name, order_created_at,
+            item_qty, order_revenue, shipping_address, shipping_district,
+            shipping_city, payment_method
+        )
         SELECT platform,
                order_id,
                COALESCE(NULLIF(MAX(buyer_username), ''), '') AS buyer_username,
@@ -231,16 +248,17 @@ function build_customer_snapshot_tables(PDO $pdo, string $where, array $params):
     ");
     $tmpOrdersStmt->execute($params);
 
-    $pdo->exec("CREATE INDEX idx_tmp_customer_buyer ON tmp_customer_orders (buyer_username)");
-    $pdo->exec("CREATE INDEX idx_tmp_customer_city ON tmp_customer_orders (shipping_city, shipping_district)");
-
     $pdo->exec("
-        CREATE TEMPORARY TABLE tmp_current_buyers AS
-        SELECT DISTINCT buyer_username
+        CREATE TEMPORARY TABLE tmp_current_buyers (
+            buyer_username VARCHAR(255) NOT NULL PRIMARY KEY
+        ) ENGINE=MEMORY DEFAULT CHARSET=utf8mb4
+    ");
+    $pdo->exec("
+        INSERT IGNORE INTO tmp_current_buyers (buyer_username)
+        SELECT buyer_username
         FROM tmp_customer_orders
         WHERE buyer_username != ''
     ");
-    $pdo->exec("CREATE INDEX idx_tmp_current_buyers ON tmp_current_buyers (buyer_username)");
 }
 
 function build_customer_detail(PDO $pdo): array
