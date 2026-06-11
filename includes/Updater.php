@@ -71,19 +71,39 @@ class Updater
      */
     public function fetchManifest(string $manifestUrl): array
     {
-        $response = $this->httpGet($manifestUrl, 15);
-        $data     = json_decode($response, true);
+        try {
+            return $this->parseManifestResponse($this->httpGet($manifestUrl, 15));
+        } catch (\Throwable $primary) {
+            // Primary URL (typically GitHub API) failed — could be rate limit
+            // (60/hr per IP, shared hosting hits this fast), network error,
+            // or an HTML error page. Fall back to the raw CDN URL with a
+            // cache-buster so we still get an answer.
+            $fallback = $this->fallbackManifestUrl($manifestUrl);
+            if ($fallback === null) {
+                throw $primary;
+            }
+            try {
+                return $this->parseManifestResponse($this->httpGet($fallback, 15));
+            } catch (\Throwable $secondary) {
+                throw new \RuntimeException(
+                    'Manifest fetch failed. API: ' . $primary->getMessage()
+                    . ' | Raw fallback: ' . $secondary->getMessage()
+                );
+            }
+        }
+    }
+
+    private function parseManifestResponse(string $response): array
+    {
+        $data = json_decode($response, true);
 
         if (!is_array($data)) {
             $preview = substr(trim($response), 0, 120);
-            throw new \RuntimeException("Manifest không phải JSON hợp lệ. Kiểm tra URL có phải raw URL không. Nhận được: " . $preview);
+            throw new \RuntimeException('Manifest không phải JSON hợp lệ. Nhận được: ' . $preview);
         }
 
-        // GitHub API contents endpoint returns the file metadata with the
-        // actual content base64-encoded under "content". 60s edge cache
-        // (vs 300s on raw.githubusercontent.com) plus ETag revalidation
-        // makes update checks reliable.
-        if (isset($data['content']) && isset($data['encoding']) && $data['encoding'] === 'base64') {
+        // GitHub API contents endpoint returns base64-encoded content.
+        if (isset($data['content']) && ($data['encoding'] ?? '') === 'base64') {
             $decoded = base64_decode(preg_replace('/\s+/', '', (string) $data['content']));
             $inner   = $decoded !== false ? json_decode($decoded, true) : null;
             if (!is_array($inner)) {
@@ -92,11 +112,38 @@ class Updater
             $data = $inner;
         }
 
+        // Detect GitHub API error envelopes — they have "message" but no
+        // "version", so the legacy "thiếu version" error obscured the real
+        // cause (typically rate limit).
         if (empty($data['version']) || empty($data['download_url'])) {
+            if (!empty($data['message'])) {
+                throw new \RuntimeException('GitHub API: ' . $data['message']);
+            }
             throw new \RuntimeException('Manifest thiếu trường "version" hoặc "download_url".');
         }
 
         return $data;
+    }
+
+    /**
+     * Build the raw.githubusercontent.com fallback for a GitHub API URL.
+     * Returns null when the input URL doesn't follow the API contents
+     * pattern (so callers can re-throw the original error).
+     */
+    private function fallbackManifestUrl(string $apiUrl): ?string
+    {
+        // api.github.com/repos/<owner>/<repo>/contents/<path>?ref=<branch>
+        if (!preg_match(
+            '#^https?://api\.github\.com/repos/([^/]+)/([^/]+)/contents/([^?]+)\?ref=([^&]+)#',
+            $apiUrl,
+            $m
+        )) {
+            return null;
+        }
+        return sprintf(
+            'https://raw.githubusercontent.com/%s/%s/%s/%s?_=%d',
+            $m[1], $m[2], $m[4], $m[3], time()
+        );
     }
 
     // ── Apply update ──────────────────────────────────────────────────────────
