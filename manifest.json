@@ -1,7 +1,7 @@
 {
-  "version": "3.4.26",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.26/release/dashboard-v3-3.4.26.zip",
-  "changelog": "- Bảo mật HIGH: Rate limiting đăng nhập — 10 lần thất bại / 15 phút / IP, sau đó khoá 15 phút (DB-based, không cần Redis).\n- Bảo mật HIGH: Session timeout — idle 2 giờ + absolute 8 giờ từ lúc đăng nhập.\n- Bảo mật HIGH: Content Security Policy header + Permissions-Policy header trong .htaccess.\n- Bảo mật: index.html tự redirect về login.html khi AUTH_ENABLED=1 và chưa đăng nhập.\n- auth.php GET trả auth_enabled flag để frontend biết có cần login không.",
+  "version": "3.4.27",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.27/release/dashboard-v3-3.4.27.zip",
+  "changelog": "- Thêm cơ chế config.local.php: file gitignored + không bị ghi đè khi update, dùng để bật auth, đổi DB password, v.v. trên production mà không cần sửa code.\n- config.local.php.example: hướng dẫn enable authentication.\n- bootstrap.php: tự merge config.local.php vào config chính nếu file tồn tại.",
   "min_php": "8.1",
   "released_at": "2026-06-11"
 }

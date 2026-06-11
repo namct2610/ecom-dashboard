@@ -20,8 +20,17 @@ if (!file_exists($autoload)) {
 }
 require $autoload;
 
-// Config
+// Config — base config then local overrides.
+// config.local.php is gitignored and preserved through updates (never overwritten).
+// Use it to enable auth, change DB credentials, etc. on production.
 $config = require __DIR__ . '/../config.php';
+$localConfig = __DIR__ . '/../config.local.php';
+if (file_exists($localConfig)) {
+    $local = require $localConfig;
+    if (is_array($local)) {
+        $config = array_replace_recursive($config, $local);
+    }
+}
 
 // Helpers
 require __DIR__ . '/helpers.php';

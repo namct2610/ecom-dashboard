@@ -1,0 +1,23 @@
+<?php
+// ============================================================
+// config.local.php — Local/production overrides
+// ============================================================
+// Copy file này thành config.local.php trên server.
+// File này KHÔNG bị commit vào git và KHÔNG bị ghi đè khi update.
+//
+// Chỉ khai báo các key muốn ghi đè — các key khác lấy từ config.php.
+// ============================================================
+
+return [
+    // Bật tính năng đăng nhập
+    'auth' => [
+        'enabled'  => true,
+        'username' => 'admin',          // tên đăng nhập admin đầu tiên
+        'password' => 'your_password',  // mật khẩu (sẽ được hash vào DB lần đầu login)
+    ],
+
+    // Ghi đè DB nếu cần (thường không cần nếu config.php đã đúng)
+    // 'db' => [
+    //     'password' => 'your_db_password',
+    // ],
+];
