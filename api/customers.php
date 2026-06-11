@@ -169,16 +169,22 @@ function build_customers_overview(PDO $pdo): array
         $pot = $potStmt->fetch() ?: $pot;
     }
 
-    $trafficParams = [];
-    $trafficWhere  = sql_filters_traffic($trafficParams);
-    $visitStmt = $pdo->prepare("
-        SELECT COALESCE(SUM(visits), 0) AS total_visits
-        FROM traffic_daily {$trafficWhere}
-    ");
-    $visitStmt->execute($trafficParams);
-    $visitsRow   = $visitStmt->fetch() ?: [];
-    $totalVisits = (int) ($visitsRow['total_visits'] ?? 0);
-    $convRate    = $totalVisits > 0 ? round($totalOrders / $totalVisits * 100, 2) : 0;
+    $totalVisits = 0;
+    $convRate    = 0;
+    try {
+        $trafficParams = [];
+        $trafficWhere  = sql_filters_traffic($trafficParams);
+        $visitStmt = $pdo->prepare("
+            SELECT COALESCE(SUM(visits), 0) AS total_visits
+            FROM traffic_daily {$trafficWhere}
+        ");
+        $visitStmt->execute($trafficParams);
+        $visitsRow   = $visitStmt->fetch() ?: [];
+        $totalVisits = (int) ($visitsRow['total_visits'] ?? 0);
+        $convRate    = $totalVisits > 0 ? round($totalOrders / $totalVisits * 100, 2) : 0;
+    } catch (\Throwable $ignored) {
+        // traffic_daily unavailable — conv_rate defaults to 0, not a fatal error
+    }
 
     return [
         'success'           => true,
@@ -223,8 +229,8 @@ function build_customer_snapshot_tables(PDO $pdo, string $where, array $params):
             shipping_city VARCHAR(100) NOT NULL DEFAULT '',
             payment_method VARCHAR(100) NOT NULL DEFAULT '',
             PRIMARY KEY (platform, order_id),
-            INDEX idx_tmp_customer_buyer (buyer_username),
-            INDEX idx_tmp_customer_city (shipping_city, shipping_district)
+            INDEX idx_tmp_customer_buyer (buyer_username(100)),
+            INDEX idx_tmp_customer_city (shipping_city(50), shipping_district(50))
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
     ");
 
