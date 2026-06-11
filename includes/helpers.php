@@ -161,6 +161,12 @@ function require_method(string $method): void
 
 function require_csrf(): void
 {
+    // Must boot the session before comparing against $_SESSION['csrf_token'].
+    // Some endpoints (e.g. api/v2-update.php) hit require_csrf() directly
+    // without calling start_session() first, so $_SESSION was empty and
+    // every POST 403'd. Endpoints that already started the session see
+    // start_session()'s idempotency guard skip this.
+    start_session();
     $token = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? ($_POST['_csrf'] ?? '');
     if (!$token || $token !== ($_SESSION['csrf_token'] ?? '')) {
         json_error('Invalid CSRF token.', 403);
