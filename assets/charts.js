@@ -34,6 +34,16 @@
      segments show ridges on every layer. This plugin clips drawing to a
      rounded-top shape spanning the FULL stack column — so the top corners
      are consistent regardless of how thin the topmost layer is. */
+  function compactNumber(v) {
+    const n = Math.abs(+v || 0);
+    const sign = v < 0 ? "-" : "";
+    const fmt = (x) => (x >= 10 ? Math.round(x) : Math.round(x * 10) / 10).toString().replace(".0", "");
+    if (n >= 1e9) return sign + fmt(n / 1e9) + "B";
+    if (n >= 1e6) return sign + fmt(n / 1e6) + "M";
+    if (n >= 1e3) return sign + fmt(n / 1e3) + "K";
+    return sign + Math.round(n).toString();
+  }
+
   const StackedRoundedTopPlugin = {
     id: 'stackedRoundedTop',
     beforeDatasetsDraw(chart, _args, opts) {
@@ -85,7 +95,40 @@
       }
     },
   };
-  Chart.register(StackedRoundedTopPlugin);
+  const StackTotalLabelPlugin = {
+    id: 'stackTotalLabel',
+    afterDatasetsDraw(chart, _args, opts) {
+      if (!opts || !opts.enabled) return;
+      const datasets = chart.data.datasets || [];
+      const len = datasets[0]?.data?.length || 0;
+      if (!len) return;
+      const { ctx, chartArea } = chart;
+      ctx.save();
+      ctx.fillStyle = opts.color || ink3();
+      ctx.font = `800 ${opts.fontSize || 10.5}px 'Be Vietnam Pro','Segoe UI',sans-serif`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "bottom";
+      for (let i = 0; i < len; i++) {
+        let total = 0, topY = Infinity, x = null;
+        for (let dsIdx = 0; dsIdx < datasets.length; dsIdx++) {
+          const meta = chart.getDatasetMeta(dsIdx);
+          if (meta.hidden) continue;
+          const v = +datasets[dsIdx].data[i] || 0;
+          if (!v) continue;
+          const bar = meta.data[i];
+          if (!bar) continue;
+          total += v;
+          topY = Math.min(topY, bar.y);
+          x = bar.x;
+        }
+        if (!total || x == null || !isFinite(topY)) continue;
+        ctx.fillText((opts.format || compactNumber)(total), x, Math.max(chartArea.top + 12, topY - 5));
+      }
+      ctx.restore();
+    },
+  };
+
+  Chart.register(StackedRoundedTopPlugin, StackTotalLabelPlugin);
 
   function tip() {
     return {
@@ -146,7 +189,7 @@
   /* ---- orders trend grouped bars ---- */
   function ordersTrend(canvas, series, opt) {
     opt = opt || {};
-    const labels = series.map((s) => dayLabel(s.date));
+    const labels = series.map((s) => s.label || dayLabel(s.date));
     const stacked = opt.platform === "all";
     const sizing = barSizing(labels.length, 34);
     let datasets;
@@ -156,11 +199,12 @@
         backgroundColor: col("--" + k), borderRadius: 0, borderSkipped: false, borderWidth: 0, stack: "o", ...sizing,
       }));
     } else {
-      datasets = [{ label: "Đơn", data: series.map((s) => s.orders), backgroundColor: col("--" + opt.platform), borderRadius: 6, borderSkipped: "bottom", borderWidth: 0, ...sizing }];
+      datasets = [{ label: "Đơn", data: series.map((s) => s["o_" + opt.platform] || 0), backgroundColor: col("--" + opt.platform), borderRadius: 6, borderSkipped: "bottom", borderWidth: 0, ...sizing }];
     }
     return mk(canvas, {
       type: "bar", data: { labels, datasets },
       options: {
+        layout: { padding: { top: 18 } },
         interaction: { mode: "index", intersect: false },
         scales: {
           x: { stacked, grid: { display: false }, ticks: { color: ink3(), font: { size: 10.5 }, maxRotation: 0, autoSkip: true, maxTicksLimit: 13 }, border: { display: false } },
@@ -169,6 +213,7 @@
         plugins: {
           tooltip: { ...tip(), callbacks: { label: (c) => " " + c.dataset.label + ": " + window.F.viInt(c.raw) + " đơn", footer: (items) => "Tổng: " + window.F.viInt(items.reduce((t, i) => t + i.raw, 0)) + " đơn" } },
           stackedRoundedTop: { enabled: stacked, radius: 6 },
+          stackTotalLabel: { enabled: true },
         },
       },
     });
@@ -250,6 +295,7 @@
     return mk(canvas, {
       type: "bar", data: { labels, datasets },
       options: {
+        layout: { padding: { top: 18 } },
         interaction: { mode: "index", intersect: false },
         scales: {
           x: { stacked, grid: { display: false }, ticks: { color: ink3(), font: { size: 10.5 }, maxRotation: 0, autoSkip: true, maxTicksLimit: 13 }, border: { display: false } },
@@ -258,6 +304,7 @@
         plugins: {
           tooltip: { ...tip(), callbacks: { label: (c) => " " + c.dataset.label + ": " + window.F.moneyFull(c.raw), footer: (items) => "Tổng: " + window.F.moneyFull(items.reduce((t, i) => t + i.raw, 0)) } },
           stackedRoundedTop: { enabled: stacked, radius: 6 },
+          stackTotalLabel: { enabled: true },
         },
       },
     });
