@@ -1,7 +1,7 @@
 {
-  "version": "3.4.18",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.18/release/dashboard-v3-3.4.18.zip",
-  "changelog": "- Sửa trang Khách hàng trên production/subpath install: frontend giờ dựng đúng URL API theo thư mục cài đặt hiện tại, không còn gọi lệch sang /api/customers.php khi site chạy ở dạng /dashboard-v3 hoặc URL có hash.\n- Áp dụng cùng cách dựng URL an toàn cho api/v2-range-detail.php để các truy vấn chi tiết theo khoảng thời gian không bị lệch path.",
+  "version": "3.4.19",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.19/release/dashboard-v3-3.4.19.zip",
+  "changelog": "- V2 updater giờ cache manifest chỉ 60 giây thay vì 30 phút, nên production nhìn thấy release mới nhanh hơn nhiều sau khi push/tag.\n- Vẫn giữ cơ chế GitHub contents API + fallback raw để không làm giảm độ ổn định khi hosting bị rate-limit hoặc CDN edge lỗi thời.",
   "min_php": "8.1",
   "released_at": "2026-06-11"
 }

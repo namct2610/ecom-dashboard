@@ -37,6 +37,7 @@ $updater = new Updater($appRoot);
 // inconsistency). The Updater detects the base64 content envelope and
 // decodes it transparently.
 const V2_MANIFEST_URL = 'https://api.github.com/repos/namct2610/ecom-dashboard/contents/manifest.json?ref=main';
+const V2_MANIFEST_CACHE_TTL = 60;
 
 function v2_update_get_setting(PDO $pdo, string $key, string $default = ''): string
 {
@@ -61,7 +62,7 @@ try {
         $cacheAge   = $lastCheck ? (time() - (int) $lastCheck) : PHP_INT_MAX;
         $fetchError = null;
 
-        if ($cacheAge < 1800 && $cachedData !== '') {
+        if ($cacheAge < V2_MANIFEST_CACHE_TTL && $cachedData !== '') {
             $manifest = json_decode($cachedData, true) ?: [];
         } else {
             try {
