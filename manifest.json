@@ -1,7 +1,7 @@
 {
-  "version": "3.4.36",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.36/release/dashboard-v3-3.4.36.zip",
-  "changelog": "- Sửa màn Khách hàng không render ổn định: bổ sung escHtml, tách lỗi/cache theo từng kỳ và giữ khung giao diện khi đang tải dữ liệu.\n- Tối ưu cảm nhận tốc độ: trang Khách hàng, Kế hoạch có skeleton trước khi dữ liệu trả về; Đối soát tải song song CSRF, danh sách file và dữ liệu so khớp.\n- Sửa format số khi đổi tiếng Anh: KPI/card tiền tệ và số lớn dùng đúng hậu tố B/M/K theo i18n, đồng thời rerender lại toàn trang khi đổi ngôn ngữ.\n- Thu gọn text so sánh và cho phép KPI foot hiển thị 2 dòng để tránh tràn hoặc mất nội dung.",
+  "version": "3.4.37",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.37/release/dashboard-v3-3.4.37.zip",
+  "changelog": "- Sửa lỗi runtime ở màn Kế hoạch: thay wrapper i18n sai `window._t/window._tf` về đúng `window.t/window.tf` để trang không còn báo `Failed to load data`.\n- Giữ lại toàn bộ các tối ưu load và hiển thị của đợt 3.4.36: skeleton cho Khách hàng/Kế hoạch, tối ưu tải Đối soát, sửa hậu tố B/M/K khi đổi tiếng Anh, và thu gọn text KPI/so sánh để tránh tràn.",
   "min_php": "8.1",
   "released_at": "2026-06-11"
 }
