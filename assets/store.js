@@ -115,6 +115,20 @@
   */
   const allMonths = () => DASH.monthly.map((m) => m.ym).sort();
 
+  function appBaseHref() {
+    const url = new URL(window.location.href);
+    let path = url.pathname || "/";
+    if (!path.endsWith("/")) {
+      const last = path.slice(path.lastIndexOf("/") + 1);
+      path = last.includes(".") ? path.slice(0, path.lastIndexOf("/") + 1) : path + "/";
+    }
+    return url.origin + path;
+  }
+
+  function buildApiUrl(path) {
+    return new URL(String(path || "").replace(/^\/+/, ""), appBaseHref());
+  }
+
   function normalizeRange(start, end, mode) {
     if (start > end) [start, end] = [end, start];
     return { mode, start, end };
@@ -436,7 +450,7 @@
     if (rangeDetailCache[cacheKey]) return rangeDetailCache[cacheKey];
     if (rangeDetailInflight[cacheKey]) return rangeDetailInflight[cacheKey];
     const range = rangeFromKey(key);
-    const url = new URL("api/v2-range-detail.php", window.location.href);
+    const url = buildApiUrl("api/v2-range-detail.php");
     url.searchParams.set("date_from", range.start);
     url.searchParams.set("date_to", range.end);
     if (activePlatform && activePlatform !== "all") {
@@ -544,7 +558,7 @@
     const cacheKey = state.period + "|" + state.platform;
     if (customerCache[cacheKey]) return Promise.resolve(customerCache[cacheKey]);
     if (customerInflight) return customerInflight;
-    const url = new URL("api/customers.php", window.location.href);
+    const url = buildApiUrl("api/customers.php");
     url.searchParams.set("date_from", range.start);
     url.searchParams.set("date_to", range.end);
     if (state.platform !== "all") url.searchParams.set("platform", state.platform === "tiktok" ? "tiktokshop" : state.platform);
@@ -557,7 +571,7 @@
 
   function fetchCustomerDetail(buyerUsername) {
     const range = rangeFromKey(state.period);
-    const url = new URL("api/customers.php", window.location.href);
+    const url = buildApiUrl("api/customers.php");
     url.searchParams.set("action", "detail");
     url.searchParams.set("buyer_username", buyerUsername);
     url.searchParams.set("date_from", range.start);
