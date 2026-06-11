@@ -50,16 +50,16 @@
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px">
             <div>
               <div class="eyebrow">${_t("plan.actual_ytd")}</div>
-              <div class="kpi-value tnum" style="margin-top:4px">${fmt(m.actual)}</div>
+              <div class="kpi-value tnum" style="margin-top:4px">${fmt(m.actual_ytd)}</div>
               <div style="font-size:12.5px;color:var(--ink-3);font-weight:600;margin-top:2px">
-                ${m.elapsed_months > 0 ? tf("plan.actual_ytd_pct", { pct: F.viDec(m.ytd_rate, 1) }) : t("plan.no_data")}
+                ${local.data.elapsed_months > 0 ? _tf("plan.actual_ytd_pct", { pct: F.viDec(m.ytd_rate, 1) }) : _t("plan.no_data")}
               </div>
             </div>
             <div>
               <div class="eyebrow">${_t("plan.year_target")}</div>
               <div class="kpi-value tnum" style="margin-top:4px">${fmt(m.target)}</div>
               <div style="font-size:12.5px;color:var(--ink-3);font-weight:600;margin-top:2px">
-                ${m.target > 0 ? tf("plan.year_target_pct", { pct: F.viDec(m.target_rate, 1) }) : t("plan.no_target")}
+                ${m.target > 0 ? _tf("plan.year_target_pct", { pct: F.viDec(m.target_rate, 1) }) : _t("plan.no_target")}
               </div>
             </div>
           </div>
@@ -76,17 +76,17 @@
 
           <div style="margin-top:18px;display:grid;grid-template-columns:repeat(3,1fr);gap:10px;border-top:1px solid var(--border);padding-top:14px">
             <div>
-              <div class="eyebrow">${t("plan.target_ytd")}</div>
+              <div class="eyebrow">${_t("plan.target_ytd")}</div>
               <div class="mono" style="font-weight:800;font-size:14px;margin-top:3px">${fmt(m.target_ytd)}</div>
             </div>
             <div>
-              <div class="eyebrow">${t("plan.gap_ytd")}</div>
+              <div class="eyebrow">${_t("plan.gap_ytd")}</div>
               <div class="mono" style="font-weight:800;font-size:14px;margin-top:3px;color:${m.gap_ytd >= 0 ? 'var(--pos)' : 'var(--neg)'}">
                 ${m.gap_ytd >= 0 ? "+" : ""}${fmt(m.gap_ytd)}
               </div>
             </div>
             <div>
-              <div class="eyebrow">${t("plan.remaining")}</div>
+              <div class="eyebrow">${_t("plan.remaining")}</div>
               <div class="mono" style="font-weight:800;font-size:14px;margin-top:3px">${fmt(m.ytg)}</div>
             </div>
           </div>

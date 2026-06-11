@@ -1,7 +1,7 @@
 {
-  "version": "3.4.32",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.32/release/dashboard-v3-3.4.32.zip",
-  "changelog": "- Sửa lỗi trang Khách hàng bị lỗi HTTP 500 do chỉ mục MySQL vượt giới hạn 767 bytes (MySQL 5.6/5.7 shared hosting).\n- Dữ liệu lưu lượng truy cập (traffic_daily) không còn làm sập toàn bộ trang khách hàng nếu bảng bị lỗi.\n- Admin thấy được thông báo lỗi chi tiết khi có lỗi server (trước chỉ hiển thị trên localhost).",
+  "version": "3.4.33",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.33/release/dashboard-v3-3.4.33.zip",
+  "changelog": "- Sửa trang Kế hoạch: cột \"Thực tế YTD\" hiển thị 0 do dùng sai tên field (m.actual thay vì m.actual_ytd).\n- Sửa điều kiện kiểm tra tháng đã trôi qua dùng sai biến (m.elapsed_months → local.data.elapsed_months).",
   "min_php": "8.1",
   "released_at": "2026-06-11"
 }
