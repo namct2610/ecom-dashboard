@@ -11,39 +11,39 @@
       colorVar: "--shopee",
       api: "api/shopee-connect.php",
       credentials: [
-        { key: "partner_id", label: "Partner ID", type: "number", placeholder: "Mã số nguyên do Shopee cấp" },
-        { key: "partner_key", label: "Partner Key", type: "password", placeholder: "Chuỗi bí mật" },
+        { key: "partner_id", labelKey: "connect.label.partner_id", type: "number", placeholderKey: "connect.placeholder.partner_id" },
+        { key: "partner_key", labelKey: "connect.label.partner_key", type: "password", placeholderKey: "connect.placeholder.partner_key" },
       ],
       // status response fields: { partner_id, has_key, shops:[...] }
       statusKeys: { keyName: "partner_id", hasSecretFlag: "has_key", listKey: "shops",
                     listIdField: "shop_id", listNameField: "shop_name", listExtra: [] },
-      oauthHint: "Sau khi bấm \"Cấp quyền\", bạn sẽ được dẫn sang Shopee để chọn shop. Hệ thống nhận callback và lưu token tự động.",
+      oauthHintKey: "connect.hint.shopee",
     },
     lazada: {
       label: "Lazada",
       colorVar: "--lazada",
       api: "api/lazada-connect.php",
       credentials: [
-        { key: "app_key",    label: "App Key",    type: "text",     placeholder: "App Key từ Lazada Open Platform" },
-        { key: "app_secret", label: "App Secret", type: "password", placeholder: "App Secret" },
+        { key: "app_key",    labelKey: "connect.label.app_key",    type: "text",     placeholderKey: "connect.placeholder.lazada_app_key" },
+        { key: "app_secret", labelKey: "connect.label.app_secret", type: "password", placeholderKey: "connect.placeholder.lazada_app_secret" },
       ],
       statusKeys: { keyName: "app_key", hasSecretFlag: "has_secret", listKey: "accounts",
                     listIdField: "account_id", listNameField: "account_name",
-                    listExtra: [{ field: "country", label: "Quốc gia" }] },
-      oauthHint: "Bấm \"Cấp quyền\" để mở trang đăng nhập Lazada Seller Center. Sau khi chấp nhận, hệ thống lưu token và đồng bộ đơn được.",
+                    listExtra: [{ field: "country", labelKey: "connect.col.country" }] },
+      oauthHintKey: "connect.hint.lazada",
     },
     tiktokshop: {
       label: "TikTok Shop",
       colorVar: "--tiktok",
       api: "api/tiktok-connect.php",
       credentials: [
-        { key: "app_key",    label: "App Key",    type: "text",     placeholder: "App Key từ TikTok Partner Center" },
-        { key: "app_secret", label: "App Secret", type: "password", placeholder: "App Secret" },
+        { key: "app_key",    labelKey: "connect.label.app_key",    type: "text",     placeholderKey: "connect.placeholder.tiktok_app_key" },
+        { key: "app_secret", labelKey: "connect.label.app_secret", type: "password", placeholderKey: "connect.placeholder.tiktok_app_secret" },
       ],
       statusKeys: { keyName: "app_key", hasSecretFlag: "has_secret", listKey: "shops",
                     listIdField: "shop_id", listNameField: "shop_name",
-                    listExtra: [{ field: "region", label: "Khu vực" }] },
-      oauthHint: "Bấm \"Cấp quyền\" để vào trang ủy quyền của TikTok. Hệ thống lưu token và đồng bộ shop sau khi nhận callback.",
+                    listExtra: [{ field: "region", labelKey: "connect.col.region" }] },
+      oauthHintKey: "connect.hint.tiktok",
     },
   };
 
@@ -128,27 +128,27 @@
       <div class="card">
         <div class="card-head">
           <div>
-            <div class="card-title">Thông tin ứng dụng (${cfg.label})</div>
-            <div class="card-sub">Sau khi lưu, bấm "Cấp quyền" để bắt đầu OAuth.</div>
+            <div class="card-title">${tf("connect.cred.title", { label: cfg.label })}</div>
+            <div class="card-sub">${t("connect.cred.sub")}</div>
           </div>
         </div>
         <div class="card-pad">
           ${cfg.credentials.map((f) => {
             const val = (f.type === "password") ? "" : (data[f.key] || "");
-            const filledNote = (f.type === "password" && data[cfg.statusKeys.hasSecretFlag]) ? `<span style="font-size:11.5px;color:var(--pos);font-weight:700;margin-left:8px">✓ Đã lưu</span>` : "";
+            const filledNote = (f.type === "password" && data[cfg.statusKeys.hasSecretFlag]) ? `<span style="font-size:11.5px;color:var(--pos);font-weight:700;margin-left:8px">${t("connect.saved_badge")}</span>` : "";
             return `
               <div class="field-row">
-                <label class="field-label">${f.label}${filledNote}</label>
+                <label class="field-label">${t(f.labelKey, f.label || f.key)}${filledNote}</label>
                 <input class="v2-input" data-cred="${f.key}" type="${f.type}"
-                       placeholder="${f.placeholder || ""}"
+                       placeholder="${t(f.placeholderKey, f.placeholder || "")}"
                        value="${(val || "").toString().replace(/"/g, '&quot;')}" />
               </div>`;
           }).join("")}
           <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:4px">
             <button class="ctrl-btn on" data-action="save-creds" style="background:var(--brand);border-color:var(--brand);color:#fff">${t("connect.save_btn")}</button>
-            <button class="ctrl-btn" data-action="get-auth-url">Cấp quyền (OAuth)</button>
+            <button class="ctrl-btn" data-action="get-auth-url">${t("connect.authorize_btn")}</button>
           </div>
-          <div class="field-hint" style="margin-top:10px">${cfg.oauthHint}</div>
+          <div class="field-hint" style="margin-top:10px">${t(cfg.oauthHintKey)}</div>
         </div>
       </div>`;
   }
@@ -165,19 +165,19 @@
       <div class="card section-gap">
         <div class="card-head">
           <div>
-            <div class="card-title">Kết nối đã có (${list.length})</div>
-            <div class="card-sub">Mỗi shop/account được lưu kèm access token. Sàn yêu cầu refresh định kỳ.</div>
+            <div class="card-title">${tf("connect.list.title", { n: list.length })}</div>
+            <div class="card-sub">${t("connect.list.sub")}</div>
           </div>
-          ${list.length ? `<button class="ctrl-btn on" data-action="sync-all" style="background:var(--brand);border-color:var(--brand);color:#fff">Đồng bộ tất cả</button>` : ""}
+          ${list.length ? `<button class="ctrl-btn on" data-action="sync-all" style="background:var(--brand);border-color:var(--brand);color:#fff">${t("common.sync_all")}</button>` : ""}
         </div>
         ${list.length ? `
           <table class="tbl">
             <thead><tr>
-              <th>${cfg.label === "Lazada" ? "Account" : "Shop"}</th>
-              ${extra.map((c) => `<th>${c.label}</th>`).join("")}
-              <th>Hết hạn token</th>
-              <th>Đồng bộ từ</th>
-              <th>Lần đồng bộ cuối</th>
+              <th>${cfg.label === "Lazada" ? t("connect.label.account") : t("connect.label.shop")}</th>
+              ${extra.map((c) => `<th>${t(c.labelKey, c.label || c.field)}</th>`).join("")}
+              <th>${t("th.token_expires")}</th>
+              <th>${t("th.sync_from")}</th>
+              <th>${t("th.last_synced")}</th>
               <th>${t("th.status")}</th>
               <th></th>
             </tr></thead>
@@ -194,15 +194,15 @@
                 <td>
                   <label style="display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700;cursor:pointer">
                     <input type="checkbox" data-toggle-active ${+c.is_active === 1 ? "checked" : ""} style="accent-color:var(--brand)" />
-                    ${+c.is_active === 1 ? "Bật" : "Tắt"}
+                    ${+c.is_active === 1 ? t("common.enabled") : t("common.disabled")}
                   </label>
                 </td>
                 <td class="num">
                   <div style="display:inline-flex;gap:6px">
-                    <button class="iconbtn-sq" data-action="sync-one" title="Đồng bộ">
+                    <button class="iconbtn-sq" data-action="sync-one" title="${t("common.sync")}">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 0 1-15.5 6.2"/><path d="M3 12A9 9 0 0 1 18.5 5.8"/><path d="M18 2v5h-5"/><path d="M6 22v-5h5"/></svg>
                     </button>
-                    <button class="iconbtn-sq" data-action="disconnect" title="Ngắt kết nối" style="color:var(--neg)">
+                    <button class="iconbtn-sq" data-action="disconnect" title="${t("common.disconnect")}" style="color:var(--neg)">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>
                     </button>
                   </div>
@@ -210,7 +210,7 @@
               </tr>`).join("")}
             </tbody>
           </table>`
-          : `<div style="padding:24px;text-align:center;color:var(--ink-3);font-weight:600">Chưa có shop/account nào. Hãy nhập thông tin ứng dụng và bấm "Cấp quyền" để bắt đầu.</div>`}
+          : `<div style="padding:24px;text-align:center;color:var(--ink-3);font-weight:600">${t("connect.list.empty")}</div>`}
       </div>`;
   }
 
@@ -243,7 +243,7 @@
     local.saving = true;
     try {
       await postAction(local.tab, body);
-      showMsg("ok", "Đã lưu thông tin " + cfg.label + ".");
+      showMsg("ok", tf("connect.saved", { label: cfg.label }));
       await fetchStatus(local.tab);
       window.App.rerender();
     } catch (e) {
@@ -255,11 +255,11 @@
     try {
       const j = await postAction(local.tab, { action: "get_auth_url" });
       if (j.auth_url) {
-        if (confirm("Mở trang cấp quyền " + CONFIGS[local.tab].label + " trong tab mới?")) {
+        if (confirm(tf("connect.open_oauth", { label: CONFIGS[local.tab].label }))) {
           window.open(j.auth_url, "_blank", "noopener");
         }
       } else {
-        showMsg("err", "Không nhận được URL cấp quyền.");
+        showMsg("err", t("connect.no_auth_url"));
       }
     } catch (e) {
       showMsg("err", t("common.error") + ": " + (e.message || e));
@@ -267,16 +267,16 @@
   }
 
   async function onSyncAll() {
-    if (!confirm("Đồng bộ tất cả " + CONFIGS[local.tab].label + " đang bật?")) return;
+    if (!confirm(tf("connect.confirm_sync_all", { label: CONFIGS[local.tab].label }))) return;
     try {
       const j = await postAction(local.tab, { action: "sync" });
       const ok = (j.results || []).filter((r) => r.success).length;
       const total = (j.results || []).length;
-      showMsg(ok === total ? "ok" : "err", "Đồng bộ: " + ok + "/" + total + " thành công.");
+      showMsg(ok === total ? "ok" : "err", tf("connect.sync_result", { ok, total }));
       await fetchStatus(local.tab);
       window.App.rerender();
     } catch (e) {
-      showMsg("err", "Lỗi sync: " + (e.message || e));
+      showMsg("err", t("common.error") + ": " + (e.message || e));
     }
   }
 
@@ -288,12 +288,12 @@
       if (action === "sync-one") {
         const j = await postAction(local.tab, { action: "sync", [idF]: id });
         const r = (j.results || [])[0];
-        if (r && r.success) showMsg("ok", "Đã đồng bộ.");
-        else showMsg("err", t("common.error") + ": " + ((r && r.error) || "không rõ"));
+        if (r && r.success) showMsg("ok", t("connect.synced_one"));
+        else showMsg("err", t("common.error") + ": " + ((r && r.error) || t("common.unknown")));
       } else if (action === "disconnect") {
-        if (!confirm("Ngắt kết nối " + id + "?")) return;
+        if (!confirm(tf("connect.disconnect_confirm", { id }))) return;
         await postAction(local.tab, { action: "disconnect", [idF]: id });
-        showMsg("ok", "Đã ngắt kết nối.");
+        showMsg("ok", t("connect.disconnected"));
       }
       await fetchStatus(local.tab);
       window.App.rerender();
@@ -318,7 +318,7 @@
     const idF = CONFIGS[local.tab].statusKeys.listIdField;
     try {
       await postAction(local.tab, { action: "set_sync_from", [idF]: +row.dataset.id, sync_from_date: value });
-      showMsg("ok", "Đã cập nhật ngày đồng bộ.");
+      showMsg("ok", t("connect.sync_from_updated"));
     } catch (e) {
       showMsg("err", t("common.error") + ": " + (e.message || e));
     }

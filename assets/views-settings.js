@@ -60,14 +60,14 @@
       <div class="card">
         <div class="card-head">
           <div>
-            <div class="card-title">Tài khoản</div>
-            <div class="card-sub">Đăng nhập bằng <b>${u.username || "—"}</b> · vai trò <b>${u.role || "—"}</b></div>
+            <div class="card-title">${t("settings.account.title")}</div>
+            <div class="card-sub">${tf("settings.account.sub", { u: u.username || "—", r: u.role || "—" })}</div>
           </div>
         </div>
         <div class="card-pad">
           <div class="field-row">
             <label class="field-label">${t("settings.account.full_name")}</label>
-            <input id="accFullName" class="v2-input" type="text" value="${(u.full_name || "").replace(/"/g, '&quot;')}" placeholder="Họ và tên đầy đủ" maxlength="120" />
+            <input id="accFullName" class="v2-input" type="text" value="${(u.full_name || "").replace(/"/g, '&quot;')}" placeholder="${t("settings.account.placeholder.full_name")}" maxlength="120" />
           </div>
           <div style="display:flex;justify-content:flex-end;margin-bottom:24px">
             <button class="ctrl-btn on" id="btnSaveProfile" style="background:var(--brand);border-color:var(--brand);color:#fff">${t("settings.account.save_profile")}</button>
@@ -82,7 +82,7 @@
             <div class="field-row">
               <label class="field-label">${t("settings.account.new_pwd")}</label>
               <input id="accNewPwd" class="v2-input" type="password" autocomplete="new-password" />
-              <div class="field-hint">Tối thiểu 8 ký tự, nên kết hợp chữ + số.</div>
+              <div class="field-hint">${t("settings.account.new_pwd_hint")}</div>
             </div>
             <div class="field-row">
               <label class="field-label">${t("settings.account.confirm_pwd")}</label>
@@ -101,9 +101,9 @@
     const brand = (rule.brand_name || "").replace(/"/g, "&quot;");
     return `
       <div class="brand-rule-row" data-idx="${idx}" style="display:grid;grid-template-columns:120px 1fr 40px;gap:10px;align-items:center;margin-bottom:8px">
-        <input class="v2-input mono" data-field="prefix" type="text" value="${prefix}" maxlength="3" placeholder="ABC" style="text-transform:uppercase;text-align:center;font-weight:800" />
-        <input class="v2-input" data-field="brand_name" type="text" value="${brand}" placeholder="Tên thương hiệu" maxlength="120" />
-        <button class="iconbtn-sq" data-action="del-rule" aria-label="Xoá" style="color:var(--neg)">
+        <input class="v2-input mono" data-field="prefix" type="text" value="${prefix}" maxlength="3" placeholder="${t("settings.brand.placeholder.prefix")}" style="text-transform:uppercase;text-align:center;font-weight:800" />
+        <input class="v2-input" data-field="brand_name" type="text" value="${brand}" placeholder="${t("settings.brand.placeholder.name")}" maxlength="120" />
+        <button class="iconbtn-sq" data-action="del-rule" aria-label="${t("common.delete")}" style="color:var(--neg)">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>
         </button>
       </div>`;
@@ -112,27 +112,27 @@
   function brandCard() {
     if (!local.isAdmin) {
       return `<div class="card card-pad" style="color:var(--ink-3);font-size:13px;font-weight:600">
-        <b>Quy ước SKU sang thương hiệu</b> — chỉ admin mới xem & chỉnh sửa được. Tài khoản của bạn (<b>${(local.user||{}).role || "—"}</b>) không có quyền truy cập mục này.
+        ${tf("settings.brand.admin_only", { r: (local.user||{}).role || "—" })}
       </div>`;
     }
 
     const list = local.rules.length
       ? local.rules.map(brandRuleRow).join("")
-      : `<div style="color:var(--ink-3);font-size:13px;font-weight:600;padding:14px 0">Chưa có quy ước nào — bấm "Thêm dòng" để bắt đầu.</div>`;
+      : `<div style="color:var(--ink-3);font-size:13px;font-weight:600;padding:14px 0">${t("settings.brand.empty")}</div>`;
 
     return `
       <div class="card">
         <div class="card-head">
           <div>
-            <div class="card-title">Quy ước SKU sang thương hiệu</div>
-            <div class="card-sub">3 ký tự đầu của SKU sau khi chuẩn hoá chữ hoa → tên thương hiệu (dùng để gom doanh thu theo brand).</div>
+            <div class="card-title">${t("settings.brand.title")}</div>
+            <div class="card-sub">${t("settings.brand.sub")}</div>
           </div>
-          <button class="ctrl-btn" id="btnAddRule">+ Thêm dòng</button>
+          <button class="ctrl-btn" id="btnAddRule">${t("settings.brand.add_row")}</button>
         </div>
         <div class="card-pad">
           <div id="brandRulesList">${list}</div>
           <div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
-            <span class="field-hint">Mã 3 ký tự, viết hoa. Trùng prefix sẽ bị gộp khi lưu.</span>
+            <span class="field-hint">${t("settings.brand.hint")}</span>
             <button class="ctrl-btn on" id="btnSaveRules" style="background:var(--brand);border-color:var(--brand);color:#fff">${t("settings.brand.save_rules")}</button>
           </div>
         </div>
@@ -291,7 +291,7 @@
       window.App.rerender();
     } catch (e) {
       local.update.installing = null;
-      showMsg("err", "Update failed: " + (e.message || e));
+      showMsg("err", t("common.error") + ": " + (e.message || e));
     }
   }
 
@@ -320,10 +320,10 @@
       const j = await r.json();
       if (!r.ok || !j.success) throw new Error(j.error || "HTTP " + r.status);
       local.user = j.user;
-      showMsg("ok", "Đã lưu hồ sơ.");
+      showMsg("ok", t("settings.account.saved"));
     } catch (e) {
       btn.textContent = t("settings.account.save_profile");
-      showMsg("err", "Lỗi lưu hồ sơ: " + (e.message || e));
+      showMsg("err", t("settings.account.save_failed") + ": " + (e.message || e));
     } finally {
       local.saving = false;
     }
@@ -335,8 +335,8 @@
     const cf  = document.getElementById("accConfirmPwd").value;
     const btn = document.getElementById("btnChangePwd");
     if (!btn || local.saving) return;
-    if (!cur || !nw || !cf) { showMsg("err", "Vui lòng nhập đủ 3 trường mật khẩu."); return; }
-    if (nw !== cf) { showMsg("err", "Xác nhận không khớp."); return; }
+    if (!cur || !nw || !cf) { showMsg("err", t("settings.account.pwd_missing")); return; }
+    if (nw !== cf) { showMsg("err", t("settings.account.pwd_mismatch")); return; }
     local.saving = true; btn.textContent = t("settings.account.changing");
     try {
       const r = await fetch("api/account.php", {
@@ -350,10 +350,10 @@
       document.getElementById("accCurPwd").value = "";
       document.getElementById("accNewPwd").value = "";
       document.getElementById("accConfirmPwd").value = "";
-      showMsg("ok", t("settings.account.change_pwd") + " thành công.");
+      showMsg("ok", t("settings.account.pwd_changed"));
     } catch (e) {
       btn.textContent = t("settings.account.change_pwd");
-      showMsg("err", "Lỗi đổi mật khẩu: " + (e.message || e));
+      showMsg("err", t("settings.account.change_failed") + ": " + (e.message || e));
     } finally {
       local.saving = false;
     }
@@ -377,8 +377,8 @@
     const rules = collectRulesFromDOM();
     // Validate client-side first
     for (const r of rules) {
-      if (r.prefix.length !== 3) { showMsg("err", `Mã "${r.prefix || "(rỗng)"}" phải đúng 3 ký tự.`); return; }
-      if (!r.brand_name) { showMsg("err", `Mã ${r.prefix} chưa có tên thương hiệu.`); return; }
+      if (r.prefix.length !== 3) { showMsg("err", tf("settings.brand.prefix_invalid", { p: r.prefix || "—" })); return; }
+      if (!r.brand_name) { showMsg("err", tf("settings.brand.name_missing", { p: r.prefix })); return; }
     }
     local.saving = true; btn.textContent = t("plan.saving");
     try {
@@ -390,11 +390,11 @@
       const j = await r.json();
       if (!r.ok || !j.success) throw new Error(j.error || "HTTP " + r.status);
       local.rules = j.rules || [];
-      showMsg("ok", j.message || "Đã lưu quy ước thương hiệu.");
+      showMsg("ok", j.message || t("settings.brand.saved"));
       window.App.rerender();
     } catch (e) {
       btn.textContent = t("settings.brand.save_rules");
-      showMsg("err", "Lỗi lưu quy ước: " + (e.message || e));
+      showMsg("err", t("settings.brand.save_failed") + ": " + (e.message || e));
     } finally {
       local.saving = false;
     }

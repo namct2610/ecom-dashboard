@@ -72,26 +72,26 @@
         <div style="margin:0 auto 12px;width:54px;height:54px;border-radius:14px;background:color-mix(in oklch, var(--brand) 12%, transparent);color:var(--brand);display:grid;place-items:center">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:24px;height:24px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5M12 3v12"/></svg>
         </div>
-        <div style="font-weight:800;font-size:15px">Kéo & thả file Excel vào đây</div>
-        <div style="font-size:12.5px;color:var(--ink-3);font-weight:600;margin-top:6px">.xlsx / .xls · tối đa 50MB mỗi file · chọn nhiều file một lúc</div>
-        <div style="font-size:11.5px;color:var(--ink-3);font-weight:600;margin-top:4px">Sàn (Shopee / Lazada / TikTok) và loại (đơn / lưu lượng) sẽ tự nhận diện.</div>
-        <button class="ctrl-btn on" id="btnPickFile" style="background:var(--brand);border-color:var(--brand);color:#fff;margin-top:16px">Chọn file...</button>
+        <div style="font-weight:800;font-size:15px">${t("upload.dropzone.title")}</div>
+        <div style="font-size:12.5px;color:var(--ink-3);font-weight:600;margin-top:6px">${t("upload.dropzone.hint1")}</div>
+        <div style="font-size:11.5px;color:var(--ink-3);font-weight:600;margin-top:4px">${t("upload.dropzone.hint2")}</div>
+        <button class="ctrl-btn on" id="btnPickFile" style="background:var(--brand);border-color:var(--brand);color:#fff;margin-top:16px">${t("upload.pick")}</button>
         <input id="fileInput" type="file" multiple accept=".xlsx,.xls" style="display:none" />
       </div>`;
   }
 
   function queueItem(q, idx) {
     let badge;
-    if (q.status === "pending") badge = `<span class="tag">Chờ</span>`;
-    else if (q.status === "uploading") badge = `<span class="tag" style="color:var(--lazada);border-color:color-mix(in oklch, var(--lazada) 30%, transparent)">Đang gửi…</span>`;
+    if (q.status === "pending") badge = `<span class="tag">${t("upload.queue.pending")}</span>`;
+    else if (q.status === "uploading") badge = `<span class="tag" style="color:var(--lazada);border-color:color-mix(in oklch, var(--lazada) 30%, transparent)">${t("upload.queue.uploading")}</span>`;
     else if (q.status === "done") {
       const r = q.result || {};
       const platLabel = (r.platform === "tiktokshop" ? "tiktok" : r.platform);
-      badge = `<span class="tag" style="color:var(--pos);border-color:color-mix(in oklch, var(--pos) 30%, transparent)">✓ ${r.imported || 0} dòng</span>
+      badge = `<span class="tag" style="color:var(--pos);border-color:color-mix(in oklch, var(--pos) 30%, transparent)">${tf("upload.queue.done", { n: r.imported || 0 })}</span>
                <span class="tag mono">${platLabel || "?"}</span>
-               <span class="tag">${r.data_type === "traffic" ? "Lưu lượng" : "Đơn hàng"}</span>`;
+               <span class="tag">${r.data_type === "traffic" ? t("upload.type.traffic") : t("upload.type.orders")}</span>`;
     } else {
-      badge = `<span class="tag" style="color:var(--neg);border-color:color-mix(in oklch, var(--neg) 30%, transparent)">✗ ${(q.result && q.result.error) || "Lỗi"}</span>`;
+      badge = `<span class="tag" style="color:var(--neg);border-color:color-mix(in oklch, var(--neg) 30%, transparent)">✗ ${(q.result && q.result.error) || t("upload.queue.error_default")}</span>`;
     }
     return `
       <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;border:1px solid var(--border);border-radius:var(--r-ctrl);background:var(--surface-2);margin-top:8px">
@@ -113,10 +113,10 @@
       <div class="card">
         <div class="card-head">
           <div>
-            <div class="card-title">Tải dữ liệu mới</div>
-            <div class="card-sub">Upload file đơn hàng / lưu lượng từ các sàn — hệ thống sẽ tự gộp và cập nhật báo cáo.</div>
+            <div class="card-title">${t("upload.card.title")}</div>
+            <div class="card-sub">${t("upload.card.sub")}</div>
           </div>
-          ${local.queue.length ? `<div style="font-size:12.5px;color:var(--ink-3);font-weight:700">${totalDone}/${local.queue.length} hoàn tất${totalErr ? ` · ${totalErr} lỗi` : ""}</div>` : ""}
+          ${local.queue.length ? `<div style="font-size:12.5px;color:var(--ink-3);font-weight:700">${totalErr ? tf("upload.queue.summary_with_errors", { done: totalDone, total: local.queue.length, err: totalErr }) : tf("upload.queue.summary", { done: totalDone, total: local.queue.length })}</div>` : ""}
         </div>
         <div class="card-pad">
           ${dropZone()}
@@ -127,21 +127,21 @@
   }
 
   function historyTable() {
-    if (local.loadingHist) return `<div style="padding:24px;text-align:center;color:var(--ink-3);font-weight:600">Đang tải lịch sử…</div>`;
-    if (!local.history.length) return `<div style="padding:32px;text-align:center;color:var(--ink-3);font-weight:600">Chưa có lịch sử upload.</div>`;
+    if (local.loadingHist) return `<div style="padding:24px;text-align:center;color:var(--ink-3);font-weight:600">${t("upload.history.loading")}</div>`;
+    if (!local.history.length) return `<div style="padding:32px;text-align:center;color:var(--ink-3);font-weight:600">${t("upload.history.empty")}</div>`;
     return `
       <table class="tbl">
         <thead><tr>
-          <th>File</th><th>Sàn</th><th>Loại</th>
-          <th class="num">Đã nhập</th><th class="num">Bỏ qua</th>
-          <th>${t("th.status")}</th><th>Lúc</th>
+          <th>${t("th.file")}</th><th>${t("th.platform")}</th><th>${t("th.type")}</th>
+          <th class="num">${t("th.imported")}</th><th class="num">${t("th.skipped")}</th>
+          <th>${t("th.status")}</th><th>${t("th.uploaded_at")}</th>
         </tr></thead>
         <tbody>
           ${local.history.map((h) => `
             <tr>
               <td style="max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${(h.original_filename || "").replace(/"/g, '&quot;')}">${h.original_filename || "—"}</td>
               <td>${platPill(h.platform)}</td>
-              <td>${h.data_type === "traffic" ? "Lưu lượng" : "Đơn hàng"}</td>
+              <td>${h.data_type === "traffic" ? t("upload.type.traffic") : t("upload.type.orders")}</td>
               <td class="num tnum">${(+h.imported_rows || 0).toLocaleString("vi-VN")}</td>
               <td class="num tnum">${(+h.skipped_rows || 0).toLocaleString("vi-VN")}</td>
               <td>${statusPill(h.status)}${h.error_message ? `<div style="font-size:11px;color:var(--neg);font-weight:600;margin-top:2px;max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${(h.error_message||'').replace(/"/g,'&quot;')}">${h.error_message}</div>` : ""}</td>
@@ -158,8 +158,8 @@
       <div class="card section-gap">
         <div class="card-head">
           <div>
-            <div class="card-title">Lịch sử upload</div>
-            <div class="card-sub">30 lần gần nhất.</div>
+            <div class="card-title">${t("upload.history.title")}</div>
+            <div class="card-sub">${t("upload.history.sub")}</div>
           </div>
           <button class="ctrl-btn" id="btnReloadHist">${t("common.reload")}</button>
         </div>
@@ -176,12 +176,12 @@
       const ext = (f.name || "").toLowerCase().split(".").pop();
       if (!["xlsx", "xls"].includes(ext)) continue;
       if (f.size > 50 * 1024 * 1024) {
-        showMsg("err", `${f.name}: quá 50MB`);
+        showMsg("err", tf("upload.too_big", { name: f.name }));
         continue;
       }
       accepted.push({ name: f.name, size: f.size, raw: f, status: "pending" });
     }
-    if (!accepted.length) { showMsg("err", "Không có file hợp lệ."); return; }
+    if (!accepted.length) { showMsg("err", t("upload.invalid")); return; }
     local.queue = local.queue.concat(accepted);
     window.App.rerender();
     runQueue();
@@ -203,13 +203,13 @@
           const r = await fetch("api/upload.php", { method: "POST", credentials: "same-origin", body: fd });
           const j = await r.json();
           // upload.php returns { success, message, results: [{file, success, ...}] }
-          const file = j.results && j.results[0] ? j.results[0] : { success: false, error: "Không có kết quả" };
+          const file = j.results && j.results[0] ? j.results[0] : { success: false, error: t("common.no_results") };
           if (file.success) {
             item.status = "done";
             item.result = file;
           } else {
             item.status = "error";
-            item.result = { error: file.error || j.error || "Lỗi không xác định" };
+            item.result = { error: file.error || j.error || t("common.error") };
           }
         } catch (e) {
           item.status = "error";
@@ -222,8 +222,8 @@
       await fetchHistory();
       const ok = local.queue.filter((q) => q.status === "done").length;
       const err = local.queue.filter((q) => q.status === "error").length;
-      if (ok && !err) showMsg("ok", `Tải lên ${ok} file thành công.`);
-      else if (err) showMsg("err", `${err} file lỗi · ${ok} thành công.`);
+      if (ok && !err) showMsg("ok", tf("upload.ok_n", { n: ok }));
+      else if (err) showMsg("err", tf("upload.partial", { err, ok }));
       window.App.rerender();
     }
   }

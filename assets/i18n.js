@@ -39,6 +39,9 @@
     "common.disabled": "Tắt",
     "common.enabled": "Bật",
     "common.you": "bạn",
+    "common.total": "Tổng",
+    "common.retry": "Thử lại",
+    "common.page_views": "lượt xem",
 
     /* Brand / sidebar */
     "brand.sub": "Marketplace Analytics",
@@ -367,6 +370,8 @@
     "plan.saving": "Đang lưu…",
     "plan.year_picker.label": "Chọn năm kế hoạch",
     "plan.year_picker.legend": "Năm",
+    "plan.chart.actual": "Thực tế",
+    "plan.chart.target": "Mục tiêu",
 
     /* Settings */
     "settings.account.title": "Tài khoản",
@@ -399,6 +404,8 @@
     "settings.brand.admin_only": "<b>Quy ước SKU sang thương hiệu</b> — chỉ admin mới xem & chỉnh sửa được. Tài khoản của bạn (<b>{r}</b>) không có quyền truy cập mục này.",
     "settings.brand.prefix_invalid": "Mã \"{p}\" phải đúng 3 ký tự.",
     "settings.brand.name_missing": "Mã {p} chưa có tên thương hiệu.",
+    "settings.brand.saved": "Đã lưu quy ước thương hiệu.",
+    "settings.brand.save_failed": "Lỗi lưu quy ước",
 
     /* Users */
     "users.summary.total": "Tổng tài khoản",
@@ -576,6 +583,9 @@
     "common.disabled": "Off",
     "common.enabled": "On",
     "common.you": "you",
+    "common.total": "Total",
+    "common.retry": "Retry",
+    "common.page_views": "page views",
 
     /* Brand / sidebar */
     "brand.sub": "Marketplace Analytics",
@@ -903,6 +913,8 @@
     "plan.saving": "Saving…",
     "plan.year_picker.label": "Select planning year",
     "plan.year_picker.legend": "Year",
+    "plan.chart.actual": "Actual",
+    "plan.chart.target": "Target",
 
     /* Settings */
     "settings.account.title": "Account",
@@ -935,6 +947,8 @@
     "settings.brand.admin_only": "<b>SKU → brand rules</b> — admin only. Your account (<b>{r}</b>) doesn't have access to this section.",
     "settings.brand.prefix_invalid": "Code \"{p}\" must be exactly 3 chars.",
     "settings.brand.name_missing": "Code {p} needs a brand name.",
+    "settings.brand.saved": "Brand rules saved.",
+    "settings.brand.save_failed": "Brand rule save failed",
 
     /* Users */
     "users.summary.total": "Total accounts",

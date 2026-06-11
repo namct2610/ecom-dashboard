@@ -1,7 +1,7 @@
 {
-  "version": "3.4.23",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/main/release/dashboard-v3-3.4.23.zip",
-  "changelog": "- Cải thiện biểu đồ Tổng quan: cột Xu hướng doanh thu và Xu hướng đơn hàng đồng bộ kích thước, rộng hơn khi ít dữ liệu và nhãn tổng dễ đọc hơn.\n- Làm lại phần Khách hàng để tránh lỗi bảng tạm MEMORY trên production, giảm truy vấn phụ và giúp trang truy cập ổn định hơn.",
+  "version": "3.4.24",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/main/release/dashboard-v3-3.4.24.zip",
+  "changelog": "- Bổ sung i18n cho các phần Upload, Cài đặt, Người dùng, Kế hoạch, Kết nối sàn và tooltip biểu đồ để chuyển ngôn ngữ ổn định hơn.\n- Thêm các key dịch dùng chung cho tổng, thử lại, lượt xem và nhãn biểu đồ kế hoạch.",
   "min_php": "8.1",
   "released_at": "2026-06-11"
 }
