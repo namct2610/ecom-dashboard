@@ -1,7 +1,7 @@
 {
-  "version": "3.4.14",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.14/release/dashboard-v3-3.4.14.zip",
-  "changelog": "- Fix trang Khách hàng treo do timeout: 2 query lifetime segment trước đây JOIN với toàn bộ bảng orders (không filter ngày) → DB lớn = PHP timeout 30s, browser thấy hang.\n- New vs Returning giờ tính trong period đã chọn (dùng tmp_customer_orders đã filter): nhanh hơn 100×.\n- Potential buyers giới hạn lookback 12 tháng trước period → orders scan dùng index, không full table scan.",
+  "version": "3.4.15",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.15/release/dashboard-v3-3.4.15.zip",
+  "changelog": "- Fix 403 trên nút Kiểm tra ngay (và mọi POST khác): require_csrf() không gọi start_session() trước khi đọc $_SESSION['csrf_token'] → session trống → token mismatch → 403 mỗi lần submit.",
   "min_php": "8.1",
   "released_at": "2026-06-11"
 }
