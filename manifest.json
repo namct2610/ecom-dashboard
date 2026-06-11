@@ -1,7 +1,7 @@
 {
-  "version": "3.4.27",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.27/release/dashboard-v3-3.4.27.zip",
-  "changelog": "- Thêm cơ chế config.local.php: file gitignored + không bị ghi đè khi update, dùng để bật auth, đổi DB password, v.v. trên production mà không cần sửa code.\n- config.local.php.example: hướng dẫn enable authentication.\n- bootstrap.php: tự merge config.local.php vào config chính nếu file tồn tại.",
+  "version": "3.4.28",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.28/release/dashboard-v3-3.4.28.zip",
+  "changelog": "- Login chỉ dùng user trong database, bỏ fallback config credentials.\n- config.php: bỏ auth.username / auth.password — chỉ còn auth.enabled.\n- config.local.php: để bật login chỉ cần enabled: true, không cần khai báo username/password.\n- Bỏ sync_legacy_config_user() — không tạo user từ config nữa.",
   "min_php": "8.1",
   "released_at": "2026-06-11"
 }
