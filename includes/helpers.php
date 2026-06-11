@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 // ── Auth ────────────────────────────────────────────────────────────────────
 
+const SESSION_IDLE_TTL    = 7200;       // 2 hours idle
+const SESSION_ABSOLUTE_TTL = 28800;     // 8 hours from login
+
 function start_session(): void
 {
     if (session_status() === PHP_SESSION_NONE) {
@@ -22,13 +25,29 @@ function start_session(): void
         }
 
         session_set_cookie_params([
-            'lifetime' => 86400 * 7,
+            'lifetime' => SESSION_ABSOLUTE_TTL,
             'path'     => '/',
             'secure'   => $https,
             'httponly' => true,
             'samesite' => 'Lax',
         ]);
         session_start();
+
+        // Enforce idle + absolute timeouts.
+        // idle: no activity for SESSION_IDLE_TTL → expire
+        // absolute: logged in more than SESSION_ABSOLUTE_TTL → expire
+        if (!empty($_SESSION['logged_in'])) {
+            $now = time();
+            if (isset($_SESSION['_last_activity']) && ($now - (int)$_SESSION['_last_activity'] > SESSION_IDLE_TTL)) {
+                clear_auth_session();
+                return;
+            }
+            if (isset($_SESSION['_login_time']) && ($now - (int)$_SESSION['_login_time'] > SESSION_ABSOLUTE_TTL)) {
+                clear_auth_session();
+                return;
+            }
+            $_SESSION['_last_activity'] = $now;
+        }
     }
 }
 
@@ -64,6 +83,9 @@ function store_user_session(array $user, bool $regenerate = true): void
     $_SESSION['must_change_password'] = !empty($user['must_change_password']);
     $_SESSION['role']      = (string) ($user['role'] ?? 'staff');
     $_SESSION['csrf_token'] ??= bin2hex(random_bytes(32));
+    // Track login time for absolute timeout; only set on fresh login.
+    $_SESSION['_login_time'] ??= time();
+    $_SESSION['_last_activity'] = time();
 }
 
 function clear_auth_session(): void
