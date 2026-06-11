@@ -9,7 +9,6 @@
 
   let cmpMetric = "revenue";
   let hideShopee = false;
-  let trendMode = "revenue";
 
   function ppChip(cur, prev, invert) {
     if (prev == null) return "";
@@ -176,9 +175,9 @@
       <div data-collapse style="grid-column:span 8" class="card">
         <div class="card-head">
           <div><div class="card-title">${_t("ovw.daily.title")}</div><div class="card-sub">${S.periodLabel(st.period).toLowerCase()} · ${plat === "all" ? _t("ovw.trend.all_platforms") : S.PLAT[plat].label}</div></div>
-          <div class="miniseg" id="trendSeg"><button class="${trendMode === "revenue" ? "active" : ""}" data-m="revenue">${_t("ovw.cmp.revenue")}</button><button class="${trendMode === "orders" ? "active" : ""}" data-m="orders">${_t("ovw.cmp.orders")}</button></div>
+          ${plat === "all" ? `<div class="legend">${S.PKEYS.map((k) => `<span class="legend-item"><span class="legend-swatch" style="background:var(--${k})"></span>${S.PLAT[k].label}</span>`).join("")}</div>` : ""}
         </div>
-        <div class="card-pad" style="padding-top:14px"><div class="chart-wrap" style="height:250px"><canvas id="dailyChart"></canvas></div></div>
+        <div class="card-pad" style="padding-top:14px"><div class="chart-wrap" style="height:280px"><canvas id="dailyChart"></canvas></div></div>
       </div>
       <div data-collapse style="grid-column:span 4" class="card">
         <div class="card-head"><div><div class="card-title">${_t("ovw.category.title")}</div><div class="card-sub">${_t("ovw.category.by_revenue")} · ${S.periodLabel(st.period).toLowerCase()}</div></div></div>
@@ -243,7 +242,7 @@
     const ds = S.dailySeriesRange(range, plat);
 
     const mc = root.querySelector("#monthlyChart"); if (mc) C.monthlyRevenue(mc, S.businessTrend(st.period), { platform: plat });
-    const dc = root.querySelector("#dailyChart"); if (dc) (trendMode === "revenue" ? C.revenueTrend : C.ordersTrend)(dc, ds, { platform: plat });
+    const dc = root.querySelector("#dailyChart"); if (dc) C.ordersTrend(dc, ds, { platform: plat });
 
     const pmAll2 = S.PKEYS.map((k) => ({ key: k, ...S.PLAT[k], ...S.aggRange(range, k) }));
     const totalRev2 = pmAll2.reduce((t, p) => t + p.revenue, 0);
@@ -253,7 +252,6 @@
     const cn = root.querySelector("#catDonut");
     if (cn) { const cats = S.categoryBreakdown(st.period, plat).filter((c) => c.revenue > 0); C.donut(cn, cats.map((c) => ({ label: S.catLabel(c.cat), value: c.revenue, color: c.color }))); }
 
-    root.querySelector("#trendSeg")?.addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) { trendMode = b.dataset.m; window.App.rerender(); } });
     root.querySelector("#cmpSeg")?.addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) { cmpMetric = b.dataset.m; window.App.rerender(); } });
     root.querySelector("#hideShopeeBtn")?.addEventListener("click", () => { hideShopee = !hideShopee; window.App.rerender(); });
     root.querySelectorAll("[data-nav]").forEach((a) => a.addEventListener("click", () => window.App.go(a.dataset.nav)));

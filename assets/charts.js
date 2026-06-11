@@ -135,30 +135,39 @@
     });
   }
 
+  function barSizing(count, maxThickness) {
+    return {
+      categoryPercentage: count <= 4 ? 0.68 : count <= 8 ? 0.76 : 0.86,
+      barPercentage: count <= 4 ? 0.9 : 0.96,
+      maxBarThickness: Math.max(12, maxThickness || 46),
+    };
+  }
+
   /* ---- orders trend grouped bars ---- */
   function ordersTrend(canvas, series, opt) {
     opt = opt || {};
     const labels = series.map((s) => dayLabel(s.date));
     const stacked = opt.platform === "all";
+    const sizing = barSizing(labels.length, 34);
     let datasets;
     if (stacked) {
       datasets = ["shopee", "lazada", "tiktok"].map((k) => ({
         label: window.Store.PLAT[k].label, data: series.map((s) => s["o_" + k]),
-        backgroundColor: col("--" + k), borderRadius: 0, borderSkipped: false, borderWidth: 0, stack: "o", maxBarThickness: 18,
+        backgroundColor: col("--" + k), borderRadius: 0, borderSkipped: false, borderWidth: 0, stack: "o", ...sizing,
       }));
     } else {
-      datasets = [{ label: "Đơn", data: series.map((s) => s.orders), backgroundColor: col("--" + opt.platform), borderRadius: 6, borderSkipped: "bottom", borderWidth: 0, maxBarThickness: 18 }];
+      datasets = [{ label: "Đơn", data: series.map((s) => s.orders), backgroundColor: col("--" + opt.platform), borderRadius: 6, borderSkipped: "bottom", borderWidth: 0, ...sizing }];
     }
     return mk(canvas, {
       type: "bar", data: { labels, datasets },
       options: {
         interaction: { mode: "index", intersect: false },
         scales: {
-          x: { stacked, grid: { display: false }, ticks: { color: ink3(), font: { size: 11 }, autoSkip: true, maxTicksLimit: 10 }, border: { display: false } },
-          y: { stacked, grid: { color: gridc(), drawTicks: false }, ticks: { color: ink3(), font: { size: 11 } }, border: { display: false } },
+          x: { stacked, grid: { display: false }, ticks: { color: ink3(), font: { size: 10.5 }, maxRotation: 0, autoSkip: true, maxTicksLimit: 13 }, border: { display: false } },
+          y: { stacked, grid: { color: gridc(), drawTicks: false }, ticks: { color: ink3(), font: { size: 11 } }, border: { display: false }, beginAtZero: true },
         },
         plugins: {
-          tooltip: { ...tip(), callbacks: { label: (c) => " " + c.dataset.label + ": " + window.F.viInt(c.raw) + " đơn" } },
+          tooltip: { ...tip(), callbacks: { label: (c) => " " + c.dataset.label + ": " + window.F.viInt(c.raw) + " đơn", footer: (items) => "Tổng: " + window.F.viInt(items.reduce((t, i) => t + i.raw, 0)) + " đơn" } },
           stackedRoundedTop: { enabled: stacked, radius: 6 },
         },
       },
@@ -226,16 +235,17 @@
     opt = opt || {};
     const labels = trend.map((t) => t.label);
     const stacked = opt.platform === "all";
+    const sizing = barSizing(labels.length, 52);
     let datasets;
     if (stacked) {
       datasets = ["shopee", "lazada", "tiktok"].map((k) => ({
         label: window.Store.PLAT[k].label, data: trend.map((t) => t[k]),
         backgroundColor: trend.map((t) => t.partial ? hexA(col("--" + k), 0.4) : col("--" + k)),
-        borderRadius: 0, borderSkipped: false, borderWidth: 0, stack: "rev", maxBarThickness: 38,
+        borderRadius: 0, borderSkipped: false, borderWidth: 0, stack: "rev", ...sizing,
       }));
     } else {
       const c = col("--" + opt.platform);
-      datasets = [{ label: window.Store.PLAT[opt.platform].label, data: trend.map((t) => t[opt.platform]), backgroundColor: trend.map((t) => t.partial ? hexA(c, 0.4) : c), borderRadius: 6, borderSkipped: "bottom", borderWidth: 0, maxBarThickness: 38 }];
+      datasets = [{ label: window.Store.PLAT[opt.platform].label, data: trend.map((t) => t[opt.platform]), backgroundColor: trend.map((t) => t.partial ? hexA(c, 0.4) : c), borderRadius: 6, borderSkipped: "bottom", borderWidth: 0, ...sizing }];
     }
     return mk(canvas, {
       type: "bar", data: { labels, datasets },
