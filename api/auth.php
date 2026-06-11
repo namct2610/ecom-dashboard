@@ -61,12 +61,19 @@ start_session();
 $method = $_SERVER['REQUEST_METHOD'];
 
 if ($method === 'GET') {
+    // Auth is disabled app-wide (require_auth() is a no-op). Report a
+    // synthetic admin user so any cached older frontend JS that checks
+    // `logged_in` doesn't redirect to /old/index.php?legacy=1 (which no
+    // longer exists). A real session, if present, still wins.
     $user = current_user();
+    if ($user === null) {
+        $user = ['username' => 'guest', 'role' => 'admin', 'full_name' => 'Guest'];
+    }
     json_response([
-        'logged_in' => $user !== null,
+        'logged_in' => true,
         'user'      => $user,
-        'username'  => $user['username'] ?? null,
-        'role'      => $user['role'] ?? null,
+        'username'  => $user['username'],
+        'role'      => $user['role'],
         'csrf'      => generate_csrf(),
     ]);
 }

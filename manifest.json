@@ -1,7 +1,7 @@
 {
-  "version": "3.4.9",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.9/release/dashboard-v3-3.4.9.zip",
-  "changelog": "- Loại bỏ hoàn toàn code v1: xoá /old, api/update.php (kênh update legacy), dev/build-old.sh.\n- Xoá 11 endpoint API mồ côi (orders/products/traffic/heatmap/revenue/comparison/admin/logs/lang/date-periods/reconcile-settings) — đã không còn được v2 dùng.\n- Bỏ login overlay + showLoginOverlay (dead code từ khi tắt auth), xoá CSS login + i18n key login.*, redirect tới /old trong các view.\n- Xoá 6 file Excel mẫu ở root (Bang_gia, Combo_to_Single, GBS, Lazada, Shopee, TiktokShop).\n- Updater preservedPaths không còn 'old', build.sh không exclude 'old/'.",
+  "version": "3.4.10",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.10/release/dashboard-v3-3.4.10.zip",
+  "changelog": "- Fix lỗi nhảy về /old/index.php?legacy=1#/login: api/auth.php giờ luôn trả logged_in=true (auth đã tắt từ 3.4.4) → JS cũ trong cache browser không còn redirect.\n- Thêm /old/index.php stub (2 dòng) bounce mọi request về root, đề phòng browser còn cache JS rất cũ.",
   "min_php": "8.1",
   "released_at": "2026-06-11"
 }
