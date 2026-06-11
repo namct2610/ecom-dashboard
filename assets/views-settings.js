@@ -19,6 +19,7 @@
     saving: false,
     msg: null,       // { kind:"ok"|"err", text }
     update: null,    // { loading, current, latest, has_update, changelog, download_url, last_checked, fetch_error, installing }
+    dbExport: null,  // { loading, stats, error, downloading }
   };
 
   async function fetchInitial() {
@@ -197,6 +198,103 @@
     return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
   }
 
+  /* ── DB export card ─────────────────────────────────────────── */
+
+  function dbExportCard() {
+    if (!local.isAdmin) return "";
+    const x = local.dbExport || {};
+    const stats = x.stats || null;
+
+    let body;
+    if (x.loading) {
+      body = `<div style="color:var(--ink-3);font-weight:600">${t("common.loading")}</div>`;
+    } else if (x.error) {
+      body = `<div style="color:var(--neg);font-weight:700;margin-bottom:8px">${t("common.error")}: ${escapeHtml(x.error)}</div>`;
+    } else if (stats) {
+      const rows = Object.entries(stats).map(([tbl, cnt]) =>
+        `<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);font-size:13px">
+          <span style="font-family:monospace;color:var(--ink-2)">${escapeHtml(tbl)}</span>
+          <span class="tnum" style="color:var(--ink-3);font-weight:700">${cnt.toLocaleString("vi-VN")}</span>
+        </div>`
+      ).join("");
+      body = `<div style="margin-bottom:14px">${rows}</div>`;
+    } else {
+      body = `<div style="color:var(--ink-3);font-size:13px;margin-bottom:12px">${t("settings.export.desc")}</div>`;
+    }
+
+    const btnLabel = x.downloading ? t("settings.export.downloading") :
+                     x.loading     ? t("common.loading") :
+                                     t("settings.export.btn");
+    const btnDisabled = x.loading || x.downloading ? "disabled" : "";
+
+    return `
+      <div class="card section-gap">
+        <div class="card-head">
+          <div>
+            <div class="card-title">${t("settings.export.title")}</div>
+            <div class="card-sub">${t("settings.export.sub")}</div>
+          </div>
+          <button class="ctrl-btn on" id="btnDbExport" ${btnDisabled}
+                  style="background:var(--brand);border-color:var(--brand);color:#fff">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            ${btnLabel}
+          </button>
+        </div>
+        <div class="card-pad">${body}</div>
+      </div>`;
+  }
+
+  async function fetchDbExportStats() {
+    local.dbExport = { loading: true };
+    window.App.rerender();
+    try {
+      const r = await fetch("api/export-db.php?action=stats", { credentials: "same-origin" });
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      const j = await r.json();
+      local.dbExport = { loading: false, stats: j.stats || {} };
+    } catch (e) {
+      local.dbExport = { loading: false, error: e.message || String(e) };
+    }
+    window.App.rerender();
+  }
+
+  async function downloadDbExport() {
+    if (!local.dbExport) local.dbExport = {};
+    local.dbExport.downloading = true;
+    local.dbExport.error = null;
+    window.App.rerender();
+    try {
+      const r = await fetch("api/export-db.php", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "X-CSRF-Token": local.csrf },
+      });
+      if (!r.ok) {
+        const j = await r.json().catch(() => ({}));
+        throw new Error(j.error || "HTTP " + r.status);
+      }
+      const blob = await r.blob();
+      const disp = r.headers.get("Content-Disposition") || "";
+      const match = disp.match(/filename="([^"]+)"/);
+      const filename = match ? match[1] : ("dashboard-db-" + new Date().toISOString().slice(0, 10) + ".sql");
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      local.dbExport.error = e.message || String(e);
+    } finally {
+      local.dbExport.downloading = false;
+      window.App.rerender();
+    }
+  }
+
+  /* ── render / mount ──────────────────────────────────────────── */
+
   function render() {
     if (local.loading) {
       return `<div class="card card-pad" style="text-align:center;color:var(--ink-3);font-weight:600">${t("common.loading")}</div>`;
@@ -210,7 +308,8 @@
         <div style="grid-column:span 6" data-collapse>${accountCard()}</div>
         <div style="grid-column:span 6" data-collapse>${brandCard()}</div>
       </div>
-      ${updateCard()}`;
+      ${updateCard()}
+      ${dbExportCard()}`;
   }
 
   /* ── v2 self-update ───────────────────────────────────────── */
@@ -429,6 +528,8 @@
     document.getElementById("btnV2UpCheck")?.addEventListener("click", checkUpdateNow);
     document.getElementById("btnV2UpApply")?.addEventListener("click", applyV2Update);
     document.getElementById("btnV2UpReload")?.addEventListener("click", () => location.reload());
+    // db export
+    document.getElementById("btnDbExport")?.addEventListener("click", downloadDbExport);
   }
 
   function mount(root) {
@@ -441,8 +542,9 @@
       return;
     }
     bind(root);
-    // lazy-load update on the first mount if not yet fetched
+    // lazy-load update + db stats on the first mount if not yet fetched
     if (local.isAdmin && !local.update) fetchUpdateStatus();
+    if (local.isAdmin && !local.dbExport) fetchDbExportStats();
   }
 
   window.Views.settings = {

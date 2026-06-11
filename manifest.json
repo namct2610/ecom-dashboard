@@ -1,7 +1,7 @@
 {
-  "version": "3.4.33",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.33/release/dashboard-v3-3.4.33.zip",
-  "changelog": "- Sửa trang Kế hoạch: cột \"Thực tế YTD\" hiển thị 0 do dùng sai tên field (m.actual thay vì m.actual_ytd).\n- Sửa điều kiện kiểm tra tháng đã trôi qua dùng sai biến (m.elapsed_months → local.data.elapsed_months).",
+  "version": "3.4.34",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.34/release/dashboard-v3-3.4.34.zip",
+  "changelog": "- Thêm tính năng Xuất Database (Export DB) trong trang Cài đặt — admin có thể tải về file .sql chứa toàn bộ dữ liệu để test local hoặc backup.\n- File SQL bao gồm: orders, traffic_daily, upload_history, app_settings, users, reconcile_price_items, reconcile_combo_items, sku_brand_rules.\n- Hiển thị số lượng bản ghi mỗi bảng trước khi tải.",
   "min_php": "8.1",
   "released_at": "2026-06-11"
 }

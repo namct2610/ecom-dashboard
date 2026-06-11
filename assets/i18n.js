@@ -407,6 +407,13 @@
     "settings.brand.saved": "Đã lưu quy ước thương hiệu.",
     "settings.brand.save_failed": "Lỗi lưu quy ước",
 
+    /* DB Export */
+    "settings.export.title": "Xuất Database",
+    "settings.export.sub": "Tải về file SQL để test local hoặc backup. Chỉ admin.",
+    "settings.export.desc": "Bấm nút để tải về file .sql — có thể import vào MySQL local để test chính xác với production.",
+    "settings.export.btn": "Tải về SQL",
+    "settings.export.downloading": "Đang xuất…",
+
     /* Users */
     "users.summary.total": "Tổng tài khoản",
     "users.summary.active": "Đang hoạt động",
@@ -949,6 +956,13 @@
     "settings.brand.name_missing": "Code {p} needs a brand name.",
     "settings.brand.saved": "Brand rules saved.",
     "settings.brand.save_failed": "Brand rule save failed",
+
+    /* DB Export */
+    "settings.export.title": "Export Database",
+    "settings.export.sub": "Download a .sql file for local testing or backup. Admin only.",
+    "settings.export.desc": "Click the button to download a .sql file — import into local MySQL to test with production-accurate data.",
+    "settings.export.btn": "Download SQL",
+    "settings.export.downloading": "Exporting…",
 
     /* Users */
     "users.summary.total": "Total accounts",
