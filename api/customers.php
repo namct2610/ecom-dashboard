@@ -149,22 +149,25 @@ function build_customers_overview(PDO $pdo): array
     ");
     $seg = $segStmt->fetch() ?: [];
 
-    $potParams = potential_lookback_bounds();
-    $potStmt = $pdo->prepare("
-        SELECT COUNT(DISTINCT o.buyer_username) AS potential_buyers
-        FROM orders o
-        WHERE o.normalized_status IN ('completed','delivered')
-          AND o.buyer_username IS NOT NULL AND o.buyer_username != ''
-          AND o.order_created_at >= :since
-          AND o.order_created_at < :until
-          AND NOT EXISTS (
-              SELECT 1
-              FROM tmp_current_buyers cb
-              WHERE cb.buyer_username = o.buyer_username
-          )
-    ");
-    $potStmt->execute($potParams);
-    $pot = $potStmt->fetch() ?: [];
+    $pot = ['potential_buyers' => 0];
+    if ($totalOrders > 0) {
+        $potParams = potential_lookback_bounds();
+        $potStmt = $pdo->prepare("
+            SELECT COUNT(DISTINCT o.buyer_username) AS potential_buyers
+            FROM orders o
+            WHERE o.normalized_status IN ('completed','delivered')
+              AND o.buyer_username IS NOT NULL AND o.buyer_username != ''
+              AND o.order_created_at >= :since
+              AND o.order_created_at < :until
+              AND NOT EXISTS (
+                  SELECT 1
+                  FROM tmp_customer_orders co
+                  WHERE co.buyer_username = o.buyer_username
+              )
+        ");
+        $potStmt->execute($potParams);
+        $pot = $potStmt->fetch() ?: $pot;
+    }
 
     $trafficParams = [];
     $trafficWhere  = sql_filters_traffic($trafficParams);
@@ -205,7 +208,6 @@ function build_customers_overview(PDO $pdo): array
 
 function build_customer_snapshot_tables(PDO $pdo, string $where, array $params): void
 {
-    $pdo->exec("DROP TEMPORARY TABLE IF EXISTS tmp_current_buyers");
     $pdo->exec("DROP TEMPORARY TABLE IF EXISTS tmp_customer_orders");
     $pdo->exec("
         CREATE TEMPORARY TABLE tmp_customer_orders (
@@ -223,7 +225,7 @@ function build_customer_snapshot_tables(PDO $pdo, string $where, array $params):
             PRIMARY KEY (platform, order_id),
             INDEX idx_tmp_customer_buyer (buyer_username),
             INDEX idx_tmp_customer_city (shipping_city, shipping_district)
-        ) ENGINE=MEMORY DEFAULT CHARSET=utf8mb4
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
     ");
 
     $tmpOrdersStmt = $pdo->prepare("
@@ -247,18 +249,6 @@ function build_customer_snapshot_tables(PDO $pdo, string $where, array $params):
         GROUP BY platform, order_id
     ");
     $tmpOrdersStmt->execute($params);
-
-    $pdo->exec("
-        CREATE TEMPORARY TABLE tmp_current_buyers (
-            buyer_username VARCHAR(255) NOT NULL PRIMARY KEY
-        ) ENGINE=MEMORY DEFAULT CHARSET=utf8mb4
-    ");
-    $pdo->exec("
-        INSERT IGNORE INTO tmp_current_buyers (buyer_username)
-        SELECT buyer_username
-        FROM tmp_customer_orders
-        WHERE buyer_username != ''
-    ");
 }
 
 function build_customer_detail(PDO $pdo): array
@@ -272,6 +262,7 @@ function build_customer_detail(PDO $pdo): array
     $where  = sql_filters($params);
     $where .= " AND normalized_status IN ('completed','delivered')";
 
+    $filteredWhere = $where . " AND buyer_username = :buyer_username";
     $filteredStmt = $pdo->prepare("
         SELECT COUNT(*) AS order_count,
                COALESCE(SUM(item_qty), 0) AS item_qty,
@@ -281,8 +272,7 @@ function build_customer_detail(PDO $pdo): array
                    order_id,
                    COALESCE(SUM(quantity), 0) AS item_qty,
                    COALESCE(MAX(order_total), 0) AS order_revenue
-            FROM orders {$where}
-            AND buyer_username = :buyer_username
+            FROM orders {$filteredWhere}
             GROUP BY platform, order_id
         ) filtered_orders
     ");
