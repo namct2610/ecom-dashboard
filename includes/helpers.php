@@ -144,12 +144,27 @@ function current_user(): ?array
 
 function require_auth(): void
 {
-    // Auth disabled: dashboard is open access.
+    global $config;
+    // If auth disabled in config, allow all access (legacy open mode).
+    // Once enabled, all protected endpoints require valid session.
+    if (!($config['auth']['enabled'] ?? false)) return;
+
+    $user = current_user();
+    if (!$user) {
+        json_error('Authentication required.', 401);
+    }
 }
 
 function require_admin(): void
 {
-    // Auth disabled: admin endpoints are open access.
+    global $config;
+    // If auth disabled, allow all access (legacy open mode).
+    if (!($config['auth']['enabled'] ?? false)) return;
+
+    $user = current_user();
+    if (!$user || $user['role'] !== 'admin') {
+        json_error('Admin access required.', 403);
+    }
 }
 
 function require_method(string $method): void
