@@ -4,8 +4,8 @@
    ============================================================ */
 (function () {
   const F = window.F, UI = window.UI, C = window.Charts, S = window.Store;
-  const _t = (k, f) => (window.t ? window._t(k, f) : (f || k));
-  const _tf = (k, v) => (window.tf ? window._tf(k, v) : k);
+  const _t = (k, f) => (window.t ? window.t(k, f) : (f || k));
+  const _tf = (k, v) => (window.tf ? window.tf(k, v) : k);
 
   // Module-local UI state
   const defaultPlanYear = (() => {
