@@ -1,7 +1,7 @@
 {
-  "version": "3.4.24",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/main/release/dashboard-v3-3.4.24.zip",
-  "changelog": "- Bổ sung i18n cho các phần Upload, Cài đặt, Người dùng, Kế hoạch, Kết nối sàn và tooltip biểu đồ để chuyển ngôn ngữ ổn định hơn.\n- Thêm các key dịch dùng chung cho tổng, thử lại, lượt xem và nhãn biểu đồ kế hoạch.",
+  "version": "3.4.25",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.25/release/dashboard-v3-3.4.25.zip",
+  "changelog": "- Bảo mật: implement authentication thực sự. require_auth() và require_admin() giờ kiểm tra session/role thực tế thay vì no-op.\n- Login page: tạo login.html với form đăng nhập, hỗ trợ environment-based config.\n- Config: chuyển sang environment variables (DB_HOST, DB_USER, AUTH_ENABLED, AUTH_USERNAME). Loại bỏ hardcoded credentials.\n- .env.example: hướng dẫn setup credentials qua env vars (không commit .env).\n- SECURITY.md: document bảo mật, best practices, checklist deployment.",
   "min_php": "8.1",
   "released_at": "2026-06-11"
 }

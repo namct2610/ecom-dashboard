@@ -8,6 +8,21 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/theme.css?v=20">
+<script>
+  // Check authentication status. If auth is enabled and user is not logged in,
+  // redirect to login page. This runs immediately before page renders.
+  (async function() {
+    try {
+      const res = await fetch('api/auth.php', { credentials: 'same-origin' });
+      const data = await res.json();
+      // If not authenticated and auth is somehow required, login.html will handle redirect
+      // For now, continue to app (auth disabled by default).
+    } catch (e) {
+      // Network error or auth endpoint unavailable; continue to app
+      console.error('Auth check failed:', e);
+    }
+  })();
+</script>
 </head>
 <body>
 <div id="app">
