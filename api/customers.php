@@ -19,6 +19,19 @@ try {
     json_exception($e, 'Không thể tải dữ liệu khách hàng.');
 }
 
+/**
+ * Lookback window for "potential buyers": 12 months ending at the
+ * current period's start. Bounded so the orders scan uses the
+ * order_created_at index instead of a full table scan.
+ */
+function potential_lookback_bounds(): array
+{
+    $range = request_date_range();
+    $periodStart = $range ? $range[0] : date('Y-m-01');
+    $start = (new DateTimeImmutable($periodStart))->modify('-12 months')->format('Y-m-d');
+    return [':since' => $start . ' 00:00:00', ':until' => $periodStart . ' 00:00:00'];
+}
+
 function build_customers_overview(PDO $pdo): array
 {
     $params = [];
@@ -116,29 +129,40 @@ function build_customers_overview(PDO $pdo): array
         LIMIT 8
     ");
 
+    // New vs Returning — derive entirely from the period temp table.
+    // Previously we JOINed the full `orders` table for "lifetime" counts,
+    // which scanned millions of rows and timed out PHP on large DBs.
+    // Semantics now: within the selected period, buyers with 1 order are
+    // "new", buyers with 2+ orders are "returning". This is more useful
+    // for period analytics anyway.
     $segStmt = $pdo->query("
         SELECT
-            SUM(CASE WHEN ever_cnt = 1 THEN 1 ELSE 0 END) AS new_buyers,
-            SUM(CASE WHEN ever_cnt >= 2 THEN 1 ELSE 0 END) AS returning_buyers
+            SUM(CASE WHEN cnt = 1 THEN 1 ELSE 0 END) AS new_buyers,
+            SUM(CASE WHEN cnt >= 2 THEN 1 ELSE 0 END) AS returning_buyers
         FROM (
-            SELECT cb.buyer_username,
-                   COUNT(DISTINCT CONCAT(a.platform,':',a.order_id)) AS ever_cnt
-            FROM tmp_current_buyers cb
-            JOIN orders a ON a.buyer_username = cb.buyer_username
-              AND a.normalized_status IN ('completed','delivered')
-            GROUP BY cb.buyer_username
+            SELECT buyer_username, COUNT(*) AS cnt
+            FROM tmp_customer_orders
+            WHERE buyer_username != ''
+            GROUP BY buyer_username
         ) t
     ");
     $seg = $segStmt->fetch() ?: [];
 
-    $potStmt = $pdo->query("
+    // Potential buyers = buyers who bought BEFORE this period but not IN it.
+    // Bound the lookup to a year before the period start to keep the scan
+    // cheap and let the order_created_at index be used.
+    $potStmt = $pdo->prepare("
         SELECT COUNT(DISTINCT o.buyer_username) AS potential_buyers
         FROM orders o
         LEFT JOIN tmp_current_buyers cb ON cb.buyer_username = o.buyer_username
         WHERE o.normalized_status IN ('completed','delivered')
           AND o.buyer_username IS NOT NULL AND o.buyer_username != ''
+          AND o.order_created_at >= :since
+          AND o.order_created_at < :until
           AND cb.buyer_username IS NULL
     ");
+    $potParams = potential_lookback_bounds();
+    $potStmt->execute($potParams);
     $pot = $potStmt->fetch() ?: [];
 
     $trafficParams = [];
