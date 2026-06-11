@@ -1,7 +1,7 @@
 {
-  "version": "3.4.30",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.30/release/dashboard-v3-3.4.30.zip",
-  "changelog": "- Fix CSP chặn Chart.js: thêm https://cdn.jsdelivr.net vào script-src trong Content-Security-Policy header (.htaccess).",
+  "version": "3.4.31",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.31/release/dashboard-v3-3.4.31.zip",
+  "changelog": "- Hash routing: URL cập nhật theo trang đang xem (/#overview, /#customers, /#settings, v.v.).\n- Có thể bookmark hoặc gõ thẳng URL để vào từng trang — nếu 1 trang bị lỗi vẫn vào được trang khác qua URL.\n- Back/Forward button trình duyệt hoạt động đúng khi chuyển trang.\n- Khi mở URL có hash hợp lệ, app tự navigate đến đúng trang đó.",
   "min_php": "8.1",
   "released_at": "2026-06-11"
 }

@@ -316,7 +316,38 @@
     if (window.I18n) window.I18n.applyDom();
   }
 
-  function commit() { S.save(); renderPage(); }
+  // ── Hash-based routing ────────────────────────────────────────────────────
+  // Valid page keys — used to validate hash values before applying.
+  const VALID_PAGES = new Set([
+    "overview","compare","orders","products","customers","traffic","plan",
+    "reconcile","upload","connect","users","settings",
+  ]);
+
+  function pageFromHash() {
+    const h = window.location.hash.replace(/^#\/?/, "").split("?")[0].toLowerCase();
+    return VALID_PAGES.has(h) ? h : null;
+  }
+
+  function setHash(page, push) {
+    const target = VALID_PAGES.has(page) ? "#" + page : "#overview";
+    if (window.location.hash !== target) {
+      push ? history.pushState(null, "", target) : history.replaceState(null, "", target);
+    }
+  }
+
+  window.addEventListener("hashchange", () => {
+    const page = pageFromHash();
+    if (page && page !== st.page) {
+      st.page = page;
+      commit();
+    }
+  });
+
+  function commit(push) {
+    setHash(st.page, push);
+    S.save();
+    renderPage();
+  }
 
   /* ---- avatar dropdown (signed-in-as + logout) ---- */
   let avatarUser = null;
@@ -379,8 +410,8 @@
       const sync = S.DASH && S.DASH.generatedAt ? S.DASH.generatedAt : new Date().toISOString().slice(0, 10);
       document.getElementById("syncDate").textContent = TF("nav.side.synced_at", { date: sync });
       // nav
-      document.querySelectorAll(".nav-item[data-page]").forEach((n) => n.addEventListener("click", () => { st.page = n.dataset.page; document.getElementById("app").classList.remove("nav-open"); commit(); }));
-      document.querySelectorAll(".nav-item:not([data-page])").forEach((n) => n.addEventListener("click", () => { st.page = "_system_" + (n.dataset.sys || ""); document.getElementById("app").classList.remove("nav-open"); commit(); }));
+      document.querySelectorAll(".nav-item[data-page]").forEach((n) => n.addEventListener("click", () => { st.page = n.dataset.page; document.getElementById("app").classList.remove("nav-open"); commit(true); }));
+      document.querySelectorAll(".nav-item:not([data-page])").forEach((n) => n.addEventListener("click", () => { st.page = "_system_" + (n.dataset.sys || ""); document.getElementById("app").classList.remove("nav-open"); commit(true); }));
       // theme
       document.getElementById("themeBtn").addEventListener("click", () => { st.theme = st.theme === "dark" ? "light" : "dark"; applyTheme(); commit(); });
       // language
@@ -400,9 +431,21 @@
       window.addEventListener("resize", () => { if (openPop) closePop(); });
 
       if (window.I18n) window.I18n.applyDom();
+
+      // On first load, honour the URL hash if it points to a valid page.
+      // This lets users bookmark / share direct links like /#customers.
+      const hashPage = pageFromHash();
+      if (hashPage) st.page = hashPage;
+      setHash(st.page);   // normalise hash in address bar
       renderPage();
+
+      // Browser back/forward button support
+      window.addEventListener("popstate", () => {
+        const p = pageFromHash();
+        if (p && p !== st.page) { st.page = p; S.save(); renderPage(); }
+      });
     },
-    go(page) { st.page = page; commit(); },
+    go(page) { st.page = page; commit(true); },
     rerender() { renderPage(); },
   };
   window.App = App;
