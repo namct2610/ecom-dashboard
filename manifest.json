@@ -1,7 +1,7 @@
 {
-  "version": "3.4.22",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/main/release/dashboard-v3-3.4.22.zip",
-  "changelog": "- Đồng bộ Xu hướng đơn hàng với Xu hướng doanh thu theo cùng bộ lọc, cùng số cột và cùng nhịp thời gian.\n- Thêm nhãn tổng rút gọn trên đỉnh mỗi cột, ví dụ 3,798,000,000 hiển thị 3.8B để gọn và dễ đọc.",
+  "version": "3.4.23",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/main/release/dashboard-v3-3.4.23.zip",
+  "changelog": "- Cải thiện biểu đồ Tổng quan: cột Xu hướng doanh thu và Xu hướng đơn hàng đồng bộ kích thước, rộng hơn khi ít dữ liệu và nhãn tổng dễ đọc hơn.\n- Làm lại phần Khách hàng để tránh lỗi bảng tạm MEMORY trên production, giảm truy vấn phụ và giúp trang truy cập ổn định hơn.",
   "min_php": "8.1",
   "released_at": "2026-06-11"
 }

@@ -103,11 +103,11 @@
       const len = datasets[0]?.data?.length || 0;
       if (!len) return;
       const { ctx, chartArea } = chart;
+      const format = opts.format || compactNumber;
       ctx.save();
-      ctx.fillStyle = opts.color || ink3();
-      ctx.font = `800 ${opts.fontSize || 10.5}px 'Be Vietnam Pro','Segoe UI',sans-serif`;
+      ctx.font = `800 ${opts.fontSize || 11.5}px 'Be Vietnam Pro','Segoe UI',sans-serif`;
       ctx.textAlign = "center";
-      ctx.textBaseline = "bottom";
+      ctx.textBaseline = "middle";
       for (let i = 0; i < len; i++) {
         let total = 0, topY = Infinity, x = null;
         for (let dsIdx = 0; dsIdx < datasets.length; dsIdx++) {
@@ -122,7 +122,31 @@
           x = bar.x;
         }
         if (!total || x == null || !isFinite(topY)) continue;
-        ctx.fillText((opts.format || compactNumber)(total), x, Math.max(chartArea.top + 12, topY - 5));
+        const text = format(total);
+        const w = Math.ceil(ctx.measureText(text).width) + 12;
+        const h = opts.height || 22;
+        const y = Math.max(chartArea.top + h / 2 + 2, topY - h / 2 - 8);
+        const r = h / 2;
+        const left = x - w / 2;
+        const top = y - h / 2;
+        ctx.fillStyle = opts.backgroundColor || surface();
+        ctx.strokeStyle = opts.borderColor || gridc();
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(left + r, top);
+        ctx.lineTo(left + w - r, top);
+        ctx.quadraticCurveTo(left + w, top, left + w, top + r);
+        ctx.lineTo(left + w, top + h - r);
+        ctx.quadraticCurveTo(left + w, top + h, left + w - r, top + h);
+        ctx.lineTo(left + r, top + h);
+        ctx.quadraticCurveTo(left, top + h, left, top + h - r);
+        ctx.lineTo(left, top + r);
+        ctx.quadraticCurveTo(left, top, left + r, top);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = opts.color || ink3();
+        ctx.fillText(text, x, y + 0.5);
       }
       ctx.restore();
     },
@@ -178,11 +202,11 @@
     });
   }
 
-  function barSizing(count, maxThickness) {
+  function barSizing(count) {
     return {
-      categoryPercentage: count <= 4 ? 0.68 : count <= 8 ? 0.76 : 0.86,
-      barPercentage: count <= 4 ? 0.9 : 0.96,
-      maxBarThickness: Math.max(12, maxThickness || 46),
+      categoryPercentage: count <= 4 ? 0.92 : count <= 8 ? 0.84 : 0.86,
+      barPercentage: count <= 4 ? 0.98 : 0.96,
+      maxBarThickness: count <= 4 ? 112 : count <= 8 ? 76 : 52,
     };
   }
 
@@ -191,7 +215,7 @@
     opt = opt || {};
     const labels = series.map((s) => s.label || dayLabel(s.date));
     const stacked = opt.platform === "all";
-    const sizing = barSizing(labels.length, 34);
+    const sizing = barSizing(labels.length);
     let datasets;
     if (stacked) {
       datasets = ["shopee", "lazada", "tiktok"].map((k) => ({
@@ -280,7 +304,7 @@
     opt = opt || {};
     const labels = trend.map((t) => t.label);
     const stacked = opt.platform === "all";
-    const sizing = barSizing(labels.length, 52);
+    const sizing = barSizing(labels.length);
     let datasets;
     if (stacked) {
       datasets = ["shopee", "lazada", "tiktok"].map((k) => ({
