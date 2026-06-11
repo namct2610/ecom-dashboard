@@ -1,7 +1,7 @@
 {
-  "version": "3.4.17",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.17/release/dashboard-v3-3.4.17.zip",
-  "changelog": "- Trang Khách hàng: hiện lỗi cụ thể thay vì đứng 'Đang tải' vô hạn. Nếu fetch fail (timeout, 500, network), hiển thị error message + nút Thử lại.\n- Backend customers.php: tăng PHP execution limit lên 120s và memory_limit 256M cho temp-table aggregation trên DB lớn.",
+  "version": "3.4.18",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.18/release/dashboard-v3-3.4.18.zip",
+  "changelog": "- Sửa trang Khách hàng trên production/subpath install: frontend giờ dựng đúng URL API theo thư mục cài đặt hiện tại, không còn gọi lệch sang /api/customers.php khi site chạy ở dạng /dashboard-v3 hoặc URL có hash.\n- Áp dụng cùng cách dựng URL an toàn cho api/v2-range-detail.php để các truy vấn chi tiết theo khoảng thời gian không bị lệch path.",
   "min_php": "8.1",
   "released_at": "2026-06-11"
 }
