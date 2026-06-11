@@ -164,12 +164,41 @@ function current_user(): ?array
     return session_user_payload();
 }
 
-function require_auth(): void
+/**
+ * Returns true when authentication should be enforced.
+ *
+ * Auth is considered active when EITHER:
+ *  - config['auth']['enabled'] is explicitly true (config.local.php), OR
+ *  - the users table contains at least one active account.
+ *
+ * This means no file or config change is needed on the server — the moment
+ * an admin user exists in the database, login is required automatically.
+ */
+function auth_is_enabled(): bool
 {
     global $config;
-    // If auth disabled in config, allow all access (legacy open mode).
-    // Once enabled, all protected endpoints require valid session.
-    if (!($config['auth']['enabled'] ?? false)) return;
+    if (!empty($config['auth']['enabled'])) return true;
+
+    // Avoid DB hit on every request by caching the result in a static var.
+    static $cached = null;
+    if ($cached !== null) return $cached;
+
+    if (!isset($config) || !is_array($config)) return ($cached = false);
+
+    try {
+        $pdo  = db($config);
+        $stmt = $pdo->query("SELECT COUNT(*) FROM users WHERE is_active = 1 LIMIT 1");
+        $cached = (int) $stmt->fetchColumn() > 0;
+    } catch (\Throwable $e) {
+        $cached = false;
+    }
+
+    return $cached;
+}
+
+function require_auth(): void
+{
+    if (!auth_is_enabled()) return;
 
     $user = current_user();
     if (!$user) {
@@ -179,9 +208,7 @@ function require_auth(): void
 
 function require_admin(): void
 {
-    global $config;
-    // If auth disabled, allow all access (legacy open mode).
-    if (!($config['auth']['enabled'] ?? false)) return;
+    if (!auth_is_enabled()) return;
 
     $user = current_user();
     if (!$user || $user['role'] !== 'admin') {

@@ -65,7 +65,7 @@ start_session();
 $method = $_SERVER['REQUEST_METHOD'];
 
 if ($method === 'GET') {
-    $authEnabled = (bool) ($config['auth']['enabled'] ?? false);
+    $authEnabled = auth_is_enabled();
     $user = current_user();
 
     if ($authEnabled) {

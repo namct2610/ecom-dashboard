@@ -1,7 +1,7 @@
 {
-  "version": "3.4.28",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.28/release/dashboard-v3-3.4.28.zip",
-  "changelog": "- Login chỉ dùng user trong database, bỏ fallback config credentials.\n- config.php: bỏ auth.username / auth.password — chỉ còn auth.enabled.\n- config.local.php: để bật login chỉ cần enabled: true, không cần khai báo username/password.\n- Bỏ sync_legacy_config_user() — không tạo user từ config nữa.",
+  "version": "3.4.29",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.29/release/dashboard-v3-3.4.29.zip",
+  "changelog": "- Auth tự động bật khi DB có ít nhất 1 user active — không cần tạo file config.local.php hay thay đổi bất kỳ cài đặt nào.\n- Nếu bảng users rỗng: open access (backward compatible).\n- Kết quả check DB được cache trong static var để không query mỗi request.",
   "min_php": "8.1",
   "released_at": "2026-06-11"
 }
