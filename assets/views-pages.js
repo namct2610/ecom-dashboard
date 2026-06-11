@@ -134,7 +134,7 @@
           <div class="card-head"><div><div class="card-title">${_t("ovw.top_products.title")}</div><div class="card-sub">${_t("ovw.top_products.sub", { period: S.periodLabel(st.period).toLowerCase() })}</div>
             <div class="miniseg" id="prodSeg"><button class="${prodMetric === "rev" ? "active" : ""}" data-m="rev">${_t("ovw.cmp.revenue")}</button><button class="${prodMetric === "qty" ? "active" : ""}" data-m="qty">${_t("ovw.top_products.by_qty")}</button></div>
           </div>
-          <div class="card-pad" style="padding:6px;overflow-x:auto"><table class="tbl"><thead><tr><th>${_t("th.product")}</th><th>${_t("cat.other").charAt(0).toUpperCase() + _t("cat.other").slice(1)}</th><th>${_t("th.platform")}</th><th class="num">${_t("th.qty_sold")}</th><th class="num">${_t("th.revenue")}</th><th class="num">${prodMetric === "qty" ? _t("th.qty_sold") : _t("th.revenue")}</th></tr></thead><tbody>${rows}</tbody></table></div>
+          <div class="card-pad" style="padding:6px;overflow-x:auto"><table class="tbl"><thead><tr><th>${_t("th.product")}</th><th>${_t("th.category")}</th><th>${_t("th.platform")}</th><th class="num">${_t("th.qty_sold")}</th><th class="num">${_t("th.revenue")}</th><th class="num">${prodMetric === "qty" ? _t("th.qty_sold") : _t("th.revenue")}</th></tr></thead><tbody>${rows}</tbody></table></div>
         </div>
       </div>`;
     },
@@ -170,8 +170,8 @@
       if (customerError) {
         const err = customerError;
         return `<div class="card card-pad" style="text-align:center;color:var(--neg);font-weight:700">
-          ${_t("common.error") || "Lỗi"}: ${escHtml(err)}
-          <div style="margin-top:12px"><button class="ctrl-btn" id="custRetry">${_t("common.retry") || "Thử lại"}</button></div>
+          ${_t("common.error")}: ${escHtml(err)}
+          <div style="margin-top:12px"><button class="ctrl-btn" id="custRetry">${_t("common.retry")}</button></div>
         </div>`;
       }
 
@@ -232,7 +232,7 @@
 
       // City distribution
       const maxG = Math.max(...cities.map((g) => g.orders), 1);
-      const geoRows = cities.map((g) => `<tr><td>${g.city}</td><td class="num">${F.viInt(g.orders)}</td><td class="num">${F.pct(g.percentage || g.pct || 0)}</td><td class="num" style="width:160px"><div class="cmp-track"><div class="cmp-fill" style="width:${g.orders / maxG * 100}%;background:var(--brand)"></div></div></td></tr>`).join("");
+      const geoRows = cities.map((g) => `<tr><td>${g.city}</td><td class="num">${F.viInt(g.orders)}</td><td class="num">${F.pct(g.percentage ?? 0)}</td><td class="num" style="width:160px"><div class="cmp-track"><div class="cmp-fill" style="width:${g.orders / maxG * 100}%;background:var(--brand)"></div></div></td></tr>`).join("");
 
       const fRows = totalNF.map((p) => `<div class="cmp-row"><div class="cmp-name">${UI.pdot(p.key)}${p.label}</div><div class="cmp-track"><div class="cmp-fill" style="width:${totalNFVal ? p.nf / Math.max(...totalNF.map((x) => x.nf), 1) * 100 : 0}%;background:var(--${p.key})"></div></div><div class="cmp-val">${F.viInt(p.nf)}</div></div>`).join("");
 
@@ -348,7 +348,7 @@
             <div><div class="eyebrow">${_t("customers.detail.first_purchase")}</div><div style="font-size:13px;font-weight:600;margin-top:6px">${dtShort2(p.first_purchase_at)}</div></div>
             <div><div class="eyebrow">${_t("customers.detail.last_purchase")}</div><div style="font-size:13px;font-weight:600;margin-top:6px">${dtShort2(p.last_purchase_at)}</div></div>
           </div>
-          ${s.filtered_order_count != null ? `<div class="note" style="margin-bottom:14px">${UI.ICON.info} ${_tf("customers.detail.orders_in_period")} · ${F.viInt(s.filtered_order_count)} ${_t("common.orders_unit")} · ${F.money(s.filtered_revenue || 0)}</div>` : ""}
+          ${s.filtered_order_count != null ? `<div class="note" style="margin-bottom:14px">${UI.ICON.info} ${_t("customers.detail.orders_in_period")} · ${F.viInt(s.filtered_order_count)} ${_t("common.orders_unit")} · ${F.money(s.filtered_revenue || 0)}</div>` : ""}
           <div style="font-weight:800;font-size:14px;margin-bottom:8px">${_t("customers.detail.order_history")}</div>
           <div style="overflow-x:auto"><table class="tbl"><thead><tr><th>${_t("th.platform")}</th><th>${_t("th.order_id")}</th><th>${_t("th.product")}</th><th class="num">${_t("customers.table.amount")}</th><th>${_t("th.status")}</th><th class="hide-md">${_t("th.uploaded_at")}</th></tr></thead><tbody>${orderRows}</tbody></table></div>
         </div>
@@ -372,7 +372,7 @@
       const cmpLab = S.compareLabel(st.period, st.compare);
       const dd = (c, p) => UI.deltaChip(F.delta(c, p));
       const kpis = kpiRow([
-        { label: _t("kpi.pageviews"), ico: `<span class="kpi-ico">${UI.ICON.eye_traffic}</span>`, value: F.num(cur.pv), delta: cmp ? dd(cur.pv, cmp.pv) : "", foot: cmp ? `vs ${F.num(cmp.pv)} · ${cmpLab}` : "page views" },
+        { label: _t("kpi.pageviews"), ico: `<span class="kpi-ico">${UI.ICON.eye_traffic}</span>`, value: F.num(cur.pv), delta: cmp ? dd(cur.pv, cmp.pv) : "", foot: cmp ? `vs ${F.num(cmp.pv)} · ${cmpLab}` : _t("common.page_views") },
         { label: _t("kpi.visits"), ico: `<span class="kpi-ico">${UI.ICON.people}</span>`, value: F.num(cur.visits), delta: cmp ? dd(cur.visits, cmp.visits) : "", foot: cmp ? `vs ${F.num(cmp.visits)} · ${cmpLab}` : _t("kpi.visits").toLowerCase() },
         { label: _t("kpi.conversion"), ico: `<span class="kpi-ico">${UI.ICON.aov}</span>`, value: F.viDec(cur.conv, 2), unit: "%", delta: cmp ? dd(cur.conv, cmp.conv) : "", foot: _t("traffic.conv.sub") },
         { label: _t("kpi.new_followers"), ico: `<span class="kpi-ico">${UI.ICON.people}</span>`, value: F.viInt(cur.nf), delta: cmp ? dd(cur.nf, cmp.nf) : "", foot: cmp ? `vs ${F.viInt(cmp.nf)}` : _t("traffic.followers_new") },
@@ -395,7 +395,7 @@
         </div>
       </div>
       <div class="card section-gap"><div class="card-head"><div><div class="card-title">${_t("traffic.table.title")}</div><div class="card-sub">${S.periodLabel(st.period).toLowerCase()}</div></div></div>
-        <div class="card-pad" style="padding:6px;overflow-x:auto"><table class="tbl"><thead><tr><th>${_t("th.platform")}</th><th class="num">${_t("kpi.pageviews")}</th><th class="num">${_t("kpi.visits")}</th><th class="num">${_t("kpi.completed")}</th><th class="num">% ${_t("kpi.conversion").charAt(0)}</th><th class="num">${_t("kpi.new_followers")}</th><th></th></tr></thead><tbody>${tRows}</tbody></table></div></div>`;
+        <div class="card-pad" style="padding:6px;overflow-x:auto"><table class="tbl"><thead><tr><th>${_t("th.platform")}</th><th class="num">${_t("kpi.pageviews")}</th><th class="num">${_t("kpi.visits")}</th><th class="num">${_t("kpi.completed")}</th><th class="num">${_t("th.conv_pct")}</th><th class="num">${_t("kpi.new_followers")}</th><th></th></tr></thead><tbody>${tRows}</tbody></table></div></div>`;
     },
     mount(root) {
       const st = S.state, range = S.currentRange();

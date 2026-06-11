@@ -406,7 +406,7 @@
     const fullName = document.getElementById("accFullName").value.trim();
     const btn = document.getElementById("btnSaveProfile");
     if (!btn || local.saving) return;
-    local.saving = true; btn.textContent = t("plan.saving");
+    local.saving = true; btn.textContent = t("settings.account.saving");
     try {
       const fd = new FormData();
       fd.append("action", "update_profile");
@@ -479,7 +479,7 @@
       if (r.prefix.length !== 3) { showMsg("err", tf("settings.brand.prefix_invalid", { p: r.prefix || "—" })); return; }
       if (!r.brand_name) { showMsg("err", tf("settings.brand.name_missing", { p: r.prefix })); return; }
     }
-    local.saving = true; btn.textContent = t("plan.saving");
+    local.saving = true; btn.textContent = t("settings.account.saving");
     try {
       const r = await fetch("api/brand-settings.php", {
         method: "POST", credentials: "same-origin",

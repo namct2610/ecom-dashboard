@@ -1,7 +1,7 @@
 {
-  "version": "3.4.34",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.34/release/dashboard-v3-3.4.34.zip",
-  "changelog": "- Thêm tính năng Xuất Database (Export DB) trong trang Cài đặt — admin có thể tải về file .sql chứa toàn bộ dữ liệu để test local hoặc backup.\n- File SQL bao gồm: orders, traffic_daily, upload_history, app_settings, users, reconcile_price_items, reconcile_combo_items, sku_brand_rules.\n- Hiển thị số lượng bản ghi mỗi bảng trước khi tải.",
+  "version": "3.4.35",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.35/release/dashboard-v3-3.4.35.zip",
+  "changelog": "- Rà soát toàn bộ i18n: thay thế ~40 chuỗi tiếng Việt hardcoded bằng i18n keys trong views-reconcile.js, views-pages.js, views-compare.js, views-plan.js.\n- Thêm _t/_tf wrappers an toàn vào views-reconcile.js và views-plan.js.\n- Sửa lỗi logic: _tf('customers.detail.orders_in_period') → _t(), g.pct → g.percentage ?? 0.\n- Sửa tiêu đề cột sai: 'cat.other' → th.category; '%.charAt(0)' → th.conv_pct, th.completion_rate_pct.\n- Thêm key i18n: th.category, th.conv_pct, th.completion_rate_pct.",
   "min_php": "8.1",
   "released_at": "2026-06-11"
 }

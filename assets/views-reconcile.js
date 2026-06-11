@@ -23,6 +23,9 @@
   const PLAT_LABELS = { shopee: "Shopee", lazada: "Lazada", tiktokshop: "TikTok Shop" };
   const PLAT_CSS = { shopee: "shopee", lazada: "lazada", tiktokshop: "tiktok" };
 
+  const _t  = (k, ...a)    => (typeof t  === "function" ? t(k, ...a)    : k);
+  const _tf = (k, p, ...a) => (typeof tf === "function" ? tf(k, p, ...a) : k);
+
   function fmtMoney(n) { return window.F.money(+n || 0); }
   function fmtInt(n) { return (+n || 0).toLocaleString("vi-VN"); }
   function fmtDate(s) {
@@ -84,20 +87,21 @@
     const m = local.selectedMonth || "—";
     const monthMeta = local.data && local.data.selected_month_meta;
     const confirmed = !!(monthMeta && monthMeta.confirmed);
+    const mLabel = m === "—" ? "—" : _tf("rec.month_btn", { m: +m.slice(5) + "/" + m.slice(0, 4) });
 
     return `
       <button class="period" id="reMonthBtn">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
-        <span class="ptxt">Tháng ${m === "—" ? "—" : (+m.slice(5) + "/" + m.slice(0, 4))}</span>
+        <span class="ptxt">${mLabel}</span>
         <span class="pcaret">▾</span>
       </button>
       <label style="display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:var(--ink-2);padding:8px 13px;background:var(--surface);border:1px solid var(--border-strong);border-radius:var(--r-ctrl);cursor:pointer">
         <input id="reConfirmBox" type="checkbox" ${confirmed ? "checked" : ""} ${m === "—" || local.saving ? "disabled" : ""} style="accent-color:var(--brand)" />
-        Đã đối soát tháng này
+        ${_t("rec.confirmed_label")}
       </label>
       <button class="ctrl-btn" id="reExportBtn" ${m === "—" ? "disabled" : ""}>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5M12 15V3"/></svg>
-        Tải Excel
+        ${_t("rec.export")}
       </button>`;
   }
 
@@ -106,12 +110,12 @@
     const totalCmp = (s.matched_orders || 0) + (s.bundle_match_orders || 0) + (s.mismatch_orders || 0);
     const matchedPct = totalCmp > 0 ? ((s.matched_orders + s.bundle_match_orders) / totalCmp) * 100 : 0;
     const tiles = [
-      { lab: "Đơn GBS",       val: fmtInt(s.gbs_orders) },
-      { lab: "Đơn trên sàn",  val: fmtInt(s.platform_orders) },
-      { lab: "Khớp",          val: fmtInt((s.matched_orders || 0) + (s.bundle_match_orders || 0)), sub: fmtPct(matchedPct), color: "var(--pos)" },
-      { lab: "Lệch",          val: fmtInt(s.mismatch_orders), color: "var(--neg)" },
-      { lab: "Thiếu trên GBS",     val: fmtInt(s.missing_in_gbs), color: "var(--ink-2)" },
-      { lab: "Thiếu trên sàn",     val: fmtInt(s.missing_in_platform), color: "var(--ink-2)" },
+      { lab: _t("rec.gbs_orders"),         val: fmtInt(s.gbs_orders) },
+      { lab: _t("rec.platform_orders"),     val: fmtInt(s.platform_orders) },
+      { lab: _t("rec.matched"),             val: fmtInt((s.matched_orders || 0) + (s.bundle_match_orders || 0)), sub: fmtPct(matchedPct), color: "var(--pos)" },
+      { lab: _t("rec.mismatch"),            val: fmtInt(s.mismatch_orders), color: "var(--neg)" },
+      { lab: _t("rec.missing_gbs"),         val: fmtInt(s.missing_in_gbs), color: "var(--ink-2)" },
+      { lab: _t("rec.missing_platform"),    val: fmtInt(s.missing_in_platform), color: "var(--ink-2)" },
     ];
     return `<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:16px">
       ${tiles.map((k) => `<div class="card card-pad" style="padding:14px 16px">
@@ -137,12 +141,12 @@
             </div>
           </div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px 14px;font-size:13px">
-            <div><span style="color:var(--ink-3);font-weight:600">Đơn sàn:</span> <b class="tnum">${fmtInt(s.platform_orders)}</b></div>
-            <div><span style="color:var(--ink-3);font-weight:600">Đơn GBS:</span> <b class="tnum">${fmtInt(s.gbs_orders)}</b></div>
-            <div><span style="color:var(--pos);font-weight:600">Khớp:</span> <b class="tnum">${fmtInt((s.matched_orders||0) + (s.bundle_match_orders||0))}</b> · ${fmtPct(matchedPct)}</div>
-            <div><span style="color:var(--neg);font-weight:600">Lệch:</span> <b class="tnum">${fmtInt(s.mismatch_orders)}</b></div>
-            <div><span style="color:var(--ink-3);font-weight:600">Thiếu GBS:</span> <b class="tnum">${fmtInt(s.missing_in_gbs)}</b></div>
-            <div><span style="color:var(--ink-3);font-weight:600">Thiếu sàn:</span> <b class="tnum">${fmtInt(s.missing_in_platform)}</b></div>
+            <div><span style="color:var(--ink-3);font-weight:600">${_t("rec.platform_orders")}:</span> <b class="tnum">${fmtInt(s.platform_orders)}</b></div>
+            <div><span style="color:var(--ink-3);font-weight:600">${_t("rec.gbs_orders")}:</span> <b class="tnum">${fmtInt(s.gbs_orders)}</b></div>
+            <div><span style="color:var(--pos);font-weight:600">${_t("rec.matched")}:</span> <b class="tnum">${fmtInt((s.matched_orders||0) + (s.bundle_match_orders||0))}</b> · ${fmtPct(matchedPct)}</div>
+            <div><span style="color:var(--neg);font-weight:600">${_t("rec.mismatch")}:</span> <b class="tnum">${fmtInt(s.mismatch_orders)}</b></div>
+            <div><span style="color:var(--ink-3);font-weight:600">${_t("rec.missing_gbs")}:</span> <b class="tnum">${fmtInt(s.missing_in_gbs)}</b></div>
+            <div><span style="color:var(--ink-3);font-weight:600">${_t("rec.missing_platform")}:</span> <b class="tnum">${fmtInt(s.missing_in_platform)}</b></div>
           </div>
         </div>
       </div>`;
@@ -161,10 +165,10 @@
     const items = insights.bullets || insights.notes || [];
     if (!items.length) return "";
     return `<div class="card" style="margin-bottom:16px">
-      <div class="card-head"><div><div class="card-title">Ghi chú đối soát</div><div class="card-sub">Tóm tắt từ dịch vụ đối soát.</div></div></div>
+      <div class="card-head"><div><div class="card-title">${_t("rec.insights.title")}</div><div class="card-sub">${_t("rec.insights.sub")}</div></div></div>
       <div class="card-pad">
         <ul style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:7px;font-size:13.5px;line-height:1.55;color:var(--ink-2)">
-          ${items.map((t) => `<li>${typeof t === "string" ? t : (t.text || t.message || JSON.stringify(t))}</li>`).join("")}
+          ${items.map((item) => `<li>${typeof item === "string" ? item : (item.text || item.message || JSON.stringify(item))}</li>`).join("")}
         </ul>
       </div>
     </div>`;
@@ -172,16 +176,16 @@
 
   function unmatchedTable() {
     const rows = (local.data && local.data.unmatched_platform_orders) || [];
-    if (!rows.length) return `<div style="padding:24px;text-align:center;color:var(--ink-3);font-weight:600">Tất cả đơn của sàn đều xuất hiện trong GBS — không có đơn lệch.</div>`;
+    if (!rows.length) return `<div style="padding:24px;text-align:center;color:var(--ink-3);font-weight:600">${_t("rec.unmatched.empty")}</div>`;
     const limit = 50;
     const shown = rows.slice(0, limit);
     return `
       <table class="tbl">
         <thead><tr>
-          <th>Order ID</th><th>Sàn</th><th>${t("th.status")}</th>
+          <th>${_t("th.order_id")}</th><th>${_t("th.platform")}</th><th>${_t("th.status")}</th>
           <th class="num">SL sàn</th><th class="num">SL GBS</th>
           <th class="num">NMV sàn</th><th class="num">NMV GBS</th>
-          <th>Ghi chú</th>
+          <th>${_t("th.note")}</th>
         </tr></thead>
         <tbody>
           ${shown.map((r) => `<tr>
@@ -196,17 +200,17 @@
           </tr>`).join("")}
         </tbody>
       </table>
-      ${rows.length > limit ? `<div style="padding:12px 16px;text-align:center;color:var(--ink-3);font-size:12.5px;font-weight:600">Hiển thị ${limit}/${rows.length} dòng. Tải Excel để xem đầy đủ.</div>` : ""}`;
+      ${rows.length > limit ? `<div style="padding:12px 16px;text-align:center;color:var(--ink-3);font-size:12.5px;font-weight:600">${_tf("rec.unmatched.truncated", { shown: limit, total: rows.length })}</div>` : ""}`;
   }
 
   function statusBadge(s) {
     const map = {
-      matched:        ["Khớp", "st-done"],
-      bundle_match:   ["Khớp combo", "st-done"],
-      order_match:    ["Khớp đơn", "st-done"],
-      mismatch:       ["Lệch", "st-cancel"],
-      missing_in_gbs: ["Thiếu GBS", "st-ship"],
-      missing_in_platform: ["Thiếu sàn", "st-ship"],
+      matched:             [_t("status.matched"),          "st-done"],
+      bundle_match:        [_t("status.matched_combo"),    "st-done"],
+      order_match:         [_t("status.matched_order"),    "st-done"],
+      mismatch:            [_t("status.mismatch"),         "st-cancel"],
+      missing_in_gbs:      [_t("status.missing_gbs"),      "st-ship"],
+      missing_in_platform: [_t("status.missing_platform"), "st-ship"],
     };
     const [lab, cls] = map[s] || [s || "?", ""];
     return `<span class="status-pill ${cls}">${lab}</span>`;
@@ -217,29 +221,29 @@
       <div class="card section-gap">
         <div class="card-head">
           <div>
-            <div class="card-title">Tệp dữ liệu GBS</div>
-            <div class="card-sub">Upload file GBS để hệ thống đối soát với dữ liệu sàn theo tháng.</div>
+            <div class="card-title">${_t("rec.files.title")}</div>
+            <div class="card-sub">${_t("rec.files.sub")}</div>
           </div>
-          <button class="ctrl-btn on" id="reAddFileBtn" style="background:var(--brand);border-color:var(--brand);color:#fff">+ Upload GBS</button>
+          <button class="ctrl-btn on" id="reAddFileBtn" style="background:var(--brand);border-color:var(--brand);color:#fff">${_t("rec.files.add")}</button>
           <input id="reFileInput" type="file" accept=".xlsx,.xls" style="display:none" />
         </div>
         <div class="card-pad">
           ${local.files.length ? `
             <table class="tbl">
               <thead><tr>
-                <th>Tệp</th><th class="num">Kích thước</th><th>Tháng</th>
-                <th>Tải lên</th><th></th>
+                <th>${_t("th.file")}</th><th class="num">${_t("th.size")}</th><th>${_t("th.month")}</th>
+                <th>${_t("th.uploaded_at")}</th><th></th>
               </tr></thead>
               <tbody>${local.files.map((f) => `<tr>
                 <td style="font-weight:600;max-width:340px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${(f.original_filename||f.filename||'').replace(/"/g,'&quot;')}">${f.original_filename || f.filename || "—"}</td>
                 <td class="num tnum">${formatBytes(f.size)}</td>
                 <td>${(f.months || []).join(", ") || "—"}</td>
                 <td style="font-size:12px;color:var(--ink-3)">${fmtDate(f.uploaded_at)}</td>
-                <td class="num"><button class="iconbtn-sq" data-del-file="${f.filename}" aria-label="Xoá" style="color:var(--neg)">
+                <td class="num"><button class="iconbtn-sq" data-del-file="${f.filename}" aria-label="${_t("common.delete")}" style="color:var(--neg)">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>
                 </button></td>
               </tr>`).join("")}</tbody>
-            </table>` : `<div style="padding:24px;text-align:center;color:var(--ink-3);font-weight:600">Chưa có tệp GBS nào.</div>`}
+            </table>` : `<div style="padding:24px;text-align:center;color:var(--ink-3);font-weight:600">${_t("rec.files.empty")}</div>`}
         </div>
       </div>`;
   }
@@ -252,17 +256,17 @@
   }
 
   function render() {
-    if (local.loading && !local.data) return `<div class="card card-pad" style="text-align:center;color:var(--ink-3);font-weight:600">Đang tải dữ liệu đối soát…</div>`;
-    if (local.error) return `<div class="card card-pad" style="text-align:center;color:var(--neg);font-weight:700">${t("common.error")}: ${local.error}</div>`;
+    if (local.loading && !local.data) return `<div class="card card-pad" style="text-align:center;color:var(--ink-3);font-weight:600">${_t("common.loading")}</div>`;
+    if (local.error) return `<div class="card card-pad" style="text-align:center;color:var(--neg);font-weight:700">${_t("common.error")}: ${local.error}</div>`;
     const noMonth = !local.selectedMonth;
     return `
       ${flashMsg()}
-      ${noMonth ? `<div class="note" style="margin-bottom:16px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>Chưa có dữ liệu GBS nào. Hãy upload tệp GBS ở dưới để bắt đầu.</div>`
+      ${noMonth ? `<div class="note" style="margin-bottom:16px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>${_t("rec.note.no_data")}</div>`
         : `${summaryTiles()}
            ${platformGrid()}
            ${insightsCard()}
            <div class="card section-gap">
-             <div class="card-head"><div><div class="card-title">Đơn lệch (cần xử lý)</div><div class="card-sub">Đơn có sai số lượng / NMV / SKU giữa sàn và GBS.</div></div></div>
+             <div class="card-head"><div><div class="card-title">${_t("rec.unmatched.title")}</div><div class="card-sub">${_t("rec.unmatched.sub")}</div></div></div>
              ${unmatchedTable()}
            </div>`}
       ${filesCard()}`;
@@ -279,11 +283,11 @@
     const months = (local.data && local.data.months) || [];
     if (!months.length) return;
     const m = document.createElement("div"); m.className = "menu";
-    m.innerHTML = `<div class="menu-label">Chọn tháng đối soát</div>` +
+    m.innerHTML = `<div class="menu-label">${_t("rec.month.picker_label")}</div>` +
       months.slice().reverse().map((mm) => {
         const ym = mm.month;
         const ok = mm.confirmed ? "✓ " : "";
-        return `<div class="menu-item ${ym === local.selectedMonth ? "sel" : ""}" data-m="${ym}">${ok}Tháng ${+ym.slice(5)}/${ym.slice(0,4)}${mm.gbs_orders ? ` <small>· ${fmtInt(mm.gbs_orders)} đơn GBS</small>` : ""}</div>`;
+        return `<div class="menu-item ${ym === local.selectedMonth ? "sel" : ""}" data-m="${ym}">${ok}${_tf("rec.month_btn", { m: +ym.slice(5) + "/" + ym.slice(0, 4) })}${mm.gbs_orders ? ` <small>· ${fmtInt(mm.gbs_orders)} đơn GBS</small>` : ""}</div>`;
       }).join("");
     document.body.appendChild(m);
     const r = e.currentTarget.getBoundingClientRect();
@@ -309,13 +313,12 @@
       });
       const j = await r.json();
       if (!j.success) throw new Error(j.error || "HTTP " + r.status);
-      // Refresh meta
       if (local.data && local.data.selected_month_meta) {
         local.data.selected_month_meta.confirmed = confirmed;
       }
-      showMsg("ok", confirmed ? "Đã đánh dấu tháng đối soát xong." : "Đã bỏ trạng thái đối soát.");
+      showMsg("ok", confirmed ? _t("rec.confirm_ok") : _t("rec.confirm_off"));
     } catch (e) {
-      showMsg("err", t("common.error") + ": " + (e.message || e));
+      showMsg("err", _t("common.error") + ": " + (e.message || e));
     } finally {
       local.saving = false; window.App.rerender();
     }
@@ -328,9 +331,9 @@
 
   async function uploadGbsFile(file) {
     if (!file) return;
-    if (!/\.xlsx?$/i.test(file.name)) { showMsg("err", "Chỉ chấp nhận .xlsx hoặc .xls"); return; }
-    if (file.size > 50 * 1024 * 1024) { showMsg("err", "File quá lớn (max 50MB)"); return; }
-    showMsg("ok", "Đang upload " + file.name + "...");
+    if (!/\.xlsx?$/i.test(file.name)) { showMsg("err", _t("rec.upload_invalid")); return; }
+    if (file.size > 50 * 1024 * 1024) { showMsg("err", _t("rec.upload_too_big")); return; }
+    showMsg("ok", _tf("rec.uploading_label", { name: file.name }));
     try {
       const fd = new FormData(); fd.append("file", file);
       const r = await fetch("api/reconciliation-files.php", {
@@ -340,16 +343,16 @@
       });
       const j = await r.json();
       if (!j.success) throw new Error(j.error || "HTTP " + r.status);
-      showMsg("ok", "Đã upload xong. Đang reload đối soát...");
+      showMsg("ok", _t("rec.upload_ok"));
       await fetchCompare(local.selectedMonth);
       window.App.rerender();
     } catch (e) {
-      showMsg("err", "Lỗi upload: " + (e.message || e));
+      showMsg("err", _t("rec.upload_failed") + ": " + (e.message || e));
     }
   }
 
   async function deleteFile(filename) {
-    if (!confirm("Xoá tệp " + filename + "?")) return;
+    if (!confirm(_tf("rec.delete_confirm", { name: filename }))) return;
     try {
       const r = await fetch("api/reconciliation-file-delete.php", {
         method: "POST", credentials: "same-origin",
@@ -358,11 +361,11 @@
       });
       const j = await r.json();
       if (!j.success) throw new Error(j.error || "HTTP " + r.status);
-      showMsg("ok", "Đã xoá tệp.");
+      showMsg("ok", _t("rec.delete_ok"));
       await fetchCompare(local.selectedMonth);
       window.App.rerender();
     } catch (e) {
-      showMsg("err", "Lỗi xoá: " + (e.message || e));
+      showMsg("err", _t("common.error") + ": " + (e.message || e));
     }
   }
 

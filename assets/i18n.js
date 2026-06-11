@@ -207,6 +207,8 @@
     "customers.segment.potential": "Tiềm năng",
     "customers.top_buyers.title": "Top khách hàng",
     "customers.top_buyers.sub": "theo doanh thu · {period}",
+    "customers.table.username": "Khách hàng",
+    "customers.table.amount": "Giá trị đơn",
     "customers.detail.title": "Chi tiết khách hàng",
     "customers.detail.lifetime": "Toàn thời gian",
     "customers.detail.first_purchase": "Đơn đầu tiên",
@@ -266,6 +268,9 @@
 
     /* Tables */
     "th.platform": "Sàn",
+    "th.category": "Danh mục",
+    "th.conv_pct": "% CVR",
+    "th.completion_rate_pct": "% HT",
     "th.product": "Sản phẩm",
     "th.sku": "SKU",
     "th.qty": "SL",
@@ -758,6 +763,8 @@
     "customers.segment.potential": "Potential",
     "customers.top_buyers.title": "Top customers",
     "customers.top_buyers.sub": "by revenue · {period}",
+    "customers.table.username": "Customer",
+    "customers.table.amount": "Order amount",
     "customers.detail.title": "Customer detail",
     "customers.detail.lifetime": "Lifetime",
     "customers.detail.first_purchase": "First purchase",
@@ -817,6 +824,9 @@
 
     /* Tables */
     "th.platform": "Platform",
+    "th.category": "Category",
+    "th.conv_pct": "% CVR",
+    "th.completion_rate_pct": "% CR",
     "th.product": "Product",
     "th.sku": "SKU",
     "th.qty": "Qty",

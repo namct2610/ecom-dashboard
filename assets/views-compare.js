@@ -74,7 +74,7 @@
     <div class="card section-gap">
       <div class="card-head"><div><div class="card-title">${_t("compare.detail.title")}</div><div class="card-sub">${S.periodLabel(st.period).toLowerCase()}</div></div></div>
       <div class="card-pad" style="overflow-x:auto;padding:6px">
-        <table class="tbl"><thead><tr><th>${_t("th.platform")}</th><th class="num">${_t("th.revenue")}</th><th class="num">Δ ${st.compare === "yoy" ? _t("compare.yoy_short") : st.compare === "prev" ? _t("compare.prev_short") : ""}</th><th class="num">${_t("th.orders")}</th><th class="num">% HT</th><th class="num">% ${_t("common.cancel")}</th><th class="num">${_t("kpi.aov")}</th><th class="num">${_t("kpi.visits")}</th><th class="num">% ${_t("kpi.conversion").charAt(0)}</th><th class="num">${_t("th.share")}</th></tr></thead><tbody>${tblRows}</tbody></table>
+        <table class="tbl"><thead><tr><th>${_t("th.platform")}</th><th class="num">${_t("th.revenue")}</th><th class="num">Δ ${st.compare === "yoy" ? _t("compare.yoy_short") : st.compare === "prev" ? _t("compare.prev_short") : ""}</th><th class="num">${_t("th.orders")}</th><th class="num">${_t("th.completion_rate_pct")}</th><th class="num">% ${_t("common.cancel")}</th><th class="num">${_t("kpi.aov")}</th><th class="num">${_t("kpi.visits")}</th><th class="num">${_t("th.conv_pct")}</th><th class="num">${_t("th.share")}</th></tr></thead><tbody>${tblRows}</tbody></table>
       </div>
     </div>`;
   }

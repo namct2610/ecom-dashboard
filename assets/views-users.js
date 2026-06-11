@@ -161,8 +161,8 @@
             <div class="field-row">
               <label class="field-label">${t("users.modal.role")}</label>
               <select id="umRole" class="v2-select">
-                <option value="staff" ${u.role === "staff" ? "selected" : ""}>Staff</option>
-                <option value="admin" ${u.role === "admin" ? "selected" : ""}>Admin</option>
+                <option value="staff" ${u.role === "staff" ? "selected" : ""}>${t("role.staff")}</option>
+                <option value="admin" ${u.role === "admin" ? "selected" : ""}>${t("role.admin")}</option>
               </select>
             </div>
             <div class="field-row">
@@ -237,7 +237,7 @@
 
     local.saving = true;
     const btn = document.getElementById("userModalSave");
-    if (btn) btn.textContent = t("plan.saving");
+    if (btn) btn.textContent = t("settings.account.saving");
     try {
       const body = isEdit
         ? { action: "update", id: local.edit.user.id, full_name, role, is_active, must_change_password, password }
