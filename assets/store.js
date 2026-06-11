@@ -597,6 +597,7 @@
   function save() { localStorage.setItem("zm_state_v3", JSON.stringify(state)); }
 
   window.Store = {
+    _customerCache: customerCache,
     DASH, PLAT, PKEYS, CAT, state, save, F,
     MONTH_VI, MONTH_VI_LONG, addMonth, parseDate, fmtDate, fmtDateShort, catLabel,
     curMonths, compareMonths, periodLabel, compareLabel, periodMode, rangeFromKey, compareRange, coercePeriod,

@@ -1,7 +1,7 @@
 {
-  "version": "3.4.10",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.10/release/dashboard-v3-3.4.10.zip",
-  "changelog": "- Fix lỗi nhảy về /old/index.php?legacy=1#/login: api/auth.php giờ luôn trả logged_in=true (auth đã tắt từ 3.4.4) → JS cũ trong cache browser không còn redirect.\n- Thêm /old/index.php stub (2 dòng) bounce mọi request về root, đề phòng browser còn cache JS rất cũ.",
+  "version": "3.4.11",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.11/release/dashboard-v3-3.4.11.zip",
+  "changelog": "- Fix khẩn cấp: trang Khách hàng làm trình duyệt đơ. Render() kiểm tra cache sai biến (S.Store thay vì window.Store) → cache miss mỗi render → spawn fetch → rerender → vòng lặp vô hạn.\n- Đồng bộ hoá guard customerLoadingKey ở cả render() lẫn mount() để chống re-fetch khi đang có request chạy.\n- Expose window.Store._customerCache để view check được trạng thái cache.",
   "min_php": "8.1",
   "released_at": "2026-06-11"
 }
