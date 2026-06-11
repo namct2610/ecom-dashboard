@@ -1,7 +1,7 @@
 {
-  "version": "3.4.19",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.19/release/dashboard-v3-3.4.19.zip",
-  "changelog": "- V2 updater giờ cache manifest chỉ 60 giây thay vì 30 phút, nên production nhìn thấy release mới nhanh hơn nhiều sau khi push/tag.\n- Vẫn giữ cơ chế GitHub contents API + fallback raw để không làm giảm độ ổn định khi hosting bị rate-limit hoặc CDN edge lỗi thời.",
+  "version": "3.4.21",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/main/release/dashboard-v3-3.4.21.zip",
+  "changelog": "- Sửa phần Khách hàng để production load ổn định và nhanh hơn bằng bảng tạm có index.\n- Cập nhật biểu đồ Tổng quan: cột Xu hướng doanh thu tự co giãn hợp lý, Xu hướng đơn hàng bỏ toggle Doanh thu/Đơn và hiển thị nhất quán với biểu đồ doanh thu.",
   "min_php": "8.1",
   "released_at": "2026-06-11"
 }
