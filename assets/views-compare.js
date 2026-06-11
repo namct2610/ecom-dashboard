@@ -7,6 +7,10 @@
   const _tf = (k, v) => (window.tf ? window.tf(k, v) : k);
   let detailLoadingKey = null;
 
+  function compactCompareText(period, compareLabel) {
+    return compareLabel ? `${period} · ${compareLabel}` : period;
+  }
+
   function render() {
     const st = S.state;
     const range = S.currentRange();
@@ -61,7 +65,7 @@
     }).join("");
 
     return `
-    <div class="note section0" style="margin-bottom:16px">${UI.ICON.info} ${_t("compare.note")} <b>${S.periodLabel(st.period)}</b>${cmpLab ? ` ${_t("compare.note")} <b>${cmpLab}</b>` : ""}. ${_t("compare.note_sub")}</div>
+    <div class="note section0" style="margin-bottom:16px">${UI.ICON.info} <b>${compactCompareText(S.periodLabel(st.period), cmpLab)}</b> · ${_t("compare.note_sub")}</div>
     <div class="g12">${cards}</div>
 
     <div class="card section-gap">
