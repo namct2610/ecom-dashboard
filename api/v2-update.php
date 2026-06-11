@@ -32,7 +32,11 @@ $pdo = db($config);
 $appRoot = dirname(__DIR__);
 $updater = new Updater($appRoot);
 
-const V2_MANIFEST_URL = 'https://raw.githubusercontent.com/namct2610/ecom-dashboard/main/manifest.json';
+// GitHub API contents endpoint — 60s CDN cache + ETag revalidation,
+// much more reliable than raw.githubusercontent.com (5-min cache + edge
+// inconsistency). The Updater detects the base64 content envelope and
+// decodes it transparently.
+const V2_MANIFEST_URL = 'https://api.github.com/repos/namct2610/ecom-dashboard/contents/manifest.json?ref=main';
 
 function v2_update_get_setting(PDO $pdo, string $key, string $default = ''): string
 {
