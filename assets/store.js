@@ -361,11 +361,18 @@
       const years = Array.from(new Set(allMonths().map((ym) => ym.slice(0, 4)))).sort();
       return years.map((y) => {
         const months = allMonths().filter((ym) => ym.startsWith(y));
+        const shopee = aggMonths(months, "shopee");
+        const lazada = aggMonths(months, "lazada");
+        const tiktok = aggMonths(months, "tiktok");
         return {
           label: _TF("period.year_short", { y }),
-          shopee: aggMonths(months, "shopee").revenue,
-          lazada: aggMonths(months, "lazada").revenue,
-          tiktok: aggMonths(months, "tiktok").revenue,
+          shopee: shopee.revenue,
+          lazada: lazada.revenue,
+          tiktok: tiktok.revenue,
+          o_shopee: shopee.orders,
+          o_lazada: lazada.orders,
+          o_tiktok: tiktok.orders,
+          orders: shopee.orders + lazada.orders + tiktok.orders,
           partial: false,
         };
       });
@@ -380,6 +387,10 @@
         shopee: monthlyMap[ym].plat.shopee.rev,
         lazada: monthlyMap[ym].plat.lazada.rev,
         tiktok: monthlyMap[ym].plat.tiktok.rev,
+        o_shopee: monthlyMap[ym].plat.shopee.ord,
+        o_lazada: monthlyMap[ym].plat.lazada.ord,
+        o_tiktok: monthlyMap[ym].plat.tiktok.ord,
+        orders: monthlyMap[ym].plat.shopee.ord + monthlyMap[ym].plat.lazada.ord + monthlyMap[ym].plat.tiktok.ord,
         // Only dim the bar if it represents the CURRENT calendar month
         // (still accumulating). Past months are complete — don't dim them
         // just because the backend treats them as "latestMonth".
@@ -393,6 +404,10 @@
         shopee: d.shopee,
         lazada: d.lazada,
         tiktok: d.tiktok,
+        o_shopee: d.o_shopee,
+        o_lazada: d.o_lazada,
+        o_tiktok: d.o_tiktok,
+        orders: d.orders,
         partial: false,
       }));
     }
@@ -402,6 +417,10 @@
       shopee: d.shopee,
       lazada: d.lazada,
       tiktok: d.tiktok,
+      o_shopee: d.o_shopee,
+      o_lazada: d.o_lazada,
+      o_tiktok: d.o_tiktok,
+      orders: d.orders,
       partial: false,
     }));
   }

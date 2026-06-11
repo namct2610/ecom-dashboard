@@ -239,10 +239,10 @@
 
   function mount(root) {
     const st = S.state, range = S.currentRange(), plat = st.platform;
-    const ds = S.dailySeriesRange(range, plat);
+    const trend = S.businessTrend(st.period);
 
-    const mc = root.querySelector("#monthlyChart"); if (mc) C.monthlyRevenue(mc, S.businessTrend(st.period), { platform: plat });
-    const dc = root.querySelector("#dailyChart"); if (dc) C.ordersTrend(dc, ds, { platform: plat });
+    const mc = root.querySelector("#monthlyChart"); if (mc) C.monthlyRevenue(mc, trend, { platform: plat });
+    const dc = root.querySelector("#dailyChart"); if (dc) C.ordersTrend(dc, trend, { platform: plat });
 
     const pmAll2 = S.PKEYS.map((k) => ({ key: k, ...S.PLAT[k], ...S.aggRange(range, k) }));
     const totalRev2 = pmAll2.reduce((t, p) => t + p.revenue, 0);
