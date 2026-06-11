@@ -8,8 +8,13 @@
   const _tf = (k, v) => (window.tf ? window._tf(k, v) : k);
 
   // Module-local UI state
+  const defaultPlanYear = (() => {
+    const latestMonth = window.Store && window.Store.DASH && window.Store.DASH.latestMonth;
+    const latestYear = latestMonth ? Number(String(latestMonth).slice(0, 4)) : 0;
+    return latestYear || new Date().getFullYear();
+  })();
   const local = {
-    year: new Date().getFullYear(),
+    year: defaultPlanYear,
     loading: false,
     data: null,
     error: null,
@@ -143,7 +148,13 @@
   }
 
   function loadingCard(msg) {
-    return `<div class="card card-pad" style="text-align:center;color:var(--ink-3);font-weight:600">${msg || _t("common.loading")}</div>`;
+    return `
+      <div class="g12" style="grid-template-columns:repeat(12,1fr);gap:16px">
+        <div style="grid-column:span 6" data-collapse><div class="card"><div class="card-head"><div><div class="card-title">${_t("plan.title.revenue")}</div><div class="card-sub">${msg || _t("common.loading")}</div></div></div><div class="card-pad" style="height:260px"></div></div></div>
+        <div style="grid-column:span 6" data-collapse><div class="card"><div class="card-head"><div><div class="card-title">${_t("plan.title.visits")}</div><div class="card-sub">${msg || _t("common.loading")}</div></div></div><div class="card-pad" style="height:260px"></div></div></div>
+        <div style="grid-column:span 6" data-collapse><div class="card"><div class="card-head"><div><div class="card-title">${_t("plan.chart.revenue_title")}</div><div class="card-sub">${_t("common.loading")}</div></div></div><div class="card-pad" style="height:240px"></div></div></div>
+        <div style="grid-column:span 6" data-collapse><div class="card"><div class="card-head"><div><div class="card-title">${_t("plan.chart.visits_title")}</div><div class="card-sub">${_t("common.loading")}</div></div></div><div class="card-pad" style="height:240px"></div></div></div>
+      </div>`;
   }
 
   function errorCard(msg) {
@@ -168,11 +179,11 @@
 
   /* ---------- main render ---------- */
   function render() {
-    if (local.loading || !local.data) {
-      return loadingCard(_t("common.loading") + " " + _tf("plan.year", { y: local.year }) + "...");
-    }
     if (local.error) {
       return errorCard(_t("common.error") + ": " + local.error);
+    }
+    if (local.loading || !local.data) {
+      return loadingCard(_t("common.loading") + " " + _tf("plan.year", { y: local.year }) + "...");
     }
 
     const d = local.data;

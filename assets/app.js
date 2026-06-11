@@ -420,6 +420,7 @@
         applyLangBtn();
         // refresh sync-date string in active language
         document.getElementById("syncDate").textContent = TF("nav.side.synced_at", { date: sync });
+        renderPage();
       });
       // avatar → user menu (logout)
       bindAvatarMenu();

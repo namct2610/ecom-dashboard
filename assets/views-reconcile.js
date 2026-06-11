@@ -52,19 +52,32 @@
 
   /* ── data fetchers ────────────────────────────────────────── */
 
-  async function fetchCompare(month) {
-    local.loading = true; local.error = null;
+  async function ensureCsrf() {
+    if (local.csrf) return local.csrf;
     try {
       const auth = await (await fetch("api/auth.php", { credentials: "same-origin" })).json();
       local.csrf = auth.csrf || "";
+    } catch (_) {
+      local.csrf = "";
+    }
+    return local.csrf;
+  }
 
+  async function fetchCompare(month) {
+    local.loading = true; local.error = null;
+    try {
       const url = "api/gbs-reconciliation.php" + (month ? "?month=" + encodeURIComponent(month) : "");
-      const r = await fetch(url, { credentials: "same-origin" });
-      const j = await r.json();
-      if (!j.success) throw new Error(j.error || "HTTP " + r.status);
+      const [j] = await Promise.all([
+        fetch(url, { credentials: "same-origin" }).then(async (r) => {
+          const body = await r.json();
+          if (!body.success) throw new Error(body.error || "HTTP " + r.status);
+          return body;
+        }),
+        ensureCsrf(),
+        fetchFiles(),
+      ]);
       local.data = j;
       local.selectedMonth = j.selected_month || month || null;
-      await fetchFiles();
     } catch (e) {
       local.error = e.message || String(e);
     } finally {

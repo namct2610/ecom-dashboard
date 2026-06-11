@@ -13,18 +13,25 @@
   };
   const PKEYS = ["shopee", "lazada", "tiktok"];
 
-  /* ---- formatters (vi-VN) ---- */
-  const viInt = (n) => Math.round(n || 0).toLocaleString("vi-VN");
-  const viDec = (n, d = 1) => (n || 0).toLocaleString("vi-VN", { minimumFractionDigits: d, maximumFractionDigits: d });
+  /* ---- formatters (locale-aware) ---- */
+  const isEn = () => !!(window.I18n && window.I18n.getLang() === 'en');
+  const fmtLabel = (key, fallback) => (window.t ? window.t(key, fallback) : fallback);
+  const viInt = (n) => Math.round(n || 0).toLocaleString(isEn() ? "en-US" : "vi-VN");
+  const viDec = (n, d = 1) => (n || 0).toLocaleString(isEn() ? "en-US" : "vi-VN", { minimumFractionDigits: d, maximumFractionDigits: d });
   function money(n) {
     n = n || 0; const a = Math.abs(n);
-    if (a >= 1e9) return viDec(n / 1e9, 2) + " Tỷ";
-    if (a >= 1e6) return viDec(n / 1e6, 1) + " Tr";
-    if (a >= 1e3) return Math.round(n / 1e3) + "K";
+    if (a >= 1e9) return viDec(n / 1e9, 2) + fmtLabel("fmt.billion", isEn() ? "B" : "Tỷ");
+    if (a >= 1e6) return viDec(n / 1e6, 1) + fmtLabel("fmt.million", isEn() ? "M" : "Tr");
+    if (a >= 1e3) return Math.round(n / 1e3).toLocaleString(isEn() ? "en-US" : "vi-VN") + fmtLabel("fmt.thousand", "K");
     return viInt(n);
   }
-  const moneyFull = (n) => viInt(n) + "₫";
-  function num(n) { n = n || 0; if (Math.abs(n) >= 1e6) return viDec(n / 1e6, 1) + "Tr"; if (Math.abs(n) >= 10000) return viDec(n / 1e3, 1) + "K"; return viInt(n); }
+  const moneyFull = (n) => viInt(n) + fmtLabel("fmt.currency", "₫");
+  function num(n) {
+    n = n || 0;
+    if (Math.abs(n) >= 1e6) return viDec(n / 1e6, 1) + fmtLabel("fmt.million", isEn() ? "M" : "Tr");
+    if (Math.abs(n) >= 10000) return viDec(n / 1e3, 1) + fmtLabel("fmt.thousand", "K");
+    return viInt(n);
+  }
   const pct = (n, d = 1) => viDec(n || 0, d) + "%";
   function delta(cur, prev) {
     if (prev == null || prev === 0) return { dir: "flat", pct: null };
@@ -570,22 +577,22 @@
 
   /* ---- customer data ---- */
   const customerCache = {};
-  let customerInflight = null;
+  const customerInflight = {};
 
   function fetchCustomers() {
     const range = rangeFromKey(state.period);
     const cacheKey = state.period + "|" + state.platform;
     if (customerCache[cacheKey]) return Promise.resolve(customerCache[cacheKey]);
-    if (customerInflight) return customerInflight;
+    if (customerInflight[cacheKey]) return customerInflight[cacheKey];
     const url = buildApiUrl("api/customers.php");
     url.searchParams.set("date_from", range.start);
     url.searchParams.set("date_to", range.end);
     if (state.platform !== "all") url.searchParams.set("platform", state.platform === "tiktok" ? "tiktokshop" : state.platform);
-    customerInflight = fetch(url.toString(), { credentials: "same-origin" })
+    customerInflight[cacheKey] = fetch(url.toString(), { credentials: "same-origin" })
       .then((r) => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
-      .then((data) => { customerCache[cacheKey] = data; customerInflight = null; return data; })
-      .catch((err) => { customerInflight = null; throw err; });
-    return customerInflight;
+      .then((data) => { customerCache[cacheKey] = data; delete customerInflight[cacheKey]; return data; })
+      .catch((err) => { delete customerInflight[cacheKey]; throw err; });
+    return customerInflight[cacheKey];
   }
 
   function fetchCustomerDetail(buyerUsername) {

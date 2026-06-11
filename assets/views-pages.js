@@ -5,6 +5,11 @@
   const S = window.Store, F = window.F, UI = window.UI, C = window.Charts;
   const _t = (k, f) => (window.t ? window.t(k, f) : (f || k));
   const _tf = (k, v) => (window.tf ? window.tf(k, v) : k);
+  const escHtml = (s) => String(s || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
   let detailLoadingKey = null;
 
   const CAL_D = ["mon","tue","wed","thu","fri","sat","sun"];
@@ -46,7 +51,7 @@
       const pending = (stt.pending || 0);
       const dd = (c, p, inv) => UI.deltaChip(F.delta(c, p), inv);
       const kpis = kpiRow([
-        { label: _t("kpi.orders"), ico: `<span class="kpi-ico">${UI.ICON.orders}</span>`, value: F.viInt(cur.orders), unit: " " + _t("common.orders_unit"), delta: cmp ? dd(cur.orders, cmp.orders) : "", foot: cmp ? `vs ${F.viInt(cmp.orders)} · ${cmpLab}` : S.periodLabel(st.period).toLowerCase() },
+        { label: _t("kpi.orders"), ico: `<span class="kpi-ico">${UI.ICON.orders}</span>`, value: F.viInt(cur.orders), unit: " " + _t("common.orders_unit"), delta: cmp ? dd(cur.orders, cmp.orders) : "", foot: cmp ? `vs ${F.viInt(cmp.orders)} ${_t("common.orders_unit")}` : S.periodLabel(st.period).toLowerCase() },
         { label: _t("kpi.completed"), ico: `<span class="kpi-ico">${UI.ICON.check}</span>`, value: F.viInt(cur.completed), delta: `<span class="tag" style="color:var(--pos)">${F.pct(cur.completionRate)}</span>`, foot: _t("kpi.completed_unit") },
         { label: _t("kpi.cancelled"), ico: `<span class="kpi-ico">${UI.ICON.cancel}</span>`, value: F.viInt(cur.cancelled), delta: `<span class="tag" style="color:var(--neg)">${F.pct(cur.cancelRate)}</span>`, foot: _t("kpi.cancelled_foot") },
         { label: _t("status.processing"), ico: `<span class="kpi-ico">${UI.ICON.orders}</span>`, value: F.viInt(pending), foot: _t("kpi.pending_foot") },
@@ -157,7 +162,18 @@
   /* ===================== CUSTOMERS ===================== */
   let customerDetailData = null;
   let customerLoadingKey = null;
-  let customerError = null;
+  const customerErrors = {};
+
+  function customerLoadingShell() {
+    return `
+      <div class="g12">
+        ${Array.from({ length: 4 }).map(() => `<div data-collapse style="grid-column:span 3"><div class="card kpi"><div class="card-pad" style="padding:20px"><div style="height:12px;width:42%;border-radius:999px;background:var(--surface-3)"></div><div style="height:28px;width:68%;border-radius:12px;background:var(--surface-2);margin-top:14px"></div><div style="height:10px;width:54%;border-radius:999px;background:var(--surface-3);margin-top:14px"></div></div></div></div>`).join("")}
+      </div>
+      <div class="g12 section-gap">
+        <div data-collapse style="grid-column:span 7"><div class="card"><div class="card-head"><div><div class="card-title">${_t("customers.top_buyers.title")}</div><div class="card-sub">${_t("common.loading")}</div></div></div><div class="card-pad" style="height:320px"></div></div></div>
+        <div data-collapse style="grid-column:span 5"><div class="card"><div class="card-head"><div><div class="card-title">${_t("customers.geo.title")}</div><div class="card-sub">${_t("common.loading")}</div></div></div><div class="card-pad" style="height:320px"></div></div></div>
+      </div>`;
+  }
 
   window.Views.customers = {
     titleKey: "page.customers.title", eyebrowKey: "page.customers.eyebrow",
@@ -166,11 +182,11 @@
 
       const cacheKey = st.period + "|" + st.platform;
       const apiData = (window.Store._customerCache || {})[cacheKey];
+      const customerError = customerErrors[cacheKey];
 
       if (customerError) {
-        const err = customerError;
         return `<div class="card card-pad" style="text-align:center;color:var(--neg);font-weight:700">
-          ${_t("common.error")}: ${escHtml(err)}
+          ${_t("common.error")}: ${escHtml(customerError)}
           <div style="margin-top:12px"><button class="ctrl-btn" id="custRetry">${_t("common.retry")}</button></div>
         </div>`;
       }
@@ -180,15 +196,15 @@
           customerLoadingKey = cacheKey;
           S.fetchCustomers().then(() => {
             customerLoadingKey = null;
-            customerError = null;
+            delete customerErrors[cacheKey];
             window.App.rerender();
           }).catch((e) => {
             customerLoadingKey = null;
-            customerError = (e && e.message) ? e.message : String(e);
+            customerErrors[cacheKey] = (e && e.message) ? e.message : String(e);
             window.App.rerender();
           });
         }
-        return `<div class="card card-pad" style="text-align:center;color:var(--ink-3);font-weight:600">${_t("common.loading")}</div>`;
+        return customerLoadingShell();
       }
 
       const data = apiData;
@@ -266,22 +282,23 @@
     mount(root) {
       const cacheKey = S.state.period + "|" + S.state.platform;
       const cached = (window.Store._customerCache || {})[cacheKey];
+      const customerError = customerErrors[cacheKey];
       if (!cached && !customerLoadingKey && !customerError) {
         customerLoadingKey = cacheKey;
         S.fetchCustomers().then(() => {
           customerLoadingKey = null;
-          customerError = null;
+          delete customerErrors[cacheKey];
           window.App.rerender();
         }).catch((e) => {
           customerLoadingKey = null;
-          customerError = (e && e.message) ? e.message : String(e);
+          customerErrors[cacheKey] = (e && e.message) ? e.message : String(e);
           window.App.rerender();
         });
       }
 
       // Retry handler when previous fetch errored.
       root.querySelector("#custRetry")?.addEventListener("click", () => {
-        customerError = null;
+        delete customerErrors[cacheKey];
         customerLoadingKey = null;
         window.App.rerender();
       });
