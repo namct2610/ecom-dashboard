@@ -1,7 +1,7 @@
 {
-  "version": "3.4.12",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.12/release/dashboard-v3-3.4.12.zip",
-  "changelog": "- Fix update bị kẹt: chuyển manifest source từ raw.githubusercontent.com (cache CDN 5 phút, không đáng tin) sang api.github.com/contents endpoint (cache 60 giây + ETag revalidation).\n- Updater decode tự động content base64 từ GitHub API.\n- Thêm header Cache-Control/Pragma no-cache trong outbound curl request để tránh proxy cache trung gian.",
+  "version": "3.4.13",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.13/release/dashboard-v3-3.4.13.zip",
+  "changelog": "- Fix cột tháng 5/2026 bị mờ: trước đây cờ 'partial' dựa vào DASH.latestMonth (backend đánh tháng có dữ liệu mới nhất) → cứ tháng đó là mờ kể cả khi đã hoàn thành. Giờ chỉ mờ khi là THÁNG HIỆN TẠI theo lịch (còn đang chạy, chưa đủ ngày).\n- Bỏ hardcode 'partial = m.ym === \"2026-06\"' trong monthlyTrend, thay bằng currentMonthYM() động.",
   "min_php": "8.1",
   "released_at": "2026-06-11"
 }
