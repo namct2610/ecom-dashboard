@@ -78,7 +78,6 @@
   async function ensureAuth() {
     if (local.csrf) return true;
     const auth = await (await fetch("api/auth.php", { credentials: "same-origin" })).json();
-    if (!auth.logged_in) { window.location.href = "old/index.php?legacy=1#/login"; return false; }
     local.csrf = auth.csrf || "";
     return true;
   }

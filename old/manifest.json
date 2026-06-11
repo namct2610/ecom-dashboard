@@ -1,7 +1,0 @@
-{
-  "version": "1.6.1",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/old-1.6.1/release/dashboard-old-1.6.1.zip",
-  "changelog": "- Đưa /db-export.php vào trong /old/ (chỉ v1 admin dùng tới). Fix include path + fetch caller trong app.js.\n- Cập nhật comment Zott red trong layout.css — không còn tham chiếu /v2/.",
-  "min_php": "8.1",
-  "released_at": "2026-06-10"
-}

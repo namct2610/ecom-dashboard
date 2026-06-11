@@ -215,43 +215,6 @@ body { transition: background .3s ease, color .3s ease; }
    /api/auth.php (action=login) and on success reloads the page
    so the bootstrap re-runs with a valid session.
    ============================================================ */
-.login-overlay {
-  position: fixed; inset: 0; z-index: 200;
-  background: color-mix(in oklch, var(--bg) 86%, transparent);
-  backdrop-filter: blur(8px) saturate(1.2);
-  display: grid; place-items: center; padding: 24px;
-}
-.login-overlay[hidden] { display: none !important; }
-.login-card {
-  width: 100%; max-width: 380px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--r-card);
-  box-shadow: var(--shadow-lg);
-  padding: 28px 26px 22px;
-  display: flex; flex-direction: column; gap: 4px;
-  font-family: var(--font-ui);
-}
-.login-brand { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
-.login-brand .brand-mark { width: 42px; height: 42px; flex: 0 0 42px; border-radius: 12px; background: var(--brand); color: #fff; display: grid; place-items: center; }
-.login-brand .brand-mark svg { width: 22px; height: 22px; }
-.login-title { font-size: 18px; font-weight: 800; letter-spacing: -.01em; }
-.login-sub { font-size: 12px; color: var(--ink-3); font-weight: 600; margin-top: 2px; }
-.login-error {
-  margin: 6px 0 0;
-  padding: 9px 12px;
-  border-radius: var(--r-ctrl);
-  background: color-mix(in oklch, var(--neg) 12%, transparent);
-  color: var(--neg);
-  font-size: 13px; font-weight: 700;
-}
-.login-fallback {
-  text-align: center; margin-top: 14px;
-  font-size: 12px; color: var(--ink-3); font-weight: 600;
-  text-decoration: none;
-}
-.login-fallback:hover { color: var(--ink-2); text-decoration: underline; }
-
 /* hamburger lives inside .iconbtn-sq (display:grid) — increase specificity so it's hidden on desktop */
 .iconbtn-sq.hamburger { display: none; }
 

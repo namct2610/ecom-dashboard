@@ -530,7 +530,7 @@
     "banner.v2_sub": "Có thể quay lại giao diện cũ nếu cần.",
     "banner.back_to_v1": "Quay lại bản cũ",
     "v2up.card.title": "Phiên bản hệ thống",
-    "v2up.card.sub": "Kiểm tra & cập nhật code chính. Bản cập nhật không đụng tới /old (bản cũ).",
+    "v2up.card.sub": "Kiểm tra & cập nhật code chính.",
     "v2up.current": "Phiên bản hiện tại",
     "v2up.check_now": "Kiểm tra ngay",
     "v2up.up_to_date": "Đang dùng phiên bản mới nhất",
@@ -541,18 +541,6 @@
     "v2up.reload": "Reload trang",
     "v2up.checked_at": "Kiểm tra lúc",
     "v2up.changelog": "Thay đổi",
-
-    /* Login overlay */
-    "login.title": "Đăng nhập",
-    "login.sub": "Zott Monte · Marketplace Analytics",
-    "login.username": "Tên đăng nhập",
-    "login.password": "Mật khẩu",
-    "login.submit": "Đăng nhập",
-    "login.submitting": "Đang đăng nhập…",
-    "login.empty": "Vui lòng nhập đủ tên đăng nhập và mật khẩu.",
-    "login.bad_creds": "Tên đăng nhập hoặc mật khẩu không đúng.",
-    "login.server_error": "Lỗi máy chủ, vui lòng thử lại.",
-    "login.legacy_fallback": "Dùng giao diện cũ (dự phòng)",
 
     /* User menu */
     "menu.signed_in_as": "Đăng nhập bằng",
@@ -1078,7 +1066,7 @@
     "banner.v2_sub": "You can switch back to the old UI at any time.",
     "banner.back_to_v1": "Back to v1",
     "v2up.card.title": "System version",
-    "v2up.card.sub": "Check & update the main app. Updates leave /old (legacy UI) untouched.",
+    "v2up.card.sub": "Check & update the main app.",
     "v2up.current": "Current version",
     "v2up.check_now": "Check now",
     "v2up.up_to_date": "Up to date",
@@ -1089,18 +1077,6 @@
     "v2up.reload": "Reload",
     "v2up.checked_at": "Checked at",
     "v2up.changelog": "Changes",
-
-    /* Login overlay */
-    "login.title": "Sign in",
-    "login.sub": "Zott Monte · Marketplace Analytics",
-    "login.username": "Username",
-    "login.password": "Password",
-    "login.submit": "Sign in",
-    "login.submitting": "Signing in…",
-    "login.empty": "Please enter both username and password.",
-    "login.bad_creds": "Wrong username or password.",
-    "login.server_error": "Server error, please try again.",
-    "login.legacy_fallback": "Use the old UI (fallback)",
 
     /* User menu */
     "menu.signed_in_as": "Signed in as",

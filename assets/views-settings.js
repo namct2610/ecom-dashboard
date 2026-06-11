@@ -26,10 +26,6 @@
     local.error = null;
     try {
       const auth = await (await fetch("api/auth.php", { credentials: "same-origin" })).json();
-      if (!auth.logged_in) {
-        window.location.href = "old/index.php?legacy=1#/login";
-        return;
-      }
       local.user = auth.user || { username: auth.username, role: auth.role };
       local.csrf = auth.csrf || "";
       local.isAdmin = (local.user.role || "") === "admin";
