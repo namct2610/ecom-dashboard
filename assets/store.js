@@ -323,13 +323,22 @@
     });
   }
 
+  // Current calendar month in YYYY-MM. Used to mark "the bar that's still
+  // accumulating" with dimmed fill — past months are complete, so they
+  // should NOT be dimmed even if DASH.latestMonth happens to equal them.
+  function currentMonthYM() {
+    const d = new Date();
+    return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0");
+  }
+
   /* ---- monthly trend (last n months) ---- */
   function monthlyTrend(n) {
     const arr = DASH.monthly.slice(-n);
+    const cur = currentMonthYM();
     return arr.map((m) => ({
       ym: m.ym, label: MONTH_VI(m.ym), revenue: m.revenue, orders: m.orders,
       shopee: m.plat.shopee.rev, lazada: m.plat.lazada.rev, tiktok: m.plat.tiktok.rev,
-      partial: m.ym === "2026-06",
+      partial: m.ym === cur,
     }));
   }
   function businessTrend(key) {
@@ -349,6 +358,7 @@
     }
     if (range.mode === "month") {
       const center = range.start.slice(0, 7);
+      const cur    = currentMonthYM();
       const months = [];
       for (let i = -6; i <= 5; i++) months.push(addMonth(center, i));
       return months.filter((ym) => monthlyMap[ym]).map((ym) => ({
@@ -356,7 +366,10 @@
         shopee: monthlyMap[ym].plat.shopee.rev,
         lazada: monthlyMap[ym].plat.lazada.rev,
         tiktok: monthlyMap[ym].plat.tiktok.rev,
-        partial: ym === DASH.latestMonth && periodMode(key) === "month",
+        // Only dim the bar if it represents the CURRENT calendar month
+        // (still accumulating). Past months are complete — don't dim them
+        // just because the backend treats them as "latestMonth".
+        partial: ym === cur,
       }));
     }
     if (range.mode === "day") {
