@@ -78,6 +78,20 @@ class Updater
             $preview = substr(trim($response), 0, 120);
             throw new \RuntimeException("Manifest không phải JSON hợp lệ. Kiểm tra URL có phải raw URL không. Nhận được: " . $preview);
         }
+
+        // GitHub API contents endpoint returns the file metadata with the
+        // actual content base64-encoded under "content". 60s edge cache
+        // (vs 300s on raw.githubusercontent.com) plus ETag revalidation
+        // makes update checks reliable.
+        if (isset($data['content']) && isset($data['encoding']) && $data['encoding'] === 'base64') {
+            $decoded = base64_decode(preg_replace('/\s+/', '', (string) $data['content']));
+            $inner   = $decoded !== false ? json_decode($decoded, true) : null;
+            if (!is_array($inner)) {
+                throw new \RuntimeException('GitHub API trả về content base64 không hợp lệ.');
+            }
+            $data = $inner;
+        }
+
         if (empty($data['version']) || empty($data['download_url'])) {
             throw new \RuntimeException('Manifest thiếu trường "version" hoặc "download_url".');
         }
@@ -254,6 +268,11 @@ class Updater
             CURLOPT_USERAGENT      => 'DashboardV3-Updater/1.0',
             CURLOPT_FOLLOWLOCATION => true,
             CURLOPT_MAXREDIRS      => 3,
+            CURLOPT_HTTPHEADER     => [
+                'Accept: application/vnd.github+json, application/json',
+                'Cache-Control: no-cache',
+                'Pragma: no-cache',
+            ],
         ]);
         $response = curl_exec($ch);
         $errno    = curl_errno($ch);

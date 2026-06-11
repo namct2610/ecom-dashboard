@@ -1,7 +1,7 @@
 {
-  "version": "3.4.11",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.11/release/dashboard-v3-3.4.11.zip",
-  "changelog": "- Fix khẩn cấp: trang Khách hàng làm trình duyệt đơ. Render() kiểm tra cache sai biến (S.Store thay vì window.Store) → cache miss mỗi render → spawn fetch → rerender → vòng lặp vô hạn.\n- Đồng bộ hoá guard customerLoadingKey ở cả render() lẫn mount() để chống re-fetch khi đang có request chạy.\n- Expose window.Store._customerCache để view check được trạng thái cache.",
+  "version": "3.4.12",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.12/release/dashboard-v3-3.4.12.zip",
+  "changelog": "- Fix update bị kẹt: chuyển manifest source từ raw.githubusercontent.com (cache CDN 5 phút, không đáng tin) sang api.github.com/contents endpoint (cache 60 giây + ETag revalidation).\n- Updater decode tự động content base64 từ GitHub API.\n- Thêm header Cache-Control/Pragma no-cache trong outbound curl request để tránh proxy cache trung gian.",
   "min_php": "8.1",
   "released_at": "2026-06-11"
 }
