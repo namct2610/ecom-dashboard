@@ -1,7 +1,7 @@
 {
-  "version": "3.4.25",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.25/release/dashboard-v3-3.4.25.zip",
-  "changelog": "- Bảo mật: implement authentication thực sự. require_auth() và require_admin() giờ kiểm tra session/role thực tế thay vì no-op.\n- Login page: tạo login.html với form đăng nhập, hỗ trợ environment-based config.\n- Config: chuyển sang environment variables (DB_HOST, DB_USER, AUTH_ENABLED, AUTH_USERNAME). Loại bỏ hardcoded credentials.\n- .env.example: hướng dẫn setup credentials qua env vars (không commit .env).\n- SECURITY.md: document bảo mật, best practices, checklist deployment.",
+  "version": "3.4.26",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.26/release/dashboard-v3-3.4.26.zip",
+  "changelog": "- Bảo mật HIGH: Rate limiting đăng nhập — 10 lần thất bại / 15 phút / IP, sau đó khoá 15 phút (DB-based, không cần Redis).\n- Bảo mật HIGH: Session timeout — idle 2 giờ + absolute 8 giờ từ lúc đăng nhập.\n- Bảo mật HIGH: Content Security Policy header + Permissions-Policy header trong .htaccess.\n- Bảo mật: index.html tự redirect về login.html khi AUTH_ENABLED=1 và chưa đăng nhập.\n- auth.php GET trả auth_enabled flag để frontend biết có cần login không.",
   "min_php": "8.1",
   "released_at": "2026-06-11"
 }
