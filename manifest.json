@@ -1,7 +1,7 @@
 {
-  "version": "3.4.35",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.35/release/dashboard-v3-3.4.35.zip",
-  "changelog": "- Rà soát toàn bộ i18n: thay thế ~40 chuỗi tiếng Việt hardcoded bằng i18n keys trong views-reconcile.js, views-pages.js, views-compare.js, views-plan.js.\n- Thêm _t/_tf wrappers an toàn vào views-reconcile.js và views-plan.js.\n- Sửa lỗi logic: _tf('customers.detail.orders_in_period') → _t(), g.pct → g.percentage ?? 0.\n- Sửa tiêu đề cột sai: 'cat.other' → th.category; '%.charAt(0)' → th.conv_pct, th.completion_rate_pct.\n- Thêm key i18n: th.category, th.conv_pct, th.completion_rate_pct.",
+  "version": "3.4.36",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.36/release/dashboard-v3-3.4.36.zip",
+  "changelog": "- Sửa màn Khách hàng không render ổn định: bổ sung escHtml, tách lỗi/cache theo từng kỳ và giữ khung giao diện khi đang tải dữ liệu.\n- Tối ưu cảm nhận tốc độ: trang Khách hàng, Kế hoạch có skeleton trước khi dữ liệu trả về; Đối soát tải song song CSRF, danh sách file và dữ liệu so khớp.\n- Sửa format số khi đổi tiếng Anh: KPI/card tiền tệ và số lớn dùng đúng hậu tố B/M/K theo i18n, đồng thời rerender lại toàn trang khi đổi ngôn ngữ.\n- Thu gọn text so sánh và cho phép KPI foot hiển thị 2 dòng để tránh tràn hoặc mất nội dung.",
   "min_php": "8.1",
   "released_at": "2026-06-11"
 }
