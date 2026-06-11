@@ -1,7 +1,7 @@
 {
-  "version": "3.4.16",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.16/release/dashboard-v3-3.4.16.zip",
-  "changelog": "- Fix 'Manifest thiếu trường version' khi check update: GitHub API endpoint giới hạn 60 req/hour/IP, shared hosting dễ bị rate limit → response trả error envelope không có trường version. Giờ tự động fallback sang raw.githubusercontent.com với cache buster nếu API fail.\n- Error message chi tiết hơn (hiện cả lý do API fail + raw fallback fail) để debug khi cả 2 cùng lỗi.",
+  "version": "3.4.17",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.17/release/dashboard-v3-3.4.17.zip",
+  "changelog": "- Trang Khách hàng: hiện lỗi cụ thể thay vì đứng 'Đang tải' vô hạn. Nếu fetch fail (timeout, 500, network), hiển thị error message + nút Thử lại.\n- Backend customers.php: tăng PHP execution limit lên 120s và memory_limit 256M cho temp-table aggregation trên DB lớn.",
   "min_php": "8.1",
   "released_at": "2026-06-11"
 }
