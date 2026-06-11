@@ -111,10 +111,6 @@
   function periodPopover(anchor) {
     closePop();
     const cfg = buildPeriods();
-    const years = Array.from(new Set((S.DASH&&S.DASH.monthly||[]).map(function(m){return m.ym.slice(0,4)})));
-    var curYear = String(new Date().getFullYear());
-    if(years.indexOf(curYear)===-1) years.push(curYear);
-    years.sort();
     const m = document.createElement("div");
     m.className = "menu period-pop";
     m.innerHTML = `
@@ -124,11 +120,6 @@
           ${cfg.modes.map(function(it){return '<button type="button" class="'+(it.key===cfg.currentMode?"active":"")+'" data-mode="'+it.key+'">'+it.label+'</button>';}).join("")}
         </div>
         <div class="period-fields">
-          <div class="field-row" data-mode-fields="year">
-            <select id="periodYearInput" class="v2-select">${
-              years.map(function(y){return '<option value="'+y+'"'+(y===cfg.range.end.slice(0,4)?' selected':'')+'>'+y+'</option>';}).join("")
-            }</select>
-          </div>
           <div id="periodCal"></div>
           <div class="period-preview">${escHtml(S.periodLabel(st.period))}</div>
         </div>
@@ -148,7 +139,6 @@
     let calStart = cfg.range.start;
     let calEnd = cfg.range.end;
     const calEl = m.querySelector("#periodCal");
-    const yearSel = m.querySelector("#periodYearInput");
     const preview = m.querySelector(".period-preview");
     const today = fmtISODate(new Date());
 
@@ -156,7 +146,7 @@
       if(mode==="day") return "d:"+calEnd;
       if(mode==="week"){var md=calMondayOf(calEnd);return "w:"+fmtISODate(md);}
       if(mode==="month") return "m:"+calEnd.slice(0,7);
-      if(mode==="year") return "y:"+((yearSel&&yearSel.value)||cfg.range.end.slice(0,4));
+      if(mode==="year") return "y:"+calEnd.slice(0,4);
       var a=calStart,b=calEnd;if(a>b){var t=a;a=b;b=t;}
       return "c:"+a+":"+b;
     }
@@ -272,10 +262,6 @@
       mode=btn.dataset.mode;
       syncModeUI();
       renderCal();
-    });
-
-    yearSel&&yearSel.addEventListener("change",function(){
-      calEnd=yearSel.value+"-01-01";renderCal();
     });
 
     m.querySelector('[data-act="cancel"]')?.addEventListener("click",closePop);

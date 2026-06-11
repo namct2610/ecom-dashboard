@@ -1,7 +1,7 @@
 {
-  "version": "3.4.13",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.13/release/dashboard-v3-3.4.13.zip",
-  "changelog": "- Fix cột tháng 5/2026 bị mờ: trước đây cờ 'partial' dựa vào DASH.latestMonth (backend đánh tháng có dữ liệu mới nhất) → cứ tháng đó là mờ kể cả khi đã hoàn thành. Giờ chỉ mờ khi là THÁNG HIỆN TẠI theo lịch (còn đang chạy, chưa đủ ngày).\n- Bỏ hardcode 'partial = m.ym === \"2026-06\"' trong monthlyTrend, thay bằng currentMonthYM() động.",
+  "version": "3.4.14",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.14/release/dashboard-v3-3.4.14.zip",
+  "changelog": "- Fix trang Khách hàng treo do timeout: 2 query lifetime segment trước đây JOIN với toàn bộ bảng orders (không filter ngày) → DB lớn = PHP timeout 30s, browser thấy hang.\n- New vs Returning giờ tính trong period đã chọn (dùng tmp_customer_orders đã filter): nhanh hơn 100×.\n- Potential buyers giới hạn lookback 12 tháng trước period → orders scan dùng index, không full table scan.",
   "min_php": "8.1",
   "released_at": "2026-06-11"
 }
