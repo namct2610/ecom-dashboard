@@ -53,7 +53,6 @@
     local.loading = true; local.error = null;
     try {
       const auth = await (await fetch("api/auth.php", { credentials: "same-origin" })).json();
-      if (!auth.logged_in) { window.location.href = "old/index.php?legacy=1#/login"; return; }
       local.csrf = auth.csrf || "";
 
       const url = "api/gbs-reconciliation.php" + (month ? "?month=" + encodeURIComponent(month) : "");

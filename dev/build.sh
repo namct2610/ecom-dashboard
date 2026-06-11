@@ -48,9 +48,7 @@ rsync -a \
   --exclude='.DS_Store' \
   --exclude='__MACOSX/' \
   --exclude='dev/' \
-  --exclude='old/' \
   ./ "$STAGE_ROOT/"
-# /old/ no longer shipped — v2 is the only production interface.
 
 mkdir -p "$STAGE_ROOT/uploads"
 if [[ -f "$ROOT_DIR/uploads/.htaccess" ]]; then
