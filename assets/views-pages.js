@@ -155,7 +155,6 @@
   };
 
   /* ===================== CUSTOMERS ===================== */
-  let customerData = null;
   let customerDetailData = null;
   let customerLoadingKey = null;
 
@@ -164,15 +163,19 @@
     render() {
       const st = S.state, range = S.currentRange(), plat = st.platform;
 
-      if (!customerData) {
-        S.fetchCustomers().then(() => { customerData = true; window.App.rerender(); }).catch(() => {});
-        return `<div class="card card-pad" style="text-align:center;color:var(--ink-3);font-weight:600">${_t("common.loading")}</div>`;
-      }
-
       const cacheKey = st.period + "|" + st.platform;
-      const apiData = S.Store ? (window.Store._customerCache || {})[cacheKey] : null;
+      const apiData = (window.Store._customerCache || {})[cacheKey];
       if (!apiData) {
-        S.fetchCustomers().then(() => { customerData = true; window.App.rerender(); }).catch(() => {});
+        // Cache miss for current period/platform — fetch in background.
+        // Guard against re-fetching while a request is already in flight so
+        // we don't busy-loop rerenders.
+        if (customerLoadingKey !== cacheKey) {
+          customerLoadingKey = cacheKey;
+          S.fetchCustomers().then(() => {
+            customerLoadingKey = null;
+            window.App.rerender();
+          }).catch(() => { customerLoadingKey = null; });
+        }
         return `<div class="card card-pad" style="text-align:center;color:var(--ink-3);font-weight:600">${_t("common.loading")}</div>`;
       }
 
@@ -249,9 +252,12 @@
       <div id="customerDetailPanel"></div>`;
     },
     mount(root) {
-      // Fetch customer data
       const cacheKey = S.state.period + "|" + S.state.platform;
-      if (!customerLoadingKey) {
+      // Only fetch if cache is empty AND no request is already in flight.
+      // render() handles the same logic on cache miss — this is a safety net
+      // for the rare case where mount runs before render's first paint.
+      const cached = (window.Store._customerCache || {})[cacheKey];
+      if (!cached && !customerLoadingKey) {
         customerLoadingKey = cacheKey;
         S.fetchCustomers().then(() => {
           customerLoadingKey = null;
