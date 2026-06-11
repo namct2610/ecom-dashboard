@@ -165,6 +165,8 @@
     };
   }
 
+  const tr = (k, f) => (window.t ? window.t(k, f) : (f || k));
+  const tfmt = (k, v) => (window.tf ? window.tf(k, v) : tr(k));
   const dayLabel = (d) => { const p = d.split("-"); return p[2] + "/" + p[1]; };
 
   /* ---- revenue trend: stacked area by platform (all) or single line ---- */
@@ -223,7 +225,7 @@
         backgroundColor: col("--" + k), borderRadius: 0, borderSkipped: false, borderWidth: 0, stack: "o", ...sizing,
       }));
     } else {
-      datasets = [{ label: "Đơn", data: series.map((s) => s["o_" + opt.platform] || 0), backgroundColor: col("--" + opt.platform), borderRadius: 6, borderSkipped: "bottom", borderWidth: 0, ...sizing }];
+      datasets = [{ label: tr("ovw.cmp.orders", "Đơn"), data: series.map((s) => s["o_" + opt.platform] || 0), backgroundColor: col("--" + opt.platform), borderRadius: 6, borderSkipped: "bottom", borderWidth: 0, ...sizing }];
     }
     return mk(canvas, {
       type: "bar", data: { labels, datasets },
@@ -235,7 +237,7 @@
           y: { stacked, grid: { color: gridc(), drawTicks: false }, ticks: { color: ink3(), font: { size: 11 } }, border: { display: false }, beginAtZero: true },
         },
         plugins: {
-          tooltip: { ...tip(), callbacks: { label: (c) => " " + c.dataset.label + ": " + window.F.viInt(c.raw) + " đơn", footer: (items) => "Tổng: " + window.F.viInt(items.reduce((t, i) => t + i.raw, 0)) + " đơn" } },
+          tooltip: { ...tip(), callbacks: { label: (c) => " " + c.dataset.label + ": " + window.F.viInt(c.raw) + " " + tr("common.orders_unit", "đơn"), footer: (items) => tr("common.total", "Tổng") + ": " + window.F.viInt(items.reduce((t, i) => t + i.raw, 0)) + " " + tr("common.orders_unit", "đơn") } },
           stackedRoundedTop: { enabled: stacked, radius: 6 },
           stackTotalLabel: { enabled: true },
         },
@@ -326,7 +328,7 @@
           y: { stacked, grid: { color: gridc(), drawTicks: false }, ticks: { color: ink3(), font: { size: 11 }, callback: (v) => window.F.money(v) }, border: { display: false } },
         },
         plugins: {
-          tooltip: { ...tip(), callbacks: { label: (c) => " " + c.dataset.label + ": " + window.F.moneyFull(c.raw), footer: (items) => "Tổng: " + window.F.moneyFull(items.reduce((t, i) => t + i.raw, 0)) } },
+          tooltip: { ...tip(), callbacks: { label: (c) => " " + c.dataset.label + ": " + window.F.moneyFull(c.raw), footer: (items) => tr("common.total", "Tổng") + ": " + window.F.moneyFull(items.reduce((t, i) => t + i.raw, 0)) } },
           stackedRoundedTop: { enabled: stacked, radius: 6 },
           stackTotalLabel: { enabled: true },
         },

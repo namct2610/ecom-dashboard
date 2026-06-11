@@ -31,13 +31,17 @@
     return `<div class="cmp-track" style="height:8px;background:var(--track)"><div class="cmp-fill" style="width:${w}%;background:${color}"></div></div>`;
   }
 
+  function planMetricTitle(m) {
+    return m.key === "revenue" ? _t("plan.title.revenue") : m.key === "visits" ? _t("plan.title.visits") : m.label;
+  }
+
   function planMetricCard(m, fmt, color) {
     const isOnTrack = m.status === "on_track";
     return `
       <div class="card">
         <div class="card-head">
           <div>
-            <div class="card-title">${m.label}</div>
+            <div class="card-title">${planMetricTitle(m)}</div>
             <div class="card-sub">${_tf("plan.sub", { year: local.year, elapsed: local.data.elapsed_months })}</div>
           </div>
           ${statusPill(m.status)}
@@ -48,14 +52,14 @@
               <div class="eyebrow">${_t("plan.actual_ytd")}</div>
               <div class="kpi-value tnum" style="margin-top:4px">${fmt(m.actual)}</div>
               <div style="font-size:12.5px;color:var(--ink-3);font-weight:600;margin-top:2px">
-                ${m.elapsed_months > 0 ? F.viDec(m.ytd_rate, 1) + "% so với mục tiêu YTD" : "Chưa có dữ liệu"}
+                ${m.elapsed_months > 0 ? tf("plan.actual_ytd_pct", { pct: F.viDec(m.ytd_rate, 1) }) : t("plan.no_data")}
               </div>
             </div>
             <div>
               <div class="eyebrow">${_t("plan.year_target")}</div>
               <div class="kpi-value tnum" style="margin-top:4px">${fmt(m.target)}</div>
               <div style="font-size:12.5px;color:var(--ink-3);font-weight:600;margin-top:2px">
-                ${m.target > 0 ? F.viDec(m.target_rate, 1) + "% đã đạt" : "Chưa đặt mục tiêu"}
+                ${m.target > 0 ? tf("plan.year_target_pct", { pct: F.viDec(m.target_rate, 1) }) : t("plan.no_target")}
               </div>
             </div>
           </div>
@@ -72,17 +76,17 @@
 
           <div style="margin-top:18px;display:grid;grid-template-columns:repeat(3,1fr);gap:10px;border-top:1px solid var(--border);padding-top:14px">
             <div>
-              <div class="eyebrow">Mục tiêu YTD</div>
+              <div class="eyebrow">${t("plan.target_ytd")}</div>
               <div class="mono" style="font-weight:800;font-size:14px;margin-top:3px">${fmt(m.target_ytd)}</div>
             </div>
             <div>
-              <div class="eyebrow">Chênh YTD</div>
+              <div class="eyebrow">${t("plan.gap_ytd")}</div>
               <div class="mono" style="font-weight:800;font-size:14px;margin-top:3px;color:${m.gap_ytd >= 0 ? 'var(--pos)' : 'var(--neg)'}">
                 ${m.gap_ytd >= 0 ? "+" : ""}${fmt(m.gap_ytd)}
               </div>
             </div>
             <div>
-              <div class="eyebrow">Còn phải đạt</div>
+              <div class="eyebrow">${t("plan.remaining")}</div>
               <div class="mono" style="font-weight:800;font-size:14px;margin-top:3px">${fmt(m.ytg)}</div>
             </div>
           </div>
@@ -95,7 +99,7 @@
       <div class="card-head">
         <div>
           <div class="card-title">${title}</div>
-          <div class="card-sub">12 tháng năm ${local.year} · cột = thực tế · đường = mục tiêu (mục tiêu năm ÷ 12)</div>
+          <div class="card-sub">${tf("plan.chart.sub", { y: local.year })}</div>
         </div>
       </div>
       <div class="card-pad">
@@ -110,22 +114,22 @@
         <div class="card" style="max-width:440px;width:100%;padding:22px;box-shadow:var(--shadow-lg)">
           <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
             <div>
-              <div class="card-title">Đặt mục tiêu năm ${local.year}</div>
-              <div class="card-sub">Mục tiêu được chia đều 12 tháng để tính tiến độ.</div>
+              <div class="card-title">${tf("plan.modal.title", { y: local.year })}</div>
+              <div class="card-sub">${t("plan.modal.sub")}</div>
             </div>
-            <button class="iconbtn-sq" id="planModalClose" aria-label=t("common.close")>
+            <button class="iconbtn-sq" id="planModalClose" aria-label="${t("common.close")}">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
             </button>
           </div>
 
           <div style="margin-top:18px">
-            <label style="display:block;font-size:12.5px;font-weight:700;color:var(--ink-2);margin-bottom:6px">Doanh số mục tiêu (VND)</label>
+            <label style="display:block;font-size:12.5px;font-weight:700;color:var(--ink-2);margin-bottom:6px">${t("plan.revenue_target")}</label>
             <input type="text" id="planRevTarget" class="plan-input" inputmode="numeric"
                    value="${(rev || 0).toLocaleString('vi-VN')}" />
           </div>
 
           <div style="margin-top:14px">
-            <label style="display:block;font-size:12.5px;font-weight:700;color:var(--ink-2);margin-bottom:6px">Lượt truy cập mục tiêu</label>
+            <label style="display:block;font-size:12.5px;font-weight:700;color:var(--ink-2);margin-bottom:6px">${t("plan.visits_target")}</label>
             <input type="text" id="planVisitsTarget" class="plan-input" inputmode="numeric"
                    value="${(vis || 0).toLocaleString('vi-VN')}" />
           </div>
@@ -153,22 +157,22 @@
     return `
       <button class="period" id="planYearBtn">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
-        <span class="ptxt">Năm ${local.year}</span>
+        <span class="ptxt">${tf("plan.year", { y: local.year })}</span>
         <span class="pcaret">▾</span>
       </button>
       <button class="ctrl-btn on" id="planSetTargetBtn" style="background:var(--brand);border-color:var(--brand);color:#fff">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
-        Đặt mục tiêu
+        ${t("plan.set_target")}
       </button>`;
   }
 
   /* ---------- main render ---------- */
   function render() {
     if (local.loading || !local.data) {
-      return loadingCard("Đang tải kế hoạch năm " + local.year + "...");
+      return loadingCard(t("common.loading") + " " + tf("plan.year", { y: local.year }) + "...");
     }
     if (local.error) {
-      return errorCard("Không tải được kế hoạch: " + local.error);
+      return errorCard(t("common.error") + ": " + local.error);
     }
 
     const d = local.data;
@@ -180,8 +184,8 @@
         <div style="grid-column:span 6" data-collapse>${planMetricCard(revMetric, fmtMoney, "var(--shopee)")}</div>
         <div style="grid-column:span 6" data-collapse>${planMetricCard(visMetric, fmtVisits, "var(--lazada)")}</div>
 
-        <div style="grid-column:span 6" data-collapse>${chartCard("Doanh số theo tháng", "planRevChart")}</div>
-        <div style="grid-column:span 6" data-collapse>${chartCard("Lượt truy cập theo tháng", "planVisitsChart")}</div>
+        <div style="grid-column:span 6" data-collapse>${chartCard(t("plan.chart.revenue_title"), "planRevChart")}</div>
+        <div style="grid-column:span 6" data-collapse>${chartCard(t("plan.chart.visits_title"), "planVisitsChart")}</div>
       </div>
     `;
   }
@@ -206,8 +210,8 @@
     for (let y = thisYear + 1; y >= thisYear - 4; y--) years.push(y);
 
     const m = document.createElement("div"); m.className = "menu";
-    m.innerHTML = `<div class="menu-label">Chọn năm kế hoạch</div>` +
-      years.map((y) => `<div class="menu-item ${y === local.year ? "sel" : ""}" data-y="${y}">Năm ${y}</div>`).join("");
+    m.innerHTML = `<div class="menu-label">${t("plan.year_picker.label")}</div>` +
+      years.map((y) => `<div class="menu-item ${y === local.year ? "sel" : ""}" data-y="${y}">${tf("plan.year", { y })}</div>`).join("");
     document.body.appendChild(m);
     const r = e.currentTarget.getBoundingClientRect();
     m.style.top = (r.bottom + 6) + "px";
@@ -266,7 +270,7 @@
         });
         if (!res.ok) throw new Error("HTTP " + res.status);
         const j = await res.json();
-        if (!j.success) throw new Error(j.error || "Lưu không thành công");
+        if (!j.success) throw new Error(j.error || t("common.error"));
         cleanup();
         await fetchData();
         window.App.rerender();
@@ -299,7 +303,7 @@
       const r = await fetch("api/plan.php?year=" + local.year, { credentials: "same-origin" });
       if (!r.ok) throw new Error("HTTP " + r.status);
       const j = await r.json();
-      if (!j.success) throw new Error(j.error || "Phản hồi không hợp lệ");
+      if (!j.success) throw new Error(j.error || t("common.error"));
       local.data = j;
     } catch (e) {
       local.error = e.message || String(e);
@@ -325,9 +329,9 @@
       data: {
         labels,
         datasets: [
-          { type: "bar", label: "Thực tế", data: actualData,
+          { type: "bar", label: t("plan.chart.actual"), data: actualData,
             backgroundColor: color, borderRadius: 6, maxBarThickness: 26 },
-          { type: "line", label: "Mục tiêu", data: targetData,
+          { type: "line", label: t("plan.chart.target"), data: targetData,
             borderColor: C.col("--ink-3"), backgroundColor: "transparent", borderWidth: 2, tension: 0,
             pointRadius: 0, pointHoverRadius: 4, borderDash: [4, 4] },
         ],

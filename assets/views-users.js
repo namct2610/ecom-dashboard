@@ -62,10 +62,10 @@
     return `
       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px">
         ${[
-          { lab: "Tổng tài khoản", val: local.summary.total },
-          { lab: "Đang hoạt động", val: local.summary.active },
-          { lab: "Quản trị viên", val: local.summary.admins },
-          { lab: "Lần đăng nhập gần nhất", val: fmtDateTime(local.summary.last_login_at) },
+          { lab: t("users.summary.total"), val: local.summary.total },
+          { lab: t("users.summary.active"), val: local.summary.active },
+          { lab: t("users.summary.admins"), val: local.summary.admins },
+          { lab: t("users.summary.last_login"), val: fmtDateTime(local.summary.last_login_at) },
         ].map((k) => `
           <div class="card card-pad" style="padding:14px 16px">
             <div class="eyebrow">${k.lab}</div>
@@ -75,13 +75,13 @@
   }
 
   function rolePill(role) {
-    if (role === "admin") return `<span class="status-pill" style="background:color-mix(in oklch, var(--brand) 14%, transparent); color:var(--brand)">Admin</span>`;
-    return `<span class="status-pill" style="background:var(--surface-3); color:var(--ink-2)">Staff</span>`;
+    if (role === "admin") return `<span class="status-pill" style="background:color-mix(in oklch, var(--brand) 14%, transparent); color:var(--brand)">${t("role.admin")}</span>`;
+    return `<span class="status-pill" style="background:var(--surface-3); color:var(--ink-2)">${t("role.staff")}</span>`;
   }
   function activePill(active) {
     return active
       ? `<span class="status-pill st-done">${t("status.active")}</span>`
-      : `<span class="status-pill st-cancel">Tắt</span>`;
+      : `<span class="status-pill st-cancel">${t("common.disabled")}</span>`;
   }
 
   function userRow(u) {
@@ -94,21 +94,21 @@
               ${(u.username || "?").slice(0, 2).toUpperCase()}
             </div>
             <div style="min-width:0">
-              <div style="font-weight:700">${u.username}${isSelf ? ' <span style="font-size:11px;color:var(--ink-3)">(bạn)</span>' : ''}</div>
+              <div style="font-weight:700">${u.username}${isSelf ? ` <span style="font-size:11px;color:var(--ink-3)">(${t("common.you")})</span>` : ''}</div>
               <div style="font-size:12px;color:var(--ink-3)">${u.full_name || "—"}</div>
             </div>
           </div>
         </td>
         <td>${rolePill(u.role)}</td>
         <td>${activePill(u.is_active)}</td>
-        <td>${u.must_change_password ? `<span class="tag" style="color:var(--neg);border-color:color-mix(in oklch, var(--neg) 30%, transparent)">Phải đổi MK</span>` : "—"}</td>
+        <td>${u.must_change_password ? `<span class="tag" style="color:var(--neg);border-color:color-mix(in oklch, var(--neg) 30%, transparent)">${t("users.must_change_pwd")}</span>` : "—"}</td>
         <td class="mono" style="font-size:12px;color:var(--ink-3)">${fmtDateTime(u.last_login_at)}</td>
         <td class="num">
           <div style="display:inline-flex;gap:6px;align-items:center;justify-content:flex-end">
-            <button class="iconbtn-sq" data-action="edit-user" data-id="${u.id}" aria-label="Sửa">
+            <button class="iconbtn-sq" data-action="edit-user" data-id="${u.id}" aria-label="${t("common.edit")}">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
             </button>
-            ${isSelf ? "" : `<button class="iconbtn-sq" data-action="del-user" data-id="${u.id}" aria-label="Xoá" style="color:var(--neg)">
+            ${isSelf ? "" : `<button class="iconbtn-sq" data-action="del-user" data-id="${u.id}" aria-label="${t("common.delete")}" style="color:var(--neg)">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>
             </button>`}
           </div>
@@ -117,11 +117,11 @@
   }
 
   function table() {
-    if (!local.users.length) return `<div style="padding:32px;text-align:center;color:var(--ink-3);font-weight:600">Chưa có tài khoản nào.</div>`;
+    if (!local.users.length) return `<div style="padding:32px;text-align:center;color:var(--ink-3);font-weight:600">${t("users.empty")}</div>`;
     return `
       <table class="tbl">
         <thead><tr>
-          <th>Tài khoản</th><th>${t("users.modal.role")}</th><th>${t("th.status")}</th><th>Yêu cầu</th><th>Đăng nhập gần nhất</th><th></th>
+          <th>${t("th.account")}</th><th>${t("users.modal.role")}</th><th>${t("th.status")}</th><th>${t("th.requirement")}</th><th>${t("th.last_login")}</th><th></th>
         </tr></thead>
         <tbody>${local.users.map(userRow).join("")}</tbody>
       </table>`;
@@ -136,25 +136,25 @@
         <div class="card" style="max-width:480px;width:100%;padding:22px;box-shadow:var(--shadow-lg)">
           <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px">
             <div>
-              <div class="card-title">${isEdit ? "Sửa tài khoản" : "Tạo tài khoản mới"}</div>
-              <div class="card-sub">${isEdit ? "Chỉ những trường được điền sẽ bị thay đổi (mật khẩu trống = giữ nguyên)." : "Tài khoản mới có thể đăng nhập ngay sau khi tạo."}</div>
+              <div class="card-title">${isEdit ? t("users.modal.edit_title") : t("users.modal.create_title")}</div>
+              <div class="card-sub">${isEdit ? t("users.modal.edit_sub") : t("users.modal.create_sub")}</div>
             </div>
-            <button class="iconbtn-sq" id="userModalClose" aria-label=t("common.close")>
+            <button class="iconbtn-sq" id="userModalClose" aria-label="${t("common.close")}">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
             </button>
           </div>
 
           <div class="field-row">
-            <label class="field-label">Tên đăng nhập</label>
-            <input id="umUsername" class="v2-input" type="text" value="${u.username || ''}" ${isEdit ? "disabled" : ""} placeholder="vd: minh.le" />
-            <div class="field-hint">a-z, 0-9, ., _, - (tối thiểu 3 ký tự).</div>
+            <label class="field-label">${t("th.username")}</label>
+            <input id="umUsername" class="v2-input" type="text" value="${u.username || ''}" ${isEdit ? "disabled" : ""} placeholder="${t("users.modal.placeholder.username")}" />
+            <div class="field-hint">${t("users.modal.username_hint")}</div>
           </div>
           <div class="field-row">
             <label class="field-label">${t("settings.account.full_name")}</label>
             <input id="umFullName" class="v2-input" type="text" value="${(u.full_name || '').replace(/"/g, '&quot;')}" />
           </div>
           <div class="field-row">
-            <label class="field-label">Mật khẩu ${isEdit ? "(để trống = giữ nguyên)" : ""}</label>
+            <label class="field-label">${isEdit ? t("users.modal.pwd_keep") : t("users.modal.pwd_set")}</label>
             <input id="umPassword" class="v2-input" type="password" autocomplete="new-password" />
           </div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
@@ -169,18 +169,18 @@
               <label class="field-label">${t("th.status")}</label>
               <select id="umActive" class="v2-select">
                 <option value="1" ${u.is_active ? "selected" : ""}>${t("status.active")}</option>
-                <option value="0" ${!u.is_active ? "selected" : ""}>Tắt</option>
+                <option value="0" ${!u.is_active ? "selected" : ""}>${t("common.disabled")}</option>
               </select>
             </div>
           </div>
           <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-2);font-weight:600;margin-top:4px">
             <input type="checkbox" id="umMustChange" ${u.must_change_password ? "checked" : ""} />
-            Bắt buộc đổi mật khẩu ở lần đăng nhập kế tiếp
+            ${t("users.modal.must_change_pwd")}
           </label>
 
           <div style="margin-top:22px;display:flex;justify-content:flex-end;gap:10px">
             <button class="ctrl-btn" id="userModalCancel">${t("common.cancel")}</button>
-            <button class="ctrl-btn on" id="userModalSave" style="background:var(--brand);border-color:var(--brand);color:#fff">${isEdit ? t("users.modal.save_btn") : "Tạo tài khoản"}</button>
+            <button class="ctrl-btn on" id="userModalSave" style="background:var(--brand);border-color:var(--brand);color:#fff">${isEdit ? t("users.modal.save_btn") : t("users.modal.create_btn")}</button>
           </div>
         </div>
       </div>`;
@@ -188,7 +188,7 @@
 
   function render() {
     if (local.loading) return `<div class="card card-pad" style="text-align:center;color:var(--ink-3);font-weight:600">${t("common.loading")}</div>`;
-    if (!local.isAdmin) return `<div class="card card-pad" style="color:var(--neg);font-weight:700">Trang này chỉ dành cho admin.</div>`;
+    if (!local.isAdmin) return `<div class="card card-pad" style="color:var(--neg);font-weight:700">${t("users.admin_only")}</div>`;
     if (local.error) return `<div class="card card-pad" style="color:var(--neg);font-weight:700">${t("common.error")}: ${local.error}</div>`;
     return `
       ${flashMsg()}
@@ -196,10 +196,10 @@
       <div class="card">
         <div class="card-head">
           <div>
-            <div class="card-title">Người dùng (${local.users.length})</div>
-            <div class="card-sub">Admin có toàn quyền; Staff chỉ xem báo cáo.</div>
+            <div class="card-title">${tf("users.list.title", { n: local.users.length })}</div>
+            <div class="card-sub">${t("users.list.sub")}</div>
           </div>
-          <button class="ctrl-btn on" id="btnNewUser" style="background:var(--brand);border-color:var(--brand);color:#fff">+ Tạo tài khoản</button>
+          <button class="ctrl-btn on" id="btnNewUser" style="background:var(--brand);border-color:var(--brand);color:#fff">${t("users.new")}</button>
         </div>
         ${table()}
       </div>
@@ -232,8 +232,8 @@
     const is_active = document.getElementById("umActive").value === "1";
     const must_change_password = document.getElementById("umMustChange").checked;
 
-    if (!isEdit && !username) { showMsg("err", "Thiếu tên đăng nhập."); return; }
-    if (!isEdit && !password)  { showMsg("err", "Tài khoản mới phải có mật khẩu."); return; }
+    if (!isEdit && !username) { showMsg("err", t("users.username_required")); return; }
+    if (!isEdit && !password)  { showMsg("err", t("users.password_required")); return; }
 
     local.saving = true;
     const btn = document.getElementById("userModalSave");
@@ -251,10 +251,10 @@
       if (!r.ok || !j.success) throw new Error(j.error || "HTTP " + r.status);
       closeModal();
       await fetchInitial();
-      showMsg("ok", isEdit ? "Đã cập nhật tài khoản." : "Đã tạo tài khoản.");
+      showMsg("ok", isEdit ? t("users.updated") : t("users.created"));
       window.App.rerender();
     } catch (e) {
-      if (btn) btn.textContent = isEdit ? t("users.modal.save_btn") : "Tạo tài khoản";
+      if (btn) btn.textContent = isEdit ? t("users.modal.save_btn") : t("users.modal.create_btn");
       showMsg("err", e.message || String(e));
     } finally {
       local.saving = false;
@@ -264,7 +264,7 @@
   async function delUser(id) {
     const u = local.users.find((x) => x.id === id);
     if (!u) return;
-    if (!confirm(`Xoá tài khoản "${u.username}"? Hành động này không thể hoàn tác.`)) return;
+    if (!confirm(tf("users.delete_confirm", { u: u.username }))) return;
     try {
       const r = await fetch("api/users.php", {
         method: "POST", credentials: "same-origin",
@@ -274,7 +274,7 @@
       const j = await r.json();
       if (!r.ok || !j.success) throw new Error(j.error || "HTTP " + r.status);
       await fetchInitial();
-      showMsg("ok", "Đã xoá tài khoản.");
+      showMsg("ok", t("users.deleted"));
       window.App.rerender();
     } catch (e) {
       showMsg("err", e.message || String(e));
