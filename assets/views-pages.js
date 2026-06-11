@@ -157,6 +157,7 @@
   /* ===================== CUSTOMERS ===================== */
   let customerDetailData = null;
   let customerLoadingKey = null;
+  let customerError = null;
 
   window.Views.customers = {
     titleKey: "page.customers.title", eyebrowKey: "page.customers.eyebrow",
@@ -165,16 +166,27 @@
 
       const cacheKey = st.period + "|" + st.platform;
       const apiData = (window.Store._customerCache || {})[cacheKey];
+
+      if (customerError) {
+        const err = customerError;
+        return `<div class="card card-pad" style="text-align:center;color:var(--neg);font-weight:700">
+          ${_t("common.error") || "Lỗi"}: ${escHtml(err)}
+          <div style="margin-top:12px"><button class="ctrl-btn" id="custRetry">${_t("common.retry") || "Thử lại"}</button></div>
+        </div>`;
+      }
+
       if (!apiData) {
-        // Cache miss for current period/platform — fetch in background.
-        // Guard against re-fetching while a request is already in flight so
-        // we don't busy-loop rerenders.
         if (customerLoadingKey !== cacheKey) {
           customerLoadingKey = cacheKey;
           S.fetchCustomers().then(() => {
             customerLoadingKey = null;
+            customerError = null;
             window.App.rerender();
-          }).catch(() => { customerLoadingKey = null; });
+          }).catch((e) => {
+            customerLoadingKey = null;
+            customerError = (e && e.message) ? e.message : String(e);
+            window.App.rerender();
+          });
         }
         return `<div class="card card-pad" style="text-align:center;color:var(--ink-3);font-weight:600">${_t("common.loading")}</div>`;
       }
@@ -253,17 +265,26 @@
     },
     mount(root) {
       const cacheKey = S.state.period + "|" + S.state.platform;
-      // Only fetch if cache is empty AND no request is already in flight.
-      // render() handles the same logic on cache miss — this is a safety net
-      // for the rare case where mount runs before render's first paint.
       const cached = (window.Store._customerCache || {})[cacheKey];
-      if (!cached && !customerLoadingKey) {
+      if (!cached && !customerLoadingKey && !customerError) {
         customerLoadingKey = cacheKey;
         S.fetchCustomers().then(() => {
           customerLoadingKey = null;
+          customerError = null;
           window.App.rerender();
-        }).catch(() => { customerLoadingKey = null; });
+        }).catch((e) => {
+          customerLoadingKey = null;
+          customerError = (e && e.message) ? e.message : String(e);
+          window.App.rerender();
+        });
       }
+
+      // Retry handler when previous fetch errored.
+      root.querySelector("#custRetry")?.addEventListener("click", () => {
+        customerError = null;
+        customerLoadingKey = null;
+        window.App.rerender();
+      });
 
       // Detail loading for range
       if (!S.getRangeDetail(S.state.period, S.state.platform) && detailLoadingKey !== cacheKey) {

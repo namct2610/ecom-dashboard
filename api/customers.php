@@ -7,6 +7,12 @@ require dirname(__DIR__) . '/includes/bootstrap.php';
 require_auth();
 require_method('GET');
 
+// Customer page does a lot of aggregation across the orders table. Give it
+// more headroom than PHP's default 30s so a temp-table build or large
+// GROUP BY doesn't tank the response on slow shared hosting.
+@set_time_limit(120);
+@ini_set('memory_limit', '256M');
+
 try {
     $pdo = db($config);
 
