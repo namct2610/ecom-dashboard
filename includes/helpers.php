@@ -308,13 +308,16 @@ function json_error(string $message, int $status = 400, array $extra = []): void
 
 function json_exception(\Throwable $e, string $fallback = 'Server error.'): void
 {
-    $msg = is_local() ? $e->getMessage() : $fallback;
+    $sessionUser = function_exists('session_user_payload') ? session_user_payload() : null;
+    $isAdmin     = $sessionUser && ($sessionUser['role'] ?? '') === 'admin';
+    $showDetail  = is_local() || $isAdmin;
+    $msg         = $showDetail ? $e->getMessage() : $fallback;
     log_activity('error', 'api', $e->getMessage(), [
         'exception' => get_class($e),
         'file'      => $e->getFile() . ':' . $e->getLine(),
         'trace'     => array_slice(explode("\n", $e->getTraceAsString()), 0, 8),
     ]);
-    json_error($msg, 500, is_local() ? ['trace' => array_slice(explode("\n", $e->getTraceAsString()), 0, 5)] : []);
+    json_error($msg, 500, $showDetail ? ['trace' => array_slice(explode("\n", $e->getTraceAsString()), 0, 5)] : []);
 }
 
 // ── SKU brand mapping ───────────────────────────────────────────────────────
