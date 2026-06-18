@@ -17,7 +17,7 @@ start_session();
 
 // ── Validate session ──────────────────────────────────────────────────────────
 if (empty($_SESSION['logged_in'])) {
-    header('Location: index.php?error=not_logged_in');
+    header('Location: ' . app_shell_url(['error' => 'not_logged_in'], 'connect'));
     exit;
 }
 
@@ -26,7 +26,7 @@ $state    = trim($_GET['state'] ?? '');
 $errParam = trim($_GET['error'] ?? '');
 
 if ($errParam) {
-    header('Location: index.php?lazada_error=' . urlencode($errParam));
+    header('Location: ' . app_shell_url(['lazada_error' => $errParam], 'connect'));
     exit;
 }
 
@@ -37,12 +37,12 @@ $savedRedirectUri = $_SESSION['lazada_oauth_redirect_uri'] ?? '';
 unset($_SESSION['lazada_oauth_redirect_uri']);
 
 if ($state === '' || $state !== $expectedState) {
-    header('Location: index.php?lazada_error=invalid_state');
+    header('Location: ' . app_shell_url(['lazada_error' => 'invalid_state'], 'connect'));
     exit;
 }
 
 if ($code === '') {
-    header('Location: index.php?lazada_error=missing_code');
+    header('Location: ' . app_shell_url(['lazada_error' => 'missing_code'], 'connect'));
     exit;
 }
 
@@ -54,7 +54,7 @@ try {
     $appSecret = $pdo->query("SELECT setting_value FROM app_settings WHERE setting_key='lazada_app_secret'")->fetchColumn() ?: '';
 
     if ($appKey === '' || $appSecret === '') {
-        header('Location: index.php?lazada_error=missing_credentials');
+        header('Location: ' . app_shell_url(['lazada_error' => 'missing_credentials'], 'connect'));
         exit;
     }
 
@@ -69,8 +69,8 @@ try {
     // Check error code (sits inside data in Lazada's actual response)
     $respCode = (string) ($data['code'] ?? $tokenRes['code'] ?? '0');
     if ($respCode !== '0') {
-        $msg = urlencode($data['message'] ?? $tokenRes['message'] ?? ('code_' . $respCode));
-        header("Location: index.php?lazada_error=$msg");
+        $msg = (string) ($data['message'] ?? $tokenRes['message'] ?? ('code_' . $respCode));
+        header('Location: ' . app_shell_url(['lazada_error' => $msg], 'connect'));
         exit;
     }
 
@@ -94,7 +94,7 @@ try {
 
     if ($accessToken === '' || $accountId === '') {
         log_activity('error', 'lazada', 'Token thiếu access_token hoặc account_id', ['data' => $data]);
-        header('Location: index.php?lazada_error=' . urlencode('Không lấy được token. Kiểm tra log để biết chi tiết.'));
+        header('Location: ' . app_shell_url(['lazada_error' => 'Không lấy được token. Kiểm tra log để biết chi tiết.'], 'connect'));
         exit;
     }
 
@@ -118,11 +118,11 @@ try {
     ")->execute([$accountId, $accountName, $countryCode, $accessToken, $refreshToken, $atExpireIn, $rtExpireIn]);
 
     log_activity('info', 'lazada', "OAuth thành công: tài khoản {$accountName} ({$countryCode}) đã kết nối.");
-    header('Location: index.php?lazada_connected=1#connect');
+    header('Location: ' . app_shell_url(['lazada_connected' => '1'], 'connect'));
     exit;
 
 } catch (\Throwable $e) {
     log_activity('error', 'lazada', 'OAuth callback thất bại: ' . $e->getMessage());
-    header('Location: index.php?lazada_error=' . urlencode($e->getMessage()));
+    header('Location: ' . app_shell_url(['lazada_error' => $e->getMessage()], 'connect'));
     exit;
 }

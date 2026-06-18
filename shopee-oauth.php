@@ -17,7 +17,7 @@ start_session();
 
 // ── Auth guard ────────────────────────────────────────────────────────────────
 if (empty($_SESSION['logged_in'])) {
-    header('Location: index.php?error=not_logged_in');
+    header('Location: ' . app_shell_url(['error' => 'not_logged_in'], 'connect'));
     exit;
 }
 
@@ -27,7 +27,7 @@ $state     = trim($_GET['state']  ?? '');
 $errParam  = trim($_GET['error']  ?? '');
 
 if ($errParam) {
-    header('Location: index.php?shopee_error=' . urlencode($errParam));
+    header('Location: ' . app_shell_url(['shopee_error' => $errParam], 'connect'));
     exit;
 }
 
@@ -36,12 +36,12 @@ $expectedState = $_SESSION['shopee_oauth_state'] ?? '';
 unset($_SESSION['shopee_oauth_state']);
 
 if ($state === '' || $state !== $expectedState) {
-    header('Location: index.php?shopee_error=invalid_state');
+    header('Location: ' . app_shell_url(['shopee_error' => 'invalid_state'], 'connect'));
     exit;
 }
 
 if ($code === '' || $shopId === 0) {
-    header('Location: index.php?shopee_error=missing_code_or_shop_id');
+    header('Location: ' . app_shell_url(['shopee_error' => 'missing_code_or_shop_id'], 'connect'));
     exit;
 }
 
@@ -53,7 +53,7 @@ try {
     $partnerKey = (string) ($pdo->query("SELECT setting_value FROM app_settings WHERE setting_key='shopee_partner_key'")->fetchColumn() ?: '');
 
     if ($partnerId === 0 || $partnerKey === '') {
-        header('Location: index.php?shopee_error=missing_credentials');
+        header('Location: ' . app_shell_url(['shopee_error' => 'missing_credentials'], 'connect'));
         exit;
     }
 
@@ -62,8 +62,8 @@ try {
 
     // Check error field
     if (!empty($tokenRes['error'])) {
-        $msg = urlencode($tokenRes['message'] ?? $tokenRes['error']);
-        header("Location: index.php?shopee_error=$msg");
+        $msg = (string) ($tokenRes['message'] ?? $tokenRes['error']);
+        header('Location: ' . app_shell_url(['shopee_error' => $msg], 'connect'));
         exit;
     }
 
@@ -75,7 +75,7 @@ try {
 
     if ($accessToken === '') {
         log_activity('error', 'shopee', 'Token thiếu access_token', ['res' => $tokenRes]);
-        header('Location: index.php?shopee_error=' . urlencode('Không lấy được access_token'));
+        header('Location: ' . app_shell_url(['shopee_error' => 'Không lấy được access_token'], 'connect'));
         exit;
     }
 
@@ -105,11 +105,11 @@ try {
     ")->execute([$retShopId, $shopName, $accessToken, $refreshToken, $atExpireIn, $rtExpireIn]);
 
     log_activity('info', 'shopee', "OAuth thành công: shop_id={$retShopId} ({$shopName})");
-    header('Location: index.php?shopee_connected=1#connect');
+    header('Location: ' . app_shell_url(['shopee_connected' => '1'], 'connect'));
     exit;
 
 } catch (\Throwable $e) {
     log_activity('error', 'shopee', 'OAuth callback thất bại: ' . $e->getMessage());
-    header('Location: index.php?shopee_error=' . urlencode($e->getMessage()));
+    header('Location: ' . app_shell_url(['shopee_error' => $e->getMessage()], 'connect'));
     exit;
 }
