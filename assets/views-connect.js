@@ -62,6 +62,12 @@
     if (isNaN(d)) return s;
     return d.toLocaleDateString("vi-VN") + " " + d.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
   }
+  function fmtDateShort(s) {
+    if (!s) return "—";
+    const [y, m, d] = String(s).split("-");
+    if (!y || !m || !d) return s;
+    return d + "/" + m + "/" + y;
+  }
   function showMsg(kind, text) {
     local.msg = { kind, text };
     window.App.rerender();
@@ -189,7 +195,7 @@
                 </td>
                 ${extra.map((col) => `<td>${c[col.field] || "—"}</td>`).join("")}
                 <td class="mono" style="font-size:12px">${fmtDate(c.access_token_expire_at)}</td>
-                <td><input type="date" class="v2-input" data-sync-from-input style="padding:6px 10px;font-size:12.5px" value="${c.sync_from_date || ''}" /></td>
+                <td><button type="button" class="v2-input date-trigger" data-sync-from-trigger data-value="${c.sync_from_date || ''}">${c.sync_from_date ? fmtDateShort(c.sync_from_date) : t("connect.pick_date")}</button></td>
                 <td class="mono" style="font-size:12px;color:var(--ink-3)">${fmtDate(c.last_synced_at)}</td>
                 <td>
                   <label style="display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700;cursor:pointer">
@@ -354,7 +360,17 @@
       row.querySelector('[data-action="sync-one"]')?.addEventListener("click", () => onRowAction(row, "sync-one"));
       row.querySelector('[data-action="disconnect"]')?.addEventListener("click", () => onRowAction(row, "disconnect"));
       row.querySelector('[data-toggle-active]')?.addEventListener("change", (e) => onToggleActive(row, e.target.checked));
-      row.querySelector('[data-sync-from-input]')?.addEventListener("change", (e) => onSetSyncFrom(row, e.target.value));
+      row.querySelector('[data-sync-from-trigger]')?.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const btn = e.currentTarget;
+        if (window.DatePicker) {
+          window.DatePicker.open(btn, btn.dataset.value || "", (newVal) => {
+            onSetSyncFrom(row, newVal);
+            btn.dataset.value = newVal;
+            btn.textContent = newVal ? fmtDateShort(newVal) : t("connect.pick_date");
+          });
+        }
+      });
     });
   }
 

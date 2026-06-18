@@ -472,4 +472,86 @@
     rerender() { renderPage(); },
   };
   window.App = App;
+
+  /* ---- Reusable day-only date picker ----------------------------
+     Opens a popover anchored to `anchor`. Calls `onPick(isoDate)`
+     when a day is clicked. `isoDate` is "" if user clicks Clear.
+  ----------------------------------------------------------------- */
+  function dayPickerPopover(anchor, value, onPick) {
+    closePop();
+    var initial = (typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value)) ? value : "";
+    var calView = initial ? parseISODate(initial) : new Date();
+    calView.setDate(1);
+    var calEnd = initial;
+    var today = fmtISODate(new Date());
+
+    var m = document.createElement("div");
+    m.className = "menu period-pop date-pop";
+    m.innerHTML =
+      '<div class="period-pop-body">'
+      + '<div class="period-fields"><div id="dpCal"></div></div>'
+      + '<div class="period-pop-actions">'
+      +   '<button type="button" class="ctrl-btn" data-act="clear">' + T("common.clear", "Xoá") + '</button>'
+      +   '<button type="button" class="ctrl-btn" data-act="cancel">' + T("common.cancel") + '</button>'
+      + '</div>'
+      + '</div>';
+    document.body.appendChild(m);
+    var rect = anchor.getBoundingClientRect();
+    m.style.top = (rect.bottom + 6) + "px";
+    m.style.left = Math.max(12, Math.min(rect.left, window.innerWidth - m.offsetWidth - 12)) + "px";
+
+    var calEl = m.querySelector("#dpCal");
+
+    function render() {
+      var titleMon = calView.getMonth(), titleYr = calView.getFullYear();
+      var h = '<div class="cal-panel">';
+      h += '<div class="cal-navbar">';
+      h += '<button type="button" class="cal-nav-btn" data-nav="-1">&lsaquo;</button>';
+      h += '<div class="cal-nav-title">' + T("period.cal." + CAL_M[titleMon]) + ' ' + titleYr + '</div>';
+      h += '<button type="button" class="cal-nav-btn" data-nav="1">&rsaquo;</button>';
+      h += '</div>';
+      var first = new Date(calView.getFullYear(), calView.getMonth(), 1);
+      var startDow = (first.getDay() + 6) % 7;
+      h += '<div class="cal-grid cal-days">';
+      for (var di = 0; di < 7; di++) h += '<div class="cal-dow">' + T("period.cal." + CAL_D[di]) + '</div>';
+      var cursor = new Date(first);
+      cursor.setDate(cursor.getDate() - startDow);
+      for (var w = 0; w < 6; w++) {
+        for (var dd = 0; dd < 7; dd++) {
+          var ds = fmtISODate(cursor), cls = "cal-day";
+          if (cursor.getMonth() !== calView.getMonth()) cls += " out";
+          if (ds === today) cls += " today";
+          if (ds === calEnd) cls += " sel";
+          h += '<button type="button" class="' + cls + '" data-pick="' + ds + '">' + cursor.getDate() + '</button>';
+          cursor.setDate(cursor.getDate() + 1);
+        }
+      }
+      h += '</div></div>';
+      calEl.innerHTML = h;
+    }
+
+    calEl.addEventListener("click", function (e) {
+      var btn = e.target.closest("[data-pick]");
+      if (btn) {
+        var pick = btn.dataset.pick;
+        closePop();
+        onPick(pick);
+        return;
+      }
+      var nav = e.target.closest("[data-nav]");
+      if (nav) {
+        calView.setMonth(calView.getMonth() + (+nav.dataset.nav));
+        render();
+      }
+    });
+
+    m.querySelector('[data-act="clear"]').addEventListener("click", function () { closePop(); onPick(""); });
+    m.querySelector('[data-act="cancel"]').addEventListener("click", closePop);
+
+    render();
+    openPop = m;
+    setTimeout(function () { document.addEventListener("click", outside, true); }, 0);
+  }
+
+  window.DatePicker = { open: dayPickerPopover };
 })();
