@@ -1,7 +1,7 @@
 {
-  "version": "3.4.46",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.46/release/dashboard-v3-3.4.46.zip",
-  "changelog": "- Thay date picker mặc định của trình duyệt ở phần Kết nối sàn bằng date picker tùy chỉnh đồng nhất với header Period Picker (cùng calendar, cùng style, hỗ trợ dark mode, đa ngôn ngữ). Khắc phục bug native input không xoá được giá trị trên một số trình duyệt và tránh sự không đồng bộ về giao diện.",
+  "version": "3.4.47",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.47/release/dashboard-v3-3.4.47.zip",
+  "changelog": "- Sửa lỗi nghiêm trọng cache JS/CSS: hằng số `?v=20` được hard-code trong index.html, không bao giờ thay đổi → các bản cập nhật từ 3.4.x trước không bao giờ tới được trình duyệt người dùng (gồm cả custom date picker ở phần Kết nối sàn từ 3.4.46). Nay build.sh tự inject phiên bản hiện tại vào tất cả `?v=...` lúc đóng gói release, đảm bảo người dùng luôn nhận bản mới nhất sau khi update.",
   "min_php": "8.1",
   "released_at": "2026-06-18"
 }
