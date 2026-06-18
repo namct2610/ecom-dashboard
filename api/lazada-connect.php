@@ -119,11 +119,12 @@ try {
 
     // ── Set sync from date ────────────────────────────────────────────────────
     if ($action === 'set_sync_from') {
-        $accountId = trim($body['account_id']      ?? '');
-        $fromDate  = trim($body['sync_from_date']  ?? '');
-        if ($accountId && preg_match('/^\d{4}-\d{2}-\d{2}$/', $fromDate)) {
+        $accountId = trim($body['account_id'] ?? '');
+        $fromDate  = trim($body['sync_from_date'] ?? '');
+        $dateVal   = preg_match('/^\d{4}-\d{2}-\d{2}$/', $fromDate) ? $fromDate : null;
+        if ($accountId && array_key_exists('sync_from_date', $body)) {
             $pdo->prepare("UPDATE lazada_connections SET sync_from_date=? WHERE account_id=?")
-                ->execute([$fromDate, $accountId]);
+                ->execute([$dateVal, $accountId]);
         }
         json_response(['success' => true]);
     }

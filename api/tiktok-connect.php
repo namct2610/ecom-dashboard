@@ -119,11 +119,12 @@ try {
 
     // ── Set sync from date ────────────────────────────────────────────────────
     if ($action === 'set_sync_from') {
-        $shopId   = trim($body['shop_id']        ?? '');
+        $shopId   = trim($body['shop_id'] ?? '');
         $fromDate = trim($body['sync_from_date'] ?? '');
-        if ($shopId && preg_match('/^\d{4}-\d{2}-\d{2}$/', $fromDate)) {
+        $dateVal  = preg_match('/^\d{4}-\d{2}-\d{2}$/', $fromDate) ? $fromDate : null;
+        if ($shopId && array_key_exists('sync_from_date', $body)) {
             $pdo->prepare("UPDATE tiktok_connections SET sync_from_date=? WHERE shop_id=?")
-                ->execute([$fromDate, $shopId]);
+                ->execute([$dateVal, $shopId]);
         }
         json_response(['success' => true]);
     }

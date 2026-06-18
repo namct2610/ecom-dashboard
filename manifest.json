@@ -1,7 +1,7 @@
 {
-  "version": "3.4.42",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.42/release/dashboard-v3-3.4.42.zip",
-  "changelog": "- Sửa lỗi nghiêm trọng: ShopeeClient tạo URL token exchange sai (double /api/v2) khiến kết nối OAuth Shopee luôn thất bại dù Shopee đã xác nhận cấp quyền. - Thêm logging chi tiết vào callback OAuth Shopee và nới lỏng kiểm tra CSRF state (cảnh báo thay vì chặn) để dễ debug và tránh chặn nhầm.",
+  "version": "3.4.43",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.43/release/dashboard-v3-3.4.43.zip",
+  "changelog": "- Sửa lỗi ngày đồng bộ: sau khi lưu, ô nhập ngày hiển thị lại giá trị cũ thay vì giá trị vừa điền (do local state chưa cập nhật). Nay cập nhật in-memory ngay sau khi lưu thành công. - Cho phép xóa ngày đồng bộ (để trống) để reset về mặc định.",
   "min_php": "8.1",
   "released_at": "2026-06-18"
 }
