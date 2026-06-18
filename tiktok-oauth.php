@@ -17,7 +17,7 @@ start_session();
 
 // ── Validate session ──────────────────────────────────────────────────────────
 if (empty($_SESSION['logged_in'])) {
-    header('Location: index.php?error=not_logged_in');
+    header('Location: ' . app_shell_url(['error' => 'not_logged_in'], 'connect'));
     exit;
 }
 
@@ -26,7 +26,7 @@ $state = trim($_GET['state'] ?? '');
 $errParam = trim($_GET['error'] ?? '');
 
 if ($errParam) {
-    header('Location: index.php?tiktok_error=' . urlencode($errParam));
+    header('Location: ' . app_shell_url(['tiktok_error' => $errParam], 'connect'));
     exit;
 }
 
@@ -35,12 +35,12 @@ $expectedState = $_SESSION['tiktok_oauth_state'] ?? '';
 unset($_SESSION['tiktok_oauth_state']);
 
 if ($state === '' || $state !== $expectedState) {
-    header('Location: index.php?tiktok_error=invalid_state');
+    header('Location: ' . app_shell_url(['tiktok_error' => 'invalid_state'], 'connect'));
     exit;
 }
 
 if ($code === '') {
-    header('Location: index.php?tiktok_error=missing_code');
+    header('Location: ' . app_shell_url(['tiktok_error' => 'missing_code'], 'connect'));
     exit;
 }
 
@@ -52,7 +52,7 @@ try {
     $appSecret = $pdo->query("SELECT setting_value FROM app_settings WHERE setting_key='tiktok_app_secret'")->fetchColumn() ?: '';
 
     if ($appKey === '' || $appSecret === '') {
-        header('Location: index.php?tiktok_error=missing_credentials');
+        header('Location: ' . app_shell_url(['tiktok_error' => 'missing_credentials'], 'connect'));
         exit;
     }
 
@@ -60,8 +60,8 @@ try {
     $tokenRes = $client->getAccessToken($code);
 
     if (($tokenRes['code'] ?? -1) !== 0) {
-        $msg = urlencode($tokenRes['message'] ?? 'token_error');
-        header("Location: index.php?tiktok_error=$msg");
+        $msg = (string) ($tokenRes['message'] ?? 'token_error');
+        header('Location: ' . app_shell_url(['tiktok_error' => $msg], 'connect'));
         exit;
     }
 
@@ -121,11 +121,11 @@ try {
     }
 
     log_activity('info', 'tiktok', "OAuth thành công: $saved shop(s) đã kết nối.");
-    header('Location: index.php?tiktok_connected=' . $saved . '#connect');
+    header('Location: ' . app_shell_url(['tiktok_connected' => (string) $saved], 'connect'));
     exit;
 
 } catch (\Throwable $e) {
     log_activity('error', 'tiktok', 'OAuth callback thất bại: ' . $e->getMessage());
-    header('Location: index.php?tiktok_error=' . urlencode($e->getMessage()));
+    header('Location: ' . app_shell_url(['tiktok_error' => $e->getMessage()], 'connect'));
     exit;
 }

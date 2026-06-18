@@ -246,6 +246,28 @@ function generate_csrf(): string
     return $_SESSION['csrf_token'];
 }
 
+function app_base_path(): string
+{
+    $scriptName = str_replace('\\', '/', (string) ($_SERVER['SCRIPT_NAME'] ?? '/'));
+    $dir = dirname($scriptName);
+    if ($dir === '.' || $dir === '/' || $dir === '\\') {
+        return '';
+    }
+
+    return rtrim($dir, '/');
+}
+
+function app_shell_url(array $query = [], string $hash = ''): string
+{
+    $path = app_base_path();
+    $url = ($path === '' ? '/' : $path . '/') . ($query ? ('?' . http_build_query($query)) : '');
+    if ($hash !== '') {
+        $url .= '#' . ltrim($hash, '#');
+    }
+
+    return $url;
+}
+
 function is_local(): bool
 {
     return in_array($_SERVER['REMOTE_ADDR'] ?? '', ['127.0.0.1', '::1'], true);
