@@ -345,41 +345,49 @@
     });
   }
 
-  function mount() {
-    // After OAuth redirect, detect which platform was just connected and
-    // switch to that tab + show a success/error flash.
-    const params = new URLSearchParams(window.location.search);
-    const oauthMap = { shopee_connected: "shopee", lazada_connected: "lazada", tiktok_connected: "tiktokshop" };
-    const errMap   = { shopee_error: "shopee", lazada_error: "lazada", tiktok_error: "tiktokshop" };
-    let platformFromUrl = null;
+  let _oauthFlashShown = false;
 
-    for (const [param, key] of Object.entries(oauthMap)) {
-      if (params.has(param)) {
-        platformFromUrl = key;
-        local.tab = key;
-        const n = parseInt(params.get(param), 10);
-        const msg = isNaN(n) || n >= 1
-          ? t(key === "lazada" ? "connect.connected_account" : "connect.connected_shop")
-          : tf("connect.connected_shops", { n });
-        showMsg("ok", CONFIGS[key].label + ": " + msg);
-        break;
-      }
-    }
-    if (!platformFromUrl) {
-      for (const [param, key] of Object.entries(errMap)) {
+  function mount() {
+    // After OAuth redirect, detect which platform was just connected.
+    // Clean URL *before* calling showMsg to avoid recursive rerender loop.
+    if (!_oauthFlashShown) {
+      const params = new URLSearchParams(window.location.search);
+      const oauthMap = { shopee_connected: "shopee", lazada_connected: "lazada", tiktok_connected: "tiktokshop" };
+      const errMap   = { shopee_error: "shopee", lazada_error: "lazada", tiktok_error: "tiktokshop" };
+      let flashPlatform = null, flashKind = null, flashMsg = null;
+
+      for (const [param, key] of Object.entries(oauthMap)) {
         if (params.has(param)) {
-          platformFromUrl = key;
+          flashPlatform = key;
           local.tab = key;
-          showMsg("err", CONFIGS[key].label + ": " + decodeURIComponent(params.get(param)));
+          const n = parseInt(params.get(param), 10);
+          const msg = isNaN(n) || n >= 1
+            ? t(key === "lazada" ? "connect.connected_account" : "connect.connected_shop")
+            : tf("connect.connected_shops", { n });
+          flashKind = "ok"; flashMsg = CONFIGS[key].label + ": " + msg;
           break;
         }
       }
-    }
+      if (!flashPlatform) {
+        for (const [param, key] of Object.entries(errMap)) {
+          if (params.has(param)) {
+            flashPlatform = key;
+            local.tab = key;
+            flashKind = "err"; flashMsg = CONFIGS[key].label + ": " + decodeURIComponent(params.get(param));
+            break;
+          }
+        }
+      }
 
-    if (platformFromUrl) {
-      // Remove OAuth params from URL without reloading
-      const cleanUrl = window.location.pathname + window.location.hash;
-      history.replaceState(null, "", cleanUrl);
+      if (flashPlatform) {
+        _oauthFlashShown = true;
+        // Clean URL first — prevents infinite rerender loop when showMsg
+        // triggers App.rerender() → mount() → showMsg() → …
+        history.replaceState(null, "", window.location.pathname + window.location.hash);
+        showMsg(flashKind, flashMsg);
+        // showMsg already called rerender; let that cycle handle fetchStatus
+        return;
+      }
     }
 
     if (local.loading[local.tab] && !local.data[local.tab]) {
