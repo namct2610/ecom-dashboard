@@ -72,6 +72,22 @@ function ensure_schema(PDO $pdo, array $config = []): void
         }
     }
 
+    // Migration: add missing columns to connection tables (for installs that
+    // pre-date the sync_from_date / authorized_at / last_synced_at columns).
+    foreach (['shopee_connections', 'lazada_connections', 'tiktok_connections'] as $connTable) {
+        if (!in_array($connTable, $tables, true)) continue;
+        $cols = array_column($pdo->query("SHOW COLUMNS FROM `$connTable`")->fetchAll(), 'Field');
+        if (!in_array('authorized_at', $cols)) {
+            $pdo->exec("ALTER TABLE `$connTable` ADD COLUMN authorized_at DATETIME DEFAULT CURRENT_TIMESTAMP");
+        }
+        if (!in_array('last_synced_at', $cols)) {
+            $pdo->exec("ALTER TABLE `$connTable` ADD COLUMN last_synced_at DATETIME NULL");
+        }
+        if (!in_array('sync_from_date', $cols)) {
+            $pdo->exec("ALTER TABLE `$connTable` ADD COLUMN sync_from_date DATE NULL");
+        }
+    }
+
     // Create tiktok_connections if missing
     if (!in_array('tiktok_connections', $tables, true)) {
         $pdo->exec("CREATE TABLE IF NOT EXISTS tiktok_connections (
