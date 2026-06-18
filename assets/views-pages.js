@@ -389,8 +389,8 @@
       const cmpLab = S.compareLabel(st.period, st.compare);
       const dd = (c, p) => UI.deltaChip(F.delta(c, p));
       const kpis = kpiRow([
-        { label: _t("kpi.pageviews"), ico: `<span class="kpi-ico">${UI.ICON.eye_traffic}</span>`, value: F.num(cur.pv), delta: cmp ? dd(cur.pv, cmp.pv) : "", foot: cmp ? `vs ${F.num(cmp.pv)} · ${cmpLab}` : _t("common.page_views") },
-        { label: _t("kpi.visits"), ico: `<span class="kpi-ico">${UI.ICON.people}</span>`, value: F.num(cur.visits), delta: cmp ? dd(cur.visits, cmp.visits) : "", foot: cmp ? `vs ${F.num(cmp.visits)} · ${cmpLab}` : _t("kpi.visits").toLowerCase() },
+        { label: _t("kpi.pageviews"), ico: `<span class="kpi-ico">${UI.ICON.eye_traffic}</span>`, value: F.num(cur.pv), delta: cmp ? dd(cur.pv, cmp.pv) : "", foot: cmp ? `vs ${F.num(cmp.pv)}` : _t("common.page_views") },
+        { label: _t("kpi.visits"), ico: `<span class="kpi-ico">${UI.ICON.people}</span>`, value: F.num(cur.visits), delta: cmp ? dd(cur.visits, cmp.visits) : "", foot: cmp ? `vs ${F.num(cmp.visits)}` : _t("kpi.visits").toLowerCase() },
         { label: _t("kpi.conversion"), ico: `<span class="kpi-ico">${UI.ICON.aov}</span>`, value: F.viDec(cur.conv, 2), unit: "%", delta: cmp ? dd(cur.conv, cmp.conv) : "", foot: _t("traffic.conv.sub") },
         { label: _t("kpi.new_followers"), ico: `<span class="kpi-ico">${UI.ICON.people}</span>`, value: F.viInt(cur.nf), delta: cmp ? dd(cur.nf, cmp.nf) : "", foot: cmp ? `vs ${F.viInt(cmp.nf)}` : _t("traffic.followers_new") },
       ]);

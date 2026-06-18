@@ -1,7 +1,7 @@
 {
-  "version": "3.4.37",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.37/release/dashboard-v3-3.4.37.zip",
-  "changelog": "- Sửa lỗi runtime ở màn Kế hoạch: thay wrapper i18n sai `window._t/window._tf` về đúng `window.t/window.tf` để trang không còn báo `Failed to load data`.\n- Giữ lại toàn bộ các tối ưu load và hiển thị của đợt 3.4.36: skeleton cho Khách hàng/Kế hoạch, tối ưu tải Đối soát, sửa hậu tố B/M/K khi đổi tiếng Anh, và thu gọn text KPI/so sánh để tránh tràn.",
+  "version": "3.4.38",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.38/release/dashboard-v3-3.4.38.zip",
+  "changelog": "- Sửa text so sánh KPI (traffic) bị tràn: bỏ nhãn kỳ so sánh khỏi footer KPI card, chỉ giữ lại giá trị số.\n- Sửa CSS kpi-foot > span: thêm flex:1 để span luôn chiếm phần còn lại và cắt đúng khi tràn.\n- Các sửa từ 3.4.36/3.4.37 đã có: định dạng số/tiền tệ theo locale (B/M/K EN, Tỷ/Tr/K VI), sửa màn Kế hoạch hiện lỗi thay vì loading mãi.",
   "min_php": "8.1",
-  "released_at": "2026-06-11"
+  "released_at": "2026-06-18"
 }
