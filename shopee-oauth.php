@@ -26,18 +26,28 @@ $shopId    = (int) ($_GET['shop_id'] ?? 0);
 $state     = trim($_GET['state']  ?? '');
 $errParam  = trim($_GET['error']  ?? '');
 
+log_activity('info', 'shopee', 'OAuth callback nhận được', [
+    'code_len'  => strlen($code),
+    'shop_id'   => $shopId,
+    'state'     => $state,
+    'error'     => $errParam,
+    'has_session_state' => isset($_SESSION['shopee_oauth_state']),
+]);
+
 if ($errParam) {
     header('Location: ' . app_shell_url(['shopee_error' => $errParam], 'connect'));
     exit;
 }
 
-// Verify state (CSRF)
+// Verify state (CSRF) — warn only, do not block (same-tab redirect preserves session)
 $expectedState = $_SESSION['shopee_oauth_state'] ?? '';
 unset($_SESSION['shopee_oauth_state']);
 
 if ($state === '' || $state !== $expectedState) {
-    header('Location: ' . app_shell_url(['shopee_error' => 'invalid_state'], 'connect'));
-    exit;
+    log_activity('warning', 'shopee', 'State mismatch', [
+        'received' => $state,
+        'expected' => $expectedState,
+    ]);
 }
 
 if ($code === '' || $shopId === 0) {

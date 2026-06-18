@@ -15,7 +15,7 @@ namespace Dashboard;
  */
 class ShopeeClient
 {
-    public const BASE_URL = 'https://partner.shopeemobile.com/api/v2';
+    public const BASE_URL = 'https://partner.shopeemobile.com';
 
     private int    $partnerId;
     private string $partnerKey;
@@ -52,7 +52,7 @@ class ShopeeClient
         ];
         if ($state !== '') $params['state'] = $state;
 
-        return self::BASE_URL . '/shop/auth_partner?' . http_build_query($params);
+        return self::BASE_URL . '/api/v2/shop/auth_partner?' . http_build_query($params);
     }
 
     /** Exchange auth code for access + refresh token. */
