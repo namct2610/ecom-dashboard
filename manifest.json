@@ -1,7 +1,7 @@
 {
-  "version": "3.4.44",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.44/release/dashboard-v3-3.4.44.zip",
-  "changelog": "- Sửa lỗi đồng bộ Shopee thất bại với lỗi 'Start time must be earlier than end time and diff in 15days': Shopee giới hạn mỗi request tối đa 15 ngày, nay tự động chia nhỏ khoảng thời gian thành nhiều cửa sổ 15 ngày khi sync_from_date xa hơn 15 ngày. Sửa thêm fallback mặc định từ -30 ngày xuống -15 ngày.",
+  "version": "3.4.45",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.45/release/dashboard-v3-3.4.45.zip",
+  "changelog": "- Sửa nhiều bug nghiêm trọng trong bộ chọn thời gian (Period Picker): (1) Ở chế độ Tháng, nút điều hướng trái/phải bị ghi đè lên tháng đã chọn — nay chuyển đúng theo NĂM và không làm mất selection. (2) Tiêu đề navbar ở chế độ Tháng giờ chỉ hiển thị Năm thay vì 'Tháng X Năm Y' khó hiểu. (3) Ở chế độ Tùy chỉnh, khi chọn ngày kết thúc TRƯỚC ngày bắt đầu, hệ thống tự động hoán đổi để dải in-range hiển thị đúng. (4) Cho phép Apply khi chỉ chọn 1 ngày trong chế độ Tùy chỉnh (single-day range). (5) Preview text khi đang chọn dở dang giờ hiển thị đúng ngày đang pick thay vì lùi về dữ liệu cũ.",
   "min_php": "8.1",
   "released_at": "2026-06-18"
 }

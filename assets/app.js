@@ -147,13 +147,24 @@
       if(mode==="week"){var md=calMondayOf(calEnd);return "w:"+fmtISODate(md);}
       if(mode==="month") return "m:"+calEnd.slice(0,7);
       if(mode==="year") return "y:"+calEnd.slice(0,4);
-      var a=calStart,b=calEnd;if(a>b){var t=a;a=b;b=t;}
+      // Custom: handle in-progress selection (one date picked) by previewing it as a single day
+      var a=calStart,b=calEnd;
+      if(!a && !b) return st.period;
+      if(!a) a=b; if(!b) b=a;
+      if(a>b){var t=a;a=b;b=t;}
       return "c:"+a+":"+b;
     }
 
     function renderCal() {
       var h='<div class="cal-panel">';
-      if(mode!=="year"){
+      if(mode==="month"){
+        // Month mode: nav arrows shift YEAR; title shows only the year
+        h+='<div class="cal-navbar">';
+        h+='<button class="cal-nav-btn" data-nav="-12">&lsaquo;</button>';
+        h+='<div class="cal-nav-title">'+calView.getFullYear()+'</div>';
+        h+='<button class="cal-nav-btn" data-nav="12">&rsaquo;</button>';
+        h+='</div>';
+      } else if(mode!=="year"){
         var titleMon=calView.getMonth(), titleYr=calView.getFullYear();
         h+='<div class="cal-navbar">';
         h+='<button class="cal-nav-btn" data-nav="-1">&lsaquo;</button>';
@@ -230,14 +241,22 @@
         if(pk.startsWith("d:")){
           var d=pk.slice(2);
           if(mode==="custom"){
-            if(!calStart||(calStart&&calEnd)){calStart=d;calEnd="";}
-            else {calEnd=d;}
+            if(!calStart||(calStart&&calEnd)){
+              // Fresh range: first click starts a new selection
+              calStart=d;calEnd="";
+            } else {
+              // Second click completes the range — swap if user picked end before start
+              if(d<calStart){calEnd=calStart;calStart=d;}
+              else {calEnd=d;}
+            }
           } else {calEnd=d;}
           renderCal();
         } else if(pk.startsWith("m:")){
+          // Month-tile click: pick this month (only in month mode)
           calEnd=pk.slice(2)+"-01";
-          if(mode==="month"){renderCal();}
+          renderCal();
         } else if(pk.startsWith("y:")){
+          // Year-tile click: pick this year and snap calView to it
           calEnd=pk.slice(2)+"-01-01";
           calView=parseISODate(calEnd);calView.setDate(1);
           renderCal();
@@ -246,12 +265,13 @@
       var nav=e.target.closest("[data-nav]");
       if(nav){
         var amt=+nav.dataset.nav;
+        // Year mode: amt is ±10 (decade). Month mode: amt is ±12 (year).
+        // Day/week/custom: amt is ±1 (month). Navigation NEVER overrides selection.
         if(mode==="year"){
           calView.setFullYear(calView.getFullYear()+amt);
         } else {
           calView.setMonth(calView.getMonth()+amt);
         }
-        if(mode==="month"){calEnd=calView.getFullYear()+"-"+String(calView.getMonth()+1).padStart(2,"0")+"-01";}
         renderCal();
       }
     });
@@ -266,6 +286,8 @@
 
     m.querySelector('[data-act="cancel"]')?.addEventListener("click",closePop);
     m.querySelector('[data-act="apply"]')?.addEventListener("click",function(){
+      // Custom mode: if only one date is picked, treat as single-day range
+      if(mode==="custom" && calStart && !calEnd){calEnd=calStart;}
       st.period=buildKey();commit();closePop();
     });
 
