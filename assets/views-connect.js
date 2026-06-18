@@ -317,10 +317,20 @@
   }
 
   async function onSetSyncFrom(row, value) {
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return;
+    // Allow empty string to clear the date; reject anything else that isn't a valid date
+    if (value !== "" && !/^\d{4}-\d{2}-\d{2}$/.test(value)) return;
     const idF = CONFIGS[local.tab].statusKeys.listIdField;
+    const rawId = row.dataset.id;
+    const numId = +rawId;
     try {
-      await postAction(local.tab, { action: "set_sync_from", [idF]: +row.dataset.id, sync_from_date: value });
+      await postAction(local.tab, { action: "set_sync_from", [idF]: isNaN(numId) ? rawId : numId, sync_from_date: value });
+      // Update in-memory data so the input reflects the new value after rerender
+      const cfg = CONFIGS[local.tab];
+      const list = local.data[local.tab]?.[cfg.statusKeys.listKey];
+      if (list) {
+        const item = list.find((c) => String(c[idF]) === rawId);
+        if (item) item.sync_from_date = value || null;
+      }
       showMsg("ok", t("connect.sync_from_updated"));
     } catch (e) {
       showMsg("err", t("common.error") + ": " + (e.message || e));
