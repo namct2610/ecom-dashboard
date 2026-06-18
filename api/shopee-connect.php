@@ -196,81 +196,89 @@ function syncShopeeShop(PDO $pdo, ShopeeClient $client, array $shop): array
         }
     }
 
-    // Time range
-    $fromDate  = $shop['sync_from_date'] ?: date('Y-m-d', strtotime('-30 days'));
-    $lastSync  = $shop['last_synced_at'];
-    $timeFrom  = $lastSync ? (strtotime($lastSync) - 300) : strtotime($fromDate . ' 00:00:00');
-    $timeTo    = time();
+    // Time range — Shopee allows max 15 days per request, so split into windows
+    $fromDate    = $shop['sync_from_date'] ?: date('Y-m-d', strtotime('-15 days'));
+    $lastSync    = $shop['last_synced_at'];
+    $timeFrom    = $lastSync ? (strtotime($lastSync) - 300) : strtotime($fromDate . ' 00:00:00');
+    $timeTo      = time();
+    $windowSecs  = 15 * 86400; // Shopee max: 15 days per request
 
     $imported = 0;
     $errors   = 0;
-    $cursor   = '';
 
-    do {
-        try {
-            $res = $client->getOrderList($accessToken, $shopId, [
-                'time_range_field' => 'create_time',
-                'time_from'        => $timeFrom,
-                'time_to'          => $timeTo,
-                'page_size'        => 100,
-                'cursor'           => $cursor,
-            ]);
-        } catch (\Throwable $e) {
-            return ['shop' => $shopName, 'success' => false, 'error' => $e->getMessage()];
-        }
+    $winStart = $timeFrom;
+    while ($winStart < $timeTo) {
+        $winEnd = min($winStart + $windowSecs, $timeTo);
+        $cursor = '';
 
-        if (!empty($res['error'])) {
-            return ['shop' => $shopName, 'success' => false, 'error' => $res['message'] ?? $res['error']];
-        }
-
-        $orderList = $res['response']['order_list'] ?? [];
-        if (empty($orderList)) break;
-
-        // Fetch full detail in batches of 50
-        $sns    = array_column($orderList, 'order_sn');
-        $chunks = array_chunk($sns, 50);
-
-        foreach ($chunks as $chunk) {
+        do {
             try {
-                $detailRes = $client->getOrderDetail($accessToken, $shopId, $chunk);
+                $res = $client->getOrderList($accessToken, $shopId, [
+                    'time_range_field' => 'create_time',
+                    'time_from'        => $winStart,
+                    'time_to'          => $winEnd,
+                    'page_size'        => 100,
+                    'cursor'           => $cursor,
+                ]);
             } catch (\Throwable $e) {
-                $errors += count($chunk);
-                continue;
+                return ['shop' => $shopName, 'success' => false, 'error' => $e->getMessage()];
             }
 
-            if (!empty($detailRes['error'])) {
-                $errors += count($chunk);
-                continue;
+            if (!empty($res['error'])) {
+                return ['shop' => $shopName, 'success' => false, 'error' => $res['message'] ?? $res['error']];
             }
 
-            foreach ($detailRes['response']['order_list'] ?? [] as $order) {
-                $orderSn = (string) ($order['order_sn'] ?? '');
-                $items = $order['item_list'] ?? [];
-                if ($orderSn === '' || empty($items)) {
+            $orderList = $res['response']['order_list'] ?? [];
+            if (empty($orderList)) break;
+
+            // Fetch full detail in batches of 50
+            $sns    = array_column($orderList, 'order_sn');
+            $chunks = array_chunk($sns, 50);
+
+            foreach ($chunks as $chunk) {
+                try {
+                    $detailRes = $client->getOrderDetail($accessToken, $shopId, $chunk);
+                } catch (\Throwable $e) {
+                    $errors += count($chunk);
                     continue;
                 }
 
-                try {
-                    $pdo->beginTransaction();
-                    delete_orders_by_platform_and_ids($pdo, 'shopee', [$orderSn]);
-                    foreach ($items as $itemIndex => $item) {
-                        insertShopeeOrder($pdo, $order, $item, $itemIndex === 0);
+                if (!empty($detailRes['error'])) {
+                    $errors += count($chunk);
+                    continue;
+                }
+
+                foreach ($detailRes['response']['order_list'] ?? [] as $order) {
+                    $orderSn = (string) ($order['order_sn'] ?? '');
+                    $items = $order['item_list'] ?? [];
+                    if ($orderSn === '' || empty($items)) {
+                        continue;
                     }
-                    $pdo->commit();
-                    $imported += count($items);
-                } catch (\Throwable $e) {
-                    if ($pdo->inTransaction()) {
-                        $pdo->rollBack();
+
+                    try {
+                        $pdo->beginTransaction();
+                        delete_orders_by_platform_and_ids($pdo, 'shopee', [$orderSn]);
+                        foreach ($items as $itemIndex => $item) {
+                            insertShopeeOrder($pdo, $order, $item, $itemIndex === 0);
+                        }
+                        $pdo->commit();
+                        $imported += count($items);
+                    } catch (\Throwable $e) {
+                        if ($pdo->inTransaction()) {
+                            $pdo->rollBack();
+                        }
+                        $errors += count($items);
                     }
-                    $errors += count($items);
                 }
             }
-        }
 
-        $more   = $res['response']['more']        ?? false;
-        $cursor = $res['response']['next_cursor']  ?? '';
+            $more   = $res['response']['more']       ?? false;
+            $cursor = $res['response']['next_cursor'] ?? '';
 
-    } while ($more && $cursor !== '');
+        } while ($more && $cursor !== '');
+
+        $winStart = $winEnd;
+    }
 
     $pdo->prepare("UPDATE shopee_connections SET last_synced_at = NOW() WHERE shop_id = ?")
         ->execute([$shopId]);

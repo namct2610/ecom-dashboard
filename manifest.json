@@ -1,7 +1,7 @@
 {
-  "version": "3.4.43",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.43/release/dashboard-v3-3.4.43.zip",
-  "changelog": "- Sửa lỗi ngày đồng bộ: sau khi lưu, ô nhập ngày hiển thị lại giá trị cũ thay vì giá trị vừa điền (do local state chưa cập nhật). Nay cập nhật in-memory ngay sau khi lưu thành công. - Cho phép xóa ngày đồng bộ (để trống) để reset về mặc định.",
+  "version": "3.4.44",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.44/release/dashboard-v3-3.4.44.zip",
+  "changelog": "- Sửa lỗi đồng bộ Shopee thất bại với lỗi 'Start time must be earlier than end time and diff in 15days': Shopee giới hạn mỗi request tối đa 15 ngày, nay tự động chia nhỏ khoảng thời gian thành nhiều cửa sổ 15 ngày khi sync_from_date xa hơn 15 ngày. Sửa thêm fallback mặc định từ -30 ngày xuống -15 ngày.",
   "min_php": "8.1",
   "released_at": "2026-06-18"
 }
