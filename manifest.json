@@ -1,7 +1,7 @@
 {
-  "version": "3.4.45",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.45/release/dashboard-v3-3.4.45.zip",
-  "changelog": "- Sửa nhiều bug nghiêm trọng trong bộ chọn thời gian (Period Picker): (1) Ở chế độ Tháng, nút điều hướng trái/phải bị ghi đè lên tháng đã chọn — nay chuyển đúng theo NĂM và không làm mất selection. (2) Tiêu đề navbar ở chế độ Tháng giờ chỉ hiển thị Năm thay vì 'Tháng X Năm Y' khó hiểu. (3) Ở chế độ Tùy chỉnh, khi chọn ngày kết thúc TRƯỚC ngày bắt đầu, hệ thống tự động hoán đổi để dải in-range hiển thị đúng. (4) Cho phép Apply khi chỉ chọn 1 ngày trong chế độ Tùy chỉnh (single-day range). (5) Preview text khi đang chọn dở dang giờ hiển thị đúng ngày đang pick thay vì lùi về dữ liệu cũ.",
+  "version": "3.4.46",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.46/release/dashboard-v3-3.4.46.zip",
+  "changelog": "- Thay date picker mặc định của trình duyệt ở phần Kết nối sàn bằng date picker tùy chỉnh đồng nhất với header Period Picker (cùng calendar, cùng style, hỗ trợ dark mode, đa ngôn ngữ). Khắc phục bug native input không xoá được giá trị trên một số trình duyệt và tránh sự không đồng bộ về giao diện.",
   "min_php": "8.1",
   "released_at": "2026-06-18"
 }

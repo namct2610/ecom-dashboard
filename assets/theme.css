@@ -710,6 +710,32 @@ body { transition: background .3s ease, color .3s ease; }
   box-shadow: 0 0 0 3px color-mix(in oklch, var(--brand) 18%, transparent);
 }
 .v2-textarea { font: 500 13.5px/1.55 var(--font-mono); min-height: 96px; resize: vertical; }
+
+/* Custom date-picker trigger — looks like .v2-input but is a button */
+.date-trigger {
+  cursor: pointer;
+  text-align: left;
+  font: 600 12.5px/1.4 var(--font-ui);
+  padding: 6px 32px 6px 10px;
+  position: relative;
+  color: var(--ink);
+}
+.date-trigger::after {
+  content: "";
+  position: absolute;
+  right: 10px; top: 50%;
+  width: 14px; height: 14px;
+  margin-top: -7px;
+  background: currentColor;
+  opacity: .55;
+  -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect x='3' y='4' width='18' height='18' rx='2'/><path d='M16 2v4M8 2v4M3 10h18'/></svg>") center/contain no-repeat;
+          mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect x='3' y='4' width='18' height='18' rx='2'/><path d='M16 2v4M8 2v4M3 10h18'/></svg>") center/contain no-repeat;
+}
+.date-trigger:hover { border-color: var(--ink-3); }
+
+/* Standalone day-only date picker popover */
+.date-pop { min-width: 280px; }
+.date-pop .period-fields { display: block; }
 .v2-select { padding-right: 36px; background-image: linear-gradient(45deg, transparent 50%, var(--ink-3) 50%), linear-gradient(135deg, var(--ink-3) 50%, transparent 50%); background-position: calc(100% - 18px) 50%, calc(100% - 13px) 50%; background-size: 5px 5px, 5px 5px; background-repeat: no-repeat; }
 
 /* 12-col grid */
