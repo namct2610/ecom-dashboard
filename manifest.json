@@ -1,7 +1,7 @@
 {
-  "version": "3.4.38",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.38/release/dashboard-v3-3.4.38.zip",
-  "changelog": "- Sửa text so sánh KPI (traffic) bị tràn: bỏ nhãn kỳ so sánh khỏi footer KPI card, chỉ giữ lại giá trị số.\n- Sửa CSS kpi-foot > span: thêm flex:1 để span luôn chiếm phần còn lại và cắt đúng khi tràn.\n- Các sửa từ 3.4.36/3.4.37 đã có: định dạng số/tiền tệ theo locale (B/M/K EN, Tỷ/Tr/K VI), sửa màn Kế hoạch hiện lỗi thay vì loading mãi.",
+  "version": "3.4.39",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.39/release/dashboard-v3-3.4.39.zip",
+  "changelog": "- Sửa lỗi sau khi kết nối OAuth thành công vẫn không thấy shop trong danh sách: sau redirect, trang tự động chuyển sang đúng tab sàn vừa kết nối và hiện thông báo thành công/lỗi.\n- Thêm i18n keys: connect.connected_shop, connect.connected_account, connect.connected_shops.",
   "min_php": "8.1",
   "released_at": "2026-06-18"
 }

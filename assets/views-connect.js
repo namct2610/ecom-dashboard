@@ -346,6 +346,42 @@
   }
 
   function mount() {
+    // After OAuth redirect, detect which platform was just connected and
+    // switch to that tab + show a success/error flash.
+    const params = new URLSearchParams(window.location.search);
+    const oauthMap = { shopee_connected: "shopee", lazada_connected: "lazada", tiktok_connected: "tiktokshop" };
+    const errMap   = { shopee_error: "shopee", lazada_error: "lazada", tiktok_error: "tiktokshop" };
+    let platformFromUrl = null;
+
+    for (const [param, key] of Object.entries(oauthMap)) {
+      if (params.has(param)) {
+        platformFromUrl = key;
+        local.tab = key;
+        const n = parseInt(params.get(param), 10);
+        const msg = isNaN(n) || n >= 1
+          ? t(key === "lazada" ? "connect.connected_account" : "connect.connected_shop")
+          : tf("connect.connected_shops", { n });
+        showMsg("ok", CONFIGS[key].label + ": " + msg);
+        break;
+      }
+    }
+    if (!platformFromUrl) {
+      for (const [param, key] of Object.entries(errMap)) {
+        if (params.has(param)) {
+          platformFromUrl = key;
+          local.tab = key;
+          showMsg("err", CONFIGS[key].label + ": " + decodeURIComponent(params.get(param)));
+          break;
+        }
+      }
+    }
+
+    if (platformFromUrl) {
+      // Remove OAuth params from URL without reloading
+      const cleanUrl = window.location.pathname + window.location.hash;
+      history.replaceState(null, "", cleanUrl);
+    }
+
     if (local.loading[local.tab] && !local.data[local.tab]) {
       fetchStatus(local.tab).then(() => window.App.rerender());
       return;
