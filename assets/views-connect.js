@@ -256,7 +256,10 @@
       const j = await postAction(local.tab, { action: "get_auth_url" });
       if (j.auth_url) {
         if (confirm(tf("connect.open_oauth", { label: CONFIGS[local.tab].label }))) {
-          window.open(j.auth_url, "_blank", "noopener");
+          // Redirect current page — keeps the session cookie intact so the
+          // OAuth callback can verify state. Opening a new tab risks the
+          // callback landing in a tab the user isn't watching.
+          window.location.href = j.auth_url;
         }
       } else {
         showMsg("err", t("connect.no_auth_url"));

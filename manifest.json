@@ -1,7 +1,7 @@
 {
-  "version": "3.4.40",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.40/release/dashboard-v3-3.4.40.zip",
-  "changelog": "- Sửa lỗi shop kết nối không hiện trong danh sách: thêm migration tự động cho các cột authorized_at, last_synced_at, sync_from_date vào shopee/lazada/tiktok_connections nếu bảng cũ chưa có — tránh lỗi SQL khi query status.\n- Sửa bug infinite rerender trong màn kết nối sau OAuth redirect (3.4.39): dọn URL trước khi gọi showMsg để tránh vòng lặp mount → rerender → mount vô tận.",
+  "version": "3.4.41",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.41/release/dashboard-v3-3.4.41.zip",
+  "changelog": "- Sửa lỗi shop kết nối OAuth không hiện trong danh sách: thay vì mở tab mới, nay chuyển hướng trang hiện tại sang Shopee/Lazada/TikTok để xác thực, sau đó tự động quay về với shop đã kết nối. Việc mở tab mới khiến Shopee redirect về tab không ai xem, người dùng nhầm nghĩ kết nối thất bại hoặc nhìn nhầm tab.",
   "min_php": "8.1",
   "released_at": "2026-06-18"
 }
