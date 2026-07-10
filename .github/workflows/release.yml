@@ -34,19 +34,19 @@ jobs:
 
       - name: Build ZIP
         run: |
-          chmod +x build.sh
-          ./build.sh
-          # build.sh outputs to parent dir — move here with versioned name
-          ZIPFILE=$(ls ${{ github.workspace }}/../dashboard-v3-*.zip 2>/dev/null | head -1)
-          VERSION="${{ steps.ver.outputs.version }}"
-          cp "$ZIPFILE" "${{ github.workspace }}/dashboard-v3-${VERSION}.zip"
-          echo "ZIP=dashboard-v3-${VERSION}.zip" >> $GITHUB_ENV
+          dev/build.sh
+          echo "ZIP=release/dashboard-v3-${{ steps.ver.outputs.version }}.zip" >> $GITHUB_ENV
 
       - name: Read changelog from manifest
         id: changelog
         run: |
           CHANGELOG=$(php -r "echo json_decode(file_get_contents('manifest.json'),true)['changelog'] ?? '';")
-          echo "text=${CHANGELOG}" >> $GITHUB_OUTPUT
+          # Changelogs are multi-line; a bare key=value would break $GITHUB_OUTPUT.
+          {
+            echo 'text<<CHANGELOG_EOF'
+            echo "${CHANGELOG}"
+            echo 'CHANGELOG_EOF'
+          } >> $GITHUB_OUTPUT
 
       - name: Create or update GitHub Release
         uses: softprops/action-gh-release@v2

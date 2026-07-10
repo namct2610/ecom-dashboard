@@ -1,7 +1,7 @@
 {
-  "version": "3.4.47",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.47/release/dashboard-v3-3.4.47.zip",
-  "changelog": "- Sửa lỗi nghiêm trọng cache JS/CSS: hằng số `?v=20` được hard-code trong index.html, không bao giờ thay đổi → các bản cập nhật từ 3.4.x trước không bao giờ tới được trình duyệt người dùng (gồm cả custom date picker ở phần Kết nối sàn từ 3.4.46). Nay build.sh tự inject phiên bản hiện tại vào tất cả `?v=...` lúc đóng gói release, đảm bảo người dùng luôn nhận bản mới nhất sau khi update.",
+  "version": "3.4.49",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.49/release/dashboard-v3-3.4.49.zip",
+  "changelog": "- Sửa lỗi trang Khách hàng trả về lỗi 500 khi cơ sở dữ liệu được phục hồi từ bản sao lưu cũ: bảng tạm dùng collation mặc định của máy chủ, không khớp với bảng `orders` (`utf8mb4_general_ci`), khiến truy vấn khách hàng tiềm năng báo \"Illegal mix of collations\". Nay bảng tạm luôn dùng đúng collation của `orders`.\n- Thêm thẻ KPI \"Khách truy cập mới\" ở phần Lưu lượng truy cập (số liệu lấy từ file traffic Shopee).\n- Phần Khách hàng: bỏ khối phân khúc bị lặp hai lần làm vỡ bố cục dưới hàng KPI; đổi tên \"Phân khúc khách hàng\" thành \"Phân loại khách hàng\" và hiển thị bằng biểu đồ donut kèm tỷ trọng trên tổng khách hàng trong kỳ. Khách tiềm năng tách riêng vì nằm ngoài tổng này.",
   "min_php": "8.1",
-  "released_at": "2026-06-18"
+  "released_at": "2026-07-10"
 }
