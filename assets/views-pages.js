@@ -37,7 +37,20 @@
   const dtShort = (s) => { const [d, t] = s.split(" "); const p = d.split("-"); return p[2] + "/" + p[1] + " " + t.slice(0, 5); };
 
   function kpiRow(items) {
-    return `<div class="g12">${items.map((o) => `<div data-collapse style="grid-column:span 3"><div class="card kpi reveal"><div class="kpi-label">${o.ico} ${o.label}</div><div class="kpi-value tnum">${o.value}${o.unit ? `<span class="unit">${o.unit}</span>` : ""}</div><div class="kpi-foot">${o.delta || ""}<span>${o.foot}</span></div></div></div>`).join("")}</div>`;
+    // ponytail: the 12-col grid divides evenly only for 1/2/3/4/6 cards; otherwise use an n-col grid
+    const even = 12 % items.length === 0;
+    const grid = even ? "" : ` style="grid-template-columns:repeat(${items.length},1fr)"`;
+    const span = even ? 12 / items.length : 1;
+    return `<div class="g12"${grid}>${items.map((o) => `<div data-collapse style="grid-column:span ${span}"><div class="card kpi reveal"><div class="kpi-label">${o.ico} ${o.label}</div><div class="kpi-value tnum">${o.value}${o.unit ? `<span class="unit">${o.unit}</span>` : ""}</div><div class="kpi-foot">${o.delta || ""}<span>${o.foot}</span></div></div></div>`).join("")}</div>`;
+  }
+
+  // Shared by the customers render (legend) and mount (donut) so both stay in sync.
+  // Hex vars only — Chart.js paints these straight onto canvas and chokes on oklch.
+  function segmentSlices(segments) {
+    return [
+      { label: _t("customers.segment.new"), value: segments.new_buyers || 0, color: "--brand" },
+      { label: _t("customers.segment.returning"), value: segments.returning_buyers || 0, color: "--lazada" },
+    ];
   }
 
   /* ===================== ORDERS ===================== */
@@ -223,14 +236,14 @@
         { label: _t("customers.summary.conversion"), ico: `<span class="kpi-ico">${UI.ICON.aov}</span>`, value: F.viDec(summary.conv_rate || 0, 2), unit: "%", delta: "", foot: _t("traffic.conv.sub") },
       ]);
 
-      // Segment cards
-      const segCards = [
-        { key: "new_buyers", label: _t("customers.segment.new"), count: segments.new_buyers || 0, color: "var(--pos)" },
-        { key: "returning_buyers", label: _t("customers.segment.returning"), count: segments.returning_buyers || 0, color: "var(--shopee)" },
-        { key: "potential_buyers", label: _t("customers.segment.potential"), count: segments.potential_buyers || 0, color: "var(--ink-3)" },
-      ].map((s) => `<div class="card card-pad" style="text-align:center">
-        <div style="font-size:28px;font-weight:800;letter-spacing:-.02em;color:${s.color}" class="tnum">${F.viInt(s.count)}</div>
-        <div style="font-size:12.5px;color:var(--ink-3);font-weight:600;margin-top:4px">${s.label}</div>
+      // Donut slices. new + returning partition unique_buyers, so they share that
+      // denominator. potential_buyers are prior-period buyers absent from this one,
+      // so they sit outside the total and stay off the donut.
+      const totalBuyers = summary.unique_buyers || 0;
+      const potential = segments.potential_buyers || 0;
+      const segLegend = segmentSlices(segments).map((s) => `<div style="display:flex;align-items:center;gap:9px;font-size:13px">
+        <span class="legend-swatch" style="background:var(${s.color})"></span><b>${s.label}</b>
+        <span style="margin-left:auto;font-weight:800" class="tnum">${F.viInt(s.value)}<span style="color:var(--ink-3);font-weight:600;margin-left:6px">${F.pct(totalBuyers ? s.value / totalBuyers * 100 : 0)}</span></span>
       </div>`).join("");
 
       // Top buyers table
@@ -253,7 +266,6 @@
       const fRows = totalNF.map((p) => `<div class="cmp-row"><div class="cmp-name">${UI.pdot(p.key)}${p.label}</div><div class="cmp-track"><div class="cmp-fill" style="width:${totalNFVal ? p.nf / Math.max(...totalNF.map((x) => x.nf), 1) * 100 : 0}%;background:var(--${p.key})"></div></div><div class="cmp-val">${F.viInt(p.nf)}</div></div>`).join("");
 
       return kpis + `
-      <div class="g12 section-gap">${segCards}</div>
       <div class="g12 section-gap">
         <div data-collapse style="grid-column:span 7" class="card">
           <div class="card-head"><div><div class="card-title">${_t("customers.top_buyers.title")}</div><div class="card-sub">${_tf("customers.top_buyers.sub", { period: S.periodLabel(st.period).toLowerCase() })}</div></div></div>
@@ -265,15 +277,27 @@
         </div>
       </div>
       <div class="g12 section-gap">
-        <div data-collapse style="grid-column:span 5" class="card">
+        <div data-collapse style="grid-column:span 7" class="card">
           <div class="card-head"><div><div class="card-title">${_t("kpi.new_followers")}</div><div class="card-sub">${_t("ovw.trend.all_platforms")} · ${S.periodLabel(st.period).toLowerCase()}</div></div></div>
           <div class="card-pad"><div style="font-size:30px;font-weight:800;letter-spacing:-.02em" class="tnum">${F.viInt(totalNFVal)} <span style="font-size:14px;color:var(--ink-3);font-weight:700">${_t("traffic.followers_new")}</span></div><div style="display:flex;flex-direction:column;gap:6px;margin-top:14px">${fRows}</div>
           <div class="note" style="margin-top:16px">${UI.ICON.people} ${_t("customers.followers.note")}</div></div>
         </div>
-        <div data-collapse style="grid-column:span 7" class="card">
-          <div class="card-head"><div><div class="card-title">${_t("customers.segment.title")}</div></div></div>
-          <div class="card-pad" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;padding-top:14px">
-            ${segCards}
+        <div data-collapse style="grid-column:span 5" class="card">
+          <div class="card-head"><div><div class="card-title">${_t("customers.segment.title")}</div><div class="card-sub">${S.periodLabel(st.period).toLowerCase()}</div></div></div>
+          <div class="card-pad">
+            <div style="display:grid;grid-template-columns:150px 1fr;gap:18px;align-items:center">
+              <div class="donut-wrap" style="height:150px"><canvas id="segDonut"></canvas>
+                <div class="donut-center"><div><div class="big tnum">${F.viInt(totalBuyers)}</div><div class="small">${_t("customers.segment.total_buyers")}</div></div></div>
+              </div>
+              <div>
+                <div style="display:flex;flex-direction:column;gap:9px">${segLegend}</div>
+                <div style="display:flex;align-items:center;gap:9px;font-size:13px;margin-top:11px;border-top:1px solid var(--surface-3);padding-top:11px">
+                  <span class="legend-swatch" style="background:var(--ink-3)"></span><b>${_t("customers.segment.potential")}</b>
+                  <span style="margin-left:auto;font-weight:800" class="tnum">${F.viInt(potential)}</span>
+                </div>
+              </div>
+            </div>
+            <div class="note" style="margin-top:14px">${UI.ICON.people} ${_t("customers.segment.potential_note")}</div>
           </div>
         </div>
       </div>
@@ -295,6 +319,9 @@
           window.App.rerender();
         });
       }
+
+      const segDonut = root.querySelector("#segDonut");
+      if (segDonut && cached) C.donut(segDonut, segmentSlices(cached.customer_segments || {}));
 
       // Retry handler when previous fetch errored.
       root.querySelector("#custRetry")?.addEventListener("click", () => {
@@ -391,6 +418,7 @@
       const kpis = kpiRow([
         { label: _t("kpi.pageviews"), ico: `<span class="kpi-ico">${UI.ICON.eye_traffic}</span>`, value: F.num(cur.pv), delta: cmp ? dd(cur.pv, cmp.pv) : "", foot: cmp ? `vs ${F.num(cmp.pv)}` : _t("common.page_views") },
         { label: _t("kpi.visits"), ico: `<span class="kpi-ico">${UI.ICON.people}</span>`, value: F.num(cur.visits), delta: cmp ? dd(cur.visits, cmp.visits) : "", foot: cmp ? `vs ${F.num(cmp.visits)}` : _t("kpi.visits").toLowerCase() },
+        { label: _t("kpi.new_visitors"), ico: `<span class="kpi-ico">${UI.ICON.people}</span>`, value: F.num(cur.nv), delta: cmp ? dd(cur.nv, cmp.nv) : "", foot: cmp ? `vs ${F.num(cmp.nv)}` : _t("traffic.visitors_new") },
         { label: _t("kpi.conversion"), ico: `<span class="kpi-ico">${UI.ICON.aov}</span>`, value: F.viDec(cur.conv, 2), unit: "%", delta: cmp ? dd(cur.conv, cmp.conv) : "", foot: _t("traffic.conv.sub") },
         { label: _t("kpi.new_followers"), ico: `<span class="kpi-ico">${UI.ICON.people}</span>`, value: F.viInt(cur.nf), delta: cmp ? dd(cur.nf, cmp.nf) : "", foot: cmp ? `vs ${F.viInt(cmp.nf)}` : _t("traffic.followers_new") },
       ]);
