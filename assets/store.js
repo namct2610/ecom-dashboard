@@ -618,14 +618,15 @@
   function trafficSeriesRange(range, platform) {
     return (DASH.trafficDaily || []).filter((d) => d.date >= range.start && d.date <= range.end).map((d) => {
       const get = (k) => (platform === "all" ? PKEYS.reduce((t, p) => t + ((d[p] && d[p][k]) || 0), 0) : (d[platform] ? d[platform][k] : 0));
-      return { date: d.date, pv: get("pv"), visits: get("visits"), nf: get("nf") };
+      return { date: d.date, pv: get("pv"), visits: get("visits"), nf: get("nf"), nv: get("nv") };
     });
   }
   function trafficAggRange(range, platform) {
     const s = trafficSeriesRange(range, platform);
     const pv = s.reduce((t, d) => t + d.pv, 0), visits = s.reduce((t, d) => t + d.visits, 0), nf = s.reduce((t, d) => t + d.nf, 0);
+    const nv = s.reduce((t, d) => t + d.nv, 0);
     const ord = aggRange(range, platform);
-    return { pv, visits, nf, orders: ord.orders, completed: ord.completed, conv: visits ? ord.completed / visits * 100 : 0 };
+    return { pv, visits, nf, nv, orders: ord.orders, completed: ord.completed, conv: visits ? ord.completed / visits * 100 : 0 };
   }
   function trafficAgg(months, platform) {
     const s = trafficSeries(months, platform);
