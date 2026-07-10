@@ -212,8 +212,33 @@ function build_customers_overview(PDO $pdo): array
     ];
 }
 
+/**
+ * Collation of orders.buyer_username, as a COLLATE clause (or '' if unknown).
+ *
+ * The temp table below is compared against orders.buyer_username. Without an
+ * explicit collation MySQL gives the temp table the server default, which is
+ * utf8mb4_0900_ai_ci on 8.0+ — while an orders table restored from an older
+ * dump is utf8mb4_general_ci. That mix raises errno 1267 on the comparison.
+ * Pinning the temp table to whatever orders actually uses keeps both cases working.
+ */
+function orders_buyer_collate_clause(PDO $pdo): string
+{
+    $collation = $pdo->query("
+        SELECT collation_name FROM information_schema.columns
+        WHERE table_schema = DATABASE() AND table_name = 'orders' AND column_name = 'buyer_username'
+    ")->fetchColumn();
+
+    // Interpolated, so accept only a plain utf8mb4 collation identifier.
+    if (!is_string($collation) || !preg_match('/^utf8mb4_[a-z0-9_]+$/', $collation)) {
+        return '';
+    }
+    return " COLLATE={$collation}";
+}
+
 function build_customer_snapshot_tables(PDO $pdo, string $where, array $params): void
 {
+    $collate = orders_buyer_collate_clause($pdo);
+
     $pdo->exec("DROP TEMPORARY TABLE IF EXISTS tmp_customer_orders");
     $pdo->exec("
         CREATE TEMPORARY TABLE tmp_customer_orders (
@@ -231,7 +256,7 @@ function build_customer_snapshot_tables(PDO $pdo, string $where, array $params):
             PRIMARY KEY (platform, order_id),
             INDEX idx_tmp_customer_buyer (buyer_username(100)),
             INDEX idx_tmp_customer_city (shipping_city(50), shipping_district(50))
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4{$collate}
     ");
 
     $tmpOrdersStmt = $pdo->prepare("
