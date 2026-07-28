@@ -285,6 +285,10 @@ class Updater
             CURLOPT_USERAGENT      => 'DashboardV3-Updater/1.0',
             CURLOPT_FOLLOWLOCATION => true,
             CURLOPT_MAXREDIRS      => 3,
+            // Redirects are followed, so pin both hops to HTTP(S): a redirect to
+            // file:// would otherwise turn a download into a local file read.
+            CURLOPT_PROTOCOLS       => CURLPROTO_HTTP | CURLPROTO_HTTPS,
+            CURLOPT_REDIR_PROTOCOLS => CURLPROTO_HTTP | CURLPROTO_HTTPS,
         ]);
         $ok       = curl_exec($ch);
         $errno    = curl_errno($ch);

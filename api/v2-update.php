@@ -39,6 +39,33 @@ $updater = new Updater($appRoot);
 const V2_MANIFEST_URL = 'https://api.github.com/repos/namct2610/ecom-dashboard/contents/manifest.json?ref=main';
 const V2_MANIFEST_CACHE_TTL = 60;
 
+/** Repo that may serve updates — must match V2_MANIFEST_URL's repo. */
+const V2_UPDATE_REPO = 'namct2610/ecom-dashboard';
+
+/**
+ * True only for https URLs serving this project's own release artifacts.
+ *
+ * Hosts are matched exactly (not by suffix) so a lookalike such as
+ * "raw.githubusercontent.com.evil.tld" cannot slip through, and the path must
+ * sit under the expected repo so another GitHub project cannot be used either.
+ */
+function update_url_is_trusted(string $url): bool
+{
+    $parts = parse_url($url);
+    if (!is_array($parts)) return false;
+
+    $scheme = strtolower((string) ($parts['scheme'] ?? ''));
+    $host   = strtolower((string) ($parts['host'] ?? ''));
+    $path   = (string) ($parts['path'] ?? '');
+
+    if ($scheme !== 'https') return false;
+    if (!in_array($host, ['raw.githubusercontent.com', 'github.com', 'codeload.github.com'], true)) {
+        return false;
+    }
+
+    return str_starts_with($path, '/' . V2_UPDATE_REPO . '/');
+}
+
 function v2_update_get_setting(PDO $pdo, string $key, string $default = ''): string
 {
     $stmt = $pdo->prepare('SELECT setting_value FROM app_settings WHERE setting_key = ?');
@@ -134,6 +161,13 @@ try {
         }
         if (!filter_var($downloadUrl, FILTER_VALIDATE_URL)) {
             json_error('download_url không hợp lệ.');
+        }
+        // The URL arrives in the request body, so without this check an admin
+        // session could point the updater at any host and have its zip unpacked
+        // over the app root — i.e. arbitrary code execution, plus an SSRF probe
+        // primitive. Updates may only ever come from this project's own repo.
+        if (!update_url_is_trusted($downloadUrl)) {
+            json_error('download_url phải trỏ tới kho phát hành chính thức trên GitHub.', 400);
         }
         if (!$updater->hasUpdate($version)) {
             json_error('Phiên bản v2 này không mới hơn phiên bản hiện tại.');
