@@ -6,6 +6,7 @@ require dirname(__DIR__) . '/includes/bootstrap.php';
 
 require_auth();
 require_method('POST');
+require_csrf();
 
 try {
     set_time_limit(300);
