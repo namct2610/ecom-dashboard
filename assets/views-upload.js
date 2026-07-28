@@ -44,13 +44,7 @@
     setTimeout(() => { local.msg = null; window.App.rerender(); }, 5000);
   }
 
-  function flashMsg() {
-    if (!local.msg) return "";
-    const isOk = local.msg.kind === "ok";
-    const bg = isOk ? "color-mix(in oklch, var(--pos) 12%, transparent)" : "color-mix(in oklch, var(--neg) 12%, transparent)";
-    const fg = isOk ? "var(--pos)" : "var(--neg)";
-    return `<div style="padding:10px 14px;border-radius:var(--r-ctrl);background:${bg};color:${fg};font-weight:700;font-size:13px;margin-bottom:14px">${local.msg.text}</div>`;
-  }
+  const flashMsg = () => window.UI.flashMsg(local.msg);
 
   function platPill(p) {
     if (!p) return "—";

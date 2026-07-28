@@ -5,11 +5,7 @@
   const S = window.Store, F = window.F, UI = window.UI, C = window.Charts;
   const _t = (k, f) => (window.t ? window.t(k, f) : (f || k));
   const _tf = (k, v) => (window.tf ? window.tf(k, v) : k);
-  const escHtml = (s) => String(s || "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
+  const escHtml = UI.esc;
   let detailLoadingKey = null;
 
   const CAL_D = ["mon","tue","wed","thu","fri","sat","sun"];
@@ -76,10 +72,10 @@
         : S.DASH.recentOrders;
       const recent = recentSource.filter((o) => plat === "all" || o.platform === plat).slice(0, 40);
       const rows = recent.map((o) => { const [lab, cls] = statusInfo(o.status); return `<tr>
-        <td class="mono" style="font-size:11.5px">${o.order_id}</td>
+        <td class="mono" style="font-size:11.5px">${escHtml(o.order_id)}</td>
         <td><span class="pchip">${UI.pdot(o.platform)}${S.PLAT[o.platform].label.replace(" Shop", "")}</span></td>
-        <td><div class="pname" style="max-width:280px">${(o.product || "").replace(/^\[.*?\]\s*/, "")}</div>${o.items > 1 ? `<span style="font-size:11px;color:var(--ink-3)">+${o.items - 1} ${_t("th.product").toLowerCase()}</span>` : ""}</td>
-        <td>${o.city}</td>
+        <td><div class="pname" style="max-width:280px">${escHtml((o.product || "").replace(/^\[.*?\]\s*/, ""))}</div>${o.items > 1 ? `<span style="font-size:11px;color:var(--ink-3)">+${o.items - 1} ${_t("th.product").toLowerCase()}</span>` : ""}</td>
+        <td>${escHtml(o.city)}</td>
         <td class="num tnum">${F.moneyFull(o.amount)}</td>
         <td><span class="status-pill ${cls}">${lab}</span></td>
         <td style="color:var(--ink-3);font-size:12px" class="hide-md">${dtShort(o.created)}</td></tr>`; }).join("");
@@ -131,7 +127,7 @@
       const list = S.products(st.period, prodMetric, st.platform).slice(0, 15);
       const maxV = Math.max(...list.map((p) => prodMetric === "qty" ? p.qty : p.revenue), 1);
       const rows = list.map((p, i) => `<tr>
-        <td><div class="prod"><span class="rank">${i + 1}</span><div style="min-width:0"><div class="pname">${p.cleanName}</div><div class="psku">${p.sku}</div></div></div></td>
+        <td><div class="prod"><span class="rank">${i + 1}</span><div style="min-width:0"><div class="pname">${escHtml(p.cleanName)}</div><div class="psku">${escHtml(p.sku)}</div></div></div></td>
         <td><span class="tag" style="border-color:transparent;background:color-mix(in oklch, ${S.CAT[p.cat].color.startsWith("--") ? "var(" + S.CAT[p.cat].color + ")" : S.CAT[p.cat].color} 14%, transparent);color:${S.CAT[p.cat].color.startsWith("--") ? "var(" + S.CAT[p.cat].color + ")" : S.CAT[p.cat].color}">${S.catLabel(p.cat)}</span></td>
         <td><span class="pchip">${UI.pdot(p.platform)}${S.PLAT[p.platform].label.replace(" Shop", "")}</span></td>
         <td class="num">${F.viInt(p.qty)}</td>
@@ -262,7 +258,7 @@
 
       // City distribution
       const maxG = Math.max(...cities.map((g) => g.orders), 1);
-      const geoRows = cities.map((g) => `<tr><td>${g.city}</td><td class="num">${F.viInt(g.orders)}</td><td class="num">${F.pct(g.percentage ?? 0)}</td><td class="num" style="width:160px"><div class="cmp-track"><div class="cmp-fill" style="width:${g.orders / maxG * 100}%;background:var(--brand)"></div></div></td></tr>`).join("");
+      const geoRows = cities.map((g) => `<tr><td>${escHtml(g.city)}</td><td class="num">${F.viInt(g.orders)}</td><td class="num">${F.pct(g.percentage ?? 0)}</td><td class="num" style="width:160px"><div class="cmp-track"><div class="cmp-fill" style="width:${g.orders / maxG * 100}%;background:var(--brand)"></div></div></td></tr>`).join("");
 
       // Warehouse distribution. Populated only by re-imported order files, so it
       // can be empty on data uploaded before the warehouse column existed.
@@ -383,7 +379,7 @@
 
       const orderRows = orders.slice(0, 20).map((o) => `<tr>
         <td><span class="pchip">${UI.pdot(o.platform === "tiktokshop" ? "tiktok" : o.platform)}${S.PLAT[o.platform === "tiktokshop" ? "tiktok" : o.platform] ? S.PLAT[o.platform === "tiktokshop" ? "tiktok" : o.platform].label.replace(" Shop", "") : o.platform}</span></td>
-        <td class="mono" style="font-size:11.5px">${o.order_id}</td>
+        <td class="mono" style="font-size:11.5px">${escHtml(o.order_id)}</td>
         <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${(o.products || "").split(" • ").slice(0, 2).join(" · ") || "—"}</td>
         <td class="num tnum">${F.moneyFull(o.order_total)}</td>
         <td>${statusPill(o.normalized_status)}</td>

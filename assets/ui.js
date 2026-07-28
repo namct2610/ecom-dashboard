@@ -48,6 +48,30 @@
     return c;
   }
 
-  window.UI = { ICON, deltaChip, pdot, pchip, platLogo, sparkCanvas, cssColor };
+  // Escape before interpolating ANY value that came from outside the app —
+  // marketplace exports, uploaded filenames, user-entered names. Safe for both
+  // text nodes and quoted attributes. ui.js loads before every view, so this is
+  // the one copy; don't re-declare it per file.
+  function esc(s) {
+    return String(s ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
+  // Inline ok/error banner. Was copy-pasted byte-for-byte into five view files;
+  // kept here so the escaping below can't drift back out of one of them —
+  // callers pass server error strings straight into msg.text.
+  function flashMsg(msg) {
+    if (!msg) return "";
+    const isOk = msg.kind === "ok";
+    const bg = isOk ? "color-mix(in oklch, var(--pos) 12%, transparent)" : "color-mix(in oklch, var(--neg) 12%, transparent)";
+    const fg = isOk ? "var(--pos)" : "var(--neg)";
+    return `<div style="padding:10px 14px;border-radius:var(--r-ctrl);background:${bg};color:${fg};font-weight:700;font-size:13px;margin-bottom:14px">${esc(msg.text)}</div>`;
+  }
+
+  window.UI = { ICON, deltaChip, pdot, pchip, platLogo, sparkCanvas, cssColor, esc, flashMsg };
   window.Views = window.Views || {};
 })();

@@ -50,13 +50,7 @@
     return d.toLocaleDateString("vi-VN") + " " + d.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
   }
 
-  function flashMsg() {
-    if (!local.msg) return "";
-    const isOk = local.msg.kind === "ok";
-    const bg = isOk ? "color-mix(in oklch, var(--pos) 12%, transparent)" : "color-mix(in oklch, var(--neg) 12%, transparent)";
-    const fg = isOk ? "var(--pos)" : "var(--neg)";
-    return `<div style="padding:10px 14px;border-radius:var(--r-ctrl);background:${bg};color:${fg};font-weight:700;font-size:13px;margin-bottom:14px">${local.msg.text}</div>`;
-  }
+  const flashMsg = () => window.UI.flashMsg(local.msg);
 
   function summaryRow() {
     return `
@@ -94,8 +88,8 @@
               ${(u.username || "?").slice(0, 2).toUpperCase()}
             </div>
             <div style="min-width:0">
-              <div style="font-weight:700">${u.username}${isSelf ? ` <span style="font-size:11px;color:var(--ink-3)">(${t("common.you")})</span>` : ''}</div>
-              <div style="font-size:12px;color:var(--ink-3)">${u.full_name || "—"}</div>
+              <div style="font-weight:700">${window.UI.esc(u.username)}${isSelf ? ` <span style="font-size:11px;color:var(--ink-3)">(${t("common.you")})</span>` : ''}</div>
+              <div style="font-size:12px;color:var(--ink-3)">${window.UI.esc(u.full_name || "—")}</div>
             </div>
           </div>
         </td>
@@ -146,12 +140,12 @@
 
           <div class="field-row">
             <label class="field-label">${t("th.username")}</label>
-            <input id="umUsername" class="v2-input" type="text" value="${u.username || ''}" ${isEdit ? "disabled" : ""} placeholder="${t("users.modal.placeholder.username")}" />
+            <input id="umUsername" class="v2-input" type="text" value="${window.UI.esc(u.username || '')}" ${isEdit ? "disabled" : ""} placeholder="${t("users.modal.placeholder.username")}" />
             <div class="field-hint">${t("users.modal.username_hint")}</div>
           </div>
           <div class="field-row">
             <label class="field-label">${t("settings.account.full_name")}</label>
-            <input id="umFullName" class="v2-input" type="text" value="${(u.full_name || '').replace(/"/g, '&quot;')}" />
+            <input id="umFullName" class="v2-input" type="text" value="${window.UI.esc(u.full_name || '')}" />
           </div>
           <div class="field-row">
             <label class="field-label">${isEdit ? t("users.modal.pwd_keep") : t("users.modal.pwd_set")}</label>

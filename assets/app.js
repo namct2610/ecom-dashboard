@@ -20,9 +20,7 @@
     const daily = (S.DASH && S.DASH.daily) || [];
     return daily.length ? daily[daily.length - 1].date : ((S.DASH.latestMonth || "2026-01") + "-01");
   }
-  function escHtml(s) {
-    return String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\"/g, "&quot;");
-  }
+  const escHtml = window.UI.esc;
   const CAL_M = ["jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec"];
   const CAL_D = ["mon","tue","wed","thu","fri","sat","sun"];
   function fmtISODate(d) { return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
@@ -393,7 +391,7 @@
       closePop();
       const u = (await fetchAvatarUser()) || {};
       const items = [];
-      const userLine = `<div class="menu-label">${T("menu.signed_in_as")}: <b>${(u.username || "—").replace(/</g, "&lt;")}</b></div>`;
+      const userLine = `<div class="menu-label">${T("menu.signed_in_as")}: <b>${escHtml(u.username || "—")}</b></div>`;
       const m = document.createElement("div"); m.className = "menu";
       m.innerHTML = userLine +
         `<div class="menu-item" data-act="logout" style="color:var(--neg)">

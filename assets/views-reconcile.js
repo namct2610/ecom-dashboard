@@ -42,13 +42,7 @@
     setTimeout(() => { local.msg = null; window.App.rerender(); }, 5000);
   }
 
-  function flashMsg() {
-    if (!local.msg) return "";
-    const isOk = local.msg.kind === "ok";
-    const bg = isOk ? "color-mix(in oklch, var(--pos) 12%, transparent)" : "color-mix(in oklch, var(--neg) 12%, transparent)";
-    const fg = isOk ? "var(--pos)" : "var(--neg)";
-    return `<div style="padding:10px 14px;border-radius:var(--r-ctrl);background:${bg};color:${fg};font-weight:700;font-size:13px;margin-bottom:14px">${local.msg.text}</div>`;
-  }
+  const flashMsg = () => window.UI.flashMsg(local.msg);
 
   /* ── data fetchers ────────────────────────────────────────── */
 
@@ -248,11 +242,11 @@
                 <th>${_t("th.uploaded_at")}</th><th></th>
               </tr></thead>
               <tbody>${local.files.map((f) => `<tr>
-                <td style="font-weight:600;max-width:340px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${(f.original_filename||f.filename||'').replace(/"/g,'&quot;')}">${f.original_filename || f.filename || "—"}</td>
+                <td style="font-weight:600;max-width:340px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${window.UI.esc(f.original_filename||f.filename||'')}">${window.UI.esc(f.original_filename || f.filename || "—")}</td>
                 <td class="num tnum">${formatBytes(f.size)}</td>
-                <td>${(f.months || []).join(", ") || "—"}</td>
+                <td>${window.UI.esc((f.months || []).join(", ") || "—")}</td>
                 <td style="font-size:12px;color:var(--ink-3)">${fmtDate(f.uploaded_at)}</td>
-                <td class="num"><button class="iconbtn-sq" data-del-file="${f.filename}" aria-label="${_t("common.delete")}" style="color:var(--neg)">
+                <td class="num"><button class="iconbtn-sq" data-del-file="${window.UI.esc(f.filename)}" aria-label="${_t("common.delete")}" style="color:var(--neg)">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>
                 </button></td>
               </tr>`).join("")}</tbody>
