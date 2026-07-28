@@ -47,13 +47,7 @@
 
   /* ── HTML fragments ─────────────────────────────────────────── */
 
-  function flashMsg() {
-    if (!local.msg) return "";
-    const isOk = local.msg.kind === "ok";
-    const bg = isOk ? "color-mix(in oklch, var(--pos) 12%, transparent)" : "color-mix(in oklch, var(--neg) 12%, transparent)";
-    const fg = isOk ? "var(--pos)" : "var(--neg)";
-    return `<div style="padding:10px 14px;border-radius:var(--r-ctrl);background:${bg};color:${fg};font-weight:700;font-size:13px;margin-bottom:14px">${local.msg.text}</div>`;
-  }
+  const flashMsg = () => window.UI.flashMsg(local.msg);
 
   function accountCard() {
     const u = local.user || {};
@@ -68,7 +62,7 @@
         <div class="card-pad">
           <div class="field-row">
             <label class="field-label">${t("settings.account.full_name")}</label>
-            <input id="accFullName" class="v2-input" type="text" value="${(u.full_name || "").replace(/"/g, '&quot;')}" placeholder="${t("settings.account.placeholder.full_name")}" maxlength="120" />
+            <input id="accFullName" class="v2-input" type="text" value="${escapeHtml(u.full_name || "")}" placeholder="${t("settings.account.placeholder.full_name")}" maxlength="120" />
           </div>
           <div style="display:flex;justify-content:flex-end;margin-bottom:24px">
             <button class="ctrl-btn on" id="btnSaveProfile" style="background:var(--brand);border-color:var(--brand);color:#fff">${t("settings.account.save_profile")}</button>
@@ -194,9 +188,7 @@
       </div>`;
   }
 
-  function escapeHtml(s) {
-    return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
-  }
+  const escapeHtml = UI.esc;
 
   /* ── DB export card ─────────────────────────────────────────── */
 

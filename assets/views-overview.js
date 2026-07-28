@@ -110,7 +110,7 @@
     const geo = S.cityDistribution(st.period, plat);
     const geoRows = geo.map((g) => `
       <div class="cmp-row" style="grid-template-columns:140px 1fr auto">
-        <div class="cmp-name" style="font-weight:600">${g.city}</div>
+        <div class="cmp-name" style="font-weight:600">${UI.esc(g.city)}</div>
         <div class="cmp-track"><div class="cmp-fill" style="width:${g.pct}%;background:${g.other ? "var(--ink-3)" : "var(--brand)"}"></div></div>
         <div class="cmp-val">${F.viInt(g.orders)} <span style="color:var(--ink-3);font-weight:600">(${F.pct(g.pct, 0)})</span></div>
       </div>`).join("");
@@ -122,7 +122,7 @@
     const prods = S.products(st.period, "rev", plat).slice(0, 3);
     const prodRows = prods.map((p, i) => `
       <tr>
-        <td><div class="prod"><span class="rank">${i + 1}</span><div style="min-width:0"><div class="pname">${p.cleanName}</div><div class="psku">${p.sku} · ${UI.pchip(p.platform)}</div></div></div></td>
+        <td><div class="prod"><span class="rank">${i + 1}</span><div style="min-width:0"><div class="pname">${UI.esc(p.cleanName)}</div><div class="psku">${UI.esc(p.sku)} · ${UI.pchip(p.platform)}</div></div></div></td>
         <td class="num">${F.viInt(p.qty)}</td>
         <td class="num"><b>${F.money(p.revenue)}</b></td>
       </tr>`).join("");
