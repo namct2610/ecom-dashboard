@@ -96,12 +96,16 @@ function clear_auth_session(): void
 
     if (ini_get('session.use_cookies')) {
         $params = session_get_cookie_params();
-        setcookie(session_name(), '', time() - 42000, [
-            'path'     => $params['path'] ?? '/',
+        // The options-array form of setcookie() takes exactly three arguments and
+        // carries the expiry inside the array. Passing the expiry as argument #3
+        // *and* an array as #4 makes PHP read the array as $path and throw.
+        setcookie(session_name(), '', [
+            'expires'  => time() - 42000,
+            'path'     => $params['path'] ?: '/',
             'domain'   => $params['domain'] ?? '',
             'secure'   => (bool) ($params['secure'] ?? false),
             'httponly' => (bool) ($params['httponly'] ?? true),
-            'samesite' => $params['samesite'] ?? 'Lax',
+            'samesite' => $params['samesite'] ?: 'Lax',
         ]);
     }
 
