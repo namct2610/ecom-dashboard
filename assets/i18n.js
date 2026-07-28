@@ -196,6 +196,9 @@
     "geo.other": "Khác",
 
     "customers.geo.title": "Phân bố đơn theo khu vực",
+    "customers.warehouse.title": "Phân bổ đơn theo kho hàng",
+    "customers.warehouse.col": "Kho hàng",
+    "customers.warehouse.empty": "Chưa có dữ liệu kho. Tải lại file đơn hàng mới để cập nhật.",
     "customers.followers.new": "người mới",
     "customers.followers.note": "Hai thị trường lớn nhất là <b>Hà Nội</b> và <b>TP.HCM</b>, chiếm phần lớn đơn hàng.",
     "customers.summary.total_orders": "Tổng đơn hoàn thành",
@@ -761,6 +764,9 @@
     "geo.other": "Other",
 
     "customers.geo.title": "Order distribution by region",
+    "customers.warehouse.title": "Order distribution by warehouse",
+    "customers.warehouse.col": "Warehouse",
+    "customers.warehouse.empty": "No warehouse data yet. Re-upload a recent order file to populate it.",
     "customers.followers.new": "new followers",
     "customers.followers.note": "The two largest markets are <b>Hanoi</b> and <b>HCMC</b>, accounting for most orders.",
     "customers.summary.total_orders": "Total completed orders",

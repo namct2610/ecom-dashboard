@@ -103,6 +103,30 @@ function build_customers_overview(PDO $pdo): array
         'percentage' => $totalWithCity > 0 ? round(((int) $c['orders']) / $totalWithCity * 100, 1) : 0,
     ], $cities);
 
+    // Warehouse distribution. Unlike city, all three platforms carry it, and it
+    // is populated only from the newer order exports — orders imported before the
+    // warehouse column existed have '' and simply drop out of this breakdown.
+    $totalWithWarehouse = (int) $pdo->query("
+        SELECT COUNT(*) FROM tmp_customer_orders WHERE warehouse != ''
+    ")->fetchColumn();
+
+    $warehouseStmt = $pdo->query("
+        SELECT warehouse,
+               COUNT(*) AS orders,
+               COALESCE(SUM(order_revenue), 0) AS revenue
+        FROM tmp_customer_orders
+        WHERE warehouse != ''
+        GROUP BY warehouse
+        ORDER BY orders DESC, revenue DESC
+        LIMIT 12
+    ");
+    $warehouseList = array_map(static fn(array $w): array => [
+        'warehouse'  => (string) $w['warehouse'],
+        'orders'     => (int) $w['orders'],
+        'revenue'    => (float) $w['revenue'],
+        'percentage' => $totalWithWarehouse > 0 ? round(((int) $w['orders']) / $totalWithWarehouse * 100, 1) : 0,
+    ], $warehouseStmt->fetchAll());
+
     $hcmStmt = $pdo->query("
         SELECT shipping_district AS district,
                COUNT(*) AS orders
@@ -204,6 +228,8 @@ function build_customers_overview(PDO $pdo): array
         'buyer_stats'       => $buyerStats,
         'city_distribution'   => $cityList,
         'city_total'          => $totalWithCity,
+        'warehouse_distribution' => $warehouseList,
+        'warehouse_total'        => $totalWithWarehouse,
         'city_others_orders'  => $othersOrders,
         'city_others_pct'     => $totalWithCity > 0 ? round($othersOrders / $totalWithCity * 100, 1) : 0,
         'hcm_districts'     => $hcmStmt->fetchAll(),
@@ -252,6 +278,7 @@ function build_customer_snapshot_tables(PDO $pdo, string $where, array $params):
             shipping_address VARCHAR(500) NOT NULL DEFAULT '',
             shipping_district VARCHAR(100) NOT NULL DEFAULT '',
             shipping_city VARCHAR(100) NOT NULL DEFAULT '',
+            warehouse VARCHAR(255) NOT NULL DEFAULT '',
             payment_method VARCHAR(100) NOT NULL DEFAULT '',
             PRIMARY KEY (platform, order_id),
             INDEX idx_tmp_customer_buyer (buyer_username(100)),
@@ -263,7 +290,7 @@ function build_customer_snapshot_tables(PDO $pdo, string $where, array $params):
         INSERT INTO tmp_customer_orders (
             platform, order_id, buyer_username, buyer_name, order_created_at,
             item_qty, order_revenue, shipping_address, shipping_district,
-            shipping_city, payment_method
+            shipping_city, warehouse, payment_method
         )
         SELECT platform,
                order_id,
@@ -275,6 +302,7 @@ function build_customer_snapshot_tables(PDO $pdo, string $where, array $params):
                COALESCE(MAX(shipping_address), '') AS shipping_address,
                COALESCE(MAX(shipping_district), '') AS shipping_district,
                COALESCE(MAX(shipping_city), '') AS shipping_city,
+               COALESCE(MAX(warehouse), '') AS warehouse,
                COALESCE(MAX(payment_method), '') AS payment_method
         FROM orders {$where}
         GROUP BY platform, order_id

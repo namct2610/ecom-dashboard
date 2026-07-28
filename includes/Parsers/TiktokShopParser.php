@@ -32,6 +32,7 @@ final class TiktokShopParser extends BaseParser
         'shipping_city'      => ['province', 'city'],
         'shipping_district'  => ['district'],
         'shipping_address'   => ['detail address'],
+        'warehouse'          => ['warehouse name', 'warehouse'],
     ];
 
     public function parse(int $uploadId): array
@@ -83,6 +84,7 @@ final class TiktokShopParser extends BaseParser
                 'shipping_address'       => $this->cell($row, $col['shipping_address'] ?? null),
                 'shipping_district'      => $this->cell($row, $col['shipping_district'] ?? null),
                 'shipping_city'          => $city,
+                'warehouse'              => $this->cell($row, $col['warehouse'] ?? null),
                 'payment_method'         => $this->cell($row, $col['payment_method'] ?? null),
                 'sku'                    => $sku,
                 'product_name'           => $this->cell($row, $col['product_name'] ?? null) ?? '',

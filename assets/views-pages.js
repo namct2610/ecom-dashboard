@@ -225,6 +225,7 @@
       const segments = data.customer_segments || {};
       const buyers = data.buyer_stats || [];
       const cities = data.city_distribution || [];
+      const warehouses = data.warehouse_distribution || [];
 
       const totalNF = S.PKEYS.map((k) => ({ key: k, ...S.PLAT[k], ...S.trafficAggRange(range, k) }));
       const totalNFVal = totalNF.reduce((t, p) => t + p.nf, 0);
@@ -263,6 +264,13 @@
       const maxG = Math.max(...cities.map((g) => g.orders), 1);
       const geoRows = cities.map((g) => `<tr><td>${g.city}</td><td class="num">${F.viInt(g.orders)}</td><td class="num">${F.pct(g.percentage ?? 0)}</td><td class="num" style="width:160px"><div class="cmp-track"><div class="cmp-fill" style="width:${g.orders / maxG * 100}%;background:var(--brand)"></div></div></td></tr>`).join("");
 
+      // Warehouse distribution. Populated only by re-imported order files, so it
+      // can be empty on data uploaded before the warehouse column existed.
+      const maxW = Math.max(...warehouses.map((w) => w.orders), 1);
+      const whRows = warehouses.length
+        ? warehouses.map((w) => `<tr><td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(w.warehouse)}</td><td class="num">${F.viInt(w.orders)}</td><td class="num">${F.pct(w.percentage ?? 0)}</td><td class="num" style="width:160px"><div class="cmp-track"><div class="cmp-fill" style="width:${w.orders / maxW * 100}%;background:var(--lazada)"></div></div></td></tr>`).join("")
+        : `<tr><td colspan="4" style="text-align:center;color:var(--ink-3);padding:18px 0">${_t("customers.warehouse.empty")}</td></tr>`;
+
       const fRows = totalNF.map((p) => `<div class="cmp-row"><div class="cmp-name">${UI.pdot(p.key)}${p.label}</div><div class="cmp-track"><div class="cmp-fill" style="width:${totalNFVal ? p.nf / Math.max(...totalNF.map((x) => x.nf), 1) * 100 : 0}%;background:var(--${p.key})"></div></div><div class="cmp-val">${F.viInt(p.nf)}</div></div>`).join("");
 
       return kpis + `
@@ -271,9 +279,15 @@
           <div class="card-head"><div><div class="card-title">${_t("customers.top_buyers.title")}</div><div class="card-sub">${_tf("customers.top_buyers.sub", { period: S.periodLabel(st.period).toLowerCase() })}</div></div></div>
           <div class="card-pad" style="padding:6px;overflow-x:auto"><table class="tbl"><thead><tr><th>#</th><th>${_t("customers.table.username")}</th><th class="num">${_t("th.orders")}</th><th class="num">${_t("th.revenue")}</th><th></th></tr></thead><tbody>${buyerRows}</tbody></table></div>
         </div>
-        <div data-collapse style="grid-column:span 5" class="card">
-          <div class="card-head"><div><div class="card-title">${_t("customers.geo.title")}</div><div class="card-sub">${_t("ovw.geo.by_orders")} · ${S.periodLabel(st.period).toLowerCase()}</div></div></div>
-          <div class="card-pad" style="padding:6px"><table class="tbl"><thead><tr><th>${_t("th.city")}</th><th class="num">${_t("th.orders")}</th><th class="num">${_t("th.share")}</th><th></th></tr></thead><tbody>${geoRows}</tbody></table></div>
+        <div data-collapse style="grid-column:span 5;display:flex;flex-direction:column;gap:16px">
+          <div class="card">
+            <div class="card-head"><div><div class="card-title">${_t("customers.geo.title")}</div><div class="card-sub">${_t("ovw.geo.by_orders")} · ${S.periodLabel(st.period).toLowerCase()}</div></div></div>
+            <div class="card-pad" style="padding:6px"><table class="tbl"><thead><tr><th>${_t("th.city")}</th><th class="num">${_t("th.orders")}</th><th class="num">${_t("th.share")}</th><th></th></tr></thead><tbody>${geoRows}</tbody></table></div>
+          </div>
+          <div class="card">
+            <div class="card-head"><div><div class="card-title">${_t("customers.warehouse.title")}</div><div class="card-sub">${_t("ovw.geo.by_orders")} · ${S.periodLabel(st.period).toLowerCase()}</div></div></div>
+            <div class="card-pad" style="padding:6px"><table class="tbl"><thead><tr><th>${_t("customers.warehouse.col")}</th><th class="num">${_t("th.orders")}</th><th class="num">${_t("th.share")}</th><th></th></tr></thead><tbody>${whRows}</tbody></table></div>
+          </div>
         </div>
       </div>
       <div class="g12 section-gap">

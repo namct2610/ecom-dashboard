@@ -1,7 +1,7 @@
 {
-  "version": "3.4.49",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.49/release/dashboard-v3-3.4.49.zip",
-  "changelog": "- Sửa lỗi trang Khách hàng trả về lỗi 500 khi cơ sở dữ liệu được phục hồi từ bản sao lưu cũ: bảng tạm dùng collation mặc định của máy chủ, không khớp với bảng `orders` (`utf8mb4_general_ci`), khiến truy vấn khách hàng tiềm năng báo \"Illegal mix of collations\". Nay bảng tạm luôn dùng đúng collation của `orders`.\n- Thêm thẻ KPI \"Khách truy cập mới\" ở phần Lưu lượng truy cập (số liệu lấy từ file traffic Shopee).\n- Phần Khách hàng: bỏ khối phân khúc bị lặp hai lần làm vỡ bố cục dưới hàng KPI; đổi tên \"Phân khúc khách hàng\" thành \"Phân loại khách hàng\" và hiển thị bằng biểu đồ donut kèm tỷ trọng trên tổng khách hàng trong kỳ. Khách tiềm năng tách riêng vì nằm ngoài tổng này.",
+  "version": "3.4.50",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.50/release/dashboard-v3-3.4.50.zip",
+  "changelog": "- Sửa lỗi HTTP 500 làm hỏng các tab (rõ nhất là tab Khách hàng) và nút Đăng xuất: khi phiên đăng nhập quá hạn (2 giờ không thao tác hoặc 8 giờ kể từ lúc đăng nhập) hoặc khi bấm Đăng xuất, hàm xoá cookie phiên gọi sai tham số nên báo lỗi máy chủ thay vì đưa về màn hình đăng nhập. Nay đã sửa; hết hạn phiên sẽ trả về đăng nhập bình thường và đăng xuất hoạt động lại.\n- Thêm phần \"Phân bổ đơn theo kho hàng\" ngay dưới \"Phân bố đơn theo khu vực\" ở tab Khách hàng, lấy từ cột kho hàng trong file đơn của cả Shopee, Lazada và TikTok. Lưu ý: dữ liệu đơn đã nhập trước bản này chưa có thông tin kho — tải lại file đơn hàng mới để phần này hiển thị số liệu.",
   "min_php": "8.1",
   "released_at": "2026-07-10"
 }

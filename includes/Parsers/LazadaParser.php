@@ -18,6 +18,7 @@ final class LazadaParser extends BaseParser
         'buyer_name'      => ['customername', 'customer name', 'shippingname', 'shipping name'],
         'shipping_city'   => ['shippingcity', 'shipping city'],
         'shipping_region' => ['shippingregion', 'shipping region'],
+        'warehouse'       => ['warehouse'],
         'payment_method'  => ['paymethod', 'pay method'],
         'sku'             => ['sellersku', 'seller sku'],
         'product_name'    => ['itemname', 'item name'],
@@ -81,6 +82,7 @@ final class LazadaParser extends BaseParser
                 'shipping_address'       => null, // Lazada masks address
                 'shipping_district'      => null,
                 'shipping_city'          => $city,
+                'warehouse'              => $this->cell($row, $col['warehouse'] ?? null),
                 'payment_method'         => $this->cell($row, $col['payment_method'] ?? null),
                 'sku'                    => $sku,
                 'product_name'           => $this->cell($row, $col['product_name'] ?? null) ?? '',
