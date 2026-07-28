@@ -1,7 +1,7 @@
 {
-  "version": "3.4.50",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.50/release/dashboard-v3-3.4.50.zip",
-  "changelog": "- Sửa lỗi HTTP 500 làm hỏng các tab (rõ nhất là tab Khách hàng) và nút Đăng xuất: khi phiên đăng nhập quá hạn (2 giờ không thao tác hoặc 8 giờ kể từ lúc đăng nhập) hoặc khi bấm Đăng xuất, hàm xoá cookie phiên gọi sai tham số nên báo lỗi máy chủ thay vì đưa về màn hình đăng nhập. Nay đã sửa; hết hạn phiên sẽ trả về đăng nhập bình thường và đăng xuất hoạt động lại.\n- Thêm phần \"Phân bổ đơn theo kho hàng\" ngay dưới \"Phân bố đơn theo khu vực\" ở tab Khách hàng, lấy từ cột kho hàng trong file đơn của cả Shopee, Lazada và TikTok. Lưu ý: dữ liệu đơn đã nhập trước bản này chưa có thông tin kho — tải lại file đơn hàng mới để phần này hiển thị số liệu.",
+  "version": "3.4.51",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.51/release/dashboard-v3-3.4.51.zip",
+  "changelog": "Bản vá bảo mật — khuyến nghị cập nhật sớm.\n- Vá lỗi chèn mã độc (XSS): dữ liệu từ file Excel tải lên và từ sàn (tên tỉnh, tên sản phẩm, mã đơn, tên khách, tên file) được hiển thị mà không lọc, nên một file đơn hàng bị chỉnh sửa có thể chạy mã trong trình duyệt của người đang xem báo cáo. Nay toàn bộ dữ liệu ngoài đều được lọc trước khi hiển thị.\n- Vá lỗi chức năng tự cập nhật: địa chỉ tải bản cập nhật nhận từ trình duyệt mà không kiểm tra nguồn, có thể bị lợi dụng để cài mã tuỳ ý lên máy chủ. Nay chỉ chấp nhận bản cập nhật tải từ đúng kho phát hành chính thức qua HTTPS.\n- Dọn trùng lặp: gộp các hàm hiển thị thông báo và hàm lọc dữ liệu bị sao chép ở nhiều file về một chỗ.",
   "min_php": "8.1",
-  "released_at": "2026-07-10"
+  "released_at": "2026-07-28"
 }
