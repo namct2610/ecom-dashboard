@@ -10,7 +10,15 @@
     uploading: false,
     queue: [],       // [{ name, size, status:'pending'|'uploading'|'done'|'error', result }]
     msg: null,
+    csrf: "",
   };
+
+  async function fetchCsrf() {
+    if (local.csrf) return local.csrf;
+    const r = await fetch("api/auth.php", { credentials: "same-origin" });
+    local.csrf = (await r.json()).csrf || "";
+    return local.csrf;
+  }
 
   function fmtBytes(b) {
     if (!b) return "—";
@@ -187,6 +195,9 @@
     if (!pending.length) return;
     local.uploading = true;
     try {
+      // api/upload.php enforces CSRF; fetch the token once per upload run.
+      const csrf = await fetchCsrf();
+
       for (const item of pending) {
         item.status = "uploading";
         window.App.rerender();
@@ -194,7 +205,7 @@
         const fd = new FormData();
         fd.append("files[]", item.raw);
         try {
-          const r = await fetch("api/upload.php", { method: "POST", credentials: "same-origin", body: fd });
+          const r = await fetch("api/upload.php", { method: "POST", credentials: "same-origin", headers: { "X-CSRF-Token": csrf }, body: fd });
           const j = await r.json();
           // upload.php returns { success, message, results: [{file, success, ...}] }
           const file = j.results && j.results[0] ? j.results[0] : { success: false, error: t("common.no_results") };
