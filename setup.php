@@ -355,6 +355,7 @@ function initSchema(PDO $pdo): void
         shipping_address VARCHAR(500) NULL,
         shipping_district VARCHAR(100) NULL,
         shipping_city VARCHAR(100) NULL,
+        warehouse VARCHAR(255) NULL,
         payment_method VARCHAR(100) NULL,
         sku VARCHAR(100) NOT NULL,
         product_name VARCHAR(500),

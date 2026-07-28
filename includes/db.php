@@ -51,6 +51,11 @@ function ensure_schema(PDO $pdo, array $config = []): void
         if (empty($sellerVoucherCol)) {
             $pdo->exec("ALTER TABLE orders ADD COLUMN seller_voucher DECIMAL(15,2) DEFAULT 0 AFTER platform_discount");
         }
+
+        $warehouseCol = $pdo->query("SHOW COLUMNS FROM orders LIKE 'warehouse'")->fetchAll();
+        if (empty($warehouseCol)) {
+            $pdo->exec("ALTER TABLE orders ADD COLUMN warehouse VARCHAR(255) NULL AFTER shipping_city");
+        }
     }
 
     if (in_array('reconcile_price_items', $tables, true)) {
@@ -219,6 +224,7 @@ function ensure_schema(PDO $pdo, array $config = []): void
         shipping_address VARCHAR(500) NULL,
         shipping_district VARCHAR(100) NULL,
         shipping_city VARCHAR(100) NULL,
+        warehouse VARCHAR(255) NULL,
         payment_method VARCHAR(100) NULL,
         sku VARCHAR(100) NOT NULL,
         product_name VARCHAR(500),
@@ -645,7 +651,7 @@ function upsert_order(PDO $pdo, array $row): void
         $stmt = $pdo->prepare("
             INSERT INTO orders
                 (platform, order_id, buyer_name, buyer_username, shipping_address,
-                 shipping_district, shipping_city, payment_method, sku, product_name,
+                 shipping_district, shipping_city, warehouse, payment_method, sku, product_name,
                  variation, quantity, unit_price, subtotal_before_discount, platform_discount,
                  seller_voucher, seller_discount, subtotal_after_discount, order_total, shipping_fee,
                  platform_fee_fixed, platform_fee_service, platform_fee_payment,
@@ -653,7 +659,7 @@ function upsert_order(PDO $pdo, array $row): void
                  order_completed_at, upload_id)
             VALUES
                 (:platform, :order_id, :buyer_name, :buyer_username, :shipping_address,
-                 :shipping_district, :shipping_city, :payment_method, :sku, :product_name,
+                 :shipping_district, :shipping_city, :warehouse, :payment_method, :sku, :product_name,
                  :variation, :quantity, :unit_price, :subtotal_before_discount, :platform_discount,
                  :seller_voucher, :seller_discount, :subtotal_after_discount, :order_total, :shipping_fee,
                  :platform_fee_fixed, :platform_fee_service, :platform_fee_payment,
@@ -665,6 +671,7 @@ function upsert_order(PDO $pdo, array $row): void
                 shipping_address         = COALESCE(NULLIF(VALUES(shipping_address), ''), shipping_address),
                 shipping_district        = COALESCE(NULLIF(VALUES(shipping_district), ''), shipping_district),
                 shipping_city            = COALESCE(NULLIF(VALUES(shipping_city), ''), shipping_city),
+                warehouse                = COALESCE(NULLIF(VALUES(warehouse), ''), warehouse),
                 payment_method           = COALESCE(NULLIF(VALUES(payment_method), ''), payment_method),
                 product_name             = COALESCE(NULLIF(VALUES(product_name), ''), product_name),
                 variation                = COALESCE(NULLIF(VALUES(variation), ''), variation),
@@ -700,6 +707,7 @@ function upsert_order(PDO $pdo, array $row): void
         ':shipping_address'        => $row['shipping_address'] ?? null,
         ':shipping_district'       => $row['shipping_district'] ?? null,
         ':shipping_city'           => $row['shipping_city'] ?? null,
+        ':warehouse'               => $row['warehouse'] ?? null,
         ':payment_method'          => $row['payment_method'] ?? null,
         ':sku'                     => $row['sku'],
         ':product_name'            => $row['product_name'] ?? '',
