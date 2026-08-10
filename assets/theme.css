@@ -673,7 +673,7 @@ body { transition: background .3s ease, color .3s ease; }
 .pcard .phead { display: flex; align-items: center; gap: 11px; padding: 16px 18px 12px; }
 .pcard .phead > div { min-width: 0; }
 .pcard .phead > div > div:first-child { white-space: nowrap; }
-.pcard .plogo { width: 34px; height: 34px; border-radius: 9px; display: grid; place-items: center; color: #fff; font-weight: 800; font-size: 13px; }
+.plogo { width: 34px; height: 34px; border-radius: 9px; display: grid; place-items: center; color: #fff; font-weight: 800; font-size: 13px; }
 .pcard .pmetric { display: flex; align-items: baseline; justify-content: space-between; padding: 9px 18px; border-top: 1px solid var(--border); }
 .pcard .pmetric .lab { font-size: 12.5px; color: var(--ink-3); font-weight: 600; white-space: nowrap; }
 .pcard .pmetric .val { font-weight: 800; font-size: 15px; font-variant-numeric: tabular-nums; }

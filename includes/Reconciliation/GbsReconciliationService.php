@@ -13,8 +13,8 @@ final class GbsReconciliationService
     private const PLATFORM_KEYS = ['shopee', 'lazada', 'tiktokshop'];
     private const CONFIRMED_MONTHS_SETTING_KEY = 'reconcile_gbs_confirmed_months';
     private const NMV_ROUNDING_TOLERANCE = 1.0;
-    // Bump khi thay đổi cấu trúc dữ liệu cache để cache cũ tự bị bỏ qua.
-    private const CACHE_VERSION = 1;
+    // Bump khi thay đổi cấu trúc hoặc cách lọc dữ liệu cache (v2: bỏ đơn huỷ).
+    private const CACHE_VERSION = 2;
 
     private const GBS_COLUMN_MAP = [
         'created_at'        => ['thời gian tạo'],
@@ -913,6 +913,7 @@ final class GbsReconciliationService
                    order_created_at, order_completed_at
             FROM orders
             WHERE platform = :platform
+              AND normalized_status <> 'cancelled'
               AND order_completed_at >= :start_at
               AND order_completed_at < :end_at
             ORDER BY order_completed_at DESC, order_id ASC, sku ASC
@@ -946,6 +947,7 @@ final class GbsReconciliationService
                        order_created_at, order_completed_at
                 FROM orders
                 WHERE platform = ?
+                  AND normalized_status <> 'cancelled'
                   AND order_id IN ({$placeholders})
                 ORDER BY order_completed_at DESC, order_id ASC, sku ASC
             ";
@@ -1219,9 +1221,10 @@ final class GbsReconciliationService
 
             $orderId  = trim((string) ($row[$col['order_id'] ?? -1] ?? ''));
             $platform = $this->normalizeGbsPlatform((string) ($row[$col['platform'] ?? -1] ?? ''));
+            $status   = trim((string) ($row[$col['status'] ?? -1] ?? ''));
             $reconcileAt = $this->parseDateTimeCell($row[$col['reconciliation_at'] ?? -1] ?? null)
                 ?? $this->parseDateTimeCell($row[$col['created_at'] ?? -1] ?? null);
-            if ($orderId === '' || $platform === null) {
+            if ($orderId === '' || $platform === null || $this->isCancelledStatus($status)) {
                 continue;
             }
 
@@ -1246,7 +1249,7 @@ final class GbsReconciliationService
                 'sku'            => $sku,
                 'product_name'   => $productName,
                 'product_type'   => $productType,
-                'status'         => trim((string) ($row[$col['status'] ?? -1] ?? '')),
+                'status'         => $status,
                 'created_at'     => $this->parseDateTimeCell($row[$col['created_at'] ?? -1] ?? null) ?? '',
                 'reconcile_at'   => $reconcileAt ?? '',
                 'reconcile_month'=> $reconcileAt ? substr($reconcileAt, 0, 7) : '',
@@ -1677,6 +1680,7 @@ final class GbsReconciliationService
             'GBS chuẩn hóa giá trị nền tảng từ `shopee_v2`, `lazada`, `tiktok` thành `shopee`, `lazada`, `tiktokshop` để so khớp.',
             'Nguồn dữ liệu sàn giờ dùng chung từ bảng orders; không cần upload và quản lý file Shopee/Lazada/TikTok riêng cho đối soát nữa.',
             'NMV Shopee đối soát = `Giá ưu đãi - Mã giảm giá của Shop`, trong đó voucher shop chỉ tính 1 lần duy nhất ở cấp đơn hàng.',
+            'Đơn huỷ / hoàn trả được bỏ khỏi cả hai phía (GBS và dữ liệu sàn) nên không còn xuất hiện trong đối soát.',
             'Các dòng GBS có dấu hiệu quà tặng / hàng tặng không bán được chuẩn hóa NMV = 0 trước khi so khớp với sàn.',
             'NMV của GBS được làm tròn trước khi so khớp để tránh lệch tiền do số lẻ khi quy đổi.',
             'Nếu NMV giữa GBS và sàn chỉ lệch trong phạm vi 1 VND do làm tròn, hệ thống vẫn coi là khớp và lấy số chuẩn theo sàn.',
@@ -2074,6 +2078,27 @@ final class GbsReconciliationService
     {
         $normalized = $this->normalizeHeader($value);
         return preg_replace('/[^a-z0-9]+/u', '', $normalized) ?? $normalized;
+    }
+
+    /**
+     * Đơn huỷ không cần đối soát. Cùng quy tắc nhận diện với các parser đơn hàng
+     * (xem ShopeeParser/TiktokShopParser/LazadaParser) vì GBS ghi trạng thái
+     * bằng chữ của sàn, không dùng enum của DB.
+     */
+    private function isCancelledStatus(string $status): bool
+    {
+        $value = trim(mb_strtolower($status));
+        if ($value === '') {
+            return false;
+        }
+
+        foreach (['hủy', 'huỷ', 'cancel', 'return', 'refund'] as $needle) {
+            if (str_contains($value, $needle)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function isGiftLikeGbsRow(string $sku, string $productName, string $productType): bool
