@@ -1,7 +1,7 @@
 {
-  "version": "3.4.52",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.52/release/dashboard-v3-3.4.52.zip",
-  "changelog": "Đối soát GBS nhanh hơn và bớt báo lệch oan.\n- Trang Đối soát GBS mở nhanh hơn nhiều: nội dung file GBS đã tải lên được lưu lại sau lần đọc đầu tiên, nên những lần vào sau không phải đọc lại toàn bộ file Excel; mỗi lần chỉ nạp đúng tháng đang xem. Khi tải file mới hoặc file thay đổi, hệ thống tự đọc lại.\n- Đơn lệch hoặc thiếu ở GBS của tháng đang xem giờ được đối chiếu tiếp với file GBS của các tháng sau. Nếu đơn được GBS đối soát trễ sang tháng sau và cộng lại khớp cả số lượng lẫn NMV, đơn được tính là khớp hoàn toàn kèm ghi chú tháng đối soát, đồng thời không còn nằm trong danh sách đơn lệch và file Excel xuất ra. Đơn cộng lại vẫn lệch thì vẫn báo lệch như trước.",
+  "version": "3.4.53",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.53/release/dashboard-v3-3.4.53.zip",
+  "changelog": "Hoàn thiện đối soát GBS và sửa lỗi giao diện.\n- Đơn huỷ và đơn hoàn trả không cần đối soát nữa: hệ thống bỏ các đơn này ở cả hai phía (file GBS và dữ liệu sàn), nên số đơn lệch phản ánh đúng phần thực sự cần kiểm tra.\n- Sửa lỗi hiển thị ở trang Đối soát GBS: chữ viết tắt của sàn (S / L / T) bị mất khung nền tròn và màu chữ, trông như chữ dính vào nền màu.\n- Sửa lỗi vỡ layout ở trang Sản phẩm: bảng sản phẩm bán chạy bị chèn vào vùng tiêu đề nên bị bóp hẹp và tràn ra ngoài thẻ, cột cuối bị cắt; phần mô tả cũng hiện sai thành chữ {period} thay vì tên tháng.",
   "min_php": "8.1",
   "released_at": "2026-08-10"
 }
