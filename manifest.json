@@ -1,7 +1,7 @@
 {
-  "version": "3.4.51",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.51/release/dashboard-v3-3.4.51.zip",
-  "changelog": "Bản vá bảo mật — khuyến nghị cập nhật sớm.\n- Vá lỗi chèn mã độc (XSS): dữ liệu từ file Excel tải lên và từ sàn (tên tỉnh, tên sản phẩm, mã đơn, tên khách, tên file) được hiển thị mà không lọc, nên một file đơn hàng bị chỉnh sửa có thể chạy mã trong trình duyệt của người đang xem báo cáo. Nay toàn bộ dữ liệu ngoài đều được lọc trước khi hiển thị.\n- Vá lỗi chức năng tự cập nhật: địa chỉ tải bản cập nhật nhận từ trình duyệt mà không kiểm tra nguồn, có thể bị lợi dụng để cài mã tuỳ ý lên máy chủ. Nay chỉ chấp nhận bản cập nhật tải từ đúng kho phát hành chính thức qua HTTPS.\n- Dọn trùng lặp: gộp các hàm hiển thị thông báo và hàm lọc dữ liệu bị sao chép ở nhiều file về một chỗ.",
+  "version": "3.4.52",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.52/release/dashboard-v3-3.4.52.zip",
+  "changelog": "Đối soát GBS nhanh hơn và bớt báo lệch oan.\n- Trang Đối soát GBS mở nhanh hơn nhiều: nội dung file GBS đã tải lên được lưu lại sau lần đọc đầu tiên, nên những lần vào sau không phải đọc lại toàn bộ file Excel; mỗi lần chỉ nạp đúng tháng đang xem. Khi tải file mới hoặc file thay đổi, hệ thống tự đọc lại.\n- Đơn lệch hoặc thiếu ở GBS của tháng đang xem giờ được đối chiếu tiếp với file GBS của các tháng sau. Nếu đơn được GBS đối soát trễ sang tháng sau và cộng lại khớp cả số lượng lẫn NMV, đơn được tính là khớp hoàn toàn kèm ghi chú tháng đối soát, đồng thời không còn nằm trong danh sách đơn lệch và file Excel xuất ra. Đơn cộng lại vẫn lệch thì vẫn báo lệch như trước.",
   "min_php": "8.1",
-  "released_at": "2026-07-28"
+  "released_at": "2026-08-10"
 }
