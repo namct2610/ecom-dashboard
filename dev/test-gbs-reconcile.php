@@ -160,4 +160,15 @@ assert(array_keys($index['shopee']) === ['NEXT'], 'Chỉ đơn của tháng sau 
 assert(abs($index['shopee']['NEXT']['qty'] - 3.0) < 0.001, 'Phải cộng dồn nhiều tháng sau.');
 assert(array_values($index['shopee']['NEXT']['months']) === ['2026-06', '2026-07'], 'Phải ghi nhận đủ các tháng.');
 
+/* ── 7. Nhận diện trạng thái huỷ / hoàn trả (đơn huỷ không cần đối soát) ── */
+$cancelled = ['Đã hủy', 'Đã huỷ', 'đã hủy', 'CANCELLED', 'canceled', 'Cancelled by system',
+              'Huỷ bởi người mua', 'Returned', 'Refunded'];
+$keep = ['Hoàn thành', 'Completed', 'Delivered', 'Đã giao', 'Chờ xác nhận', 'Đang giao', '', 'Đã thanh toán'];
+foreach ($cancelled as $status) {
+    assert(call_private($service, 'isCancelledStatus', [$status]) === true, "phải coi là huỷ: {$status}");
+}
+foreach ($keep as $status) {
+    assert(call_private($service, 'isCancelledStatus', [$status]) === false, "không được coi là huỷ: {$status}");
+}
+
 echo "OK — tất cả self-check đối soát chéo GBS đều pass.\n";
