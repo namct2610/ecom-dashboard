@@ -13,6 +13,8 @@ final class GbsReconciliationService
     private const PLATFORM_KEYS = ['shopee', 'lazada', 'tiktokshop'];
     private const CONFIRMED_MONTHS_SETTING_KEY = 'reconcile_gbs_confirmed_months';
     private const NMV_ROUNDING_TOLERANCE = 1.0;
+    // Bump khi thay đổi cấu trúc dữ liệu cache để cache cũ tự bị bỏ qua.
+    private const CACHE_VERSION = 1;
 
     private const GBS_COLUMN_MAP = [
         'created_at'        => ['thời gian tạo'],
@@ -104,6 +106,7 @@ final class GbsReconciliationService
 
         $gbsRows = $this->loadGbsRowsForMonth($catalog['sources'], $selectedMonth);
         $gbsGroupedByPlat = $this->groupGbsOrdersByPlatform($gbsRows);
+        $laterGbsOrders = $this->collectLaterMonthGbsOrders($catalog['months'], $selectedMonth);
 
         $platformSummaries = [];
         $totals = $this->emptySummary();
@@ -116,13 +119,19 @@ final class GbsReconciliationService
                 $selectedMonth,
                 array_keys($gbsOrders)
             );
-            $comparison = $this->comparePlatform($platform, $platformRows, $gbsOrders);
+            $comparison = $this->comparePlatform(
+                $platform,
+                $platformRows,
+                $gbsOrders,
+                $laterGbsOrders[$platform] ?? []
+            );
             $comparison['scope_note'] = $this->platformScopeNote($platform);
 
             $platformSummaries[$platform] = $comparison;
             $totals['platform_orders']     += $comparison['summary']['platform_orders'];
             $totals['common_orders']       += $comparison['summary']['common_orders'];
             $totals['matched_orders']      += $comparison['summary']['matched_orders'];
+            $totals['cross_month_orders']  += $comparison['summary']['cross_month_orders'];
             $totals['bundle_match_orders'] += $comparison['summary']['bundle_match_orders'];
             $totals['mismatch_orders']     += $comparison['summary']['mismatch_orders'];
             $totals['missing_in_gbs']      += $comparison['summary']['missing_in_gbs'];
@@ -221,7 +230,7 @@ final class GbsReconciliationService
         ];
     }
 
-    private function comparePlatform(string $platform, array $platformRows, array $gbsOrders): array
+    private function comparePlatform(string $platform, array $platformRows, array $gbsOrders, array $laterGbsOrders = []): array
     {
         $platformOrders = $this->groupPlatformOrders($platformRows);
         $allOrderIds = array_values(array_unique(array_merge(array_keys($platformOrders), array_keys($gbsOrders))));
@@ -232,6 +241,7 @@ final class GbsReconciliationService
             'gbs_orders'           => count($gbsOrders),
             'common_orders'        => 0,
             'matched_orders'       => 0,
+            'cross_month_orders'   => 0,
             'bundle_match_orders'  => 0,
             'mismatch_orders'      => 0,
             'missing_in_gbs'       => 0,
@@ -243,6 +253,8 @@ final class GbsReconciliationService
         foreach ($allOrderIds as $orderId) {
             $platformOrder = $platformOrders[$orderId] ?? null;
             $gbsOrder      = $gbsOrders[$orderId] ?? null;
+            $laterGbsOrder = $laterGbsOrders[$orderId] ?? null;
+            $crossMonths   = [];
 
             if ($platformOrder === null) {
                 $summary['missing_in_platform']++;
@@ -250,13 +262,33 @@ final class GbsReconciliationService
                 continue;
             }
 
+            // Đơn chưa có trong GBS tháng đang chọn nhưng đã được đối soát ở
+            // file GBS của tháng sau → lấy số của tháng sau để so khớp.
             if ($gbsOrder === null) {
-                $summary['missing_in_gbs']++;
-                $results[] = $this->buildMissingResult($platform, $orderId, $platformOrder, 'missing_in_gbs');
-                continue;
+                $crossOrder = $laterGbsOrder !== null ? $this->buildCrossMonthGbsOrder($laterGbsOrder) : null;
+                if ($crossOrder === null || !$this->totalsMatch($crossOrder, $platformOrder)) {
+                    $summary['missing_in_gbs']++;
+                    $results[] = $this->buildMissingResult($platform, $orderId, $platformOrder, 'missing_in_gbs', $laterGbsOrder);
+                    continue;
+                }
+
+                $gbsOrder = $crossOrder;
+                $crossMonths = array_values($laterGbsOrder['months']);
             }
 
             $summary['common_orders']++;
+
+            // Đơn lệch ở tháng này nhưng phần còn lại nằm ở GBS tháng sau →
+            // cộng gộp lại, khớp thì coi như khớp hoàn toàn.
+            if ($crossMonths === [] && $laterGbsOrder !== null && !$this->totalsMatch($gbsOrder, $platformOrder)) {
+                $merged = $gbsOrder;
+                $merged['total_qty'] += (float) ($laterGbsOrder['qty'] ?? 0);
+                $merged['total_nmv'] = $this->roundCurrency($merged['total_nmv'] + (float) ($laterGbsOrder['nmv'] ?? 0));
+                if ($this->totalsMatch($merged, $platformOrder)) {
+                    $gbsOrder = $merged;
+                    $crossMonths = array_values($laterGbsOrder['months']);
+                }
+            }
 
             $qtyDiff = round($gbsOrder['total_qty'] - $platformOrder['total_qty'], 4);
             $rawNmvDiff = round($gbsOrder['total_nmv'] - $platformOrder['total_nmv'], 2);
@@ -279,7 +311,11 @@ final class GbsReconciliationService
             }
 
             $status = 'mismatch';
-            if ($qtyMatch && $nmvMatch && $skuAligned) {
+            if ($crossMonths !== []) {
+                $status = 'matched';
+                $summary['matched_orders']++;
+                $summary['cross_month_orders']++;
+            } elseif ($qtyMatch && $nmvMatch && $skuAligned) {
                 $status = 'matched';
                 $summary['matched_orders']++;
             } elseif ($qtyMatch && $nmvMatch && $hasBundle) {
@@ -315,7 +351,14 @@ final class GbsReconciliationService
                 'platform_reconcile_at' => $platformOrder['reconcile_at'] ?? '',
                 'gbs_skus'            => $gbsOrder['sku_items'],
                 'platform_skus'       => $platformOrder['display_sku_items'] ?? $platformOrder['sku_items'],
-                'note'                => $this->buildMatchNote($status, $qtyMatch, $nmvMatch, $hasBundle, $nmvRoundedFromGbs),
+                'cross_month'         => $crossMonths !== [],
+                'cross_month_months'  => $crossMonths,
+                'note'                => $crossMonths !== []
+                    ? sprintf(
+                        'Đơn đã được đối soát ở GBS tháng %s nên tính là khớp hoàn toàn.',
+                        $this->formatMonthList($crossMonths)
+                    )
+                    : $this->buildMatchNote($status, $qtyMatch, $nmvMatch, $hasBundle, $nmvRoundedFromGbs),
             ];
         }
 
@@ -344,11 +387,17 @@ final class GbsReconciliationService
         ];
     }
 
-    private function buildMissingResult(string $platform, string|int $orderId, ?array $order, string $status): array
-    {
+    private function buildMissingResult(
+        string $platform,
+        string|int $orderId,
+        ?array $order,
+        string $status,
+        ?array $laterGbsOrder = null
+    ): array {
         $isMissingInGbs = $status === 'missing_in_gbs';
         $source = $order ?? $this->emptyOrderGroup();
         $orderId = (string) $orderId;
+        $crossMonths = $laterGbsOrder !== null ? array_values($laterGbsOrder['months']) : [];
 
         return [
                 'order_id'            => (string) $orderId,
@@ -373,10 +422,74 @@ final class GbsReconciliationService
             'platform_reconcile_at' => $isMissingInGbs ? (string) ($source['reconcile_at'] ?? '') : '',
             'gbs_skus'            => $isMissingInGbs ? [] : ($source['sku_items'] ?? []),
             'platform_skus'       => $isMissingInGbs ? ($source['display_sku_items'] ?? $source['sku_items'] ?? []) : [],
+            'cross_month'         => false,
+            'cross_month_months'  => $crossMonths,
             'note'                => $isMissingInGbs
                 ? 'Đơn có trong dữ liệu sàn chung nhưng không tìm thấy ở GBS tháng đang chọn.'
+                    . ($crossMonths !== [] ? sprintf(
+                        ' Đơn có xuất hiện ở GBS tháng %s nhưng số liệu vẫn lệch.',
+                        $this->formatMonthList($crossMonths)
+                    ) : '')
                 : 'Đơn có trong GBS nhưng chưa thấy trong dữ liệu sàn chung.',
         ];
+    }
+
+    /**
+     * Gom đơn GBS của các tháng sau tháng đang chọn, dùng để đối chiếu chéo các
+     * đơn bị lệch do GBS đối soát trễ sang tháng kế tiếp.
+     */
+    private function collectLaterMonthGbsOrders(array $months, string $selectedMonth): array
+    {
+        $index = [];
+        foreach ($months as $monthKey => $month) {
+            if (strcmp((string) $monthKey, $selectedMonth) <= 0) {
+                continue;
+            }
+
+            foreach (($month['orders'] ?? []) as $orderKey => $totals) {
+                if (!str_contains((string) $orderKey, '|')) {
+                    continue;
+                }
+                [$platform, $orderId] = explode('|', (string) $orderKey, 2);
+                if ($orderId === '') {
+                    continue;
+                }
+
+                if (!isset($index[$platform][$orderId])) {
+                    $index[$platform][$orderId] = ['qty' => 0.0, 'nmv' => 0.0, 'months' => []];
+                }
+                $index[$platform][$orderId]['qty'] += (float) ($totals['qty'] ?? 0);
+                $index[$platform][$orderId]['nmv'] += (float) ($totals['nmv'] ?? 0);
+                $index[$platform][$orderId]['months'][(string) $monthKey] = (string) $monthKey;
+            }
+        }
+
+        return $index;
+    }
+
+    private function buildCrossMonthGbsOrder(array $laterGbsOrder): array
+    {
+        $order = $this->emptyOrderGroup();
+        $order['total_qty'] = (float) ($laterGbsOrder['qty'] ?? 0);
+        $order['total_nmv'] = $this->roundCurrency((float) ($laterGbsOrder['nmv'] ?? 0));
+
+        return $order;
+    }
+
+    private function totalsMatch(array $gbsOrder, array $platformOrder): bool
+    {
+        return abs(round((float) $gbsOrder['total_qty'] - (float) $platformOrder['total_qty'], 4)) < 0.001
+            && abs(round((float) $gbsOrder['total_nmv'] - (float) $platformOrder['total_nmv'], 2)) <= self::NMV_ROUNDING_TOLERANCE;
+    }
+
+    private function formatMonthList(array $months): string
+    {
+        sort($months);
+
+        return implode(', ', array_map(
+            static fn(string $month): string => ((int) substr($month, 5, 2)) . '/' . substr($month, 0, 4),
+            $months
+        ));
     }
 
     private function emptySummary(): array
@@ -386,6 +499,7 @@ final class GbsReconciliationService
             'gbs_orders'           => 0,
             'common_orders'        => 0,
             'matched_orders'       => 0,
+            'cross_month_orders'   => 0,
             'bundle_match_orders'  => 0,
             'mismatch_orders'      => 0,
             'missing_in_gbs'       => 0,
@@ -482,40 +596,29 @@ final class GbsReconciliationService
             'months' => [],
             'sources' => [],
         ];
+        $liveCacheKeys = [];
 
         foreach ($files as $file) {
             if (($file['status'] ?? 'missing') !== 'ready' || empty($file['path'])) {
                 continue;
             }
 
-            $rows = $this->loadGbsRows((string) $file['path']);
-            $groupedOrders = $this->groupGbsOrdersByPlatform($rows);
-            $months = [];
-
-            foreach ($rows as $row) {
-                $monthKey = (string) ($row['reconcile_month'] ?? '');
-                if ($monthKey === '') {
-                    continue;
-                }
-                if (!isset($months[$monthKey])) {
-                    $months[$monthKey] = [
-                        'row_count' => 0,
-                        'order_keys' => [],
-                    ];
-                }
-                $months[$monthKey]['row_count']++;
-                $months[$monthKey]['order_keys'][$row['platform'] . '|' . $row['order_id']] = true;
-            }
+            $path = (string) $file['path'];
+            $cacheKey = $this->gbsCacheKey($path);
+            $liveCacheKeys[$cacheKey] = true;
+            $index = $this->gbsFileIndex($path, $cacheKey);
+            $months = $index['months'];
 
             $fileMeta = $file;
-            $fileMeta['row_count'] = count($rows);
-            $fileMeta['order_count'] = $this->countGroupedOrders($groupedOrders);
+            $fileMeta['row_count'] = (int) ($index['row_count'] ?? 0);
+            $fileMeta['order_count'] = (int) ($index['order_count'] ?? 0);
             $fileMeta['months'] = array_keys($months);
 
             $catalog['files'][] = $fileMeta;
             $catalog['sources'][] = [
                 'file' => $fileMeta,
-                'rows' => $rows,
+                'path' => $path,
+                'cache_key' => $cacheKey,
                 'months' => $months,
             ];
 
@@ -525,7 +628,7 @@ final class GbsReconciliationService
                         'month' => $monthKey,
                         'label' => $this->formatMonthLabel($monthKey),
                         'row_count' => 0,
-                        'order_keys' => [],
+                        'orders' => [],
                         'file_count' => 0,
                         'files' => [],
                         'latest_modified_at' => '',
@@ -544,11 +647,17 @@ final class GbsReconciliationService
                     $catalog['months'][$monthKey]['latest_modified_at'] = (string) ($fileMeta['modified_at'] ?? '');
                 }
 
-                foreach (array_keys($monthInfo['order_keys'] ?? []) as $orderKey) {
-                    $catalog['months'][$monthKey]['order_keys'][$orderKey] = true;
+                foreach (($monthInfo['orders'] ?? []) as $orderKey => $totals) {
+                    $current = $catalog['months'][$monthKey]['orders'][$orderKey] ?? ['qty' => 0.0, 'nmv' => 0.0];
+                    $catalog['months'][$monthKey]['orders'][$orderKey] = [
+                        'qty' => $current['qty'] + (float) ($totals['qty'] ?? 0),
+                        'nmv' => $current['nmv'] + (float) ($totals['nmv'] ?? 0),
+                    ];
                 }
             }
         }
+
+        $this->pruneCache(array_keys($liveCacheKeys));
 
         usort($catalog['files'], static fn(array $left, array $right): int =>
             strcmp((string) ($right['modified_at'] ?? ''), (string) ($left['modified_at'] ?? ''))
@@ -556,6 +665,128 @@ final class GbsReconciliationService
         krsort($catalog['months']);
 
         return $catalog;
+    }
+
+    /**
+     * Chỉ mục tháng/đơn của 1 file GBS. Parse xlsx là phần chậm nhất của trang
+     * đối soát nên kết quả được cache ra đĩa; cache key gắn với mtime + size
+     * nên file đổi là cache tự hết hiệu lực.
+     */
+    private function gbsFileIndex(string $path, string $cacheKey): array
+    {
+        $index = $this->cacheRead($cacheKey . '.idx');
+        if ($index !== null && isset($index['months'])) {
+            return $index;
+        }
+
+        $rows = $this->loadGbsRows($path);
+        $rowsByMonth = [];
+        $orderKeys = [];
+        foreach ($rows as $row) {
+            $orderKeys[$row['platform'] . '|' . $row['order_id']] = true;
+            $monthKey = (string) ($row['reconcile_month'] ?? '');
+            if ($monthKey !== '') {
+                $rowsByMonth[$monthKey][] = $row;
+            }
+        }
+        krsort($rowsByMonth);
+
+        $index = [
+            'row_count'   => count($rows),
+            'order_count' => count($orderKeys),
+            'months'      => [],
+        ];
+
+        foreach ($rowsByMonth as $monthKey => $monthRows) {
+            $this->cacheWrite($cacheKey . '.m' . $monthKey, $monthRows);
+            $index['months'][$monthKey] = [
+                'row_count' => count($monthRows),
+                'orders'    => $this->indexMonthOrders($monthRows),
+            ];
+        }
+
+        $this->cacheWrite($cacheKey . '.idx', $index);
+
+        return $index;
+    }
+
+    /** Tổng số lượng + NMV theo từng đơn, dùng cho đối chiếu chéo giữa các tháng. */
+    private function indexMonthOrders(array $rows): array
+    {
+        $orders = [];
+        foreach ($rows as $row) {
+            $orderKey = $row['platform'] . '|' . $row['order_id'];
+            if (!isset($orders[$orderKey])) {
+                $orders[$orderKey] = ['qty' => 0.0, 'nmv' => 0.0];
+            }
+            $orders[$orderKey]['qty'] += (float) ($row['quantity'] ?? 0);
+            $orders[$orderKey]['nmv'] += $this->roundCurrency((float) ($row['nmv'] ?? 0));
+        }
+
+        return $orders;
+    }
+
+    private function cacheDir(): string
+    {
+        return $this->fileStore->storageDir() . DIRECTORY_SEPARATOR . 'cache';
+    }
+
+    private function gbsCacheKey(string $path): string
+    {
+        return sprintf(
+            'gbs-%s-%d-%d-v%d',
+            sha1($path),
+            filemtime($path) ?: 0,
+            filesize($path) ?: 0,
+            self::CACHE_VERSION
+        );
+    }
+
+    private function cacheRead(string $name): ?array
+    {
+        $file = $this->cacheDir() . DIRECTORY_SEPARATOR . $name;
+        if (!is_file($file)) {
+            return null;
+        }
+
+        $raw = @file_get_contents($file);
+        if ($raw === false) {
+            return null;
+        }
+
+        $data = @unserialize($raw, ['allowed_classes' => false]);
+        return is_array($data) ? $data : null;
+    }
+
+    private function cacheWrite(string $name, array $data): void
+    {
+        try {
+            \ensure_protected_dir($this->cacheDir());
+            $file = $this->cacheDir() . DIRECTORY_SEPARATOR . $name;
+            $tmp = $file . '.' . bin2hex(random_bytes(4)) . '.tmp';
+            if (@file_put_contents($tmp, serialize($data)) === false || !@rename($tmp, $file)) {
+                @unlink($tmp);
+            }
+        } catch (\Throwable $e) {
+            // ponytail: cache hỏng thì chỉ chậm chứ không sai — bỏ qua, lần sau parse lại.
+        }
+    }
+
+    /** Xoá cache của file GBS đã bị thay thế hoặc đã xoá khỏi kho. */
+    private function pruneCache(array $liveCacheKeys): void
+    {
+        $dir = $this->cacheDir();
+        if (!is_dir($dir)) {
+            return;
+        }
+
+        $live = array_flip($liveCacheKeys);
+        foreach (glob($dir . DIRECTORY_SEPARATOR . 'gbs-*') ?: [] as $file) {
+            $key = preg_replace('/\.(idx|m\d{4}-\d{2})(\.[0-9a-f]+\.tmp)?$/', '', basename($file));
+            if ($key !== null && !isset($live[$key]) && is_file($file)) {
+                @unlink($file);
+            }
+        }
     }
 
     private function discoverLegacyGbsFiles(): array
@@ -593,10 +824,20 @@ final class GbsReconciliationService
     {
         $rows = [];
         foreach ($sources as $source) {
-            foreach (($source['rows'] ?? []) as $row) {
-                if (($row['reconcile_month'] ?? '') === $month) {
-                    $rows[] = $row;
-                }
+            if (!isset($source['months'][$month])) {
+                continue;
+            }
+
+            $monthRows = $this->cacheRead(((string) $source['cache_key']) . '.m' . $month);
+            if ($monthRows === null) {
+                $monthRows = array_filter(
+                    $this->loadGbsRows((string) $source['path']),
+                    static fn(array $row): bool => ($row['reconcile_month'] ?? '') === $month
+                );
+            }
+
+            foreach ($monthRows as $row) {
+                $rows[] = $row;
             }
         }
 
@@ -612,7 +853,7 @@ final class GbsReconciliationService
                 'month' => $monthKey,
                 'label' => $month['label'] ?? $this->formatMonthLabel($monthKey),
                 'row_count' => (int) ($month['row_count'] ?? 0),
-                'gbs_orders' => count($month['order_keys'] ?? []),
+                'gbs_orders' => count($month['orders'] ?? []),
                 'file_count' => (int) ($month['file_count'] ?? 0),
                 'latest_modified_at' => $month['latest_modified_at'] ?? '',
                 'files' => array_values($month['files'] ?? []),
@@ -1460,6 +1701,17 @@ final class GbsReconciliationService
 
         if ($files === []) {
             $insights[] = 'Chưa có file GBS nào trong kho đối soát. Upload file GBS theo tháng để bắt đầu.';
+        }
+
+        $crossMonthOrders = 0;
+        foreach (self::PLATFORM_KEYS as $platform) {
+            $crossMonthOrders += (int) ($platforms[$platform]['summary']['cross_month_orders'] ?? 0);
+        }
+        if ($crossMonthOrders > 0) {
+            $insights[] = sprintf(
+                'Có %d đơn lệch của tháng này được tìm thấy trong file GBS của tháng sau (đối soát trễ) nên đã tính là khớp hoàn toàn.',
+                $crossMonthOrders
+            );
         }
 
         foreach (self::PLATFORM_KEYS as $platform) {
