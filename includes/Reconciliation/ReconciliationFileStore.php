@@ -24,6 +24,11 @@ final class ReconciliationFileStore
         return in_array($sourceKey, self::SOURCE_KEYS, true);
     }
 
+    public function storageDir(): string
+    {
+        return $this->storageDir;
+    }
+
     public function ensureDirectory(): void
     {
         \ensure_protected_dir($this->storageDir);

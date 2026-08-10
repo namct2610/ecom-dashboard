@@ -119,7 +119,9 @@
     const tiles = [
       { lab: _t("rec.gbs_orders"),         val: fmtInt(s.gbs_orders) },
       { lab: _t("rec.platform_orders"),     val: fmtInt(s.platform_orders) },
-      { lab: _t("rec.matched"),             val: fmtInt((s.matched_orders || 0) + (s.bundle_match_orders || 0)), sub: fmtPct(matchedPct), color: "var(--pos)" },
+      { lab: _t("rec.matched"),             val: fmtInt((s.matched_orders || 0) + (s.bundle_match_orders || 0)),
+        sub: fmtPct(matchedPct) + (s.cross_month_orders ? " · " + _tf("rec.cross_month", { n: fmtInt(s.cross_month_orders) }) : ""),
+        color: "var(--pos)" },
       { lab: _t("rec.mismatch"),            val: fmtInt(s.mismatch_orders), color: "var(--neg)" },
       { lab: _t("rec.missing_gbs"),         val: fmtInt(s.missing_in_gbs), color: "var(--ink-2)" },
       { lab: _t("rec.missing_platform"),    val: fmtInt(s.missing_in_platform), color: "var(--ink-2)" },
