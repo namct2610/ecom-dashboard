@@ -1,7 +1,7 @@
 {
-  "version": "3.4.53",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.53/release/dashboard-v3-3.4.53.zip",
-  "changelog": "Hoàn thiện đối soát GBS và sửa lỗi giao diện.\n- Đơn huỷ và đơn hoàn trả không cần đối soát nữa: hệ thống bỏ các đơn này ở cả hai phía (file GBS và dữ liệu sàn), nên số đơn lệch phản ánh đúng phần thực sự cần kiểm tra.\n- Sửa lỗi hiển thị ở trang Đối soát GBS: chữ viết tắt của sàn (S / L / T) bị mất khung nền tròn và màu chữ, trông như chữ dính vào nền màu.\n- Sửa lỗi vỡ layout ở trang Sản phẩm: bảng sản phẩm bán chạy bị chèn vào vùng tiêu đề nên bị bóp hẹp và tràn ra ngoài thẻ, cột cuối bị cắt; phần mô tả cũng hiện sai thành chữ {period} thay vì tên tháng.",
+  "version": "3.4.54",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.54/release/dashboard-v3-3.4.54.zip",
+  "changelog": "Cập nhật nhận diện thương hiệu.\n- Thay logo ở thanh bên và trang đăng nhập bằng logo Zott.\n- Thêm biểu tượng cho tab trình duyệt (favicon) — trước đây trang chưa có, tab chỉ hiện icon mặc định của trình duyệt.",
   "min_php": "8.1",
-  "released_at": "2026-08-10"
+  "released_at": "2026-08-11"
 }
