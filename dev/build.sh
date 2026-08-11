@@ -55,16 +55,20 @@ if [[ -f "$ROOT_DIR/uploads/.htaccess" ]]; then
   cp "$ROOT_DIR/uploads/.htaccess" "$STAGE_ROOT/uploads/.htaccess"
 fi
 
-# Bake the version into index.html so the browser cache-busts on every release.
+# Bake the version into index.html and login.html so the browser cache-busts on
+# every release. Both pages carry `?v=` asset links (theme.css, the favicon), so
+# leaving login.html out pinned its assets at whatever `?v=` the source had.
 # Replaces the literal `?v=20` query-string (in the static <link>/script src) and
 # the `var V = 20;` initializer with the current VERSION.
-if [[ -f "$STAGE_ROOT/index.html" ]]; then
-  sed -E -i.bak \
-    -e "s/\\?v=[0-9.]+/?v=${VERSION}/g" \
-    -e "s/var V = [^;]+;/var V = '${VERSION}';/" \
-    "$STAGE_ROOT/index.html"
-  rm -f "$STAGE_ROOT/index.html.bak"
-fi
+for page in index.html login.html; do
+  if [[ -f "$STAGE_ROOT/$page" ]]; then
+    sed -E -i.bak \
+      -e "s/\\?v=[0-9.]+/?v=${VERSION}/g" \
+      -e "s/var V = [^;]+;/var V = '${VERSION}';/" \
+      "$STAGE_ROOT/$page"
+    rm -f "$STAGE_ROOT/$page.bak"
+  fi
+done
 
 (
   cd "$STAGE_DIR"
