@@ -137,14 +137,14 @@
       const totalCatRev = cats.reduce((t, c) => t + c.revenue, 0);
       return `
       <div class="g12">
-        <div data-collapse style="grid-column:span 5" class="card">
+        <div data-collapse style="grid-column:span 12" class="card">
           <div class="card-head"><div><div class="card-title">${_t("ovw.category.title")}</div><div class="card-sub">${_t("ovw.category.by_revenue")} · ${S.periodLabel(st.period).toLowerCase()}</div></div></div>
-          <div class="card-pad"><div class="donut-wrap" style="height:180px"><canvas id="catDonut2"></canvas><div class="donut-center"><div><div class="big tnum">${F.money(totalCatRev)}</div><div class="small">${_t("ovw.top_products.by_rev")}</div></div></div></div>
-            <div style="margin-top:14px;display:flex;flex-direction:column;gap:10px">
+          <div class="card-pad" style="display:flex;flex-wrap:wrap;gap:24px;align-items:center"><div class="donut-wrap" style="height:180px;flex:0 0 240px;min-width:0;max-width:100%"><canvas id="catDonut2"></canvas><div class="donut-center"><div><div class="big tnum">${F.money(totalCatRev)}</div><div class="small">${_t("ovw.top_products.by_rev")}</div></div></div></div>
+            <div style="flex:1 1 320px;min-width:0;display:flex;flex-direction:column;gap:10px">
               ${cats.map((c) => `<div><div style="display:flex;align-items:center;gap:9px;font-size:13px;margin-bottom:4px"><span class="legend-swatch" style="background:${UI.cssColor(c.color)}"></span><b>${S.catLabel(c.cat)}</b><span style="margin-left:auto;font-weight:800" class="tnum">${F.money(c.revenue)}</span></div><div class="cmp-track"><div class="cmp-fill" style="width:${c.revenue / (cats[0].revenue || 1) * 100}%;background:${UI.cssColor(c.color)}"></div></div></div>`).join("")}
             </div></div>
         </div>
-        <div data-collapse style="grid-column:span 7" class="card">
+        <div data-collapse style="grid-column:span 12" class="card">
           <div class="card-head"><div><div class="card-title">${_t("ovw.top_products.title")}</div><div class="card-sub">${_tf("ovw.top_products.sub", { period: S.periodLabel(st.period).toLowerCase() })}</div></div>
             <div class="miniseg" id="prodSeg"><button class="${prodMetric === "rev" ? "active" : ""}" data-m="rev">${_t("ovw.cmp.revenue")}</button><button class="${prodMetric === "qty" ? "active" : ""}" data-m="qty">${_t("ovw.top_products.by_qty")}</button></div>
           </div>
