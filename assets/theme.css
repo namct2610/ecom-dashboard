@@ -131,11 +131,10 @@ body { transition: background .3s ease, color .3s ease; }
 
 .brand { display: flex; align-items: center; gap: 11px; padding: 19px 18px; height: var(--header-h); }
 .brand-mark {
-  width: 38px; height: 38px; flex: 0 0 38px; border-radius: 11px;
-  background: var(--brand); color: #fff;
+  width: 38px; height: 38px; flex: 0 0 38px;
   display: grid; place-items: center;
 }
-.brand-mark svg { width: 21px; height: 21px; }
+.brand-mark img { width: 38px; height: 38px; display: block; }
 .brand-text { overflow: hidden; white-space: nowrap; }
 .brand-name { font-weight: 800; font-size: 15.5px; letter-spacing: -.01em; }
 .brand-sub { font-size: 10px; color: var(--ink-3); font-weight: 600; letter-spacing: .01em;  }
