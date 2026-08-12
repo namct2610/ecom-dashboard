@@ -1,7 +1,7 @@
 {
-  "version": "3.4.54",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.54/release/dashboard-v3-3.4.54.zip",
-  "changelog": "Cập nhật nhận diện thương hiệu.\n- Thay logo ở thanh bên và trang đăng nhập bằng logo Zott.\n- Thêm biểu tượng cho tab trình duyệt (favicon) — trước đây trang chưa có, tab chỉ hiện icon mặc định của trình duyệt.",
+  "version": "3.4.55",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.55/release/dashboard-v3-3.4.55.zip",
+  "changelog": "Cải thiện giao diện trang Sản phẩm.\n- Bảng \"Sản phẩm bán chạy\" nay chiếm trọn chiều ngang màn hình, không còn bị bóp trong nửa trang nên tên sản phẩm và các cột số đọc thoải mái hơn.\n- Thẻ \"Doanh thu theo danh mục\" cũng trải hết chiều ngang, biểu đồ tròn nằm bên trái và phần chú giải theo danh mục nằm bên phải.",
   "min_php": "8.1",
-  "released_at": "2026-08-11"
+  "released_at": "2026-08-12"
 }
