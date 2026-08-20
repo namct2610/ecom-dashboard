@@ -46,6 +46,11 @@ try {
     }
 
     // ───────── monthly aggregate ─────────
+    // Doanh thu cộng theo `subtotal_after_discount` (cấp dòng SKU), KHÔNG dùng
+    // `order_total`: order_total là tổng của cả đơn và được lặp lại trên mọi
+    // dòng SKU, nên SUM theo dòng sẽ nhân doanh thu lên theo số dòng của đơn
+    // (trung bình ~1,7 lần). Đây cũng là cơ sở mà bảng sản phẩm/danh mục dùng,
+    // nhờ vậy KPI Doanh thu và các bảng đó khớp nhau.
     // Build per-platform totals per month, then merge into one row per ym.
     $monthlyStmt = $pdo->query("
         SELECT DATE_FORMAT(order_created_at,'%Y-%m') AS ym,
@@ -53,7 +58,7 @@ try {
                COUNT(DISTINCT CONCAT(platform,':',order_id)) AS orders,
                SUM(CASE WHEN normalized_status IN ('completed','delivered') THEN 1 ELSE 0 END) AS done_lines,
                SUM(CASE WHEN normalized_status = 'cancelled' THEN 1 ELSE 0 END) AS canc_lines,
-               SUM(CASE WHEN normalized_status IN ('completed','delivered') THEN order_total ELSE 0 END) AS revenue
+               SUM(CASE WHEN normalized_status IN ('completed','delivered') THEN subtotal_after_discount ELSE 0 END) AS revenue
         FROM orders
         GROUP BY ym, platform
         ORDER BY ym ASC
@@ -108,7 +113,7 @@ try {
                COUNT(DISTINCT order_id) AS ord,
                COUNT(DISTINCT CASE WHEN normalized_status IN ('completed','delivered') THEN order_id END) AS done,
                COUNT(DISTINCT CASE WHEN normalized_status = 'cancelled' THEN order_id END) AS canc,
-               SUM(CASE WHEN normalized_status IN ('completed','delivered') THEN order_total ELSE 0 END) AS rev
+               SUM(CASE WHEN normalized_status IN ('completed','delivered') THEN subtotal_after_discount ELSE 0 END) AS rev
         FROM orders
         WHERE order_created_at >= :from
         GROUP BY d, platform
@@ -197,7 +202,7 @@ try {
         $cityStmt = $pdo->prepare("
             SELECT COALESCE(NULLIF(TRIM(shipping_city),''),'(Không rõ)') AS city,
                    COUNT(DISTINCT order_id) AS orders,
-                   SUM(CASE WHEN normalized_status IN ('completed','delivered') THEN order_total ELSE 0 END) AS revenue
+                   SUM(CASE WHEN normalized_status IN ('completed','delivered') THEN subtotal_after_discount ELSE 0 END) AS revenue
             FROM orders
             WHERE order_created_at >= :s AND order_created_at < :e
             GROUP BY city
