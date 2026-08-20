@@ -1,7 +1,7 @@
 {
-  "version": "3.4.55",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.55/release/dashboard-v3-3.4.55.zip",
-  "changelog": "Cải thiện giao diện trang Sản phẩm.\n- Bảng \"Sản phẩm bán chạy\" nay chiếm trọn chiều ngang màn hình, không còn bị bóp trong nửa trang nên tên sản phẩm và các cột số đọc thoải mái hơn.\n- Thẻ \"Doanh thu theo danh mục\" cũng trải hết chiều ngang, biểu đồ tròn nằm bên trái và phần chú giải theo danh mục nằm bên phải.",
+  "version": "3.4.56",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.56/release/dashboard-v3-3.4.56.zip",
+  "changelog": "Gộp kho trùng tên trong bảng phân bổ đơn.\n- Bảng \"Phân bổ đơn theo kho hàng\" (trang Khách hàng) trước đây tách một kho thành hai dòng khi sàn ghi tên khác nhau — ví dụ \"Kho Gò Vấp\" và \"NPP Gò Vấp (Dũng Tiến)\" vốn là một nơi, phần trong ngoặc chỉ là tên thật của nhà phân phối. Nay các dòng này được gộp làm một, số đơn và tỷ trọng cộng lại đầy đủ.\n- Tên kho hiển thị gọn hơn: bỏ phần trong ngoặc, lấy theo cách gọi phổ biến nhất của kho đó.",
   "min_php": "8.1",
-  "released_at": "2026-08-12"
+  "released_at": "2026-08-20"
 }
