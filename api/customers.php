@@ -38,6 +38,51 @@ function potential_lookback_bounds(): array
     return [':since' => $start . ' 00:00:00', ':until' => $periodStart . ' 00:00:00'];
 }
 
+/**
+ * Cùng một kho được các sàn ghi bằng nhiều tên: "Kho Gò Vấp" và
+ * "NPP Gò Vấp (Dũng Tiến)" là một nơi — phần trong ngoặc chỉ là tên thật của
+ * NPP. Chuẩn hoá về lõi tên để gộp chung một dòng.
+ */
+function warehouse_group_key(string $name): string
+{
+    $core = warehouse_core_name($name);
+    if ($core === '') {
+        return mb_strtolower(trim($name));
+    }
+
+    // Bỏ dấu tiếng Việt cho riêng key, để một kho bị xuất ra cả "Gò Vấp" lẫn
+    // "Go Vap" vẫn gộp chung. Nhãn hiển thị vẫn giữ nguyên dấu.
+    $folded = $core;
+    if (class_exists('\Normalizer')) {
+        $decomposed = \Normalizer::normalize($core, \Normalizer::FORM_D);
+        if (is_string($decomposed)) {
+            $folded = preg_replace('/\p{Mn}+/u', '', $decomposed) ?? $core;
+        }
+    }
+    $folded = str_replace(['đ', 'Đ'], 'd', $folded);
+
+    return mb_strtolower(trim($folded));
+}
+
+/** Nhãn hiển thị: bỏ phần trong ngoặc, giữ nguyên tiền tố "Kho"/"NPP". */
+function warehouse_display_name(string $name): string
+{
+    $clean = preg_replace('/\s*\([^)]*\)/u', '', trim($name)) ?? $name;
+    $clean = preg_replace('/\s+/u', ' ', $clean) ?? $clean;
+    $clean = trim($clean, " \t\n\r-–—,");
+
+    return $clean !== '' ? $clean : trim($name);
+}
+
+/** Tên lõi: bỏ phần trong ngoặc và tiền tố loại kho ("Kho", "NPP", ...). */
+function warehouse_core_name(string $name): string
+{
+    $core = warehouse_display_name($name);
+    $core = preg_replace('/^(kho|npp|nha\s*phan\s*phoi|nhà\s*phân\s*phối)\s+/iu', '', $core) ?? $core;
+
+    return trim($core);
+}
+
 function build_customers_overview(PDO $pdo): array
 {
     $params = [];
@@ -110,6 +155,8 @@ function build_customers_overview(PDO $pdo): array
         SELECT COUNT(*) FROM tmp_customer_orders WHERE warehouse != ''
     ")->fetchColumn();
 
+    // Gộp trước rồi mới cắt top 12, nếu không một biến thể tên của cùng một kho
+    // có thể rơi ra ngoài LIMIT và bị mất khi gộp.
     $warehouseStmt = $pdo->query("
         SELECT warehouse,
                COUNT(*) AS orders,
@@ -118,14 +165,38 @@ function build_customers_overview(PDO $pdo): array
         WHERE warehouse != ''
         GROUP BY warehouse
         ORDER BY orders DESC, revenue DESC
-        LIMIT 12
     ");
+
+    $warehouseGroups = [];
+    foreach ($warehouseStmt->fetchAll() as $w) {
+        $raw     = trim((string) $w['warehouse']);
+        $orders  = (int) $w['orders'];
+        $revenue = (float) $w['revenue'];
+        $key     = warehouse_group_key($raw);
+
+        if (!isset($warehouseGroups[$key])) {
+            $warehouseGroups[$key] = ['warehouse' => '', 'orders' => 0, 'revenue' => 0.0, 'label_orders' => -1];
+        }
+        // Nhãn hiển thị lấy theo biến thể nhiều đơn nhất (thường là "Kho X").
+        if ($orders > $warehouseGroups[$key]['label_orders']) {
+            $warehouseGroups[$key]['warehouse']    = warehouse_display_name($raw);
+            $warehouseGroups[$key]['label_orders'] = $orders;
+        }
+        $warehouseGroups[$key]['orders']  += $orders;
+        $warehouseGroups[$key]['revenue'] += $revenue;
+    }
+
+    $warehouseGroups = array_values($warehouseGroups);
+    usort($warehouseGroups, static fn(array $a, array $b): int =>
+        [$b['orders'], $b['revenue']] <=> [$a['orders'], $a['revenue']]
+    );
+
     $warehouseList = array_map(static fn(array $w): array => [
         'warehouse'  => (string) $w['warehouse'],
         'orders'     => (int) $w['orders'],
         'revenue'    => (float) $w['revenue'],
         'percentage' => $totalWithWarehouse > 0 ? round(((int) $w['orders']) / $totalWithWarehouse * 100, 1) : 0,
-    ], $warehouseStmt->fetchAll());
+    ], array_slice($warehouseGroups, 0, 12));
 
     $hcmStmt = $pdo->query("
         SELECT shipping_district AS district,
