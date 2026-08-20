@@ -81,7 +81,7 @@ try {
     $cityStmt = $pdo->prepare("
         SELECT COALESCE(NULLIF(TRIM(shipping_city),''),'(Không rõ)') AS city,
                COUNT(DISTINCT CONCAT(platform, ':', order_id)) AS orders,
-               SUM(CASE WHEN normalized_status IN ('completed','delivered') THEN order_total ELSE 0 END) AS revenue
+               SUM(CASE WHEN normalized_status IN ('completed','delivered') THEN subtotal_after_discount ELSE 0 END) AS revenue
         FROM orders {$where}
           AND platform != 'lazada'
         GROUP BY city

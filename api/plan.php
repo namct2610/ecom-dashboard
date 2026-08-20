@@ -129,9 +129,11 @@ try {
     }
 
     if ($elapsedMonths > 0) {
+        // Cùng cơ sở doanh thu với dashboard: subtotal_after_discount theo dòng.
+        // order_total là tổng cả đơn lặp trên từng dòng nên SUM sẽ bị nhân lên.
         $revenueStmt = $pdo->prepare("
             SELECT DATE_FORMAT(order_created_at, '%Y-%m') AS month,
-                   COALESCE(SUM(order_total), 0) AS revenue
+                   COALESCE(SUM(subtotal_after_discount), 0) AS revenue
             FROM orders
             WHERE DATE(order_created_at) BETWEEN :start_date AND :end_date
               AND normalized_status IN ('completed', 'delivered')
