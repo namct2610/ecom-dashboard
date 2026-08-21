@@ -1,7 +1,7 @@
 {
-  "version": "3.4.57",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.57/release/dashboard-v3-3.4.57.zip",
-  "changelog": "Sửa lỗi doanh thu và giá trị đơn trung bình bị cộng thừa.\n- LƯU Ý: sau khi cập nhật, số Doanh thu và Giá trị đơn TB sẽ GIẢM so với trước. Đây là sửa lỗi, không phải mất dữ liệu — số cũ bị thổi phồng.\n- Nguyên nhân: đơn hàng có nhiều sản phẩm bị cộng tổng tiền nhiều lần, mỗi dòng sản phẩm một lần. Đơn càng nhiều mặt hàng thì càng bị cộng dư. Trên dữ liệu mẫu, doanh thu bị thổi lên khoảng 1,6 lần.\n- Sau khi sửa, KPI Doanh thu khớp đúng với tổng của bảng Sản phẩm bán chạy và bảng Doanh thu theo danh mục — trước đây hai nơi này không bao giờ về cùng một số.\n- Các chỗ cùng bị ảnh hưởng và đã sửa: doanh thu theo tháng và theo ngày, doanh thu theo tỉnh/thành, và doanh thu đối chiếu với kế hoạch. Vì vậy phần trăm hoàn thành kế hoạch cũng sẽ thấp hơn trước; nếu chỉ tiêu được đặt theo số cũ thì nên xem lại mức chỉ tiêu.",
+  "version": "3.4.58",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.58/release/dashboard-v3-3.4.58.zip",
+  "changelog": "Thống nhất cách tính doanh thu giữa các trang.\n- Trang Khách hàng trước đây tính tiền mỗi đơn theo cách khác với trang Tổng quan, nên cùng một chỉ số \"Giá trị đơn TB\" lại ra hai con số. Nay hai trang dùng chung một cách tính.\n- LƯU Ý: \"Giá trị đơn TB\" và doanh thu trên trang Khách hàng sẽ TĂNG nhẹ so với trước, do cách tính mới chưa trừ mã giảm giá ở cấp đơn hàng. Đây là thay đổi cách tính cho đồng bộ, không phải dữ liệu thay đổi.\n- Trong phần chi tiết một khách hàng, cộng giá trị các đơn trong lịch sử mua giờ đúng bằng tổng chi tiêu hiển thị phía trên.\n- Cùng với bản 3.4.57, doanh thu ở Tổng quan, bảng Sản phẩm bán chạy, bảng Doanh thu theo danh mục và trang Khách hàng đều về chung một con số.",
   "min_php": "8.1",
   "released_at": "2026-08-21"
 }
