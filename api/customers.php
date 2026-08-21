@@ -369,7 +369,10 @@ function build_customer_snapshot_tables(PDO $pdo, string $where, array $params):
                COALESCE(NULLIF(MAX(buyer_name), ''), MAX(buyer_username), '') AS buyer_name,
                MIN(order_created_at) AS order_created_at,
                COALESCE(SUM(quantity), 0) AS item_qty,
-               COALESCE(MAX(order_total), 0) AS order_revenue,
+               -- Doanh thu mỗi đơn = tổng tiền hàng các dòng, cùng cơ sở với
+               -- KPI Doanh thu ở dashboard (xem api/v2-data.php). Không dùng
+               -- cột order_total nữa, để hai trang không ra hai con số khác nhau.
+               COALESCE(SUM(subtotal_after_discount), 0) AS order_revenue,
                COALESCE(MAX(shipping_address), '') AS shipping_address,
                COALESCE(MAX(shipping_district), '') AS shipping_district,
                COALESCE(MAX(shipping_city), '') AS shipping_city,
@@ -401,7 +404,7 @@ function build_customer_detail(PDO $pdo): array
             SELECT platform,
                    order_id,
                    COALESCE(SUM(quantity), 0) AS item_qty,
-                   COALESCE(MAX(order_total), 0) AS order_revenue
+                   COALESCE(SUM(subtotal_after_discount), 0) AS order_revenue
             FROM orders {$filteredWhere}
             GROUP BY platform, order_id
         ) filtered_orders
@@ -420,7 +423,7 @@ function build_customer_detail(PDO $pdo): array
                    order_id,
                    MIN(order_created_at) AS order_created_at,
                    COALESCE(SUM(quantity), 0) AS item_qty,
-                   COALESCE(MAX(order_total), 0) AS order_revenue
+                   COALESCE(SUM(subtotal_after_discount), 0) AS order_revenue
             FROM orders
             WHERE buyer_username = ?
               AND normalized_status IN ('completed','delivered')
@@ -462,7 +465,7 @@ function build_customer_detail(PDO $pdo): array
         SELECT platform,
                order_id,
                MIN(order_created_at) AS order_created_at,
-               MAX(order_total) AS order_total,
+               COALESCE(SUM(subtotal_after_discount), 0) AS order_total,
                MAX(normalized_status) AS normalized_status,
                COALESCE(SUM(quantity), 0) AS item_qty,
                MAX(payment_method) AS payment_method,
