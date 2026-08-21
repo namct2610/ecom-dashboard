@@ -44,11 +44,16 @@ foreach ($mustUse as $rel => $atLeast) {
     }
 }
 
-// MAX(order_total) theo từng đơn thì hợp lệ — không được báo lỗi oan.
+// Trang Khách hàng phải dùng cùng cơ sở: tiền mỗi đơn = SUM(subtotal_after_discount)
+// theo từng đơn, không quay lại MAX(order_total) (sẽ lệch với KPI ở dashboard).
 $customers = (string) file_get_contents($root . '/api/customers.php');
-if (!preg_match('/MAX\(order_total\)/i', $customers)) {
+if (preg_match_all('/MAX\(order_total\)/i', $customers, $m)) {
     $fails++;
-    echo "  FAIL api/customers.php: mất MAX(order_total) — chỗ này tính đúng theo đơn, không nên bỏ\n";
+    printf("  FAIL api/customers.php: còn %d chỗ MAX(order_total), phải dùng SUM(subtotal_after_discount) theo đơn\n", count($m[0]));
+}
+if (preg_match_all('/SUM\(subtotal_after_discount\), 0\) AS order_(revenue|total)/i', $customers) < 4) {
+    $fails++;
+    echo "  FAIL api/customers.php: thiếu chỗ tính tiền đơn theo SUM(subtotal_after_discount)\n";
 }
 
 echo $fails === 0
