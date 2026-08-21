@@ -1,7 +1,7 @@
 {
-  "version": "3.4.56",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.56/release/dashboard-v3-3.4.56.zip",
-  "changelog": "Gộp kho trùng tên trong bảng phân bổ đơn.\n- Bảng \"Phân bổ đơn theo kho hàng\" (trang Khách hàng) trước đây tách một kho thành hai dòng khi sàn ghi tên khác nhau — ví dụ \"Kho Gò Vấp\" và \"NPP Gò Vấp (Dũng Tiến)\" vốn là một nơi, phần trong ngoặc chỉ là tên thật của nhà phân phối. Nay các dòng này được gộp làm một, số đơn và tỷ trọng cộng lại đầy đủ.\n- Tên kho hiển thị gọn hơn: bỏ phần trong ngoặc, lấy theo cách gọi phổ biến nhất của kho đó.",
+  "version": "3.4.57",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.57/release/dashboard-v3-3.4.57.zip",
+  "changelog": "Sửa lỗi doanh thu và giá trị đơn trung bình bị cộng thừa.\n- LƯU Ý: sau khi cập nhật, số Doanh thu và Giá trị đơn TB sẽ GIẢM so với trước. Đây là sửa lỗi, không phải mất dữ liệu — số cũ bị thổi phồng.\n- Nguyên nhân: đơn hàng có nhiều sản phẩm bị cộng tổng tiền nhiều lần, mỗi dòng sản phẩm một lần. Đơn càng nhiều mặt hàng thì càng bị cộng dư. Trên dữ liệu mẫu, doanh thu bị thổi lên khoảng 1,6 lần.\n- Sau khi sửa, KPI Doanh thu khớp đúng với tổng của bảng Sản phẩm bán chạy và bảng Doanh thu theo danh mục — trước đây hai nơi này không bao giờ về cùng một số.\n- Các chỗ cùng bị ảnh hưởng và đã sửa: doanh thu theo tháng và theo ngày, doanh thu theo tỉnh/thành, và doanh thu đối chiếu với kế hoạch. Vì vậy phần trăm hoàn thành kế hoạch cũng sẽ thấp hơn trước; nếu chỉ tiêu được đặt theo số cũ thì nên xem lại mức chỉ tiêu.",
   "min_php": "8.1",
-  "released_at": "2026-08-20"
+  "released_at": "2026-08-21"
 }
