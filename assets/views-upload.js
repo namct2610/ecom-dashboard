@@ -54,6 +54,14 @@
 
   const flashMsg = () => window.UI.flashMsg(local.msg);
 
+  // 3 loại file, không mặc định về "Đơn hàng" nữa: báo cáo tài chính bị gán
+  // nhầm nhãn thì người dùng tưởng import sai.
+  function typeLabel(dataType) {
+    if (dataType === "traffic") return t("upload.type.traffic");
+    if (dataType === "settlement") return t("upload.type.settlement");
+    return t("upload.type.orders");
+  }
+
   function platPill(p) {
     if (!p) return "—";
     const key = p === "tiktokshop" ? "tiktok" : p;
@@ -91,7 +99,7 @@
       const platLabel = (r.platform === "tiktokshop" ? "tiktok" : r.platform);
       badge = `<span class="tag" style="color:var(--pos);border-color:color-mix(in oklch, var(--pos) 30%, transparent)">${tf("upload.queue.done", { n: r.imported || 0 })}</span>
                <span class="tag mono">${platLabel || "?"}</span>
-               <span class="tag">${r.data_type === "traffic" ? t("upload.type.traffic") : t("upload.type.orders")}</span>`;
+               <span class="tag">${typeLabel(r.data_type)}</span>`;
     } else {
       badge = `<span class="tag" style="color:var(--neg);border-color:color-mix(in oklch, var(--neg) 30%, transparent)">✗ ${(q.result && q.result.error) || t("upload.queue.error_default")}</span>`;
     }
@@ -143,7 +151,7 @@
             <tr>
               <td style="max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${(h.original_filename || "").replace(/"/g, '&quot;')}">${h.original_filename || "—"}</td>
               <td>${platPill(h.platform)}</td>
-              <td>${h.data_type === "traffic" ? t("upload.type.traffic") : t("upload.type.orders")}</td>
+              <td>${typeLabel(h.data_type)}</td>
               <td class="num tnum">${(+h.imported_rows || 0).toLocaleString("vi-VN")}</td>
               <td class="num tnum">${(+h.skipped_rows || 0).toLocaleString("vi-VN")}</td>
               <td>${statusPill(h.status)}${h.error_message ? `<div style="font-size:11px;color:var(--neg);font-weight:600;margin-top:2px;max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${(h.error_message||'').replace(/"/g,'&quot;')}">${h.error_message}</div>` : ""}</td>
