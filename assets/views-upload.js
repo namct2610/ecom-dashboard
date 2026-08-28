@@ -11,6 +11,8 @@
     queue: [],       // [{ name, size, status:'pending'|'uploading'|'done'|'error', result }]
     msg: null,
     csrf: "",
+    catalog: null,          // dữ liệu thô đang có, để biết xuất được gì
+    exportPick: { platform: "", file_type: "", from: "", to: "" },
   };
 
   async function fetchCsrf() {
@@ -161,10 +163,69 @@
       </table>`;
   }
 
+  const TYPE_ORDER = ["orders", "settlement", "traffic"];
+
+  function exportCard() {
+    const cat = local.catalog;
+    if (cat === null) {
+      return `<div class="card section-gap"><div class="card-pad" style="color:var(--ink-3);font-weight:600">${t("common.loading")}</div></div>`;
+    }
+    if (!cat.length) {
+      return `
+        <div class="card section-gap">
+          <div class="card-head"><div><div class="card-title">${t("export.title")}</div><div class="card-sub">${t("export.sub")}</div></div></div>
+          <div class="card-pad"><div class="note" style="margin:0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>${t("export.empty")}</div></div>
+        </div>`;
+    }
+
+    const p = local.exportPick;
+    const sorted = cat.slice().sort((a, b) =>
+      TYPE_ORDER.indexOf(a.file_type) - TYPE_ORDER.indexOf(b.file_type) || a.platform.localeCompare(b.platform));
+    const rows = sorted.map((c) => {
+      const on = p.platform === c.platform && p.file_type === c.file_type;
+      return `<tr data-pick="${c.platform}|${c.file_type}" style="cursor:pointer${on ? ";background:var(--surface-2)" : ""}">
+        <td><input type="radio" name="expPick" ${on ? "checked" : ""} style="accent-color:var(--brand)"></td>
+        <td>${platPill(c.platform)}</td>
+        <td>${typeLabel(c.file_type)}</td>
+        <td class="num tnum">${(+c.rows || 0).toLocaleString("vi-VN")}</td>
+        <td class="mono" style="font-size:12px;color:var(--ink-3)">${c.date_from || "?"} → ${c.date_to || "?"}</td>
+        <td class="num tnum" style="font-size:12px;color:${c.undated ? "var(--neg)" : "var(--ink-3)"}">${c.undated ? (+c.undated).toLocaleString("vi-VN") : "—"}</td>
+      </tr>`;
+    }).join("");
+
+    const ready = p.platform && p.file_type && p.from && p.to;
+    return `
+      <div class="card section-gap">
+        <div class="card-head"><div><div class="card-title">${t("export.title")}</div><div class="card-sub">${t("export.sub")}</div></div></div>
+        <div class="card-pad" style="padding:6px;overflow-x:auto">
+          <table class="tbl"><thead><tr>
+            <th style="width:34px"></th><th>${t("th.platform")}</th><th>${t("export.col.type")}</th>
+            <th class="num">${t("export.col.rows")}</th><th>${t("export.col.range")}</th>
+            <th class="num">${t("export.col.undated")}</th>
+          </tr></thead><tbody>${rows}</tbody></table>
+        </div>
+        <div class="card-pad" style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;border-top:1px solid var(--border)">
+          <label style="display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:700;color:var(--ink-2)">
+            ${t("export.from")}
+            <input type="date" id="expFrom" value="${p.from}" style="padding:8px 10px;border:1px solid var(--border);border-radius:var(--r-ctrl);background:var(--surface-2);color:var(--ink);font-family:inherit;font-size:13px">
+          </label>
+          <label style="display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:700;color:var(--ink-2)">
+            ${t("export.to")}
+            <input type="date" id="expTo" value="${p.to}" style="padding:8px 10px;border:1px solid var(--border);border-radius:var(--r-ctrl);background:var(--surface-2);color:var(--ink);font-family:inherit;font-size:13px">
+          </label>
+          <button class="ctrl-btn on" id="expBtn" ${ready ? "" : "disabled"} style="background:var(--brand);border-color:var(--brand);color:#fff${ready ? "" : ";opacity:.5;cursor:not-allowed"}">
+            ${t("export.download")}
+          </button>
+          <div style="flex:1 1 260px;min-width:0;font-size:12px;color:var(--ink-3);font-weight:600;line-height:1.5">${t("export.note")}</div>
+        </div>
+      </div>`;
+  }
+
   function render() {
     return `
       ${flashMsg()}
       ${uploadCard()}
+      ${exportCard()}
       <div class="card section-gap">
         <div class="card-head">
           <div>
@@ -280,11 +341,50 @@
     });
   }
 
+  async function fetchCatalog() {
+    try {
+      const r = await fetch("api/export-raw.php?action=catalog", { credentials: "same-origin" });
+      const j = await r.json();
+      local.catalog = j.success ? (j.catalog || []) : [];
+    } catch (_) {
+      local.catalog = [];
+    }
+  }
+
+  function bindExport() {
+    document.querySelectorAll("[data-pick]").forEach((tr) => tr.addEventListener("click", () => {
+      const [platform, fileType] = tr.dataset.pick.split("|");
+      const c = (local.catalog || []).find((x) => x.platform === platform && x.file_type === fileType);
+      // Mặc định lấy trọn khoảng đang có, người dùng chỉnh lại tuỳ ý.
+      local.exportPick = { platform, file_type: fileType, from: (c && c.date_from) || "", to: (c && c.date_to) || "" };
+      window.App.rerender();
+    }));
+    const sync = () => {
+      local.exportPick.from = document.getElementById("expFrom")?.value || "";
+      local.exportPick.to = document.getElementById("expTo")?.value || "";
+      const btn = document.getElementById("expBtn");
+      const ready = local.exportPick.platform && local.exportPick.from && local.exportPick.to;
+      if (btn) { btn.disabled = !ready; btn.style.opacity = ready ? "" : ".5"; }
+    };
+    document.getElementById("expFrom")?.addEventListener("change", sync);
+    document.getElementById("expTo")?.addEventListener("change", sync);
+    document.getElementById("expBtn")?.addEventListener("click", () => {
+      const p = local.exportPick;
+      if (!p.platform || !p.from || !p.to) return;
+      const q = new URLSearchParams({ platform: p.platform, file_type: p.file_type, date_from: p.from, date_to: p.to });
+      window.location.href = "api/export-raw.php?" + q.toString();
+    });
+  }
+
   function mount() {
     if (local.loadingHist && !local.history.length) {
       fetchHistory().then(() => window.App.rerender());
     }
+    if (local.catalog === null) {
+      fetchCatalog().then(() => window.App.rerender());
+    }
     bind();
+    bindExport();
   }
 
   window.Views.upload = {
