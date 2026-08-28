@@ -427,6 +427,57 @@ function ensure_managed_settings_schema(PDO $pdo): void
         INDEX idx_reconcile_combo_name (combo_name(100))
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
+    // Dòng thô của file sàn, giữ nguyên văn để xuất ngược ra đúng format gốc.
+    // Khoá theo mã tự nhiên của sàn nên tải file chồng kỳ chỉ ghi đè, không
+    // nhân bản; cắt khoảng ngày nào cũng được, độc lập với kỳ của file gốc.
+    $pdo->exec("CREATE TABLE IF NOT EXISTS import_layouts (
+        layout_hash CHAR(40) NOT NULL,
+        platform VARCHAR(20) NOT NULL,
+        file_type VARCHAR(20) NOT NULL,
+        headers JSON NOT NULL,
+        prologue JSON NULL,
+        preamble JSON NULL,
+        sheet_name VARCHAR(120) NOT NULL DEFAULT 'Sheet1',
+        column_count INT NOT NULL DEFAULT 0,
+        first_seen TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        last_seen TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        PRIMARY KEY (layout_hash),
+        INDEX idx_layout_kind (platform, file_type)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+    $pdo->exec("CREATE TABLE IF NOT EXISTS import_rows (
+        platform VARCHAR(20) NOT NULL,
+        file_type VARCHAR(20) NOT NULL,
+        row_key VARCHAR(190) NOT NULL,
+        row_date DATE NULL,
+        layout_hash CHAR(40) NOT NULL,
+        payload JSON NOT NULL,
+        upload_id INT NULL,
+        imported_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        PRIMARY KEY (platform, file_type, row_key),
+        INDEX idx_import_rows_range (platform, file_type, row_date)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+    // CREATE TABLE IF NOT EXISTS không thêm cột cho bảng đã tồn tại, nên các
+    // cột thêm sau phải tự vá — nếu không bản đã chạy sẽ lỗi "Unknown column".
+    try {
+        $have = [];
+        foreach ($pdo->query("SHOW COLUMNS FROM import_layouts") as $c) {
+            $have[(string) $c['Field']] = true;
+        }
+        if ($have !== []) {
+            if (!isset($have['prologue'])) {
+                $pdo->exec("ALTER TABLE import_layouts ADD COLUMN prologue JSON NULL AFTER headers");
+            }
+            if (!isset($have['preamble'])) {
+                $pdo->exec("ALTER TABLE import_layouts ADD COLUMN preamble JSON NULL AFTER prologue");
+            }
+            if (!isset($have['sheet_name'])) {
+                $pdo->exec("ALTER TABLE import_layouts ADD COLUMN sheet_name VARCHAR(120) NOT NULL DEFAULT 'Sheet1' AFTER preamble");
+            }
+        }
+    } catch (\Throwable $e) { /* bảng chưa có, CREATE ở trên lo */ }
+
     // Phí thật lấy từ báo cáo tài chính / sao kê của sàn. Để riêng bảng vì đây
     // là nguồn khác với file đơn hàng: import lại đơn hàng không được xoá phí,
     // và một đơn có thể được quyết toán làm nhiều đợt.
@@ -1192,4 +1243,60 @@ function upsert_order_settlement(PDO $pdo, array $row, ?int $uploadId = null): v
         ':details'       => json_encode($row['details'] ?? [], JSON_UNESCAPED_UNICODE) ?: null,
         ':upload_id'     => $uploadId,
     ]);
+}
+
+/** Ghi nhớ thứ tự cột của một bản layout để lúc xuất dựng lại đúng file gốc. */
+function save_import_layout(PDO $pdo, string $layoutHash, string $platform, string $fileType, array $headers, array $preamble = [], string $sheetName = 'Sheet1', array $prologue = []): void
+{
+    $pdo->prepare("
+        INSERT INTO import_layouts (layout_hash, platform, file_type, headers, prologue, preamble, sheet_name, column_count)
+        VALUES (:h, :p, :ft, :hd, :pro, :pre, :sn, :cc)
+        ON DUPLICATE KEY UPDATE prologue = VALUES(prologue), preamble = VALUES(preamble), sheet_name = VALUES(sheet_name), last_seen = CURRENT_TIMESTAMP
+    ")->execute([
+        ':h'   => $layoutHash,
+        ':p'   => $platform,
+        ':ft'  => $fileType,
+        ':hd'  => json_encode(array_values($headers), JSON_UNESCAPED_UNICODE) ?: '[]',
+        ':pre' => $preamble === [] ? null : (json_encode($preamble, JSON_UNESCAPED_UNICODE) ?: null),
+        ':pro' => $prologue === [] ? null : (json_encode($prologue, JSON_UNESCAPED_UNICODE) ?: null),
+        ':sn'  => mb_substr($sheetName, 0, 120),
+        ':cc'  => count($headers),
+    ]);
+}
+
+/**
+ * Lưu dòng thô. Tải lại cùng một đơn (kể cả từ file kỳ khác) thì ghi đè bản
+ * mới nhất — file sàn xuất sau là bản đúng hơn.
+ */
+function upsert_import_rows(PDO $pdo, string $platform, string $fileType, string $layoutHash, array $rows, ?int $uploadId = null): int
+{
+    if ($rows === []) {
+        return 0;
+    }
+
+    $stmt = $pdo->prepare("
+        INSERT INTO import_rows (platform, file_type, row_key, row_date, layout_hash, payload, upload_id)
+        VALUES (:p, :ft, :rk, :rd, :lh, :pl, :uid)
+        ON DUPLICATE KEY UPDATE
+            row_date    = VALUES(row_date),
+            layout_hash = VALUES(layout_hash),
+            payload     = VALUES(payload),
+            upload_id   = VALUES(upload_id)
+    ");
+
+    $saved = 0;
+    foreach ($rows as $row) {
+        $stmt->execute([
+            ':p'   => $platform,
+            ':ft'  => $fileType,
+            ':rk'  => (string) $row['row_key'],
+            ':rd'  => $row['row_date'] ?? null,
+            ':lh'  => $layoutHash,
+            ':pl'  => json_encode($row['payload'], JSON_UNESCAPED_UNICODE) ?: '{}',
+            ':uid' => $uploadId,
+        ]);
+        $saved++;
+    }
+
+    return $saved;
 }

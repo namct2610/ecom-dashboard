@@ -135,6 +135,23 @@ try {
                 );
                 foreach ($parsed['rows'] as $row) upsert_order($pdo, $row);
             }
+            // Giữ nguyên văn từng dòng để sau này xuất ngược ra đúng format gốc.
+            // Lỗi ở bước này không được làm hỏng import: dữ liệu phân tích vẫn
+            // phải vào được, chỉ mất khả năng xuất lại của riêng file đó.
+            $rawSaved = 0;
+            $rawError = null;
+            try {
+                $raw = \Dashboard\Parsers\RawRowCapture::capture($dest, $platform, $dataType);
+                save_import_layout($pdo, $raw['layout_hash'], $platform, $dataType, $raw['headers'], $raw['preamble'] ?? [], $raw['sheet_name'] ?? 'Sheet1', $raw['prologue'] ?? []);
+                $rawSaved = upsert_import_rows($pdo, $platform, $dataType, $raw['layout_hash'], $raw['rows'], $uploadId);
+            } catch (\Throwable $rawEx) {
+                $rawError = $rawEx->getMessage();
+                log_activity('warning', 'upload_raw', "Không lưu được dòng thô: {$originalName}", [
+                    'upload_id' => $uploadId,
+                    'error'     => $rawError,
+                ]);
+            }
+
             $pdo->commit();
 
             update_upload_history($pdo, $uploadId, 'completed', $parsed);
@@ -163,6 +180,8 @@ try {
                 'imported'   => $parsed['imported_rows'],
                 'skipped'    => $parsed['skipped_rows'],
                 'errors'     => $errCount,
+                'raw_saved'  => $rawSaved,
+                'raw_error'  => $rawError,
             ];
         } catch (\Throwable $e) {
             if ($pdo->inTransaction()) $pdo->rollBack();
