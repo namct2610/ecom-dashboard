@@ -34,11 +34,19 @@ function ensure_schema(PDO $pdo, array $config = []): void
     $needed  = ['upload_history', 'orders', 'traffic_daily', 'import_errors', 'app_settings', 'app_logs', 'tiktok_connections', 'lazada_connections', 'shopee_connections', 'users'];
     $missing = array_diff($needed, $tables);
 
+    // Mở rộng ENUM data_type cho báo cáo tài chính (migration cho bản đã chạy).
+    try {
+        $dt = $pdo->query("SHOW COLUMNS FROM upload_history LIKE 'data_type'")->fetch();
+        if ($dt && !str_contains((string) ($dt['Type'] ?? ''), 'settlement')) {
+            $pdo->exec("ALTER TABLE upload_history MODIFY COLUMN data_type ENUM('orders','traffic','settlement') NOT NULL DEFAULT 'orders'");
+        }
+    } catch (\Throwable $e) { /* bảng chưa có, CREATE bên dưới lo */ }
+
     // Add data_type column if missing (migration)
     if (in_array('upload_history', $tables, true)) {
         $col = $pdo->query("SHOW COLUMNS FROM upload_history LIKE 'data_type'")->fetchAll();
         if (empty($col)) {
-            $pdo->exec("ALTER TABLE upload_history ADD COLUMN data_type ENUM('orders','traffic') NOT NULL DEFAULT 'orders' AFTER platform");
+            $pdo->exec("ALTER TABLE upload_history ADD COLUMN data_type ENUM('orders','traffic','settlement') NOT NULL DEFAULT 'orders' AFTER platform");
         }
     }
 
@@ -199,7 +207,7 @@ function ensure_schema(PDO $pdo, array $config = []): void
     $pdo->exec("CREATE TABLE IF NOT EXISTS upload_history (
         id INT AUTO_INCREMENT PRIMARY KEY,
         platform ENUM('shopee','lazada','tiktokshop') NOT NULL,
-        data_type ENUM('orders','traffic') NOT NULL DEFAULT 'orders',
+        data_type ENUM('orders','traffic','settlement') NOT NULL DEFAULT 'orders',
         filename VARCHAR(255) NOT NULL,
         original_filename VARCHAR(255) NOT NULL,
         total_rows INT DEFAULT 0,
@@ -418,6 +426,34 @@ function ensure_managed_settings_schema(PDO $pdo): void
         INDEX idx_reconcile_combo_single (single_sku),
         INDEX idx_reconcile_combo_name (combo_name(100))
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+    // Phí thật lấy từ báo cáo tài chính / sao kê của sàn. Để riêng bảng vì đây
+    // là nguồn khác với file đơn hàng: import lại đơn hàng không được xoá phí,
+    // và một đơn có thể được quyết toán làm nhiều đợt.
+    // Phải cùng collation với orders.order_id, nếu không mọi JOIN giữa hai bảng
+    // sẽ chết vì "Illegal mix of collations" (orders là utf8mb4_general_ci từ
+    // bản cũ, còn MySQL 8 mặc định utf8mb4_0900_ai_ci cho bảng mới).
+    $ordersCollation = $pdo->query("
+        SELECT collation_name FROM information_schema.columns
+        WHERE table_schema = DATABASE() AND table_name = 'orders' AND column_name = 'order_id'
+    ")->fetchColumn();
+    $settlementCollate = (is_string($ordersCollation) && preg_match('/^utf8mb4_[a-z0-9_]+$/', $ordersCollation))
+        ? " COLLATE={$ordersCollation}"
+        : '';
+
+    $pdo->exec("CREATE TABLE IF NOT EXISTS order_settlements (
+        platform VARCHAR(20) NOT NULL,
+        order_id VARCHAR(100) NOT NULL,
+        fee_platform DECIMAL(15,2) NOT NULL DEFAULT 0,
+        fee_marketing DECIMAL(15,2) NOT NULL DEFAULT 0,
+        fee_promotion DECIMAL(15,2) NOT NULL DEFAULT 0,
+        fee_total DECIMAL(15,2) NOT NULL DEFAULT 0,
+        details JSON NULL,
+        upload_id INT NULL,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        PRIMARY KEY (platform, order_id),
+        INDEX idx_settlement_platform (platform)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4{$settlementCollate}");
 
     $pdo->exec("CREATE TABLE IF NOT EXISTS sku_brand_rules (
         prefix CHAR(3) NOT NULL PRIMARY KEY,
@@ -911,6 +947,16 @@ function detect_platform_from_file(string $filePath): string
 
 function detect_upload_profile_from_file(string $filePath): array
 {
+    // Báo cáo tài chính nhận diện theo tên sheet nên rất nhẹ, thử trước.
+    try {
+        $meta = \Dashboard\Parsers\SettlementParser::detect($filePath);
+        return [
+            'data_type'   => 'settlement',
+            'platform'    => $meta['platform'],
+            'detected_by' => 'settlement_sheet',
+        ];
+    } catch (\Throwable $settlementError) { /* không phải sao kê, đi tiếp */ }
+
     try {
         return [
             'data_type'   => 'orders',
@@ -1108,4 +1154,42 @@ function excel_probe_line_has_all(string $line, array $tokens): bool
     }
 
     return true;
+}
+
+/**
+ * Ghi phí thật của một đơn từ báo cáo tài chính. Nhập lại cùng kỳ thì ghi đè
+ * (báo cáo mới là bản đúng), nên dùng REPLACE thay vì cộng dồn.
+ */
+function upsert_order_settlement(PDO $pdo, array $row, ?int $uploadId = null): void
+{
+    static $stmt = null;
+    if ($stmt === null) {
+        $stmt = $pdo->prepare("
+            INSERT INTO order_settlements
+                (platform, order_id, fee_platform, fee_marketing, fee_promotion, fee_total, details, upload_id)
+            VALUES (:platform, :order_id, :fee_platform, :fee_marketing, :fee_promotion, :fee_total, :details, :upload_id)
+            ON DUPLICATE KEY UPDATE
+                fee_platform  = VALUES(fee_platform),
+                fee_marketing = VALUES(fee_marketing),
+                fee_promotion = VALUES(fee_promotion),
+                fee_total     = VALUES(fee_total),
+                details       = VALUES(details),
+                upload_id     = VALUES(upload_id)
+        ");
+    }
+
+    $platformFee  = round((float) ($row['fee_platform'] ?? 0), 2);
+    $marketingFee = round((float) ($row['fee_marketing'] ?? 0), 2);
+    $promotionFee = round((float) ($row['fee_promotion'] ?? 0), 2);
+
+    $stmt->execute([
+        ':platform'      => (string) $row['platform'],
+        ':order_id'      => (string) $row['order_id'],
+        ':fee_platform'  => $platformFee,
+        ':fee_marketing' => $marketingFee,
+        ':fee_promotion' => $promotionFee,
+        ':fee_total'     => $platformFee + $marketingFee + $promotionFee,
+        ':details'       => json_encode($row['details'] ?? [], JSON_UNESCAPED_UNICODE) ?: null,
+        ':upload_id'     => $uploadId,
+    ]);
 }

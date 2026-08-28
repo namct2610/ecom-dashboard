@@ -79,12 +79,17 @@
       </div></div>`).join("")}</div>`;
   }
 
-  function feeMixCard(s) {
-    const parts = [
-      { lab: _t("costs.fee.fixed"), val: s.fee_fixed || 0, color: "--shopee" },
-      { lab: _t("costs.fee.service"), val: s.fee_service || 0, color: "--lazada" },
-      { lab: _t("costs.fee.payment"), val: s.fee_payment || 0, color: "--tiktok" },
+  // 3 nhóm chi phí: bắt buộc / marketing tự chọn / khuyến mãi tự chịu
+  function feeGroups(s) {
+    return [
+      { lab: _t("costs.group.platform"), val: s.fee_platform || 0, color: "--shopee" },
+      { lab: _t("costs.group.marketing"), val: s.fee_marketing || 0, color: "--lazada" },
+      { lab: _t("costs.group.promotion"), val: s.fee_promotion || 0, color: "--tiktok" },
     ];
+  }
+
+  function feeMixCard(s) {
+    const parts = feeGroups(s);
     const total = parts.reduce((t, p) => t + p.val, 0) || 1;
     return `
       <div data-collapse style="grid-column:span 5" class="card">
@@ -117,9 +122,9 @@
   }
 
   function sourceBadge(source) {
-    return source === "actual"
-      ? `<span class="status-pill st-done">${_t("costs.source.actual")}</span>`
-      : `<span class="status-pill st-ship">${_t("costs.source.estimated")}</span>`;
+    if (source === "settlement") return `<span class="status-pill st-done">${_t("costs.source.settlement")}</span>`;
+    if (source === "order_file" || source === "actual") return `<span class="status-pill st-done">${_t("costs.source.order_file")}</span>`;
+    return `<span class="status-pill st-ship">${_t("costs.source.estimated")}</span>`;
   }
 
   function platformTable(platforms) {
@@ -130,9 +135,10 @@
         <td>${sourceBadge(p.source)}</td>
         <td class="num tnum">${F.viInt(p.orders)}</td>
         <td class="num tnum">${F.money(p.revenue)}</td>
-        <td class="num tnum">${p.fee_fixed ? F.money(p.fee_fixed) : "—"}</td>
-        <td class="num tnum">${p.fee_service ? F.money(p.fee_service) : "—"}</td>
-        <td class="num tnum">${p.fee_payment ? F.money(p.fee_payment) : "—"}</td>
+        <td class="num tnum">${p.fee_platform ? F.money(p.fee_platform) : "—"}</td>
+        <td class="num tnum">${p.fee_marketing ? F.money(p.fee_marketing) : "—"}</td>
+        <td class="num tnum">${p.fee_promotion ? F.money(p.fee_promotion) : "—"}</td>
+        <td class="num tnum" style="font-size:12px;color:var(--ink-3)">${p.settled_orders ? p.settled_orders + "/" + p.orders : "—"}</td>
         <td class="num tnum"><b>${F.money(p.fee_total)}</b></td>
         <td class="num tnum" style="color:var(--neg);font-weight:700">${F.viDec(p.fee_pct, 2)}%</td>
         <td class="num tnum" style="color:var(--pos)">${F.money(p.net_revenue)}</td>
@@ -146,8 +152,9 @@
           <table class="tbl"><thead><tr>
             <th>${_t("th.platform")}</th><th>${_t("costs.table.source")}</th>
             <th class="num">${_t("th.orders")}</th><th class="num">${_t("th.revenue")}</th>
-            <th class="num">${_t("costs.fee.fixed")}</th><th class="num">${_t("costs.fee.service")}</th>
-            <th class="num">${_t("costs.fee.payment")}</th><th class="num">${_t("costs.kpi.fee")}</th>
+            <th class="num">${_t("costs.group.platform")}</th><th class="num">${_t("costs.group.marketing")}</th>
+            <th class="num">${_t("costs.group.promotion")}</th><th class="num">${_t("costs.table.coverage")}</th>
+            <th class="num">${_t("costs.kpi.fee")}</th>
             <th class="num">${_t("costs.table.pct")}</th><th class="num">${_t("costs.kpi.net")}</th>
           </tr></thead><tbody>${rows}</tbody></table>
         </div>
@@ -159,13 +166,13 @@
     const rates = local.editing ? local.draft : (data.rates || {});
     const rows = PKEYS.map((k) => {
       const r = rates[k] || { commission: 0, payment: 0 };
-      const usesActual = (data.platforms[k] || {}).source === "actual";
+      const usesActual = ["settlement", "order_file", "actual"].includes((data.platforms[k] || {}).source);
       const cell = (field) => local.editing && !usesActual
         ? `<input type="number" step="0.1" min="0" max="100" data-rate="${k}" data-field="${field}" value="${r[field]}" style="width:78px;padding:5px 8px;border:1px solid var(--border);border-radius:6px;background:var(--surface-2);color:var(--ink);font-family:inherit;font-size:13px;text-align:right">`
         : `<span class="tnum">${usesActual ? "—" : F.viDec(r[field] || 0, 1) + "%"}</span>`;
       return `<tr>
         <td><span class="pchip">${UI.pdot(PLAT_CSS[k])}${PLAT_LABEL[k]}</span></td>
-        <td>${usesActual ? sourceBadge("actual") : sourceBadge("estimated")}</td>
+        <td>${sourceBadge((data.platforms[k] || {}).source || "estimated")}</td>
         <td class="num">${cell("commission")}</td>
         <td class="num">${cell("payment")}</td>
         <td style="font-size:12px;color:var(--ink-3)">${usesActual ? _t("costs.rates.from_file") : _t("costs.rates.from_config")}</td>
@@ -195,11 +202,16 @@
 
   function notesCard(data) {
     const notes = [
+      _t("costs.note.groups"),
+      _t("costs.note.settlement"),
       _t("costs.note.per_order"),
       _t("costs.note.revenue_basis"),
-      _t("costs.note.shipping") + (data.summary.shipping_fee ? " (" + F.money(data.summary.shipping_fee) + ")" : ""),
+      _t("costs.note.shipping"),
       _t("costs.note.excluded"),
     ];
+    if (data.summary.settled_orders) {
+      notes.unshift(_tf("costs.note.coverage", { settled: F.viInt(data.summary.settled_orders), total: F.viInt(data.summary.orders) }));
+    }
     if (data.has_estimated) notes.unshift(_t("costs.note.estimated"));
     return `
       <div class="card section-gap">
@@ -232,15 +244,15 @@
 
     const s = local.data.summary;
     const dn = root.querySelector("#feeMixDonut");
-    if (dn) C.donut(dn, [
-      { label: _t("costs.fee.fixed"), value: s.fee_fixed || 0, color: "--shopee" },
-      { label: _t("costs.fee.service"), value: s.fee_service || 0, color: "--lazada" },
-      { label: _t("costs.fee.payment"), value: s.fee_payment || 0, color: "--tiktok" },
-    ]);
+    if (dn) C.donut(dn, feeGroups(s).map((g) => ({ label: g.lab, value: g.val, color: g.color })));
 
     const tc = root.querySelector("#costTrend");
     const trend = local.data.trend || [];
-    if (tc && trend.length) {
+    // 1 điểm thì đường kẻ không hiện được (pointRadius = 0) → để lại lời nhắn.
+    if (tc && trend.length === 1) {
+      tc.closest(".chart-wrap").innerHTML =
+        `<div style="height:100%;display:grid;place-items:center;color:var(--ink-3);font-weight:600;font-size:13px">${_t("costs.trend.single")}</div>`;
+    } else if (tc && trend.length) {
       C.lineSeries(tc, trend.map((t) => t.month), [
         { label: _t("th.revenue"), data: trend.map((t) => t.revenue), color: "--pos" },
         { label: _t("costs.kpi.fee"), data: trend.map((t) => t.fee_total), color: "--neg" },
