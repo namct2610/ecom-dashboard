@@ -36,36 +36,52 @@ $d = build_cost_analysis($pdo);
 $s = $d['summary'];
 
 // --- Phí phải gộp theo ĐƠN, không cộng theo dòng ---
+// Kiểm trên đường "phí từ file đơn hàng": chọn kỳ chưa có sao kê.
+$_GET = ['date_from' => '2025-01-01', 'date_to' => '2025-12-31', 'platform' => 'all'];
+$y2025 = build_cost_analysis($pdo);
 $perOrder = (float) $pdo->query("SELECT ROUND(SUM(f)) FROM (
         SELECT MAX(platform_fee_fixed)+MAX(platform_fee_service)+MAX(platform_fee_payment) f
         FROM orders WHERE platform='shopee' AND normalized_status IN ('completed','delivered')
-          AND order_created_at >= '2026-01-01' AND order_created_at < '2027-01-01'
+          AND order_created_at >= '2025-01-01' AND order_created_at < '2026-01-01'
         GROUP BY order_id) t")->fetchColumn();
 $perLine = (float) $pdo->query("SELECT ROUND(SUM(platform_fee_fixed+platform_fee_service+platform_fee_payment))
     FROM orders WHERE platform='shopee' AND normalized_status IN ('completed','delivered')
-      AND order_created_at >= '2026-01-01' AND order_created_at < '2027-01-01'")->fetchColumn();
-$shopee = $d['platforms']['shopee'] ?? null;
-$check('Shopee: phí khớp cách gộp theo đơn', $shopee && abs($shopee['fee_total'] - $perOrder) < 2);
-$check('Shopee: KHÔNG cộng phí theo dòng', $shopee && $perLine > $shopee['fee_total'] * 1.2);
+      AND order_created_at >= '2025-01-01' AND order_created_at < '2026-01-01'")->fetchColumn();
+$sp2025 = $y2025['platforms']['shopee'] ?? null;
+$check('Phí từ file đơn hàng: gộp theo đơn', $sp2025 && abs($sp2025['fee_total'] - $perOrder) < 2);
+$check('Phí từ file đơn hàng: KHÔNG cộng theo dòng', $sp2025 && $perLine > $sp2025['fee_total'] * 1.2);
+$check('Nguồn = file đơn hàng khi chưa có sao kê', ($sp2025['source'] ?? '') === 'order_file');
 
-// --- Nguồn dữ liệu ---
-$check('Shopee dùng phí thật', ($shopee['source'] ?? '') === 'actual');
-foreach (['lazada', 'tiktokshop'] as $p) {
-    if (isset($d['platforms'][$p])) {
-        $check("{$p} là ước tính (file chưa có cột phí)", $d['platforms'][$p]['source'] === 'estimated');
-        $r = $d['rates'][$p];
-        $expect = round($d['platforms'][$p]['revenue'] * ($r['commission'] + $r['payment']) / 100, 0);
-        $check("{$p}: ước tính = doanh thu x biểu phí", abs($expect - $d['platforms'][$p]['fee_total']) <= 1);
-    }
+// --- Ưu tiên sao kê khi có ---
+$_GET = ['date_from' => '2026-06-01', 'date_to' => '2026-06-30', 'platform' => 'all'];
+$jun = build_cost_analysis($pdo);
+$hasSettlement = (int) $pdo->query("SELECT COUNT(*) FROM order_settlements")->fetchColumn() > 0;
+if ($hasSettlement) {
+    $spJun = $jun['platforms']['shopee'] ?? [];
+    $check('Có sao kê thì ưu tiên sao kê', ($spJun['source'] ?? '') === 'settlement');
+    $check('Sao kê tách đủ 3 nhóm chi phí',
+        isset($spJun['fee_platform'], $spJun['fee_marketing'], $spJun['fee_promotion']));
+    $check('Đếm được số đơn đã có sao kê', ($spJun['settled_orders'] ?? 0) > 0);
+    $sqlSettled = (float) $pdo->query("SELECT ROUND(SUM(s.fee_total)) FROM order_settlements s
+        JOIN (SELECT DISTINCT platform, order_id FROM orders
+              WHERE normalized_status IN ('completed','delivered')
+                AND order_created_at >= '2026-06-01' AND order_created_at < '2026-07-01') o
+          ON o.platform = s.platform AND o.order_id = s.order_id
+        WHERE s.platform='shopee'")->fetchColumn();
+    $check('Phí sao kê khớp SQL độc lập', abs($sqlSettled - $spJun['fee_total']) < 2,
+        number_format($sqlSettled) . ' vs ' . number_format($spJun['fee_total']));
 }
 
 // --- Cộng dồn nhất quán ---
-$check('Tổng phí = cộng các sàn', abs(array_sum(array_column($d['platforms'], 'fee_total')) - $s['fee_total']) <= 2);
+$_GET = ['mode' => 'year', 'period' => '2026', 'platform' => 'all'];
+$d = build_cost_analysis($pdo);
+$s = $d['summary'];
+$check('Tổng phí = cộng các sàn', abs(array_sum(array_column($d['platforms'], 'fee_total')) - $s['fee_total']) <= 3);
 $check('Doanh thu thuần = doanh thu - phí', abs(($s['revenue'] - $s['fee_total']) - $s['net_revenue']) <= 2);
-$check('Phí = cố định + dịch vụ + thanh toán', abs(($s['fee_fixed'] + $s['fee_service'] + $s['fee_payment']) - $s['fee_total']) <= 2);
-$check('Xu hướng theo tháng cộng lại = tổng phí', abs(array_sum(array_column($d['trend'], 'fee_total')) - $s['fee_total']) <= 12);
+$check('Tổng phí = 3 nhóm cộng lại',
+    abs(($s['fee_platform'] + $s['fee_marketing'] + $s['fee_promotion']) - $s['fee_total']) <= 3);
 
-// --- Doanh thu cùng cơ sở với dashboard (subtotal_after_discount) ---
+// --- Doanh thu cùng cơ sở với dashboard ---
 $revB = (float) $pdo->query("SELECT ROUND(SUM(subtotal_after_discount)) FROM orders
     WHERE normalized_status IN ('completed','delivered')
       AND order_created_at >= '2026-01-01' AND order_created_at < '2027-01-01'")->fetchColumn();

@@ -61,27 +61,42 @@ function build_cost_analysis(PDO $pdo): array
     // Phí sàn được ghi ở cấp ĐƠN và lặp lại trên mọi dòng SKU (đã kiểm: không
     // đơn nào có phí khác nhau giữa các dòng). Vì vậy phải MAX theo từng đơn
     // rồi mới cộng — SUM thẳng theo dòng sẽ nhân phí lên theo số dòng của đơn.
+    // Gom orders trước rồi mới LEFT JOIN sao kê, để $where không bị nhập nhằng
+    // tên cột giữa hai bảng.
     $perOrder = "
-        SELECT platform,
-               order_id,
-               MIN(order_created_at) AS created_at,
-               COALESCE(SUM(subtotal_after_discount), 0) AS revenue,
-               COALESCE(MAX(platform_fee_fixed), 0)   AS fee_fixed,
-               COALESCE(MAX(platform_fee_service), 0) AS fee_service,
-               COALESCE(MAX(platform_fee_payment), 0) AS fee_payment,
-               COALESCE(MAX(shipping_fee), 0)         AS shipping_fee
-        FROM orders {$where}
-        GROUP BY platform, order_id
+        SELECT po.platform,
+               po.order_id,
+               po.created_at,
+               po.revenue,
+               po.fee_from_orders,
+               COALESCE(s.fee_platform, 0)  AS s_platform,
+               COALESCE(s.fee_marketing, 0) AS s_marketing,
+               COALESCE(s.fee_promotion, 0) AS s_promotion,
+               COALESCE(s.fee_total, 0)     AS s_total
+        FROM (
+            SELECT platform,
+                   order_id,
+                   MIN(order_created_at) AS created_at,
+                   COALESCE(SUM(subtotal_after_discount), 0) AS revenue,
+                   COALESCE(MAX(platform_fee_fixed), 0)
+                     + COALESCE(MAX(platform_fee_service), 0)
+                     + COALESCE(MAX(platform_fee_payment), 0) AS fee_from_orders
+            FROM orders {$where}
+            GROUP BY platform, order_id
+        ) po
+        LEFT JOIN order_settlements s
+               ON s.platform = po.platform AND s.order_id = po.order_id
     ";
 
     $byPlatformStmt = $pdo->prepare("
         SELECT platform,
                COUNT(*) AS orders,
-               COALESCE(SUM(revenue), 0)      AS revenue,
-               COALESCE(SUM(fee_fixed), 0)    AS fee_fixed,
-               COALESCE(SUM(fee_service), 0)  AS fee_service,
-               COALESCE(SUM(fee_payment), 0)  AS fee_payment,
-               COALESCE(SUM(shipping_fee), 0) AS shipping_fee
+               COALESCE(SUM(revenue), 0)         AS revenue,
+               COALESCE(SUM(fee_from_orders), 0) AS fee_from_orders,
+               COALESCE(SUM(s_platform), 0)      AS s_platform,
+               COALESCE(SUM(s_marketing), 0)     AS s_marketing,
+               COALESCE(SUM(s_promotion), 0)     AS s_promotion,
+               SUM(CASE WHEN s_total > 0 THEN 1 ELSE 0 END) AS settled_orders
         FROM ({$perOrder}) o
         GROUP BY platform
     ");
@@ -89,58 +104,64 @@ function build_cost_analysis(PDO $pdo): array
 
     $rates = cost_load_rates($pdo);
     $platforms = [];
-    $totals = ['orders' => 0, 'revenue' => 0.0, 'fee_fixed' => 0.0, 'fee_service' => 0.0,
-               'fee_payment' => 0.0, 'fee_total' => 0.0, 'shipping_fee' => 0.0, 'net_revenue' => 0.0];
+    $totals = ['orders' => 0, 'revenue' => 0.0, 'fee_platform' => 0.0, 'fee_marketing' => 0.0,
+               'fee_promotion' => 0.0, 'fee_total' => 0.0, 'net_revenue' => 0.0, 'settled_orders' => 0];
     $anyEstimated = false;
 
     foreach ($byPlatformStmt->fetchAll() as $row) {
         $platform = (string) $row['platform'];
         $revenue  = (float) $row['revenue'];
-        $actual   = (float) $row['fee_fixed'] + (float) $row['fee_service'] + (float) $row['fee_payment'];
+        $settled  = (float) $row['s_platform'] + (float) $row['s_marketing'] + (float) $row['s_promotion'];
 
-        // Có phí thật thì dùng phí thật; không thì mới ước tính theo biểu phí.
-        $isActual = $actual > 0;
-        if ($isActual) {
-            $feeFixed   = (float) $row['fee_fixed'];
-            $feeService = (float) $row['fee_service'];
-            $feePayment = (float) $row['fee_payment'];
+        // Thứ tự ưu tiên: sao kê (đủ nhất) > phí trong file đơn hàng > ước tính.
+        if ($settled > 0) {
+            $source        = 'settlement';
+            $feePlatform   = (float) $row['s_platform'];
+            $feeMarketing  = (float) $row['s_marketing'];
+            $feePromotion  = (float) $row['s_promotion'];
+        } elseif ((float) $row['fee_from_orders'] > 0) {
+            $source        = 'order_file';
+            $feePlatform   = (float) $row['fee_from_orders'];
+            $feeMarketing  = 0.0;
+            $feePromotion  = 0.0;
         } else {
-            $rate = $rates[$platform] ?? ['commission' => 0.0, 'payment' => 0.0];
-            $feeFixed   = 0.0;
-            $feeService = $revenue * $rate['commission'] / 100;
-            $feePayment = $revenue * $rate['payment'] / 100;
-            $anyEstimated = $anyEstimated || $revenue > 0;
+            $source        = 'estimated';
+            $rate          = $rates[$platform] ?? ['commission' => 0.0, 'payment' => 0.0];
+            $feePlatform   = $revenue * ($rate['commission'] + $rate['payment']) / 100;
+            $feeMarketing  = 0.0;
+            $feePromotion  = 0.0;
+            $anyEstimated  = $anyEstimated || $revenue > 0;
         }
-        $feeTotal = $feeFixed + $feeService + $feePayment;
+        $feeTotal = $feePlatform + $feeMarketing + $feePromotion;
 
         $platforms[$platform] = [
-            'platform'     => $platform,
-            'source'       => $isActual ? 'actual' : 'estimated',
-            'orders'       => (int) $row['orders'],
-            'revenue'      => round($revenue, 0),
-            'fee_fixed'    => round($feeFixed, 0),
-            'fee_service'  => round($feeService, 0),
-            'fee_payment'  => round($feePayment, 0),
-            'fee_total'    => round($feeTotal, 0),
-            'fee_pct'      => $revenue > 0 ? round($feeTotal / $revenue * 100, 2) : 0.0,
-            'fee_per_order'=> ((int) $row['orders']) > 0 ? round($feeTotal / (int) $row['orders'], 0) : 0.0,
-            'net_revenue'  => round($revenue - $feeTotal, 0),
-            'shipping_fee' => round((float) $row['shipping_fee'], 0),
+            'platform'       => $platform,
+            'source'         => $source,
+            'orders'         => (int) $row['orders'],
+            'settled_orders' => (int) $row['settled_orders'],
+            'revenue'        => round($revenue, 0),
+            'fee_platform'   => round($feePlatform, 0),
+            'fee_marketing'  => round($feeMarketing, 0),
+            'fee_promotion'  => round($feePromotion, 0),
+            'fee_total'      => round($feeTotal, 0),
+            'fee_pct'        => $revenue > 0 ? round($feeTotal / $revenue * 100, 2) : 0.0,
+            'fee_per_order'  => ((int) $row['orders']) > 0 ? round($feeTotal / (int) $row['orders'], 0) : 0.0,
+            'net_revenue'    => round($revenue - $feeTotal, 0),
         ];
 
-        $totals['orders']       += (int) $row['orders'];
-        $totals['revenue']      += $revenue;
-        $totals['fee_fixed']    += $feeFixed;
-        $totals['fee_service']  += $feeService;
-        $totals['fee_payment']  += $feePayment;
-        $totals['fee_total']    += $feeTotal;
-        $totals['shipping_fee'] += (float) $row['shipping_fee'];
+        $totals['orders']         += (int) $row['orders'];
+        $totals['settled_orders'] += (int) $row['settled_orders'];
+        $totals['revenue']        += $revenue;
+        $totals['fee_platform']   += $feePlatform;
+        $totals['fee_marketing']  += $feeMarketing;
+        $totals['fee_promotion']  += $feePromotion;
+        $totals['fee_total']      += $feeTotal;
     }
 
     $totals['net_revenue']   = $totals['revenue'] - $totals['fee_total'];
     $totals['fee_pct']       = $totals['revenue'] > 0 ? round($totals['fee_total'] / $totals['revenue'] * 100, 2) : 0.0;
     $totals['fee_per_order'] = $totals['orders'] > 0 ? round($totals['fee_total'] / $totals['orders'], 0) : 0.0;
-    foreach (['revenue','fee_fixed','fee_service','fee_payment','fee_total','shipping_fee','net_revenue'] as $k) {
+    foreach (['revenue','fee_platform','fee_marketing','fee_promotion','fee_total','net_revenue'] as $k) {
         $totals[$k] = round($totals[$k], 0);
     }
 
@@ -149,7 +170,7 @@ function build_cost_analysis(PDO $pdo): array
         SELECT DATE_FORMAT(created_at, '%Y-%m') AS month,
                platform,
                COALESCE(SUM(revenue), 0) AS revenue,
-               COALESCE(SUM(fee_fixed + fee_service + fee_payment), 0) AS fee_actual
+               COALESCE(SUM(GREATEST(s_total, fee_from_orders)), 0) AS fee_actual
         FROM ({$perOrder}) o
         GROUP BY month, platform
         ORDER BY month ASC

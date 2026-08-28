@@ -79,7 +79,9 @@ try {
         try {
             $profile = detect_upload_profile_from_file($tempPath);
             $platform = (string) ($profile['platform'] ?? '');
-            $isTraffic = (string) ($profile['data_type'] ?? 'orders') === 'traffic';
+            $dataType  = (string) ($profile['data_type'] ?? 'orders');
+            $isTraffic = $dataType === 'traffic';
+            $isSettlement = $dataType === 'settlement';
             $detectedBy = (string) ($profile['detected_by'] ?? '');
         } catch (\Throwable $e) {
             $results[] = ['file' => $originalName, 'success' => false, 'error' => $e->getMessage()];
@@ -99,18 +101,31 @@ try {
         $pdo->prepare(
             "INSERT INTO upload_history (platform, data_type, filename, original_filename, status)
              VALUES (:p, :dt, :fn, :ofn, 'processing')"
-        )->execute([':p' => $platform, ':dt' => $isTraffic ? 'traffic' : 'orders', ':fn' => $stored, ':ofn' => $originalName]);
+        )->execute([':p' => $platform, ':dt' => $dataType, ':fn' => $stored, ':ofn' => $originalName]);
         $uploadId = (int)$pdo->lastInsertId();
 
         try {
-            $parser  = $isTraffic ? create_traffic_parser($platform, $dest) : create_order_parser($platform, $dest);
-            $parsed  = $parser->parse($uploadId);
+            if ($isSettlement) {
+                $settlement = \Dashboard\Parsers\SettlementParser::parse($dest);
+                $parsed = [
+                    'rows'          => $settlement['rows'],
+                    'errors'        => [],
+                    'total_rows'    => count($settlement['rows']),
+                    'imported_rows' => count($settlement['rows']),
+                    'skipped_rows'  => (int) ($settlement['skipped'] ?? 0),
+                ];
+            } else {
+                $parser = $isTraffic ? create_traffic_parser($platform, $dest) : create_order_parser($platform, $dest);
+                $parsed = $parser->parse($uploadId);
+            }
 
             $pdo->beginTransaction();
             foreach ($parsed['errors'] ?? [] as $err) {
                 log_import_error($pdo, $uploadId, (int)$err['row_number'], $err['raw_order_id'] ?? null, $err['raw_sku'] ?? null, $err['error_code'], $err['error_message'], (array)($err['raw_payload'] ?? []));
             }
-            if ($isTraffic) {
+            if ($isSettlement) {
+                foreach ($parsed['rows'] as $row) upsert_order_settlement($pdo, $row, $uploadId);
+            } elseif ($isTraffic) {
                 foreach ($parsed['rows'] as $row) upsert_traffic_daily($pdo, $row);
             } else {
                 delete_orders_by_platform_and_ids(
@@ -128,7 +143,7 @@ try {
             log_activity('info', 'upload', "Import thành công: {$originalName}", [
                 'upload_id'  => $uploadId,
                 'platform'   => $platform,
-                'data_type'  => $isTraffic ? 'traffic' : 'orders',
+                'data_type'  => $dataType,
                 'detected_by'=> $detectedBy,
                 'total_rows' => $parsed['total_rows'],
                 'imported'   => $parsed['imported_rows'],
@@ -142,7 +157,7 @@ try {
                 'success'    => true,
                 'upload_id'  => $uploadId,
                 'platform'   => $platform,
-                'data_type'  => $isTraffic ? 'traffic' : 'orders',
+                'data_type'  => $dataType,
                 'detected_by'=> $detectedBy,
                 'total_rows' => $parsed['total_rows'],
                 'imported'   => $parsed['imported_rows'],
