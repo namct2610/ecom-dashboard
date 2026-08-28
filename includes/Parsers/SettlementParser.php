@@ -4,8 +4,26 @@ declare(strict_types=1);
 
 namespace Dashboard\Parsers;
 
+use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Reader\IReadFilter;
 use RuntimeException;
+
+/**
+ * Sheet báo cáo của sàn đệm rất nhiều cột rỗng — bản Shopee thật là 1301 dòng
+ * x 1000 cột (1,3 triệu ô) trong khi chỉ 53 cột có dữ liệu. PhpSpreadsheet tạo
+ * một object cho mỗi ô nên đọc hết sẽ vượt memory_limit 256M của server. Lọc
+ * theo số cột tối đa cần dùng là đủ để về ngưỡng an toàn.
+ */
+final class SettlementColumnFilter implements IReadFilter
+{
+    public function __construct(private int $maxColumn = 80) {}
+
+    public function readCell($columnAddress, $row, $worksheetName = ''): bool
+    {
+        return Coordinate::columnIndexFromString($columnAddress) <= $this->maxColumn;
+    }
+}
 
 /**
  * Đọc báo cáo tài chính / sao kê của 3 sàn và quy về một khuôn chung.
@@ -253,10 +271,16 @@ final class SettlementParser
     {
         $reader = IOFactory::createReaderForFile($path);
         $reader->setReadDataOnly(true);
+        $reader->setReadFilter(new SettlementColumnFilter());
         $names = $reader->listWorksheetNames($path);
         if (isset($names[$sheetIndex])) {
             $reader->setLoadSheetsOnly($names[$sheetIndex]);
         }
-        return $reader->load($path)->getSheet(0)->toArray(null, false, true, false);
+        $spreadsheet = $reader->load($path);
+        $rows = $spreadsheet->getSheet(0)->toArray(null, false, true, false);
+        $spreadsheet->disconnectWorksheets();
+        unset($spreadsheet);
+
+        return $rows;
     }
 }
