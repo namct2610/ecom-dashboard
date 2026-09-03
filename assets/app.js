@@ -310,6 +310,43 @@
     setTimeout(function(){document.addEventListener("click",outside,true);},0);
   }
 
+  // One delegated listener for every chart fullscreen button. The CARD goes
+  // fullscreen (not the canvas) so the title, legend and grain toggle come with
+  // it; Chart.js redraws itself because it observes the canvas parent, and
+  // charts.js scales fonts and bar widths off the new width.
+  function setMaximized(card, on) {
+    card.classList.toggle("chart-maximized", on);
+    syncFsButtons(on);
+  }
+  function syncFsButtons(on) {
+    document.querySelectorAll("[data-fs]").forEach((b) => {
+      // app.js keeps its own small ICON set; the chart icons live in UI.ICON.
+      b.innerHTML = on ? window.UI.ICON.collapseFs : window.UI.ICON.expand;
+      b.classList.toggle("on", on);
+    });
+  }
+  document.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-fs]");
+    if (!btn) return;
+    const card = btn.closest(".card");
+    if (!card) return;
+    if (document.fullscreenElement) { document.exitFullscreen(); return; }
+    if (card.classList.contains("chart-maximized")) { setMaximized(card, false); return; }
+    // Real fullscreen where the browser allows it — best for the screenshots
+    // this button exists for — and an in-page overlay where it does not, so the
+    // button never just does nothing.
+    let p = null;
+    try { p = card.requestFullscreen && card.requestFullscreen(); } catch (_) { p = null; }
+    if (p && p.catch) p.catch(() => setMaximized(card, true));
+    else if (!p) setMaximized(card, true);
+  });
+  document.addEventListener("fullscreenchange", () => syncFsButtons(!!document.fullscreenElement));
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape") return;
+    const open = document.querySelector(".card.chart-maximized");
+    if (open) setMaximized(open, false);
+  });
+
   function wireControls() {
     document.getElementById("platSeg")?.addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) { st.platform = b.dataset.p; commit(); } });
     document.getElementById("periodBtn")?.addEventListener("click", (e) => { e.stopPropagation(); periodPopover(e.currentTarget); });

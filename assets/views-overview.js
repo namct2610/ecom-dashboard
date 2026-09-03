@@ -197,9 +197,10 @@
             <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:flex-end">
               ${plat === "all" ? `<div class="legend">${S.PKEYS.map((k) => `<span class="legend-item"><span class="legend-swatch" style="background:var(--${k})"></span>${S.PLAT[k].label}</span>`).join("")}</div>` : ""}
               ${grainSeg("revGrainSeg", revG)}
+              ${UI.fsBtn()}
             </div>
           </div>
-        <div class="card-pad" style="padding-top:14px"><div class="chart-scroll"><div class="chart-wrap resizable" style="height:280px"><canvas id="monthlyChart"></canvas></div></div></div>
+        <div class="card-pad" style="padding-top:14px"><div class="chart-wrap" style="height:280px"><canvas id="monthlyChart"></canvas></div></div>
       </div>
       <div data-collapse style="grid-column:span 4" class="card">
         <div class="card-head"><div><div class="card-title">${_t("ovw.share.title")}</div><div class="card-sub">${hideShopee ? _t("ovw.share.hiding") : S.periodLabel(st.period).toLowerCase()}</div></div></div>
@@ -217,9 +218,10 @@
           <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:flex-end">
             ${plat === "all" ? `<div class="legend">${S.PKEYS.map((k) => `<span class="legend-item"><span class="legend-swatch" style="background:var(--${k})"></span>${S.PLAT[k].label}</span>`).join("")}</div>` : ""}
             ${grainSeg("ordGrainSeg", ordG)}
+              ${UI.fsBtn()}
           </div>
         </div>
-        <div class="card-pad" style="padding-top:14px"><div class="chart-scroll"><div class="chart-wrap resizable" style="height:280px"><canvas id="dailyChart"></canvas></div></div></div>
+        <div class="card-pad" style="padding-top:14px"><div class="chart-wrap" style="height:280px"><canvas id="dailyChart"></canvas></div></div>
       </div>
       <div data-collapse style="grid-column:span 4" class="card">
         <div class="card-head"><div><div class="card-title">${_t("ovw.category.title")}</div><div class="card-sub">${_t("ovw.category.by_revenue")} · ${S.periodLabel(st.period).toLowerCase()}</div></div></div>
