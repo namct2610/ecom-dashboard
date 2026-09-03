@@ -1,7 +1,7 @@
 {
-  "version": "3.4.62",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.62/release/dashboard-v3-3.4.62.zip",
-  "changelog": "Đồng bộ biểu đồ tròn và cho phép kéo rộng biểu đồ cột.\n- Hai biểu đồ tròn \"Thị phần doanh thu\" và \"Doanh thu theo danh mục\" nay hiển thị giống nhau: cùng kích thước, cùng có tổng ở giữa vòng tròn, và chú thích đều ghi số tiền kèm tỷ lệ phần trăm. Trước đây hai biểu đồ này lệch nhau về kích thước và một bên chỉ hiện phần trăm còn bên kia chỉ hiện số tiền.\n- Biểu đồ cột nay KÉO RỘNG ĐƯỢC: giữ và kéo góc dưới bên phải của biểu đồ để nới ngang, khung sẽ tự cuộn. Dùng khi có nhiều cột khiến nhãn số phía trên bị chồng lên nhau, hoặc khi cần chụp màn hình số liệu để báo cáo. Áp dụng cho Xu hướng doanh thu, Xu hướng đơn hàng (trang Tổng quan) và biểu đồ trang Đơn hàng.\n- Bỏ giới hạn cứng số nhãn trên trục ngang, nên kéo càng rộng thì càng hiện nhiều mốc thời gian (thử nghiệm: 15 nhãn ở kích thước mặc định, 60 nhãn khi kéo rộng)."
+  "version": "3.4.63",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.63/release/dashboard-v3-3.4.63.zip",
+  "changelog": "Nút toàn màn hình cho biểu đồ cột, thay cho cách kéo rộng ở bản trước.\n- THAY ĐỔI: bỏ thao tác kéo góc để nới rộng biểu đồ (có ở bản 3.4.62). Thay vào đó mỗi biểu đồ cột có NÚT TOÀN MÀN HÌNH ở góc phải phần tiêu đề. Bấm một lần để phóng to kín màn hình, bấm lại hoặc nhấn phím Esc để thoát. Tiêu đề, chú giải và nút chọn Ngày/Tuần/Tháng/Năm vẫn hiển thị khi phóng to, nên chụp màn hình là có đủ thông tin.\n- Biểu đồ tự điều chỉnh theo kích thước: cỡ chữ trục và cỡ nhãn số lớn dần khi phóng to, và các cột dãn rộng ra thay vì đứng lọt thỏm giữa khoảng trống.\n- SỬA LỖI hiển thị: nhãn số phía trên các cột không còn chồng lên nhau. Hệ thống nay đo trước rồi chỉ vẽ những nhãn còn đủ chỗ, nên càng phóng to càng hiện thêm số. Trước đây với chuỗi dài (ví dụ xem theo ngày trong nhiều tháng) các nhãn đè lên nhau thành một vệt không đọc được.\n- Lưu ý: kích thước biểu đồ khi hiển thị bình thường trong thẻ giữ nguyên như cũ, chỉ thay đổi khi phóng to."
   ,
   "min_php": "8.1",
   "released_at": "2026-09-03"

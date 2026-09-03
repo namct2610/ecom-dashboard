@@ -106,10 +106,17 @@
       if (!len) return;
       const { ctx, chartArea } = chart;
       const format = opts.format || compactNumber;
+      // Scale with the plot width: a chart opened fullscreen would otherwise
+      // keep the 11.5px it needs inside a card.
+      const fontSize = opts.fontSize || (chart.width >= 1500 ? 14 : chart.width >= 1050 ? 12.5 : 11.5);
+      const h = opts.height || Math.round(fontSize * 1.92);
       ctx.save();
-      ctx.font = `800 ${opts.fontSize || 11.5}px 'Be Vietnam Pro','Segoe UI',sans-serif`;
+      ctx.font = `800 ${fontSize}px 'Be Vietnam Pro','Segoe UI',sans-serif`;
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
+
+      // Pass 1 — measure every candidate badge.
+      const items = [];
       for (let i = 0; i < len; i++) {
         let total = 0, topY = Infinity, x = null;
         for (let dsIdx = 0; dsIdx < datasets.length; dsIdx++) {
@@ -125,11 +132,20 @@
         }
         if (!total || x == null || !isFinite(topY)) continue;
         const text = format(total);
-        const w = Math.ceil(ctx.measureText(text).width) + 12;
-        const h = opts.height || 22;
+        items.push({ x, topY, text, w: Math.ceil(ctx.measureText(text).width) + 12 });
+      }
+
+      // Pass 2 — draw left to right, dropping any badge that would touch the
+      // one before it. Widening the chart then genuinely reveals more numbers
+      // instead of packing them into an unreadable smear.
+      let lastRight = -Infinity;
+      for (const it of items) {
+        const x = it.x, topY = it.topY, text = it.text, w = it.w;
+        const left = x - w / 2;
+        if (left < lastRight + 5) continue;
+        lastRight = x + w / 2;
         const y = Math.max(chartArea.top + h / 2 + 2, topY - h / 2 - 8);
         const r = h / 2;
-        const left = x - w / 2;
         const top = y - h / 2;
         ctx.fillStyle = opts.backgroundColor || surface();
         ctx.strokeStyle = opts.borderColor || gridc();
@@ -154,7 +170,32 @@
     },
   };
 
-  Chart.register(StackedRoundedTopPlugin, StackTotalLabelPlugin);
+  // maxBarThickness is a fixed number chosen for the in-card width, so a chart
+  // opened fullscreen keeps card-sized bars stranded in huge gaps. Recompute the
+  // cap from the real plot width on each update (a resize triggers one). It only
+  // ever widens — the in-card appearance is left exactly as it was.
+  const AdaptiveBarWidthPlugin = {
+    id: 'adaptiveBarWidth',
+    beforeUpdate(chart, _args, opts) {
+      if (!opts || !opts.enabled) return;
+      const n = chart.data.labels ? chart.data.labels.length : 0;
+      const plotW = (chart.chartArea && chart.chartArea.width) || chart.width || 0;
+      if (!n || !plotW) return;
+      const slot = plotW / n;
+      // Only engage once the plot is genuinely large (i.e. fullscreen). Inside a
+      // card the original barSizing() caps must stand, or a three-bar chart would
+      // silently get fatter bars than it has always had.
+      const wide = plotW >= 1000;
+      chart.data.datasets.forEach((ds) => {
+        if (ds._baseMaxBar == null) ds._baseMaxBar = ds.maxBarThickness;
+        ds.maxBarThickness = wide
+          ? Math.max(ds._baseMaxBar || 0, Math.min(180, Math.round(slot * 0.68)))
+          : ds._baseMaxBar;
+      });
+    },
+  };
+
+  Chart.register(StackedRoundedTopPlugin, StackTotalLabelPlugin, AdaptiveBarWidthPlugin);
 
   function tip() {
     return {
@@ -199,7 +240,7 @@
         interaction: { mode: "index", intersect: false },
         scales: {
           x: { stacked, grid: { display: false }, ticks: { color: ink3(), font: { size: 11 }, maxRotation: 0, autoSkip: true, maxTicksLimit: 10 }, border: { display: false } },
-          y: { stacked, grid: { color: gridc(), drawTicks: false }, ticks: { color: ink3(), font: { size: 11 }, callback: (v) => window.F.money(v) }, border: { display: false } },
+          y: { stacked, grid: { color: gridc(), drawTicks: false }, ticks: { color: ink3(), font: (c) => ({ size: c.chart.width >= 1500 ? 13 : c.chart.width >= 1050 ? 12 : 11 }), callback: (v) => window.F.money(v) }, border: { display: false } },
         },
         plugins: { tooltip: { ...tip(), callbacks: { label: (c) => " " + c.dataset.label + ": " + window.F.moneyFull(c.raw) } } },
       },
@@ -235,13 +276,14 @@
         layout: { padding: { top: 18 } },
         interaction: { mode: "index", intersect: false },
         scales: {
-          x: { stacked, grid: { display: false }, ticks: { color: ink3(), font: { size: 10.5 }, maxRotation: 0, autoSkip: true }, border: { display: false } },
-          y: { stacked, grid: { color: gridc(), drawTicks: false }, ticks: { color: ink3(), font: { size: 11 } }, border: { display: false }, beginAtZero: true },
+          x: { stacked, grid: { display: false }, ticks: { color: ink3(), font: (c) => ({ size: c.chart.width >= 1500 ? 13 : c.chart.width >= 1050 ? 12 : 10.5 }), maxRotation: 0, autoSkip: true }, border: { display: false } },
+          y: { stacked, grid: { color: gridc(), drawTicks: false }, ticks: { color: ink3(), font: (c) => ({ size: c.chart.width >= 1500 ? 13 : c.chart.width >= 1050 ? 12 : 11 }) }, border: { display: false }, beginAtZero: true },
         },
         plugins: {
           tooltip: { ...tip(), callbacks: { label: (c) => " " + c.dataset.label + ": " + window.F.viInt(c.raw) + " " + tr("common.orders_unit", "đơn"), footer: (items) => tr("common.total", "Tổng") + ": " + window.F.viInt(items.reduce((t, i) => t + i.raw, 0)) + " " + tr("common.orders_unit", "đơn") } },
           stackedRoundedTop: { enabled: stacked, radius: 6 },
           stackTotalLabel: { enabled: true },
+          adaptiveBarWidth: { enabled: true },
         },
       },
     });
@@ -308,10 +350,9 @@
   }
 
   /* ---- monthly revenue: stacked bars by platform + optional compare line ----
-     No maxTicksLimit on the x axis here or in ordersTrend: both live in a
-     user-resizable wrap, and a hard cap would keep hiding labels no matter how
-     far the chart is dragged out. autoSkip already prevents overlap at any
-     width. */
+     No maxTicksLimit on the x axis here or in ordersTrend: both can be opened
+     fullscreen, and a hard cap would keep hiding the same labels however big
+     the chart gets. autoSkip already prevents overlap at any width. */
   function monthlyRevenue(canvas, trend, opt) {
     opt = opt || {};
     const labels = trend.map((t) => t.label);
@@ -334,13 +375,14 @@
         layout: { padding: { top: 18 } },
         interaction: { mode: "index", intersect: false },
         scales: {
-          x: { stacked, grid: { display: false }, ticks: { color: ink3(), font: { size: 10.5 }, maxRotation: 0, autoSkip: true }, border: { display: false } },
-          y: { stacked, grid: { color: gridc(), drawTicks: false }, ticks: { color: ink3(), font: { size: 11 }, callback: (v) => window.F.money(v) }, border: { display: false } },
+          x: { stacked, grid: { display: false }, ticks: { color: ink3(), font: (c) => ({ size: c.chart.width >= 1500 ? 13 : c.chart.width >= 1050 ? 12 : 10.5 }), maxRotation: 0, autoSkip: true }, border: { display: false } },
+          y: { stacked, grid: { color: gridc(), drawTicks: false }, ticks: { color: ink3(), font: (c) => ({ size: c.chart.width >= 1500 ? 13 : c.chart.width >= 1050 ? 12 : 11 }), callback: (v) => window.F.money(v) }, border: { display: false } },
         },
         plugins: {
           tooltip: { ...tip(), callbacks: { label: (c) => " " + c.dataset.label + ": " + window.F.moneyFull(c.raw), footer: (items) => tr("common.total", "Tổng") + ": " + window.F.moneyFull(items.reduce((t, i) => t + i.raw, 0)) } },
           stackedRoundedTop: { enabled: stacked, radius: 6 },
           stackTotalLabel: { enabled: true },
+          adaptiveBarWidth: { enabled: true },
         },
       },
     });
