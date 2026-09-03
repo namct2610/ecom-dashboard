@@ -244,7 +244,7 @@
 
     const s = local.data.summary;
     const dn = root.querySelector("#feeMixDonut");
-    if (dn) C.donut(dn, feeGroups(s).map((g) => ({ label: g.lab, value: g.val, color: g.color })));
+    if (dn) C.donut(dn, feeGroups(s).map((g) => ({ label: g.lab, value: g.val, color: g.color })), { money: true });
 
     const tc = root.querySelector("#costTrend");
     const trend = local.data.trend || [];

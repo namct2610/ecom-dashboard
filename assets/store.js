@@ -195,7 +195,10 @@
     return monthsInRange(rangeFromKey(key));
   }
   function compareRange(key, mode) {
-    if (mode === "none") return null;
+    // All-time has nothing meaningful to compare against — there is no earlier
+    // period left. Refuse here rather than in each view, so no caller can render
+    // a delta chip against a half-empty range.
+    if (mode === "none" || key === "all") return null;
     const cur = rangeFromKey(key);
     if (mode === "yoy") {
       const cmpStart = shiftDateYear(cur.start, -1);
@@ -230,7 +233,7 @@
     return _T("period.all");
   }
   function compareLabel(key, mode) {
-    if (mode === "none") return "";
+    if (mode === "none" || key === "all") return "";
     const cur = rangeFromKey(key);
     const cmp = compareRange(key, mode);
     if (!cmp) return "";
@@ -362,7 +365,66 @@
       partial: m.ym === cur,
     }));
   }
-  function businessTrend(key) {
+  // ── Trend granularity ──────────────────────────────────────────────────────
+  // The overview trend charts let the user pick day/week/month/year explicitly.
+  // A grain is applied over a WINDOW ending at the selected period's end, never
+  // shorter than the period itself and never fewer than GRAIN_MIN buckets — a
+  // bare one-month range bucketed by month would otherwise draw a single bar.
+  // This generalises what businessTrend already did per period mode (30 days for
+  // day, ~12 months for month, all years for year).
+  const GRAIN_MIN = { day: 30, week: 12, month: 12, year: 0 };
+
+  function mondayOf(dateStr) {
+    const d = parseDate(dateStr);
+    const dow = (d.getDay() + 6) % 7; // 0 = Monday
+    return addDays(dateStr, -dow);
+  }
+
+  function grainWindow(range, grain) {
+    const end = range.end;
+    let start;
+    if (grain === "day")   start = addDays(end, -(GRAIN_MIN.day - 1));
+    else if (grain === "week")  start = addDays(mondayOf(end), -7 * (GRAIN_MIN.week - 1));
+    else if (grain === "month") start = monthStart(addMonth(end.slice(0, 7), -(GRAIN_MIN.month - 1)));
+    else start = allDates()[0] || range.start;
+    return normalizeRange(start < range.start ? start : range.start, end, range.mode);
+  }
+
+  function trendByGrain(range, grain) {
+    const win = grainWindow(range, grain);
+    const bucketOf = {
+      day:   (d) => d.date,
+      week:  (d) => mondayOf(d.date),
+      month: (d) => d.date.slice(0, 7),
+      year:  (d) => d.date.slice(0, 4),
+    }[grain];
+    const labelOf = {
+      day:   (k) => fmtDateShort(k).slice(0, 5),
+      week:  (k) => fmtDateShort(k).slice(0, 5),
+      month: (k) => MONTH_VI(k),
+      year:  (k) => _TF("period.year_short", { y: k }),
+    }[grain];
+    const map = new Map();
+    dailySeriesRange(win, "all").forEach((d) => {
+      const k = bucketOf(d);
+      let e = map.get(k);
+      if (!e) { e = { k, shopee: 0, lazada: 0, tiktok: 0, o_shopee: 0, o_lazada: 0, o_tiktok: 0, orders: 0, partial: false }; map.set(k, e); }
+      e.shopee += d.shopee; e.lazada += d.lazada; e.tiktok += d.tiktok;
+      e.o_shopee += d.o_shopee; e.o_lazada += d.o_lazada; e.o_tiktok += d.o_tiktok;
+      e.orders += d.orders;
+    });
+    return [...map.values()].sort((a, b) => (a.k < b.k ? -1 : 1)).map((e) => ({ ...e, label: labelOf(e.k) }));
+  }
+
+  // Grain the auto behaviour below already produces, so the toggle can show the
+  // right button as active before the user picks anything.
+  function autoGrain(key) {
+    const mode = rangeFromKey(key).mode;
+    return mode === "year" ? "year" : mode === "month" ? "month" : "day";
+  }
+
+  function businessTrend(key, grain) {
+    if (grain) return trendByGrain(rangeFromKey(key), grain);
     const range = rangeFromKey(key);
     if (range.mode === "year") {
       const years = Array.from(new Set(allMonths().map((ym) => ym.slice(0, 4)))).sort();
@@ -655,7 +717,7 @@
     DASH, PLAT, PKEYS, CAT, state, save, F,
     MONTH_VI, MONTH_VI_LONG, addMonth, parseDate, fmtDate, fmtDateShort, catLabel,
     curMonths, compareMonths, periodLabel, compareLabel, periodMode, rangeFromKey, compareRange, coercePeriod,
-    aggMonths, aggRange, platformMetrics, dailySeries, dailySeriesRange, monthlyTrend, businessTrend,
+    aggMonths, aggRange, platformMetrics, dailySeries, dailySeriesRange, monthlyTrend, businessTrend, autoGrain,
     products, categoryBreakdown, cityDistribution, heatMatrix, statusBreakdown, categoryOf, ensureRangeDetail, getRangeDetail,
     trafficSeries, trafficSeriesRange, trafficAgg, trafficAggRange, trafficByPlatform,
     fetchCustomers, fetchCustomerDetail,

@@ -30,7 +30,9 @@
   function buildPeriods() {
     const latest = newestDate();
     const range = S.currentRange();
-    const currentMode = S.periodMode(st.period);
+    // "all" is a period key, not a range mode — rangeFromKey reports it as
+    // "custom", so recognise it here or the popover opens on the wrong tab.
+    const currentMode = st.period === "all" ? "all" : S.periodMode(st.period);
     return {
       modes: [
         { key: "day", label: T("period.mode.day", "Ngày") },
@@ -38,6 +40,7 @@
         { key: "month", label: T("period.mode.month", "Tháng") },
         { key: "year", label: T("period.mode.year", "Năm") },
         { key: "custom", label: T("period.mode.custom", "Tùy chỉnh") },
+        { key: "all", label: T("period.mode.all", "Toàn thời gian") },
       ],
       currentMode,
       latest,
@@ -76,13 +79,14 @@
 
   function renderControls() {
     const periodLabel = S.periodLabel(st.period);
+    const allTime = st.period === "all";
     return `
       <div class="segment hide-sm" id="platSeg">
         <button class="${st.platform === "all" ? "active" : ""}" data-p="all">${T("common.all")}</button>
         ${S.PKEYS.map((k) => `<button class="${st.platform === k ? "active" : ""}" data-p="${k}"><span class="pdot" style="background:var(--${k})"></span>${S.PLAT[k].label.replace(" Shop", "")}</button>`).join("")}
       </div>
       <button class="period" id="periodBtn">${ICON.cal}<span class="ptxt">${periodLabel}</span><span class="pcaret">▾</span></button>
-      <button class="ctrl-btn hide-sm ${st.compare !== "none" ? "on" : ""}" id="compareBtn">${ICON.cmp}<span>${(COMPARES.find((c) => c.key === st.compare) || COMPARES[0]).label}</span><span class="pcaret">▾</span></button>
+      <button class="ctrl-btn hide-sm ${st.compare !== "none" && !allTime ? "on" : ""}" id="compareBtn" ${allTime ? `disabled title="${escHtml(T("period.all_hint"))}" style="opacity:.5;cursor:not-allowed"` : ""}>${ICON.cmp}<span>${allTime ? T("compare.none") : (COMPARES.find((c) => c.key === st.compare) || COMPARES[0]).label}</span><span class="pcaret">▾</span></button>
     `;
   }
 
@@ -141,6 +145,7 @@
     const today = fmtISODate(new Date());
 
     function buildKey() {
+      if(mode==="all") return "all";
       if(mode==="day") return "d:"+calEnd;
       if(mode==="week"){var md=calMondayOf(calEnd);return "w:"+fmtISODate(md);}
       if(mode==="month") return "m:"+calEnd.slice(0,7);
@@ -154,6 +159,12 @@
     }
 
     function renderCal() {
+      if(mode==="all"){
+        calEl.innerHTML='<div class="cal-panel" style="display:flex;align-items:center;justify-content:center;min-height:150px;text-align:center;padding:18px">'
+          +'<div style="font-size:12.5px;color:var(--ink-3);font-weight:600;line-height:1.6">'+escHtml(T("period.all_hint"))+'</div></div>';
+        preview.textContent=S.periodLabel("all");
+        return;
+      }
       var h='<div class="cal-panel">';
       if(mode==="month"){
         // Month mode: nav arrows shift YEAR; title shows only the year
@@ -286,7 +297,11 @@
     m.querySelector('[data-act="apply"]')?.addEventListener("click",function(){
       // Custom mode: if only one date is picked, treat as single-day range
       if(mode==="custom" && calStart && !calEnd){calEnd=calStart;}
-      st.period=buildKey();commit();closePop();
+      st.period=buildKey();
+      // All-time has no comparison range; flip the control so the header stops
+      // advertising a comparison the data layer will refuse to produce.
+      if(st.period==="all") st.compare="none";
+      commit();closePop();
     });
 
     syncModeUI();
