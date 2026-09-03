@@ -4,11 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Zott Monte · Marketplace Analytics</title>
-<link rel="icon" type="image/svg+xml" href="assets/logo.svg?v=22">
+<link rel="icon" type="image/svg+xml" href="assets/logo.svg?v=24">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/theme.css?v=22">
+<link rel="stylesheet" href="assets/theme.css?v=24">
 <script>
   // Redirect to login page when auth is enabled and session is not active.
   // Runs before any app JS loads to prevent flash of unauthenticated content.
@@ -33,7 +33,7 @@
   <nav id="sidebar">
     <div class="brand">
       <div class="brand-mark">
-        <img src="assets/logo.svg?v=22" alt="Zott" width="38" height="38">
+        <img src="assets/logo.svg?v=24" alt="Zott" width="38" height="38">
       </div>
       <div class="brand-text">
         <div class="brand-name">Zott Monte</div>
@@ -140,7 +140,7 @@
   </div>
 </div>
 
-<script src="assets/i18n.js?v=22"></script>
+<script src="assets/i18n.js?v=24"></script>
 <script>
   // i18n.js loads synchronously above — t() must be available before any view
   // IIFE runs. Apply translations to the static markup immediately so the
@@ -156,7 +156,7 @@
     var root = document.getElementById('pageRoot');
     root.innerHTML = '<div style="padding:48px 24px;color:var(--ink-3);font-weight:600;text-align:center">' + (window.t ? window.t('boot.loading_data') : 'Đang tải dữ liệu…') + '</div>';
 
-    var V = 22; // cache-bust for assets
+    var V = 24; // cache-bust for assets
     var MODULES = [
       'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js',
       'assets/store.js?v=' + V,
