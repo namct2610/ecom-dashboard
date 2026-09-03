@@ -246,7 +246,8 @@
   }
 
   /* ---- donut ---- */
-  function donut(canvas, items) {
+  function donut(canvas, items, opt) {
+    opt = opt || {};
     return mk(canvas, {
       type: "doughnut",
       data: {
@@ -262,7 +263,10 @@
       },
       options: {
         cutout: "70%",
-        plugins: { tooltip: { ...tip(), callbacks: { label: (c) => " " + c.label + ": " + (c.formatted) } } },
+        // c.formatted does not exist in Chart.js 4 (it is formattedValue), so this
+        // read printed "undefined" in every donut tooltip. Use c.raw with the app
+        // formatters, like every other tooltip in this file.
+        plugins: { tooltip: { ...tip(), callbacks: { label: (c) => " " + c.label + ": " + (opt.money ? window.F.moneyFull(c.raw) : window.F.viInt(c.raw)) } } },
       },
     });
   }

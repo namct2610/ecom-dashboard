@@ -154,7 +154,7 @@
     },
     mount(root) {
       const cats = S.categoryBreakdown(S.state.period, S.state.platform).filter((c) => c.revenue > 0);
-      const cn = root.querySelector("#catDonut2"); if (cn) C.donut(cn, cats.map((c) => ({ label: S.catLabel(c.cat), value: c.revenue, color: c.color })));
+      const cn = root.querySelector("#catDonut2"); if (cn) C.donut(cn, cats.map((c) => ({ label: S.catLabel(c.cat), value: c.revenue, color: c.color })), { money: true });
       root.querySelector("#prodSeg")?.addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) { prodMetric = b.dataset.m; window.App.rerender(); } });
       const cacheKey = S.state.period + "|" + S.state.platform;
       if (!S.getRangeDetail(S.state.period, S.state.platform) && detailLoadingKey !== cacheKey) {

@@ -1,7 +1,8 @@
 {
-  "version": "3.4.60",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.60/release/dashboard-v3-3.4.60.zip",
-  "changelog": "Nhập báo cáo tài chính của sàn và xuất lại dữ liệu gốc.\n- Hệ thống nay đọc được BÁO CÁO TÀI CHÍNH của cả ba sàn (báo cáo doanh thu Shopee, sao kê Lazada, quyết toán TikTok Shop). Chỉ cần kéo file vào trang Tải dữ liệu như file thường, hệ thống tự nhận diện.\n- Nhờ đó trang Chi phí sàn dùng PHÍ THẬT cho cả ba sàn thay vì ước tính, và tách rõ ba nhóm: phí sàn bắt buộc, chi phí marketing (affiliate, quảng cáo, Voucher Xtra/Max), khuyến mãi tự chịu (mã giảm giá, xu).\n- LƯU Ý: số phí Shopee sẽ TĂNG đáng kể so với trước, vì báo cáo tài chính có thêm phí affiliate, phí quảng cáo và voucher shop tự chịu mà file đơn hàng không hề chứa. Đây là bổ sung dữ liệu còn thiếu, không phải số cũ sai.\n- MỚI: xuất lại dữ liệu gốc. Từ bản này, mọi file tải lên đều được giữ nguyên văn, nên có thể xuất ngược ra file đúng format sàn đã xuất — đúng thứ tự cột, dòng tiêu đề và tên sheet — theo khoảng ngày tuỳ chọn bất kỳ, không phụ thuộc kỳ của file đã tải lên. Dùng cho việc lưu trữ ngoài. Chức năng nằm ở cuối trang Tải dữ liệu.\n- Các file đã tải lên TRƯỚC bản này không xuất lại được (dữ liệu gốc chưa từng được lưu); hãy tải lên lại một lượt để lấp đầy. Tải chồng kỳ không gây trùng dữ liệu.",
+  "version": "3.4.61",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.61/release/dashboard-v3-3.4.61.zip",
+  "changelog": "Nâng cấp biểu đồ trang Tổng quan.\n- THÊM bộ lọc \"Toàn thời gian\": xem toàn bộ dữ liệu đã nhập trong một lần. Ở chế độ này hệ thống tự chuyển sang \"Không so sánh\" và ẩn mọi số liệu so sánh, vì không còn kỳ nào trước đó để đối chiếu.\n- THÊM nút chọn Ngày / Tuần / Tháng / Năm cho biểu đồ Xu hướng doanh thu và Xu hướng đơn hàng. Hai biểu đồ chỉnh độc lập nhau, nên có thể xem doanh thu theo tháng trong khi xem đơn hàng theo tuần.\n- SỬA LỖI: chú thích khi rê chuột vào biểu đồ tròn hiển thị chữ \"undefined\" thay vì số tiền. Lỗi này có ở tất cả biểu đồ tròn (Tổng quan, Đơn hàng, Khách hàng, Chi phí sàn); nay hiện đúng số tiền theo định dạng Việt Nam.\n- Đổi chỗ \"Khung giờ đặt đơn\" và \"Sản phẩm bán chạy\" ở cuối trang, đồng thời căn lại cho thẳng hàng với các khối phía trên."
+  ,
   "min_php": "8.1",
-  "released_at": "2026-08-28"
+  "released_at": "2026-09-03"
 }
