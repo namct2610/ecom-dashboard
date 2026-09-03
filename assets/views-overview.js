@@ -13,6 +13,35 @@
   let revGrain = null;
   let ordGrain = null;
 
+  // Both overview donuts render through this. They had drifted apart — 172px vs
+  // 150px tall, a centre total on one only, share as % on one and đồng on the
+  // other — so size, centre and legend units now come from one place.
+  function donutBlock(canvasId, items, centerLabel) {
+    const total = items.reduce((t, i) => t + i.value, 0);
+    return `
+      <div class="donut-wrap" style="height:172px"><canvas id="${canvasId}"></canvas>
+        <div class="donut-center"><div><div class="big tnum">${F.money(total)}</div><div class="small">${centerLabel}</div></div></div>
+      </div>
+      <div style="margin-top:14px;display:flex;flex-direction:column;gap:9px">
+        ${items.map((i) => `<div style="display:flex;align-items:center;gap:9px;font-size:13px">
+          <span class="legend-swatch" style="background:${UI.cssColor(i.color)}"></span><b>${UI.esc(i.label)}</b>
+          <span style="margin-left:auto;font-weight:800" class="tnum">${F.money(i.value)}<span style="color:var(--ink-3);font-weight:600;margin-left:6px">${F.pct(total ? i.value / total * 100 : 0)}</span></span>
+        </div>`).join("")}
+      </div>`;
+  }
+
+  // Slice definitions shared by render (legend) and mount (canvas), so the two
+  // can never disagree about order, colour or value.
+  function shareItems(range) {
+    const all = S.PKEYS.map((k) => ({ key: k, ...S.PLAT[k], ...S.aggRange(range, k) }));
+    const shown = hideShopee ? all.filter((p) => p.key !== "shopee") : all;
+    return shown.map((p) => ({ label: p.label, value: p.revenue, color: "--" + p.key }));
+  }
+  function catItems(key, plat) {
+    return S.categoryBreakdown(key, plat).filter((c) => c.revenue > 0)
+      .map((c) => ({ label: S.catLabel(c.cat), value: c.revenue, color: c.color }));
+  }
+
   const GRAINS = ["day", "week", "month", "year"];
   function grainSeg(id, active) {
     return `<div class="miniseg" id="${id}">${GRAINS.map((g) =>
@@ -128,7 +157,7 @@
       </div>`).join("");
 
     // category donut
-    const cats = S.categoryBreakdown(st.period, plat).filter((c) => c.revenue > 0);
+    const cats = catItems(st.period, plat);
 
     // ── Row 5: Top 3 products + Heatmap ──
     const prods = S.products(st.period, "rev", plat).slice(0, 3);
@@ -170,17 +199,12 @@
               ${grainSeg("revGrainSeg", revG)}
             </div>
           </div>
-        <div class="card-pad" style="padding-top:14px"><div class="chart-wrap" style="height:280px"><canvas id="monthlyChart"></canvas></div></div>
+        <div class="card-pad" style="padding-top:14px"><div class="chart-scroll"><div class="chart-wrap resizable" style="height:280px"><canvas id="monthlyChart"></canvas></div></div></div>
       </div>
       <div data-collapse style="grid-column:span 4" class="card">
         <div class="card-head"><div><div class="card-title">${_t("ovw.share.title")}</div><div class="card-sub">${hideShopee ? _t("ovw.share.hiding") : S.periodLabel(st.period).toLowerCase()}</div></div></div>
         <div class="card-pad">
-          <div class="donut-wrap" style="height:172px"><canvas id="shareDonut"></canvas>
-            <div class="donut-center"><div><div class="big tnum">${F.money(pm.reduce((t, p) => t + p.revenue, 0))}</div><div class="small">${hideShopee ? _t("ovw.share.total_lz_tt") : _t("ovw.share.total_revenue")}</div></div></div>
-          </div>
-          <div style="margin-top:14px;display:flex;flex-direction:column;gap:9px">
-            ${pm.map((p) => `<div style="display:flex;align-items:center;gap:9px;font-size:13px"><span class="legend-swatch" style="background:var(--${p.key})"></span><b>${p.label}</b><span style="margin-left:auto;font-weight:800" class="tnum">${F.pct(p.share)}</span></div>`).join("")}
-          </div>
+          ${donutBlock("shareDonut", shareItems(range), hideShopee ? _t("ovw.share.total_lz_tt") : _t("ovw.share.total_revenue"))}
         </div>
       </div>
     </div>
@@ -195,15 +219,12 @@
             ${grainSeg("ordGrainSeg", ordG)}
           </div>
         </div>
-        <div class="card-pad" style="padding-top:14px"><div class="chart-wrap" style="height:280px"><canvas id="dailyChart"></canvas></div></div>
+        <div class="card-pad" style="padding-top:14px"><div class="chart-scroll"><div class="chart-wrap resizable" style="height:280px"><canvas id="dailyChart"></canvas></div></div></div>
       </div>
       <div data-collapse style="grid-column:span 4" class="card">
         <div class="card-head"><div><div class="card-title">${_t("ovw.category.title")}</div><div class="card-sub">${_t("ovw.category.by_revenue")} · ${S.periodLabel(st.period).toLowerCase()}</div></div></div>
         <div class="card-pad">
-          <div class="donut-wrap" style="height:150px"><canvas id="catDonut"></canvas></div>
-          <div style="margin-top:12px;display:flex;flex-direction:column;gap:8px">
-            ${cats.map((c) => `<div style="display:flex;align-items:center;gap:9px;font-size:12.5px"><span class="legend-swatch" style="background:${UI.cssColor(c.color)}"></span>${S.catLabel(c.cat)}<span style="margin-left:auto;font-weight:800" class="tnum">${F.money(c.revenue)}</span></div>`).join("")}
-          </div>
+          ${donutBlock("catDonut", cats, _t("ovw.category.by_revenue"))}
         </div>
       </div>
     </div>
@@ -262,13 +283,8 @@
     const mc = root.querySelector("#monthlyChart"); if (mc) C.monthlyRevenue(mc, S.businessTrend(st.period, revGrain), { platform: plat });
     const dc = root.querySelector("#dailyChart"); if (dc) C.ordersTrend(dc, S.businessTrend(st.period, ordGrain), { platform: plat });
 
-    const pmAll2 = S.PKEYS.map((k) => ({ key: k, ...S.PLAT[k], ...S.aggRange(range, k) }));
-    const totalRev2 = pmAll2.reduce((t, p) => t + p.revenue, 0);
-    pmAll2.forEach((p) => { p.share = totalRev2 ? p.revenue / totalRev2 * 100 : 0; });
-    const pm2 = hideShopee ? pmAll2.filter((p) => p.key !== "shopee") : pmAll2;
-    const dn = root.querySelector("#shareDonut"); if (dn) C.donut(dn, pm2.map((p) => ({ label: p.label, value: p.revenue, color: "--" + p.key })), { money: true });
-    const cn = root.querySelector("#catDonut");
-    if (cn) { const cats = S.categoryBreakdown(st.period, plat).filter((c) => c.revenue > 0); C.donut(cn, cats.map((c) => ({ label: S.catLabel(c.cat), value: c.revenue, color: c.color })), { money: true }); }
+    const dn = root.querySelector("#shareDonut"); if (dn) C.donut(dn, shareItems(range), { money: true });
+    const cn = root.querySelector("#catDonut"); if (cn) C.donut(cn, catItems(st.period, plat), { money: true });
 
     root.querySelector("#revGrainSeg")?.addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) { revGrain = b.dataset.g; window.App.rerender(); } });
     root.querySelector("#ordGrainSeg")?.addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) { ordGrain = b.dataset.g; window.App.rerender(); } });

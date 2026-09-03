@@ -636,6 +636,21 @@ body { transition: background .3s ease, color .3s ease; }
 /* chart canvas wrap */
 .chart-wrap { position: relative; width: 100%; }
 
+/* Bar charts get unreadable once there are many bars — the value label above
+   each bar overlaps its neighbours. These two rules let the user drag the plot
+   wider than the card (the outer box then scrolls), which also makes it easy to
+   grab a clean screenshot of a long series.
+   resize needs a non-visible overflow to work, hence overflow:hidden on the
+   wrap; Chart.js re-renders on its own via ResizeObserver. */
+.chart-scroll { overflow-x: auto; overflow-y: hidden; }
+.chart-wrap.resizable { resize: horizontal; overflow: hidden; min-width: 100%; }
+.chart-wrap.resizable::after {
+  content: ""; position: absolute; right: 0; bottom: 0; width: 14px; height: 14px;
+  border-right: 2px solid var(--ink-3); border-bottom: 2px solid var(--ink-3);
+  opacity: .28; pointer-events: none; border-bottom-right-radius: 3px;
+}
+.chart-wrap.resizable:hover::after { opacity: .6; }
+
 /* legend */
 .legend { display: flex; flex-wrap: wrap; gap: 14px; }
 .legend-item { display: inline-flex; align-items: center; gap: 7px; font-size: 12.5px; font-weight: 700; color: var(--ink-2); cursor: pointer; user-select: none; }

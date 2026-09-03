@@ -16,6 +16,8 @@
   const surface = () => col("--surface");
 
   function destroy(id) { if (reg[id]) { reg[id].destroy(); delete reg[id]; } }
+  // Chart.js already puts a ResizeObserver on the canvas's parent, which is the
+  // .chart-wrap the user drags — so resizing needs no wiring here, only CSS.
   function mk(canvas, cfg) {
     const id = canvas.id || (canvas.id = "c" + Math.random().toString(36).slice(2));
     destroy(id);
@@ -233,7 +235,7 @@
         layout: { padding: { top: 18 } },
         interaction: { mode: "index", intersect: false },
         scales: {
-          x: { stacked, grid: { display: false }, ticks: { color: ink3(), font: { size: 10.5 }, maxRotation: 0, autoSkip: true, maxTicksLimit: 13 }, border: { display: false } },
+          x: { stacked, grid: { display: false }, ticks: { color: ink3(), font: { size: 10.5 }, maxRotation: 0, autoSkip: true }, border: { display: false } },
           y: { stacked, grid: { color: gridc(), drawTicks: false }, ticks: { color: ink3(), font: { size: 11 } }, border: { display: false }, beginAtZero: true },
         },
         plugins: {
@@ -305,7 +307,11 @@
     return g;
   }
 
-  /* ---- monthly revenue: stacked bars by platform + optional compare line ---- */
+  /* ---- monthly revenue: stacked bars by platform + optional compare line ----
+     No maxTicksLimit on the x axis here or in ordersTrend: both live in a
+     user-resizable wrap, and a hard cap would keep hiding labels no matter how
+     far the chart is dragged out. autoSkip already prevents overlap at any
+     width. */
   function monthlyRevenue(canvas, trend, opt) {
     opt = opt || {};
     const labels = trend.map((t) => t.label);
@@ -328,7 +334,7 @@
         layout: { padding: { top: 18 } },
         interaction: { mode: "index", intersect: false },
         scales: {
-          x: { stacked, grid: { display: false }, ticks: { color: ink3(), font: { size: 10.5 }, maxRotation: 0, autoSkip: true, maxTicksLimit: 13 }, border: { display: false } },
+          x: { stacked, grid: { display: false }, ticks: { color: ink3(), font: { size: 10.5 }, maxRotation: 0, autoSkip: true }, border: { display: false } },
           y: { stacked, grid: { color: gridc(), drawTicks: false }, ticks: { color: ink3(), font: { size: 11 }, callback: (v) => window.F.money(v) }, border: { display: false } },
         },
         plugins: {

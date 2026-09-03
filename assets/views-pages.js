@@ -84,7 +84,7 @@
       <div class="g12 section-gap">
         <div data-collapse style="grid-column:span 8" class="card">
           <div class="card-head"><div><div class="card-title">${_t("orders.daily.title")}</div><div class="card-sub">${S.periodLabel(st.period).toLowerCase()} · ${plat === "all" ? _t("ovw.trend.all_platforms") : S.PLAT[plat].label}</div></div></div>
-          <div class="card-pad" style="padding-top:14px"><div class="chart-wrap" style="height:250px"><canvas id="ordChart"></canvas></div></div>
+          <div class="card-pad" style="padding-top:14px"><div class="chart-scroll"><div class="chart-wrap resizable" style="height:250px"><canvas id="ordChart"></canvas></div></div></div>
         </div>
         <div data-collapse style="grid-column:span 4" class="card">
           <div class="card-head"><div><div class="card-title">${_t("th.status")} ${_t("common.orders_unit")}</div><div class="card-sub">${S.periodLabel(st.period).toLowerCase()}</div></div></div>
