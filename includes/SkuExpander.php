@@ -95,11 +95,15 @@ final class SkuExpander
     public function expandRow(array $row, ?string $platform = null): array
     {
         $combo = strtoupper(trim((string) ($row['sku'] ?? '')));
-        if ($combo === '' || !isset($this->combos[$combo])) {
+        if ($combo === '') {
             return [$row];
         }
 
-        $mappings = $this->selectMappings($combo, $platform ?? (string) ($row['platform'] ?? ''));
+        $activePlatform = $platform ?? (string) ($row['platform'] ?? '');
+        $mappings = $this->selectMappings($combo, $activePlatform);
+        if (empty($mappings)) {
+            $mappings = $this->inferSingleFlavorMapping($combo, (string) ($row['product_name'] ?? ''), $activePlatform);
+        }
         if (empty($mappings)) {
             return [$row];
         }
@@ -145,9 +149,11 @@ final class SkuExpander
                 ? $remainingRevenue
                 : round($rev * $share, 2);
             $remainingRevenue = round($remainingRevenue - $allocatedRevenue, 2);
+            $singleName = $this->nameOf($singleSku)
+                ?: (string) ($m['single_name'] ?? $this->singleNameFromCombo((string) ($row['product_name'] ?? '')));
             $out[] = array_merge($row, [
                 'sku'           => $singleSku,
-                'product_name'  => $this->nameOf($singleSku) ?: ($row['product_name'] ?? $singleSku),
+                'product_name'  => $singleName ?: $singleSku,
                 'total_qty'     => $qty * (float) $m['single_qty'],
                 'total_revenue' => $allocatedRevenue,
                 'order_count'   => $orderCount, // each order still counted once per output sku
@@ -166,6 +172,16 @@ final class SkuExpander
      */
     public function expandAndAggregate(array $rows): array
     {
+        // Direct single-SKU rows provide a better name than a COMBO fallback.
+        // Load them before expansion because input order depends on the query.
+        foreach ($rows as $row) {
+            $sku = strtoupper(trim((string) ($row['sku'] ?? '')));
+            $name = trim((string) ($row['product_name'] ?? ''));
+            if ($sku !== '' && $name !== '' && $this->nameOf($sku) === '' && $this->comboMultiplierFromName($name) === 1) {
+                $this->names[$sku] = $name;
+            }
+        }
+
         $bucket = [];
         foreach ($rows as $row) {
             foreach ($this->expandRow($row) as $out) {
@@ -210,5 +226,65 @@ final class SkuExpander
         if (!empty($matched)) { return $matched; }
         $fallback = array_values(array_filter($all, fn($m) => $m['platform'] === 'all'));
         return !empty($fallback) ? $fallback : $all;
+    }
+
+    /** @return list<array{single_sku:string, single_qty:float, platform:string, combo_name:string}> */
+    private function inferSingleFlavorMapping(string $combo, string $productName, string $platform): array
+    {
+        if (str_contains($combo, 'MIX') || stripos($productName, 'MIX') !== false) {
+            return [];
+        }
+
+        $multiplier = $this->comboMultiplierFromName($productName);
+        if ($multiplier <= 1) {
+            return [];
+        }
+
+        $base = preg_replace('/-[A-Z0-9]+$/', '', $combo) ?? $combo;
+        if (preg_match('/^(.*?)(\d{2,3})([A-Z]+)$/', $base, $matches) !== 1) {
+            return [];
+        }
+
+        $count = (int) $matches[2];
+        if ($count <= 0 || $count % $multiplier !== 0) {
+            return [];
+        }
+
+        $singleSku = $matches[1]
+            . str_pad((string) ($count / $multiplier), strlen($matches[2]), '0', STR_PAD_LEFT)
+            . $matches[3];
+        $candidates = [$singleSku];
+        if (preg_match('/^MON\d{3}GC\d{2}/', $singleSku) === 1) {
+            $candidates[] = preg_replace('/^(MON\d{3})GC/', '$1GH', $singleSku) ?? $singleSku;
+        }
+        foreach ($candidates as $candidate) {
+            if (isset($this->prices[$candidate]) || $this->nameOf($candidate) !== '') {
+                $singleSku = $candidate;
+                break;
+            }
+        }
+
+        return [[
+            'single_sku' => $singleSku,
+            'single_qty' => (float) $multiplier,
+            'platform' => $platform,
+            'combo_name' => $productName,
+            'single_name' => $this->nameOf($singleSku) ?: $this->singleNameFromCombo($productName),
+        ]];
+    }
+
+    private function comboMultiplierFromName(string $productName): int
+    {
+        if (preg_match('/combo[^\d]{0,12}(\d+)/iu', $productName, $matches) === 1) {
+            return max(1, (int) ($matches[1] ?? 1));
+        }
+        return 1;
+    }
+
+    private function singleNameFromCombo(string $productName): string
+    {
+        $name = preg_replace('/^(?:\[[^\]]+\]\s*)+/u', '', trim($productName)) ?? trim($productName);
+        $name = preg_replace('/\bCOMBO(?:\s+MIX)?\s*\d*\s*(?:vỉ|lốc|túi)?\s*/iu', '', $name) ?? $name;
+        return trim($name);
     }
 }

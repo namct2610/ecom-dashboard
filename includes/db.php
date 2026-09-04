@@ -436,14 +436,44 @@ function ensure_managed_settings_schema(PDO $pdo): void
         WHEN 'MNS055GC04MNG' THEN 'Sữa chua Montinis Xoài, vỉ 4 hũ'
         WHEN 'MNS055GC04PLN' THEN 'Sữa chua Montinis Nguyên bản, vỉ 4 hũ'
         WHEN 'MON055GH04CLA' THEN 'Váng sữa Monte Classic, vỉ 4 hũ'
+        WHEN 'MON055GH04CXP' THEN 'Váng sữa Monte Canxi Plus, vỉ 4 hũ'
         WHEN 'MON055GH04SCO' THEN 'Váng sữa Monte Socola, vỉ 4 hũ'
         WHEN 'MON055GH04VAN' THEN 'Váng sữa Monte Vani, vỉ 4 hũ'
         WHEN 'MON095MC04SCO' THEN 'Monte Drink Socola, lốc 4 chai'
         WHEN 'MON095MC04VAN' THEN 'Monte Drink Vani, lốc 4 chai'
+        WHEN 'GMS200GL12BGR' THEN 'Phô mai lát Gourmet Slices Burger, túi 12 lát'
+        WHEN 'GMS200GL12MZR' THEN 'Phô mai lát Gourmet Slices Mozzarella, túi 12 lát'
+        WHEN 'GMS200GL12SDW' THEN 'Phô mai lát Gourmet Slices Sandwich, túi 12 lát'
+        WHEN 'GMS200GL12TST' THEN 'Phô mai lát Gourmet Slices Toast, túi 12 lát'
         ELSE product_name END
         WHERE TRIM(product_name) = '' AND UPPER(sku) IN (
             'MNF055GC04STB', 'MNF055GC04VAN', 'MNS055GC04APL', 'MNS055GC04MNG', 'MNS055GC04PLN',
-            'MON055GH04CLA', 'MON055GH04SCO', 'MON055GH04VAN', 'MON095MC04SCO', 'MON095MC04VAN'
+            'MON055GH04CLA', 'MON055GH04CXP', 'MON055GH04SCO', 'MON055GH04VAN',
+            'MON095MC04SCO', 'MON095MC04VAN',
+            'GMS200GL12BGR', 'GMS200GL12MZR', 'GMS200GL12SDW', 'GMS200GL12TST'
+        )");
+
+    $pdo->exec("INSERT INTO reconcile_price_items (sku, product_name, unit_price) VALUES
+        ('MNS055GC04BAN', 'Sữa chua Montinis Chuối, vỉ 4 hũ', 59000),
+        ('MTG050GC04DVN', 'Phô mai tươi Milk Tiger Dâu - Vani, vỉ 4 hũ', 0),
+        ('MTG050GC04DCH', 'Phô mai tươi Milk Tiger Dâu - Chuối, vỉ 4 hũ', 0)
+        ON DUPLICATE KEY UPDATE product_name = IF(TRIM(product_name) = '', VALUES(product_name), product_name)");
+
+    $pdo->exec("INSERT INTO reconcile_combo_items (platform, combo_sku, combo_name, single_sku, single_qty)
+        SELECT seed.platform, seed.combo_sku, seed.combo_name, seed.single_sku, seed.single_qty
+        FROM (
+            SELECT 'all' platform, 'MNS055GC16MIX' combo_sku, 'COMBO MIX 4 vị Montinis' combo_name, 'MNS055GC04PLN' single_sku, 1 single_qty
+            UNION ALL SELECT 'all', 'MNS055GC16MIX', 'COMBO MIX 4 vị Montinis', 'MNS055GC04APL', 1
+            UNION ALL SELECT 'all', 'MNS055GC16MIX', 'COMBO MIX 4 vị Montinis', 'MNS055GC04MNG', 1
+            UNION ALL SELECT 'all', 'MNS055GC16MIX', 'COMBO MIX 4 vị Montinis', 'MNS055GC04BAN', 1
+            UNION ALL SELECT 'all', 'MTG050GC08MIX', 'COMBO MIX 2 vị Milk Tiger', 'MTG050GC04DVN', 1
+            UNION ALL SELECT 'all', 'MTG050GC08MIX', 'COMBO MIX 2 vị Milk Tiger', 'MTG050GC04DCH', 1
+        ) seed
+        WHERE NOT EXISTS (
+            SELECT 1 FROM reconcile_combo_items existing
+            WHERE existing.platform = seed.platform
+              AND existing.combo_sku = seed.combo_sku
+              AND existing.single_sku = seed.single_sku
         )");
 
     // Dòng thô của file sàn, giữ nguyên văn để xuất ngược ra đúng format gốc.

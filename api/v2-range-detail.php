@@ -82,7 +82,7 @@ try {
     $expandedProducts = array_map($normalizeProduct, $expandedProducts);
     $rankProducts = static function (array $rows, string $metric): array {
         usort($rows, static fn(array $a, array $b): int => $b[$metric] <=> $a[$metric]);
-        return array_slice($rows, 0, 15);
+        return $rows;
     };
     $topRev = $rankProducts($expandedProducts, 'revenue');
     $topQty = $rankProducts($expandedProducts, 'qty');
