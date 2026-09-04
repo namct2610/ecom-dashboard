@@ -233,7 +233,7 @@
     "compare.share": "thị trường",
     "compare.revenue_period": "doanh thu kỳ này",
 
-    "orders.daily.title": "Đơn theo ngày",
+    "orders.daily.title": "Thống kê đơn hàng",
     "orders.status_total": "đơn",
     "orders.recent_n": "{n} đơn mới nhất",
 
@@ -892,7 +892,7 @@
     "compare.share": "market share",
     "compare.revenue_period": "revenue this period",
 
-    "orders.daily.title": "Orders by day",
+    "orders.daily.title": "Order statistics",
     "orders.status_total": "orders",
     "orders.recent_n": "{n} most recent orders",
 

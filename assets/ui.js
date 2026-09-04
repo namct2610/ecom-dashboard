@@ -75,6 +75,37 @@
     return `<div style="padding:10px 14px;border-radius:var(--r-ctrl);background:${bg};color:${fg};font-weight:700;font-size:13px;margin-bottom:14px">${esc(msg.text)}</div>`;
   }
 
+  // Day/week/month/year toggle for a trend chart, plus its click handling.
+  // Shared because two views need it now — a second copy is exactly how the
+  // escape helpers and flashMsg drifted apart before.
+  const GRAINS = ["day", "week", "month", "year"];
+  function grainSeg(id, active) {
+    const tr = (k) => (window.t ? window.t(k) : k);
+    return `<div class="miniseg" id="${id}">${GRAINS.map((g) =>
+      `<button class="${g === active ? "active" : ""}" data-g="${g}">${tr("period.mode." + g)}</button>`).join("")}</div>`;
+  }
+
+  // Switching grain normally re-renders the page, but that replaces the card
+  // node — and a node removed from the document drops out of fullscreen, so the
+  // view would snap shut on every click. While a chart is enlarged, update its
+  // toggle and redraw its canvas in place instead of rebuilding the page.
+  function grainHandler(segId, canvasId, setGrain, build) {
+    return (e) => {
+      const btn = e.target.closest("button");
+      if (!btn) return;
+      setGrain(btn.dataset.g);
+
+      const seg = document.getElementById(segId);
+      const card = seg && seg.closest(".card");
+      const enlarged = card && (document.fullscreenElement === card || card.classList.contains("chart-maximized"));
+      if (!enlarged) { window.App.rerender(); return; }
+
+      seg.querySelectorAll("button").forEach((b) => b.classList.toggle("active", b === btn));
+      const cv = card.querySelector("#" + canvasId);
+      if (cv) build(cv);
+    };
+  }
+
   // Fullscreen toggle for a chart card. app.js owns the click handling with one
   // delegated listener, so a view only has to drop this into its card head.
   function fsBtn() {
@@ -82,6 +113,6 @@
     return `<button type="button" class="ctrl-btn chart-fs-btn" data-fs title="${esc(label)}" aria-label="${esc(label)}">${ICON.expand}</button>`;
   }
 
-  window.UI = { ICON, deltaChip, pdot, pchip, platLogo, sparkCanvas, cssColor, esc, flashMsg, fsBtn };
+  window.UI = { ICON, deltaChip, pdot, pchip, platLogo, sparkCanvas, cssColor, esc, flashMsg, fsBtn, grainSeg, grainHandler };
   window.Views = window.Views || {};
 })();

@@ -7,6 +7,8 @@
   const _tf = (k, v) => (window.tf ? window.tf(k, v) : k);
   const escHtml = UI.esc;
   let detailLoadingKey = null;
+  // null = theo cấp độ tự nhiên của kỳ đang chọn (S.autoGrain)
+  let ordersGrain = null;
 
   const CAL_D = ["mon","tue","wed","thu","fri","sat","sun"];
   const dayLabels = () => CAL_D.map((d) => _t("period.cal." + d));
@@ -99,8 +101,16 @@
       return kpis + `
       <div class="g12 section-gap">
         <div data-collapse style="grid-column:span 8" class="card">
-          <div class="card-head"><div><div class="card-title">${_t("orders.daily.title")}</div></div>${UI.fsBtn()}</div>
-          <div class="card-pad" style="padding-top:14px"><div class="chart-wrap" style="height:250px"><canvas id="ordChart"></canvas></div></div>
+          <div class="card-head"><div><div class="card-title">${_t("orders.daily.title")}</div></div>
+            <div class="chart-tools">
+              ${UI.grainSeg("ordersGrainSeg", ordersGrain || S.autoGrain(st.period))}
+              ${UI.fsBtn()}
+            </div>
+          </div>
+          <div class="card-pad" style="padding-top:14px">
+            <div class="chart-wrap" style="height:250px"><canvas id="ordChart"></canvas></div>
+            ${plat === "all" ? `<div class="legend chart-legend">${S.PKEYS.map((k) => `<span class="legend-item"><span class="legend-swatch" style="background:var(--${k})"></span>${S.PLAT[k].label}</span>`).join("")}</div>` : ""}
+          </div>
         </div>
         <div data-collapse style="grid-column:span 4" class="card">
           <div class="card-head"><div><div class="card-title">${_t("th.status")} ${_t("common.orders_unit")}</div></div></div>
@@ -118,7 +128,12 @@
     },
     mount(root) {
       const st = S.state, range = S.currentRange(), plat = st.platform;
-      const oc = root.querySelector("#ordChart"); if (oc) C.ordersTrend(oc, S.dailySeriesRange(range, plat), { platform: plat });
+      // businessTrend thay cho dailySeriesRange: nó hiểu cấp độ ngày/tuần/tháng/năm,
+      // và trả cùng dạng dữ liệu (label + o_shopee/o_lazada/o_tiktok).
+      const buildOrd = (cv) => C.ordersTrend(cv, S.businessTrend(S.state.period, ordersGrain), { platform: S.state.platform });
+      const oc = root.querySelector("#ordChart"); if (oc) buildOrd(oc);
+      root.querySelector("#ordersGrainSeg")?.addEventListener("click",
+        UI.grainHandler("ordersGrainSeg", "ordChart", (g) => { ordersGrain = g; }, buildOrd));
       const cur = S.aggRange(range, plat);
       const sd = root.querySelector("#statusDonut"); if (sd) C.donut(sd, [{ label: _t("status.completed"), value: cur.completed, color: "--pos" }, { label: _t("status.cancelled"), value: cur.cancelled, color: "--neg" }, { label: _t("status.other"), value: Math.max(0, cur.orders - cur.completed - cur.cancelled), color: "--border-strong" }]);
       const cacheKey = st.period + "|" + st.platform;

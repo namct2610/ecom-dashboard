@@ -1,7 +1,7 @@
 {
-  "version": "3.4.68",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.68/release/dashboard-v3-3.4.68.zip",
-  "changelog": "Đổi màu Shopee, biểu đồ đơn hàng dạng vùng và infographic chuyển đổi.\n- Màu Shopee đổi từ ĐỎ sang CAM đúng màu thương hiệu của sàn, áp dụng cho toàn bộ biểu đồ, chú giải và bảng. Màu đỏ vẫn là màu thương hiệu Zott nên không đổi.\n- Biểu đồ \"Xu hướng đơn hàng\" (trang Tổng quan và trang Đơn hàng) đổi từ dạng cột sang DẠNG VÙNG XẾP CHỒNG, dễ theo dõi diễn biến theo thời gian hơn khi có nhiều mốc. Vẫn giữ con số tổng phía trên mỗi mốc.\n- \"Chuyển đổi theo sàn\" làm lại thành infographic: mỗi sàn có 10 hình người, tô màu theo đúng tỷ lệ chuyển đổi, kèm số phần trăm cỡ lớn bên cạnh. Đã bỏ dòng \"… truy cập → … đơn\".\n- SỬA LỖI MÀU (có từ bản 3.4.64): vùng tô nền của biểu đồ đường, dải màu của biểu đồ nhỏ trong thẻ chỉ số, và cột của tháng đang chạy bị tô sai thành màu xanh đen. Nay hiển thị đúng màu mờ của từng sàn."
+  "version": "3.4.69",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.69/release/dashboard-v3-3.4.69.zip",
+  "changelog": "Biểu đồ ở trang Đơn hàng có thêm lựa chọn Ngày/Tuần/Tháng/Năm.\n- Biểu đồ \"Đơn theo ngày\" đổi tên thành \"THỐNG KÊ ĐƠN HÀNG\".\n- Thêm nhóm nút chọn Ngày / Tuần / Tháng / Năm giống hệt hai biểu đồ ở trang Tổng quan, kèm nút phóng to và chú giải đặt dưới biểu đồ.\n- Giữ nguyên chế độ toàn màn hình khi đổi cấp độ xem, giống các biểu đồ khác."
   ,
   "min_php": "8.1",
   "released_at": "2026-09-04"
