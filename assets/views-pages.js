@@ -161,7 +161,7 @@
       const rows = list.map((p, i) => `<tr>
         <td><div class="prod"><span class="rank">${i + 1}</span><div style="min-width:0"><div class="pname">${escHtml(p.cleanName)}</div><div class="psku">${escHtml(p.sku)}</div></div></div></td>
         <td><span class="tag" style="border-color:transparent;background:color-mix(in oklch, ${S.CAT[p.cat].color.startsWith("--") ? "var(" + S.CAT[p.cat].color + ")" : S.CAT[p.cat].color} 14%, transparent);color:${S.CAT[p.cat].color.startsWith("--") ? "var(" + S.CAT[p.cat].color + ")" : S.CAT[p.cat].color}">${S.catLabel(p.cat)}</span></td>
-        <td><span class="pchip">${UI.pdot(p.platform)}${S.PLAT[p.platform].label.replace(" Shop", "")}</span></td>
+        <td>${UI.pchip(p.platform)}</td>
         <td class="num">${F.viInt(p.qty)}</td>
         <td class="num"><b>${F.money(p.revenue)}</b></td>
         <td class="num" style="width:120px"><div class="cmp-track"><div class="cmp-fill" style="width:${(prodMetric === "qty" ? p.qty : p.revenue) / maxV * 100}%;background:var(--brand)"></div></div></td>
