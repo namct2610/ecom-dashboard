@@ -40,6 +40,22 @@
     return `<div class="g12"${grid}>${items.map((o) => `<div data-collapse style="grid-column:span ${span}"><div class="card kpi reveal"><div class="kpi-label">${o.ico} ${o.label}</div><div class="kpi-value tnum">${o.value}${o.unit ? `<span class="unit">${o.unit}</span>` : ""}</div><div class="kpi-foot">${o.delta || ""}<span>${o.foot}</span></div></div></div>`).join("")}</div>`;
   }
 
+  // Ten figures stand for 100 visitors' worth of proportion: the rate fills them
+  // left to right, the last one part-filled. Conversion is single-digit here, so
+  // an honest picture is "most of the first figure" — the big % beside it is what
+  // carries the exact number.
+  const FIGURES = 10;
+  function convFigures(pct, platKey) {
+    const filled = Math.max(0, Math.min(100, +pct || 0)) / (100 / FIGURES);
+    const cells = Array.from({ length: FIGURES }, (_, i) => {
+      const w = Math.max(0, Math.min(1, filled - i)) * 100;
+      return `<span class="ppl">${UI.ICON.person}
+        <span class="ppl-fill" style="width:${w.toFixed(2)}%;color:var(--${platKey})">${UI.ICON.person}</span>
+      </span>`;
+    }).join("");
+    return `<div class="ppl-row">${cells}</div>`;
+  }
+
   // Shared by the customers render (legend) and mount (donut) so both stay in sync.
   // Hex vars only — Chart.js paints these straight onto canvas and chokes on oklch.
   function segmentSlices(segments) {
@@ -445,7 +461,13 @@
         <div data-collapse style="grid-column:span 4" class="card">
           <div class="card-head"><div><div class="card-title">${_t("traffic.conv.title")}</div></div></div>
           <div class="card-pad" style="display:flex;flex-direction:column;gap:14px;padding-top:18px">
-            ${tp.map((p) => `<div><div style="display:flex;align-items:center;gap:8px;font-size:13px;margin-bottom:5px"><span class="legend-swatch" style="background:var(--${p.key})"></span><b>${p.label}</b><span style="margin-left:auto;font-weight:800" class="tnum">${F.pct(p.conv)}</span></div><div class="cmp-track" style="height:9px"><div class="cmp-fill" style="width:${Math.min(100, p.conv / Math.max(...tp.map((x) => x.conv), 1) * 100)}%;background:var(--${p.key})"></div></div><div style="font-size:11.5px;color:var(--ink-3);font-weight:600;margin-top:4px">${_tf("traffic.conv_line", { visits: F.viInt(p.visits), orders: F.viInt(p.completed) })}</div></div>`).join("")}
+            ${tp.map((p) => `<div style="display:flex;align-items:center;gap:14px">
+              <div style="flex:1;min-width:0">
+                <div style="display:flex;align-items:center;gap:8px;font-size:13px;margin-bottom:7px"><span class="legend-swatch" style="background:var(--${p.key})"></span><b>${p.label}</b></div>
+                ${convFigures(p.conv, p.key)}
+              </div>
+              <div class="tnum" style="flex:none;font-size:26px;font-weight:800;letter-spacing:-.02em;line-height:1;color:var(--${p.key})">${F.pct(p.conv)}</div>
+            </div>`).join("")}
           </div>
         </div>
       </div>
