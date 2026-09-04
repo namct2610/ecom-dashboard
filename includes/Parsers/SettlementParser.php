@@ -142,8 +142,28 @@ final class SettlementParser
     {
         $meta = self::detect($path);
         $rows = self::sheetRows($path, $meta['sheet']);
-        $header = array_map(static fn($v): string => trim((string) ($v ?? '')), $rows[$meta['header_row']] ?? []);
-        $data = array_slice($rows, $meta['header_row'] + 1);
+
+        // detect() only reads workbook.xml, so it succeeds even when the sheet
+        // itself never parses — which surfaced as "thiếu cột mã đơn hàng" and
+        // sent everyone looking at the export layout instead of at the reader.
+        // Separate the two: an empty load is a reading failure, and says so.
+        if (self::isBlank($rows)) {
+            throw new RuntimeException(sprintf(
+                'Đọc được sheet "%s" nhưng không có dữ liệu nào (%d dòng). File tải lên có thể hỏng, '
+                . 'hoặc thư viện đọc Excel của máy chủ không xử lý được sheet lớn này.%s',
+                self::sheetNames($path)[$meta['sheet']] ?? '?',
+                count($rows),
+                self::xmlErrorHint()
+            ));
+        }
+
+        // Shopee's preamble is not a fixed height — an extra line shifts the
+        // header off the hardcoded row and makes every column look missing.
+        // Find the row that actually carries the id column and fall back to the
+        // documented one only when the scan finds nothing.
+        $headerRow = self::findHeaderRow($rows, $meta['platform']) ?? $meta['header_row'];
+        $header = array_map(static fn($v): string => trim((string) ($v ?? '')), $rows[$headerRow] ?? []);
+        $data = array_slice($rows, $headerRow + 1);
 
         return $meta['platform'] === 'lazada'
             ? self::parseLong($header, $data, 'lazada')
@@ -153,7 +173,7 @@ final class SettlementParser
     /** Lazada: mỗi dòng một khoản phí, gộp theo mã đơn. */
     private static function parseLong(array $header, array $data, string $platform): array
     {
-        $idx = self::indexOf($header, ['mã đơn hàng', 'order number', 'ordernumber']);
+        $idx = self::indexOf($header, self::idCandidates('lazada'));
         $nameIdx = self::indexOf($header, ['tên phí', 'fee name']);
         $amtIdx = self::indexOf($header, ['số tiền (đã bao gồm thuế)', 'số tiền', 'amount']);
         if ($idx === null || $nameIdx === null || $amtIdx === null) {
@@ -182,9 +202,7 @@ final class SettlementParser
     /** Shopee / TikTok: mỗi đơn một dòng, mỗi loại phí một cột. */
     private static function parseWide(array $header, array $data, string $platform): array
     {
-        $idx = self::indexOf($header, $platform === 'shopee'
-            ? ['mã đơn hàng', 'order id']
-            : ['id đơn hàng/điều chỉnh', 'order/adjustment id', 'order id']);
+        $idx = self::indexOf($header, self::idCandidates($platform));
         if ($idx === null) {
             // Naming only the missing column left no way to tell a genuinely new
             // export layout from a sheet detected as the wrong platform (which
@@ -258,6 +276,53 @@ final class SettlementParser
         ];
         $orders[$orderId]['fee_' . $group] += $amount;
         $orders[$orderId]['details'][$name] = round(($orders[$orderId]['details'][$name] ?? 0) + $amount, 2);
+    }
+
+    /** Tên cột mã đơn theo từng sàn. */
+    private static function idCandidates(string $platform): array
+    {
+        return match ($platform) {
+            'lazada' => ['mã đơn hàng', 'order number', 'ordernumber'],
+            'shopee' => ['mã đơn hàng', 'order id'],
+            default  => ['id đơn hàng/điều chỉnh', 'order/adjustment id', 'order id'],
+        };
+    }
+
+    /** Dòng tiêu đề thật, dò trong 10 dòng đầu. */
+    private static function findHeaderRow(array $rows, string $platform): ?int
+    {
+        $candidates = self::idCandidates($platform);
+        foreach (array_slice($rows, 0, 10, true) as $i => $row) {
+            if (!is_array($row)) { continue; }
+            $cells = array_map(static fn($v): string => trim((string) ($v ?? '')), $row);
+            if (self::indexOf($cells, $candidates) !== null) { return (int) $i; }
+        }
+        return null;
+    }
+
+    /** Sheet không có ô nào mang dữ liệu. */
+    private static function isBlank(array $rows): bool
+    {
+        foreach ($rows as $row) {
+            if (!is_array($row)) { continue; }
+            foreach ($row as $v) {
+                if (trim((string) ($v ?? '')) !== '') { return false; }
+            }
+        }
+        return true;
+    }
+
+    /**
+     * PhpSpreadsheet đọc XML với libxml ở chế độ internal errors, nên khi libxml
+     * từ chối file thì sheet về rỗng mà không ném lỗi. Lấy lại thông báo đó.
+     */
+    private static function xmlErrorHint(): string
+    {
+        $errors = libxml_get_errors();
+        if ($errors === []) { return ''; }
+        $first = trim((string) $errors[0]->message);
+        libxml_clear_errors();
+        return $first === '' ? '' : ' Lỗi XML: ' . $first;
     }
 
     private static function indexOf(array $header, array $candidates): ?int
