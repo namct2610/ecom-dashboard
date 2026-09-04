@@ -5,14 +5,13 @@
    ============================================================ */
 (function () {
   const local = {
-    loadingHist: true,
-    history: [],
     uploading: false,
     queue: [],       // [{ name, size, status:'pending'|'uploading'|'done'|'error', result }]
     msg: null,
     csrf: "",
     catalog: null,          // dữ liệu thô đang có, để biết xuất được gì
     exportPick: { platform: "", file_type: "", from: "", to: "" },
+    coverage: null,   // { loading, error, months, types }
   };
 
   async function fetchCsrf() {
@@ -35,18 +34,6 @@
     return d.toLocaleDateString("vi-VN") + " " + d.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
   }
 
-  async function fetchHistory() {
-    local.loadingHist = true;
-    try {
-      const r = await fetch("api/upload-history.php?limit=30", { credentials: "same-origin" });
-      const j = await r.json();
-      if (j.success) local.history = j.history || [];
-    } catch (e) {
-      // non-fatal
-    } finally {
-      local.loadingHist = false;
-    }
-  }
 
   function showMsg(kind, text) {
     local.msg = { kind, text };
@@ -138,30 +125,6 @@
       </div>`;
   }
 
-  function historyTable() {
-    if (local.loadingHist) return `<div style="padding:24px;text-align:center;color:var(--ink-3);font-weight:600">${t("upload.history.loading")}</div>`;
-    if (!local.history.length) return `<div style="padding:32px;text-align:center;color:var(--ink-3);font-weight:600">${t("upload.history.empty")}</div>`;
-    return `
-      <table class="tbl">
-        <thead><tr>
-          <th>${t("th.file")}</th><th>${t("th.platform")}</th><th>${t("th.type")}</th>
-          <th class="num">${t("th.imported")}</th><th class="num">${t("th.skipped")}</th>
-          <th>${t("th.status")}</th><th>${t("th.uploaded_at")}</th>
-        </tr></thead>
-        <tbody>
-          ${local.history.map((h) => `
-            <tr>
-              <td style="max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${(h.original_filename || "").replace(/"/g, '&quot;')}">${h.original_filename || "—"}</td>
-              <td>${platPill(h.platform)}</td>
-              <td>${typeLabel(h.data_type)}</td>
-              <td class="num tnum">${(+h.imported_rows || 0).toLocaleString("vi-VN")}</td>
-              <td class="num tnum">${(+h.skipped_rows || 0).toLocaleString("vi-VN")}</td>
-              <td>${statusPill(h.status)}${h.error_message ? `<div style="font-size:11px;color:var(--neg);font-weight:600;margin-top:2px;max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${(h.error_message||'').replace(/"/g,'&quot;')}">${h.error_message}</div>` : ""}</td>
-              <td class="mono" style="font-size:12px;color:var(--ink-3)">${fmtDT(h.uploaded_at)}</td>
-            </tr>`).join("")}
-        </tbody>
-      </table>`;
-  }
 
   const TYPE_ORDER = ["orders", "settlement", "traffic"];
 
@@ -221,6 +184,66 @@
       </div>`;
   }
 
+  /* ── data coverage grid (thay cho lịch sử upload) ────────── */
+
+  const COV_TYPES = [
+    { key: "traffic", label: "upload.cov.traffic" },
+    { key: "orders",  label: "upload.cov.orders" },
+    { key: "finance", label: "upload.cov.finance" },
+    { key: "ads",     label: "upload.cov.ads" },
+  ];
+
+  async function fetchCoverage() {
+    local.coverage = { loading: true };
+    window.App.rerender();
+    try {
+      const r = await fetch("api/data-coverage.php", { credentials: "same-origin" });
+      const j = await r.json();
+      if (!r.ok || !j.success) throw new Error(j.error || "HTTP " + r.status);
+      local.coverage = { months: j.months || [], types: j.types || [] };
+    } catch (e) {
+      local.coverage = { error: e.message || String(e) };
+    }
+    window.App.rerender();
+  }
+
+  function covCell(cell, typeKey) {
+    const st = (cell && cell.state) || "none";
+    // Numbers stay on the cell: a yellow month is only actionable if you can see
+    // it is 10/31 days rather than 30/31.
+    const detail = st === "unsupported" ? t("upload.cov.unsupported")
+      : cell.unit === "orders" ? tf("upload.cov.detail_orders", { have: fmtInt(cell.have), total: fmtInt(cell.expected) })
+      : tf("upload.cov.detail_days", { have: fmtInt(cell.have), total: fmtInt(cell.expected) });
+    return `<td class="cov-cell"><span class="cov cov-${st}" title="${t("upload.cov." + typeKey)}: ${detail}">
+      <span class="cov-dot"></span><span class="cov-txt">${st === "unsupported" ? "—" : detail}</span>
+    </span></td>`;
+  }
+
+  const fmtInt = (n) => (+n || 0).toLocaleString("vi-VN");
+
+  function monthLabel(ym) {
+    const [y, m] = ym.split("-");
+    return tf("period.month_n", { n: +m, y });
+  }
+
+  function coverageTable() {
+    const c = local.coverage || {};
+    if (c.loading) return `<div style="padding:24px;text-align:center;color:var(--ink-3);font-weight:600">${t("common.loading")}</div>`;
+    if (c.error) return `<div style="padding:24px;text-align:center;color:var(--neg);font-weight:700">${t("common.error")}: ${window.UI.esc(c.error)}</div>`;
+    if (!c.months || !c.months.length) return `<div style="padding:32px;text-align:center;color:var(--ink-3);font-weight:600">${t("upload.cov.empty")}</div>`;
+
+    const head = COV_TYPES.map((ty) => `<th>${t(ty.label)}</th>`).join("");
+    const rows = c.months.map((m) => `<tr>
+      <td style="font-weight:700;white-space:nowrap">${monthLabel(m.ym)}</td>
+      ${COV_TYPES.map((ty) => covCell(m.cells[ty.key], ty.key)).join("")}
+    </tr>`).join("");
+
+    return `<div class="card-pad" style="padding:6px 6px 10px;overflow-x:auto">
+      <table class="tbl"><thead><tr><th>${t("upload.cov.month")}</th>${head}</tr></thead><tbody>${rows}</tbody></table>
+      <div class="note" style="margin-top:12px">${window.UI.ICON.info} ${t("upload.cov.note")}</div>
+    </div>`;
+  }
+
   function render() {
     return `
       ${flashMsg()}
@@ -228,13 +251,15 @@
       ${exportCard()}
       <div class="card section-gap">
         <div class="card-head">
-          <div>
-            <div class="card-title">${t("upload.history.title")}</div>
-            
+          <div><div class="card-title">${t("upload.cov.title")}</div></div>
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+            <span class="cov-legend"><span class="cov cov-full"><span class="cov-dot"></span></span>${t("upload.cov.legend_full")}</span>
+            <span class="cov-legend"><span class="cov cov-partial"><span class="cov-dot"></span></span>${t("upload.cov.legend_partial")}</span>
+            <span class="cov-legend"><span class="cov cov-none"><span class="cov-dot"></span></span>${t("upload.cov.legend_none")}</span>
+            <button class="ctrl-btn" id="btnReloadCov">${t("common.reload")}</button>
           </div>
-          <button class="ctrl-btn" id="btnReloadHist">${t("common.reload")}</button>
         </div>
-        ${historyTable()}
+        ${coverageTable()}
       </div>`;
   }
 
@@ -293,7 +318,7 @@
       }
     } finally {
       local.uploading = false;
-      await fetchHistory();
+      await fetchCoverage();
       const ok = local.queue.filter((q) => q.status === "done").length;
       const err = local.queue.filter((q) => q.status === "error").length;
       if (ok && !err) showMsg("ok", tf("upload.ok_n", { n: ok }));
@@ -336,9 +361,7 @@
     document.getElementById("btnClearQueue")?.addEventListener("click", () => {
       local.queue = []; window.App.rerender();
     });
-    document.getElementById("btnReloadHist")?.addEventListener("click", () => {
-      fetchHistory().then(() => window.App.rerender());
-    });
+    document.getElementById("btnReloadCov")?.addEventListener("click", fetchCoverage);
   }
 
   async function fetchCatalog() {
@@ -377,9 +400,7 @@
   }
 
   function mount() {
-    if (local.loadingHist && !local.history.length) {
-      fetchHistory().then(() => window.App.rerender());
-    }
+    if (local.coverage === null) fetchCoverage();
     if (local.catalog === null) {
       fetchCatalog().then(() => window.App.rerender());
     }
