@@ -186,7 +186,17 @@ final class SettlementParser
             ? ['mã đơn hàng', 'order id']
             : ['id đơn hàng/điều chỉnh', 'order/adjustment id', 'order id']);
         if ($idx === null) {
-            throw new RuntimeException('Báo cáo thiếu cột mã đơn hàng.');
+            // Naming only the missing column left no way to tell a genuinely new
+            // export layout from a sheet detected as the wrong platform (which
+            // picks a different header row, so every column looks missing).
+            // Report what was actually read so the answer is in the message.
+            $seen = array_slice(array_values(array_filter($header, static fn($h) => $h !== '')), 0, 12);
+            throw new RuntimeException(sprintf(
+                'Báo cáo thiếu cột mã đơn hàng (nhận diện là %s, đọc được %d cột: %s).',
+                $platform,
+                count(array_filter($header, static fn($h) => $h !== '')),
+                $seen ? implode(' | ', $seen) : 'không có cột nào'
+            ));
         }
 
         // Chỉ những cột tên có chữ "phí"/"fee"/"mã ưu đãi"... mới là khoản chi.
