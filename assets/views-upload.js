@@ -318,7 +318,12 @@
           const r = await fetch("api/upload.php", { method: "POST", credentials: "same-origin", headers: { "X-CSRF-Token": csrf }, body: fd });
           const j = await readJson(r);
           // upload.php returns { success, message, results: [{file, success, ...}] }
-          const file = j.results && j.results[0] ? j.results[0] : { success: false, error: t("common.no_results") };
+          // No results array means the request never reached the normal path —
+          // a 500, a timeout, or a body the server threw away. Surfacing the
+          // status and whatever text came back beats a bare "no results".
+          const file = j.results && j.results[0]
+            ? j.results[0]
+            : { success: false, error: j.error || tf("upload.no_response", { status: r.status }) };
           if (file.success) {
             item.status = "done";
             item.result = file;
