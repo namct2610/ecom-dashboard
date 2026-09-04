@@ -1,7 +1,7 @@
 {
-  "version": "3.4.74",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.74/release/dashboard-v3-3.4.74.zip",
-  "changelog": "Đọc báo cáo tài chính bền hơn và báo đúng chỗ hỏng.\n- Trước đây khi máy chủ nạp sheet về rỗng, hệ thống lại báo \"thiếu cột mã đơn hàng\" khiến ai cũng đi soi định dạng file, trong khi lỗi nằm ở khâu đọc. Nay hai trường hợp được tách bạch: sheet rỗng sẽ báo rõ là đọc không ra dữ liệu, kèm thông báo lỗi XML của máy chủ nếu có.\n- Dòng tiêu đề nay được tự dò trong 10 dòng đầu thay vì cố định. Shopee chỉ cần chèn thêm một dòng mở đầu là trước đây toàn bộ cột sẽ coi như mất; nay bảng vẫn đọc được bình thường.\n- Đã đối chiếu lại 29 báo cáo tài chính từ 04/2024 đến 08/2026: số dòng nhập vào không đổi so với bản cũ.",
+  "version": "3.4.75",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.75/release/dashboard-v3-3.4.75.zip",
+  "changelog": "Tự chữa và tự chẩn đoán khi máy chủ nạp sheet về rỗng.\n- Khi sheet đọc ra không có ô nào, hệ thống tự đọc lại theo cách khác (lấy sheet theo tên từ toàn bộ workbook thay vì chỉ nạp một sheet). Nếu đây là nguyên nhân thì lần nhập tiếp theo sẽ chạy bình thường, không cần làm gì thêm.\n- Sheet nay được lấy theo TÊN thay vì theo vị trí, bỏ giả định vị trí luôn đúng.\n- Nếu đọc lại vẫn rỗng, thông báo lỗi sẽ kèm kích thước sheet mà file khai báo, số mục trong file nén, phiên bản PHP và phiên bản thư viện đọc Excel trên chính máy chủ đó.\n- Đã đối chiếu 29 báo cáo tài chính 04/2024–08/2026: số dòng nhập vào không đổi.",
   "min_php": "8.1",
   "released_at": "2026-09-04"
 }
