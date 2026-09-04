@@ -42,32 +42,7 @@
       .map((c) => ({ label: S.catLabel(c.cat), value: c.revenue, color: c.color }));
   }
 
-  // Switching grain normally re-renders the page, but that replaces the card
-  // node — and a node removed from the document drops out of fullscreen, so the
-  // view would snap shut on every click. While a chart is enlarged, update its
-  // toggle and redraw its canvas in place instead of rebuilding the page.
-  function grainHandler(segId, canvasId, setGrain, build) {
-    return (e) => {
-      const btn = e.target.closest("button");
-      if (!btn) return;
-      setGrain(btn.dataset.g);
-
-      const seg = document.getElementById(segId);
-      const card = seg && seg.closest(".card");
-      const enlarged = card && (document.fullscreenElement === card || card.classList.contains("chart-maximized"));
-      if (!enlarged) { window.App.rerender(); return; }
-
-      seg.querySelectorAll("button").forEach((b) => b.classList.toggle("active", b === btn));
-      const cv = card.querySelector("#" + canvasId);
-      if (cv) build(cv);
-    };
-  }
-
-  const GRAINS = ["day", "week", "month", "year"];
-  function grainSeg(id, active) {
-    return `<div class="miniseg" id="${id}">${GRAINS.map((g) =>
-      `<button class="${g === active ? "active" : ""}" data-g="${g}">${_t("period.mode." + g)}</button>`).join("")}</div>`;
-  }
+  const grainSeg = UI.grainSeg, grainHandler = UI.grainHandler;
 
   function ppChip(cur, prev, invert) {
     if (prev == null) return "";
