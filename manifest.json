@@ -1,7 +1,7 @@
 {
-  "version": "3.4.83",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.83/release/dashboard-v3-3.4.83.zip",
-  "changelog": "Bổ sung tỷ trọng doanh thu theo danh mục trong báo cáo Sản phẩm.\n- Hiển thị phần trăm ngay cạnh doanh thu của từng danh mục.\n- Tỷ trọng được tính trên tổng doanh thu báo cáo sau khi loại quà tặng.",
+  "version": "3.4.84",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.84/release/dashboard-v3-3.4.84.zip",
+  "changelog": "Sửa lỗi tràn bảng ở phần Khách hàng trên màn hình hẹp.\n- Hai bảng \"Phân bố đơn theo khu vực\" và \"Phân bổ đơn theo kho hàng\" từ khi có thêm cột doanh thu đã rộng hơn khung chứa, nên trên điện thoại phần cuối bảng bị tràn ra ngoài thẻ. Nay hai bảng này tự cuộn ngang trong khung, giống bảng Top khách hàng.",
   "min_php": "8.1",
   "released_at": "2026-09-05"
 }
