@@ -155,6 +155,14 @@ try {
             GROUP BY UPPER(TRIM(sku)), platform
         ");
         $prodStmt->execute($bind);
+        $rawProds = $prodStmt->fetchAll();
+        $comboProds = array_map(static fn(array $p): array => [
+            'sku' => (string) $p['sku'],
+            'name' => (string) ($p['name'] ?? ''),
+            'qty' => (int) $p['qty'],
+            'revenue' => (float) $p['revenue'],
+            'plat' => (string) $p['platform'],
+        ], $rawProds);
         $prods = array_map(static fn(array $p): array => [
             'sku' => (string) $p['sku'],
             'name' => (string) ($p['product_name'] ?? ''),
@@ -168,7 +176,7 @@ try {
             'total_qty' => (int) $p['qty'],
             'total_revenue' => (float) $p['revenue'],
             'order_count' => (int) $p['order_count'],
-        ], $prodStmt->fetchAll())));
+        ], $rawProds)));
 
         $topRev = $prods;
         usort($topRev, fn($a,$b) => (float)$b['revenue'] <=> (float)$a['revenue']);
@@ -176,6 +184,12 @@ try {
         $topQty = $prods;
         usort($topQty, fn($a,$b) => (int)$b['qty'] <=> (int)$a['qty']);
         $topQty = array_slice($topQty, 0, 10);
+        $topRevCombo = $comboProds;
+        usort($topRevCombo, fn($a,$b) => (float)$b['revenue'] <=> (float)$a['revenue']);
+        $topRevCombo = array_slice($topRevCombo, 0, 10);
+        $topQtyCombo = $comboProds;
+        usort($topQtyCombo, fn($a,$b) => (int)$b['qty'] <=> (int)$a['qty']);
+        $topQtyCombo = array_slice($topQtyCombo, 0, 10);
 
         $shape = function (array $list) use ($platMap) {
             return array_map(function ($p) use ($platMap) {
@@ -245,6 +259,8 @@ try {
         $monthDetail[$ym] = [
             'topRev' => $shape($topRev),
             'topQty' => $shape($topQty),
+            'topRevCombo' => $shape($topRevCombo),
+            'topQtyCombo' => $shape($topQtyCombo),
             'city' => $cities,
             'heat' => $heat,
             'status' => $status,
