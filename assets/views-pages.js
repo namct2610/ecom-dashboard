@@ -155,13 +155,14 @@
     titleKey: "page.products.title", eyebrowKey: "page.products.eyebrow",
     render() {
       const st = S.state;
-      const cats = S.categoryBreakdown(st.period, st.platform, prodGrouping).filter((c) => c.revenue > 0);
-      const list = S.products(st.period, prodMetric, st.platform, prodGrouping).slice(0, 15);
+      const showPlatform = prodGrouping === "combo";
+      const cats = S.categoryBreakdown(st.period, st.platform, prodGrouping).filter((c) => c.cat !== "gift" && c.revenue > 0);
+      const list = S.products(st.period, prodMetric, st.platform, prodGrouping).filter((p) => p.cat !== "gift").slice(0, 15);
       const maxV = Math.max(...list.map((p) => prodMetric === "qty" ? p.qty : p.revenue), 1);
       const rows = list.map((p, i) => `<tr>
         <td><div class="prod"><span class="rank">${i + 1}</span><div style="min-width:0"><div class="pname">${escHtml(p.cleanName)}</div><div class="psku">${escHtml(p.sku)}</div></div></div></td>
         <td><span class="tag" style="border-color:transparent;background:color-mix(in oklch, ${S.CAT[p.cat].color.startsWith("--") ? "var(" + S.CAT[p.cat].color + ")" : S.CAT[p.cat].color} 14%, transparent);color:${S.CAT[p.cat].color.startsWith("--") ? "var(" + S.CAT[p.cat].color + ")" : S.CAT[p.cat].color}">${S.catLabel(p.cat)}</span></td>
-        <td>${UI.pchip(p.platform)}</td>
+        ${showPlatform ? `<td>${UI.pchip(p.platform)}</td>` : ""}
         <td class="num">${F.viInt(p.qty)}</td>
         <td class="num"><b>${F.money(p.revenue)}</b></td>
         <td class="num" style="width:120px"><div class="cmp-track"><div class="cmp-fill" style="width:${(prodMetric === "qty" ? p.qty : p.revenue) / maxV * 100}%;background:var(--brand)"></div></div></td>
@@ -182,12 +183,12 @@
           <div class="card-head"><div><div class="card-title">${_t("ovw.top_products.title")}</div></div>
             <div class="miniseg" id="prodSeg"><button class="${prodMetric === "rev" ? "active" : ""}" data-m="rev">${_t("ovw.cmp.revenue")}</button><button class="${prodMetric === "qty" ? "active" : ""}" data-m="qty">${_t("ovw.top_products.by_qty")}</button></div>
           </div>
-          <div class="card-pad" style="padding:6px;overflow-x:auto"><table class="tbl"><thead><tr><th>${_t("th.product")}</th><th>${_t("th.category")}</th><th>${_t("th.platform")}</th><th class="num">${_t("th.qty_sold")}</th><th class="num">${_t("th.revenue")}</th><th class="num">${prodMetric === "qty" ? _t("th.qty_sold") : _t("th.revenue")}</th></tr></thead><tbody>${rows}</tbody></table></div>
+          <div class="card-pad" style="padding:6px;overflow-x:auto"><table class="tbl"><thead><tr><th>${_t("th.product")}</th><th>${_t("th.category")}</th>${showPlatform ? `<th>${_t("th.platform")}</th>` : ""}<th class="num">${_t("th.qty_sold")}</th><th class="num">${_t("th.revenue")}</th><th class="num">${prodMetric === "qty" ? _t("th.qty_sold") : _t("th.revenue")}</th></tr></thead><tbody>${rows}</tbody></table></div>
         </div>
       </div>`;
     },
     mount(root) {
-      const cats = S.categoryBreakdown(S.state.period, S.state.platform, prodGrouping).filter((c) => c.revenue > 0);
+      const cats = S.categoryBreakdown(S.state.period, S.state.platform, prodGrouping).filter((c) => c.cat !== "gift" && c.revenue > 0);
       const cn = root.querySelector("#catDonut2"); if (cn) C.donut(cn, cats.map((c) => ({ label: S.catLabel(c.cat), value: c.revenue, color: c.color })), { money: true });
       root.querySelector("#prodGroupingSeg")?.addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) { prodGrouping = b.dataset.grouping; window.App.rerender(); } });
       root.querySelector("#prodSeg")?.addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) { prodMetric = b.dataset.m; window.App.rerender(); } });

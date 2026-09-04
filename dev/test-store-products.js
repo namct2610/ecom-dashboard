@@ -7,6 +7,7 @@ const rows = [
   { sku: "SKU-1", name: "Product 1", platform: "lazada", qty: 3, revenue: 300 },
   { sku: "SKU-1", name: "Product 1", platform: "tiktok", qty: 1, revenue: 100 },
   { sku: "SKU-2", name: "Product 2", platform: "shopee", qty: 1, revenue: 50 },
+  { sku: "GIFT-1", name: "Gift item", platform: "shopee", qty: 50, revenue: 0 },
 ];
 
 const window = {
@@ -50,9 +51,10 @@ vm.runInNewContext(fs.readFileSync("assets/store.js", "utf8"), context);
   for (const grouping of ["single", "combo"]) {
     for (const metric of ["rev", "qty"]) {
       const merged = store.products("m:2026-01", metric, "all", grouping);
-      assert.equal(merged.length, 2);
+      assert.equal(merged.length, 3);
+      const sku1 = merged.find((row) => row.sku === "SKU-1");
       assert.deepEqual(
-        { sku: merged[0].sku, qty: merged[0].qty, revenue: merged[0].revenue, platform: merged[0].platform },
+        { sku: sku1.sku, qty: sku1.qty, revenue: sku1.revenue, platform: sku1.platform },
         { sku: "SKU-1", qty: 6, revenue: 600, platform: "all" },
       );
 
@@ -63,10 +65,38 @@ vm.runInNewContext(fs.readFileSync("assets/store.js", "utf8"), context);
 
   await store.ensureRangeDetail("m:2026-01", "shopee");
   const shopee = store.products("m:2026-01", "rev", "shopee", "single");
-  assert.deepEqual(Array.from(shopee, (row) => row.platform), ["shopee", "shopee"]);
+  assert.deepEqual(Array.from(shopee, (row) => row.platform), ["shopee", "shopee", "shopee"]);
   assert.equal(shopee.reduce((sum, row) => sum + row.revenue, 0), 250);
 
-  console.log("Store product platform aggregation: OK");
+  window.Views = {};
+  window.UI = {
+    esc: (value) => String(value),
+    pchip: (platform) => `platform:${platform}`,
+    cssColor: (color) => color,
+  };
+  window.Charts = {};
+  window.App = { rerender: () => {} };
+  window.t = (key, fallback) => fallback || key;
+  vm.runInNewContext(fs.readFileSync("assets/views-pages.js", "utf8"), context);
+
+  const handlers = {};
+  window.Views.products.mount({
+    querySelector: (selector) => selector === "#prodGroupingSeg" || selector === "#prodSeg"
+      ? { addEventListener: (_event, handler) => { handlers[selector] = handler; } }
+      : null,
+  });
+  handlers["#prodSeg"]({ target: { closest: () => ({ dataset: { m: "qty" } }) } });
+
+  const singleHtml = window.Views.products.render();
+  assert.equal(singleHtml.includes("th.platform"), false);
+  assert.equal(singleHtml.includes("Gift item"), false);
+
+  handlers["#prodGroupingSeg"]({ target: { closest: () => ({ dataset: { grouping: "combo" } }) } });
+  const comboHtml = window.Views.products.render();
+  assert.equal(comboHtml.includes("th.platform"), true);
+  assert.equal(comboHtml.includes("Gift item"), false);
+
+  console.log("Store aggregation and product report filtering: OK");
 })().catch((error) => {
   console.error(error);
   process.exitCode = 1;
