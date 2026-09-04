@@ -199,12 +199,59 @@ function build_cost_analysis(PDO $pdo): array
         'fee_pct'     => $m['revenue'] > 0 ? round($m['fee_total'] / $m['revenue'] * 100, 2) : 0.0,
     ], $trendMap));
 
+    // Bóc tách từng khoản phí. order_settlements.details giữ nguyên
+    // {tên khoản gốc trên sao kê: số tiền} cho mỗi đơn, nên gộp lại theo tên là
+    // biết chính xác tiền đi đâu — chi tiết hơn hẳn ba nhóm lớn ở trên, và
+    // không cần nhập lại dữ liệu.
+    $detailStmt = $pdo->prepare("
+        SELECT s.details
+        FROM (SELECT DISTINCT platform, order_id FROM orders {$where}) po
+        JOIN order_settlements s
+          ON s.platform = po.platform AND s.order_id = po.order_id
+        WHERE s.details IS NOT NULL
+    ");
+    $detailStmt->execute($params);
+
+    $items = [];
+    foreach ($detailStmt->fetchAll(PDO::FETCH_COLUMN) as $json) {
+        $decoded = json_decode((string) $json, true);
+        if (!is_array($decoded)) continue;
+        foreach ($decoded as $name => $amount) {
+            $amount = (float) $amount;
+            if ($amount == 0.0) continue;
+            $name = (string) $name;
+            if (!isset($items[$name])) {
+                $items[$name] = [
+                    'name'   => $name,
+                    'group'  => \Dashboard\Parsers\SettlementParser::classify($name) ?? 'platform',
+                    'amount' => 0.0,
+                    'orders' => 0,
+                ];
+            }
+            $items[$name]['amount'] += $amount;
+            $items[$name]['orders']++;
+        }
+    }
+    usort($items, static fn(array $a, array $b): int => $b['amount'] <=> $a['amount']);
+    $itemsTotal = array_sum(array_column($items, 'amount'));
+    $feeItems = array_map(static function (array $i) use ($itemsTotal): array {
+        return [
+            'name'   => $i['name'],
+            'group'  => $i['group'],
+            'orders' => $i['orders'],
+            'amount' => round($i['amount'], 0),
+            'share'  => $itemsTotal > 0 ? round($i['amount'] / $itemsTotal * 100, 1) : 0.0,
+        ];
+    }, $items);
+
     return [
-        'summary'       => $totals,
-        'platforms'     => $platforms,
-        'trend'         => $trend,
-        'rates'         => $rates,
-        'has_estimated' => $anyEstimated,
+        'summary'         => $totals,
+        'platforms'       => $platforms,
+        'trend'           => $trend,
+        'rates'           => $rates,
+        'has_estimated'   => $anyEstimated,
+        'fee_items'       => $feeItems,
+        'fee_items_total' => round($itemsTotal, 0),
     ];
 }
 

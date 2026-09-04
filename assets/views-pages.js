@@ -83,11 +83,11 @@
       return kpis + `
       <div class="g12 section-gap">
         <div data-collapse style="grid-column:span 8" class="card">
-          <div class="card-head"><div><div class="card-title">${_t("orders.daily.title")}</div><div class="card-sub">${S.periodLabel(st.period).toLowerCase()} · ${plat === "all" ? _t("ovw.trend.all_platforms") : S.PLAT[plat].label}</div></div>${UI.fsBtn()}</div>
+          <div class="card-head"><div><div class="card-title">${_t("orders.daily.title")}</div></div>${UI.fsBtn()}</div>
           <div class="card-pad" style="padding-top:14px"><div class="chart-wrap" style="height:250px"><canvas id="ordChart"></canvas></div></div>
         </div>
         <div data-collapse style="grid-column:span 4" class="card">
-          <div class="card-head"><div><div class="card-title">${_t("th.status")} ${_t("common.orders_unit")}</div><div class="card-sub">${S.periodLabel(st.period).toLowerCase()}</div></div></div>
+          <div class="card-head"><div><div class="card-title">${_t("th.status")} ${_t("common.orders_unit")}</div></div></div>
           <div class="card-pad"><div class="donut-wrap" style="height:170px"><canvas id="statusDonut"></canvas>
             <div class="donut-center"><div><div class="big tnum">${F.viInt(cur.orders)}</div><div class="small">${_t("common.orders_unit")}</div></div></div></div>
             <div style="margin-top:14px;display:flex;flex-direction:column;gap:9px">
@@ -96,8 +96,8 @@
             </div></div>
         </div>
       </div>
-       <div class="card section-gap"><div class="card-head"><div><div class="card-title">${_t("ovw.heat.title")}</div><div class="card-sub">${_t("ovw.heat.density")} · ${_t("period.cal.mon")} × h · ${S.periodLabel(st.period).toLowerCase()}</div></div></div><div class="card-pad" style="overflow-x:auto">${heatHTML(st.period, plat)}</div></div>
-      <div class="card section-gap"><div class="card-head"><div><div class="card-title">${_t("ovw.recent_orders.title")}</div><div class="card-sub">${_tf("orders.recent_n", { n: recent.length })}${plat !== "all" ? " · " + S.PLAT[plat].label : ""}</div></div></div>
+       <div class="card section-gap"><div class="card-head"><div><div class="card-title">${_t("ovw.heat.title")}</div></div></div><div class="card-pad" style="overflow-x:auto">${heatHTML(st.period, plat)}</div></div>
+      <div class="card section-gap"><div class="card-head"><div><div class="card-title">${_t("ovw.recent_orders.title")}</div></div></div>
         <div class="card-pad" style="padding:6px;overflow-x:auto"><table class="tbl"><thead><tr><th>${_t("th.order_id")}</th><th>${_t("th.platform")}</th><th>${_t("th.product")}</th><th>${_t("th.region")}</th><th class="num">${_t("th.revenue")}</th><th>${_t("th.status")}</th><th class="hide-md">${_t("th.uploaded_at")}</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
     },
     mount(root) {
@@ -138,14 +138,14 @@
       return `
       <div class="g12">
         <div data-collapse style="grid-column:span 12" class="card">
-          <div class="card-head"><div><div class="card-title">${_t("ovw.category.title")}</div><div class="card-sub">${_t("ovw.category.by_revenue")} · ${S.periodLabel(st.period).toLowerCase()}</div></div></div>
+          <div class="card-head"><div><div class="card-title">${_t("ovw.category.title")}</div></div></div>
           <div class="card-pad" style="display:flex;flex-wrap:wrap;gap:24px;align-items:center"><div class="donut-wrap" style="height:180px;flex:0 0 240px;min-width:0;max-width:100%"><canvas id="catDonut2"></canvas><div class="donut-center"><div><div class="big tnum">${F.money(totalCatRev)}</div><div class="small">${_t("ovw.top_products.by_rev")}</div></div></div></div>
             <div style="flex:1 1 320px;min-width:0;display:flex;flex-direction:column;gap:10px">
               ${cats.map((c) => `<div><div style="display:flex;align-items:center;gap:9px;font-size:13px;margin-bottom:4px"><span class="legend-swatch" style="background:${UI.cssColor(c.color)}"></span><b>${S.catLabel(c.cat)}</b><span style="margin-left:auto;font-weight:800" class="tnum">${F.money(c.revenue)}</span></div><div class="cmp-track"><div class="cmp-fill" style="width:${c.revenue / (cats[0].revenue || 1) * 100}%;background:${UI.cssColor(c.color)}"></div></div></div>`).join("")}
             </div></div>
         </div>
         <div data-collapse style="grid-column:span 12" class="card">
-          <div class="card-head"><div><div class="card-title">${_t("ovw.top_products.title")}</div><div class="card-sub">${_tf("ovw.top_products.sub", { period: S.periodLabel(st.period).toLowerCase() })}</div></div>
+          <div class="card-head"><div><div class="card-title">${_t("ovw.top_products.title")}</div></div>
             <div class="miniseg" id="prodSeg"><button class="${prodMetric === "rev" ? "active" : ""}" data-m="rev">${_t("ovw.cmp.revenue")}</button><button class="${prodMetric === "qty" ? "active" : ""}" data-m="qty">${_t("ovw.top_products.by_qty")}</button></div>
           </div>
           <div class="card-pad" style="padding:6px;overflow-x:auto"><table class="tbl"><thead><tr><th>${_t("th.product")}</th><th>${_t("th.category")}</th><th>${_t("th.platform")}</th><th class="num">${_t("th.qty_sold")}</th><th class="num">${_t("th.revenue")}</th><th class="num">${prodMetric === "qty" ? _t("th.qty_sold") : _t("th.revenue")}</th></tr></thead><tbody>${rows}</tbody></table></div>
@@ -179,8 +179,8 @@
         ${Array.from({ length: 4 }).map(() => `<div data-collapse style="grid-column:span 3"><div class="card kpi"><div class="card-pad" style="padding:20px"><div style="height:12px;width:42%;border-radius:999px;background:var(--surface-3)"></div><div style="height:28px;width:68%;border-radius:12px;background:var(--surface-2);margin-top:14px"></div><div style="height:10px;width:54%;border-radius:999px;background:var(--surface-3);margin-top:14px"></div></div></div></div>`).join("")}
       </div>
       <div class="g12 section-gap">
-        <div data-collapse style="grid-column:span 7"><div class="card"><div class="card-head"><div><div class="card-title">${_t("customers.top_buyers.title")}</div><div class="card-sub">${_t("common.loading")}</div></div></div><div class="card-pad" style="height:320px"></div></div></div>
-        <div data-collapse style="grid-column:span 5"><div class="card"><div class="card-head"><div><div class="card-title">${_t("customers.geo.title")}</div><div class="card-sub">${_t("common.loading")}</div></div></div><div class="card-pad" style="height:320px"></div></div></div>
+        <div data-collapse style="grid-column:span 7"><div class="card"><div class="card-head"><div><div class="card-title">${_t("customers.top_buyers.title")}</div></div></div><div class="card-pad" style="height:320px"></div></div></div>
+        <div data-collapse style="grid-column:span 5"><div class="card"><div class="card-head"><div><div class="card-title">${_t("customers.geo.title")}</div></div></div><div class="card-pad" style="height:320px"></div></div></div>
       </div>`;
   }
 
@@ -272,28 +272,28 @@
       return kpis + `
       <div class="g12 section-gap">
         <div data-collapse style="grid-column:span 7" class="card">
-          <div class="card-head"><div><div class="card-title">${_t("customers.top_buyers.title")}</div><div class="card-sub">${_tf("customers.top_buyers.sub", { period: S.periodLabel(st.period).toLowerCase() })}</div></div></div>
+          <div class="card-head"><div><div class="card-title">${_t("customers.top_buyers.title")}</div></div></div>
           <div class="card-pad" style="padding:6px;overflow-x:auto"><table class="tbl"><thead><tr><th>#</th><th>${_t("customers.table.username")}</th><th class="num">${_t("th.orders")}</th><th class="num">${_t("th.revenue")}</th><th></th></tr></thead><tbody>${buyerRows}</tbody></table></div>
         </div>
         <div data-collapse style="grid-column:span 5;display:flex;flex-direction:column;gap:16px">
           <div class="card">
-            <div class="card-head"><div><div class="card-title">${_t("customers.geo.title")}</div><div class="card-sub">${_t("ovw.geo.by_orders")} · ${S.periodLabel(st.period).toLowerCase()}</div></div></div>
+            <div class="card-head"><div><div class="card-title">${_t("customers.geo.title")}</div></div></div>
             <div class="card-pad" style="padding:6px"><table class="tbl"><thead><tr><th>${_t("th.city")}</th><th class="num">${_t("th.orders")}</th><th class="num">${_t("th.share")}</th><th></th></tr></thead><tbody>${geoRows}</tbody></table></div>
           </div>
           <div class="card">
-            <div class="card-head"><div><div class="card-title">${_t("customers.warehouse.title")}</div><div class="card-sub">${_t("ovw.geo.by_orders")} · ${S.periodLabel(st.period).toLowerCase()}</div></div></div>
+            <div class="card-head"><div><div class="card-title">${_t("customers.warehouse.title")}</div></div></div>
             <div class="card-pad" style="padding:6px"><table class="tbl"><thead><tr><th>${_t("customers.warehouse.col")}</th><th class="num">${_t("th.orders")}</th><th class="num">${_t("th.share")}</th><th></th></tr></thead><tbody>${whRows}</tbody></table></div>
           </div>
         </div>
       </div>
       <div class="g12 section-gap">
         <div data-collapse style="grid-column:span 7" class="card">
-          <div class="card-head"><div><div class="card-title">${_t("kpi.new_followers")}</div><div class="card-sub">${_t("ovw.trend.all_platforms")} · ${S.periodLabel(st.period).toLowerCase()}</div></div></div>
+          <div class="card-head"><div><div class="card-title">${_t("kpi.new_followers")}</div></div></div>
           <div class="card-pad"><div style="font-size:30px;font-weight:800;letter-spacing:-.02em" class="tnum">${F.viInt(totalNFVal)} <span style="font-size:14px;color:var(--ink-3);font-weight:700">${_t("traffic.followers_new")}</span></div><div style="display:flex;flex-direction:column;gap:6px;margin-top:14px">${fRows}</div>
           <div class="note" style="margin-top:16px">${UI.ICON.people} ${_t("customers.followers.note")}</div></div>
         </div>
         <div data-collapse style="grid-column:span 5" class="card">
-          <div class="card-head"><div><div class="card-title">${_t("customers.segment.title")}</div><div class="card-sub">${S.periodLabel(st.period).toLowerCase()}</div></div></div>
+          <div class="card-head"><div><div class="card-title">${_t("customers.segment.title")}</div></div></div>
           <div class="card-pad">
             <div style="display:grid;grid-template-columns:150px 1fr;gap:18px;align-items:center">
               <div class="donut-wrap" style="height:150px"><canvas id="segDonut"></canvas>
@@ -391,7 +391,7 @@
         <div class="card-head">
           <div>
             <div class="card-title">${_t("customers.detail.title")}</div>
-            <div class="card-sub">${escHtml(p.buyer_name || p.buyer_username)}${p.shipping_city ? " · " + escHtml(p.shipping_city) : ""}</div>
+            
           </div>
           <button class="ctrl-btn" id="custDetailBack">${_t("customers.detail.back")}</button>
         </div>
@@ -438,18 +438,18 @@
       return kpis + `
       <div class="g12 section-gap">
         <div data-collapse style="grid-column:span 8" class="card">
-          <div class="card-head"><div><div class="card-title">${_t("traffic.daily.title")}</div><div class="card-sub">${S.periodLabel(st.period).toLowerCase()} · ${plat === "all" ? _t("ovw.trend.all_platforms") : S.PLAT[plat].label}</div></div>
+          <div class="card-head"><div><div class="card-title">${_t("traffic.daily.title")}</div></div>
             <div class="legend">${S.PKEYS.map((k) => `<span class="legend-item"><span class="legend-swatch" style="background:var(--${k})"></span>${S.PLAT[k].label}</span>`).join("")}</div></div>
           <div class="card-pad" style="padding-top:14px"><div class="chart-wrap" style="height:260px"><canvas id="trafChart"></canvas></div></div>
         </div>
         <div data-collapse style="grid-column:span 4" class="card">
-          <div class="card-head"><div><div class="card-title">${_t("traffic.conv.title")}</div><div class="card-sub">${_t("traffic.conv.sub")}</div></div></div>
+          <div class="card-head"><div><div class="card-title">${_t("traffic.conv.title")}</div></div></div>
           <div class="card-pad" style="display:flex;flex-direction:column;gap:14px;padding-top:18px">
             ${tp.map((p) => `<div><div style="display:flex;align-items:center;gap:8px;font-size:13px;margin-bottom:5px"><span class="legend-swatch" style="background:var(--${p.key})"></span><b>${p.label}</b><span style="margin-left:auto;font-weight:800" class="tnum">${F.pct(p.conv)}</span></div><div class="cmp-track" style="height:9px"><div class="cmp-fill" style="width:${Math.min(100, p.conv / Math.max(...tp.map((x) => x.conv), 1) * 100)}%;background:var(--${p.key})"></div></div><div style="font-size:11.5px;color:var(--ink-3);font-weight:600;margin-top:4px">${_tf("traffic.conv_line", { visits: F.viInt(p.visits), orders: F.viInt(p.completed) })}</div></div>`).join("")}
           </div>
         </div>
       </div>
-      <div class="card section-gap"><div class="card-head"><div><div class="card-title">${_t("traffic.table.title")}</div><div class="card-sub">${S.periodLabel(st.period).toLowerCase()}</div></div></div>
+      <div class="card section-gap"><div class="card-head"><div><div class="card-title">${_t("traffic.table.title")}</div></div></div>
         <div class="card-pad" style="padding:6px;overflow-x:auto"><table class="tbl"><thead><tr><th>${_t("th.platform")}</th><th class="num">${_t("kpi.pageviews")}</th><th class="num">${_t("kpi.visits")}</th><th class="num">${_t("kpi.completed")}</th><th class="num">${_t("th.conv_pct")}</th><th class="num">${_t("kpi.new_followers")}</th><th></th></tr></thead><tbody>${tRows}</tbody></table></div></div>`;
     },
     mount(root) {

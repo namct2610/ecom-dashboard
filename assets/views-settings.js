@@ -57,7 +57,7 @@
         <div class="card-head">
           <div>
             <div class="card-title">${t("settings.account.title")}</div>
-            <div class="card-sub">${tf("settings.account.sub", { u: u.username || "—", r: u.role || "—" })}</div>
+            
           </div>
         </div>
         <div class="card-pad">
@@ -121,7 +121,7 @@
         <div class="card-head">
           <div>
             <div class="card-title">${t("settings.brand.title")}</div>
-            <div class="card-sub">${t("settings.brand.sub")}</div>
+            
           </div>
           <button class="ctrl-btn" id="btnAddRule">${t("settings.brand.add_row")}</button>
         </div>
@@ -176,7 +176,7 @@
         <div class="card-head">
           <div>
             <div class="card-title">${t("v2up.card.title")}</div>
-            <div class="card-sub">${t("v2up.card.sub")}</div>
+            
           </div>
           <button class="ctrl-btn" id="btnV2UpCheck">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 0 1-15.5 6.2"/><path d="M3 12A9 9 0 0 1 18.5 5.8"/><path d="M18 2v5h-5"/><path d="M6 22v-5h5"/></svg>
@@ -225,7 +225,7 @@
         <div class="card-head">
           <div>
             <div class="card-title">${t("settings.export.title")}</div>
-            <div class="card-sub">${t("settings.export.sub")}</div>
+            
           </div>
           <button class="ctrl-btn on" id="btnDbExport" ${btnDisabled}
                   style="background:var(--brand);border-color:var(--brand);color:#fff">
@@ -350,7 +350,7 @@
         <div class="card-head">
           <div>
             <div class="card-title">${t("settings.scan.title")}</div>
-            <div class="card-sub">${t("settings.scan.sub")}</div>
+            
           </div>
           <div style="display:flex;gap:8px;align-items:center">
             ${delCount ? `<button class="ctrl-btn" id="btnScanDelete" ${scanning ? "disabled" : ""}

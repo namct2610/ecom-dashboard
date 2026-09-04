@@ -666,8 +666,21 @@ body { transition: background .3s ease, color .3s ease; }
 .card.chart-maximized .legend-item { font-size: 14px; }
 .card:fullscreen .legend-swatch,
 .card.chart-maximized .legend-swatch { width: 13px; height: 13px; }
-.chart-fs-btn { padding: 6px 9px; }
-.chart-fs-btn svg { width: 16px; height: 16px; }
+/* Sits beside .miniseg in a chart head, so it matches that pill: same 30px
+   outer height, same 99px radius, same 1px border. */
+.chart-tools { display: inline-flex; align-items: center; gap: 8px; flex: none; }
+.chart-fs-btn {
+  /* 29px is .miniseg's rendered height (2px padding + 12px/4px button + 1px
+     border, both sides) — matched explicitly because aspect-ratio cannot derive
+     a width from a stretched height inside a flex row. */
+  width: 29px; height: 29px; padding: 0; flex: none;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 99px;
+}
+.chart-fs-btn svg { width: 15px; height: 15px; }
+
+/* Chart legend now sits under the plot, centred. */
+.chart-legend { justify-content: center; margin-top: 12px; }
 
 /* legend */
 .legend { display: flex; flex-wrap: wrap; gap: 14px; }
