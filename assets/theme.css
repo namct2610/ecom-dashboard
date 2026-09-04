@@ -14,7 +14,7 @@
   /* platform identity — Zott palette + TikTok brand black.
      Black is reserved exclusively for TikTok data in charts, per the
      brand rule "no black on charts unless it represents TikTok". */
-  --shopee: #E2001A;
+  --shopee: #EE4D2D;         /* Shopee brand orange, not the Zott red used by --brand */
   --lazada: #1F5FAE;
   --tiktok: #111827;
   --shopee-ink: #C00016;
@@ -79,7 +79,7 @@
   --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
   --shadow-md: 0 6px 20px -6px rgba(0,0,0,0.5);
   --shadow-lg: 0 20px 50px -12px rgba(0,0,0,0.6);
-  --shopee: #ff2b40;
+  --shopee: #FF7A5C;
   --lazada: #4f8fde;
   --tiktok: #E5E7EB;  /* near-white in dark mode (TikTok brand black has no contrast on dark bg) */
   --brand: #ff2b40;
@@ -681,6 +681,15 @@ body { transition: background .3s ease, color .3s ease; }
 
 /* Chart legend now sits under the plot, centred. */
 .chart-legend { justify-content: center; margin-top: 12px; }
+
+/* Conversion infographic: ten figures = 100%, filled left-to-right in
+   proportion to the rate, with the last figure part-filled. Two stacked copies
+   of the same glyph — a grey base and a coloured overlay clipped to a width —
+   because a fractional fill cannot be expressed with a single icon. */
+.ppl-row { display: flex; gap: 4px; }
+.ppl { position: relative; display: block; width: 19px; height: 22px; flex: none; color: var(--track); }
+.ppl svg { display: block; width: 19px; height: 22px; }
+.ppl-fill { position: absolute; inset: 0; overflow: hidden; }
 
 /* legend */
 .legend { display: flex; flex-wrap: wrap; gap: 14px; }

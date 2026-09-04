@@ -334,34 +334,42 @@
   }
 
   /* ---- orders trend grouped bars ---- */
+  /* ---- orders trend: stacked area by platform (all) or single filled line ----
+     Line rather than bars: a daily order series is a flow over time, and at 30+
+     points the bars were thin slivers. Stacking still shows the platform split
+     and the total silhouette. */
   function ordersTrend(canvas, series, opt) {
     opt = opt || {};
     const labels = series.map((s) => s.label || dayLabel(s.date));
     const stacked = opt.platform === "all";
-    const sizing = barSizing(labels.length);
-    let datasets;
-    if (stacked) {
-      datasets = ["shopee", "lazada", "tiktok"].map((k) => ({
-        label: window.Store.PLAT[k].label, data: series.map((s) => s["o_" + k]),
-        backgroundColor: col("--" + k), borderRadius: 0, borderSkipped: false, borderWidth: 0, stack: "o", ...sizing,
-      }));
-    } else {
-      datasets = [{ label: tr("ovw.cmp.orders", "Đơn"), data: series.map((s) => s["o_" + opt.platform] || 0), backgroundColor: col("--" + opt.platform), borderRadius: 6, borderSkipped: "bottom", borderWidth: 0, ...sizing }];
-    }
+    const lineOf = (key, label) => {
+      const c = col("--" + key);
+      return {
+        label, data: series.map((s) => s["o_" + key] || 0),
+        borderColor: c, backgroundColor: hexA(c, 0.35),
+        borderWidth: 2, tension: 0.32, fill: true,
+        pointRadius: 0, pointHoverRadius: 4, pointBackgroundColor: c, pointBorderWidth: 0,
+      };
+    };
+    const datasets = stacked
+      ? ["shopee", "lazada", "tiktok"].map((k) => lineOf(k, window.Store.PLAT[k].label))
+      : [lineOf(opt.platform, window.Store.PLAT[opt.platform].label)];
+
     return mk(canvas, {
-      type: "bar", data: { labels, datasets },
+      type: "line", data: { labels, datasets },
       options: {
         layout: { padding: { top: 18 } },
         interaction: { mode: "index", intersect: false },
         scales: {
-          x: { stacked, grid: { display: false }, ticks: { color: ink3(), font: (c) => ({ size: c.chart.width >= 1600 ? 14.5 : c.chart.width >= 1200 ? 13 : c.chart.width >= 950 ? 12 : 10.5 }), maxRotation: 0, autoSkip: true }, border: { display: false } },
+          x: { grid: { display: false }, ticks: { color: ink3(), font: (c) => ({ size: c.chart.width >= 1600 ? 14.5 : c.chart.width >= 1200 ? 13 : c.chart.width >= 950 ? 12 : 10.5 }), maxRotation: 0, autoSkip: true }, border: { display: false } },
           y: { stacked, grid: { color: gridc(), drawTicks: false }, ticks: { color: ink3(), font: (c) => ({ size: c.chart.width >= 1600 ? 14.5 : c.chart.width >= 1200 ? 13 : c.chart.width >= 950 ? 12 : 11 }) }, border: { display: false }, beginAtZero: true },
         },
         plugins: {
           tooltip: { ...tip(), callbacks: { label: (c) => " " + c.dataset.label + ": " + window.F.viInt(c.raw) + " " + tr("common.orders_unit", "đơn"), footer: (items) => tr("common.total", "Tổng") + ": " + window.F.viInt(items.reduce((t, i) => t + i.raw, 0)) + " " + tr("common.orders_unit", "đơn") } },
-          stackedRoundedTop: { enabled: stacked, radius: 6 },
+          // stackedRoundedTop / adaptiveBarWidth are bar-only; stackTotalLabel
+          // reads meta.data[i].x/y, which line points expose too, so the totals
+          // above each step still work.
           stackTotalLabel: { enabled: true },
-          adaptiveBarWidth: { enabled: true },
         },
       },
     });
@@ -418,10 +426,15 @@
   }
 
   // helpers
-  function hexA(hex, a) {
-    hex = col(hex);
-    if (hex.startsWith("oklch") || hex.startsWith("var")) return hex; // chart.js can't alpha oklch easily
-    const h = hex.replace("#", "");
+  // col() now normalises every colour to rgb()/rgba(), so this has to read that
+  // form first — parsing "rgb(238,77,45)" as hex silently produced rgba(0,11,35)
+  // and washed the area fills and partial-month bars a dark navy.
+  function hexA(color, a) {
+    const c = col(color);
+    const m = /^rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)/.exec(c);
+    if (m) return `rgba(${+m[1]},${+m[2]},${+m[3]},${a})`;
+    const h = c.replace("#", "");
+    if (!/^[0-9a-fA-F]{3}([0-9a-fA-F]{3})?$/.test(h)) return c; // unknown form: leave it alone
     const full = h.length === 3 ? h.split("").map((x) => x + x).join("") : h;
     const r = parseInt(full.slice(0, 2), 16), g = parseInt(full.slice(2, 4), 16), b = parseInt(full.slice(4, 6), 16);
     return `rgba(${r},${g},${b},${a})`;
