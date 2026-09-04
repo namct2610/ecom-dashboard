@@ -20,6 +20,7 @@
     msg: null,       // { kind:"ok"|"err", text }
     update: null,    // { loading, current, latest, has_update, changelog, download_url, last_checked, fetch_error, installing }
     dbExport: null,  // { loading, stats, error, downloading }
+    scan: null,      // { loading, error, findings, selected:Set, deleting }
   };
 
   async function fetchInitial() {
@@ -285,6 +286,123 @@
     }
   }
 
+  /* ── server housekeeping scan ───────────────────────────────── */
+
+  const RISK_META = {
+    high:   { color: "var(--neg)",    key: "settings.scan.risk_high" },
+    medium: { color: "var(--warn)",   key: "settings.scan.risk_medium" },
+    low:    { color: "var(--ink-3)",  key: "settings.scan.risk_low" },
+  };
+
+  function fmtBytes(b) {
+    b = +b || 0;
+    if (b < 1024) return b + " B";
+    if (b < 1048576) return (b / 1024).toFixed(1) + " KB";
+    if (b < 1073741824) return (b / 1048576).toFixed(1) + " MB";
+    return (b / 1073741824).toFixed(2) + " GB";
+  }
+
+  function securityScanCard() {
+    if (!local.isAdmin) return "";
+    const x = local.scan || {};
+    const sel = x.selected || new Set();
+
+    let body;
+    if (x.loading) {
+      body = `<div style="color:var(--ink-3);font-weight:600">${t("common.loading")}</div>`;
+    } else if (x.error) {
+      body = `<div style="color:var(--neg);font-weight:700">${t("common.error")}: ${escapeHtml(x.error)}</div>`;
+    } else if (!x.findings) {
+      body = `<div style="color:var(--ink-3);font-size:13px">${t("settings.scan.desc")}</div>`;
+    } else if (!x.findings.length) {
+      body = `<div style="color:var(--pos);font-weight:700;font-size:13.5px">${t("settings.scan.clean")}</div>`;
+    } else {
+      const rows = x.findings.map((f) => {
+        const m = RISK_META[f.risk] || RISK_META.low;
+        const checked = sel.has(f.path) ? "checked" : "";
+        return `<label style="display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--border);cursor:pointer">
+          <input type="checkbox" data-scan-path="${escapeHtml(f.path)}" ${checked} style="margin-top:3px;flex:none" />
+          <span style="min-width:0;flex:1">
+            <span style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <b style="font-family:monospace;font-size:12.5px;word-break:break-all">${escapeHtml(f.path)}${f.is_dir ? "/" : ""}</b>
+              <span class="tag" style="color:${m.color};font-weight:800;font-size:11px">${t(m.key)}</span>
+              <span style="color:var(--ink-3);font-size:11.5px;font-weight:700">${fmtBytes(f.size)}</span>
+            </span>
+            <span style="display:block;color:var(--ink-3);font-size:12px;margin-top:2px">${escapeHtml(f.reason)}</span>
+          </span>
+        </label>`;
+      }).join("");
+      body = `
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
+          <button class="ctrl-btn" id="btnScanAll" style="padding:5px 10px;font-size:12.5px">${t("settings.scan.select_all")}</button>
+          <button class="ctrl-btn" id="btnScanNone" style="padding:5px 10px;font-size:12.5px">${t("settings.scan.select_none")}</button>
+          <span style="color:var(--ink-3);font-size:12.5px;font-weight:700;margin-left:auto">${tf("settings.scan.summary", { n: x.findings.length, size: fmtBytes(x.bytes || 0) })}</span>
+        </div>
+        <div style="max-height:340px;overflow-y:auto">${rows}</div>
+        <div class="note" style="margin-top:14px">${UI.ICON.info} ${t("settings.scan.note")}</div>`;
+    }
+
+    const scanning = x.loading || x.deleting;
+    const delCount = sel.size;
+
+    return `
+      <div class="card section-gap">
+        <div class="card-head">
+          <div>
+            <div class="card-title">${t("settings.scan.title")}</div>
+            <div class="card-sub">${t("settings.scan.sub")}</div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center">
+            ${delCount ? `<button class="ctrl-btn" id="btnScanDelete" ${scanning ? "disabled" : ""}
+                style="background:var(--neg);border-color:var(--neg);color:#fff">
+                ${x.deleting ? t("settings.scan.deleting") : tf("settings.scan.delete_n", { n: delCount })}</button>` : ""}
+            <button class="ctrl-btn on" id="btnScanRun" ${scanning ? "disabled" : ""}>${x.loading ? t("common.loading") : t("settings.scan.btn")}</button>
+          </div>
+        </div>
+        <div class="card-pad">${body}</div>
+      </div>`;
+  }
+
+  async function runScan() {
+    local.scan = { loading: true, selected: new Set() };
+    window.App.rerender();
+    try {
+      const r = await fetch("api/security-scan.php", { credentials: "same-origin" });
+      const j = await r.json();
+      if (!r.ok || !j.success) throw new Error(j.error || "HTTP " + r.status);
+      local.scan = { findings: j.findings || [], bytes: j.bytes || 0, truncated: j.truncated, selected: new Set() };
+    } catch (e) {
+      local.scan = { error: e.message || String(e), selected: new Set() };
+    }
+    window.App.rerender();
+  }
+
+  async function deleteScanned() {
+    const x = local.scan || {};
+    const paths = [...(x.selected || [])];
+    if (!paths.length || x.deleting) return;
+    if (!window.confirm(tf("settings.scan.confirm", { n: paths.length }))) return;
+
+    local.scan = { ...x, deleting: true };
+    window.App.rerender();
+    try {
+      const r = await fetch("api/security-scan.php", {
+        method: "POST", credentials: "same-origin",
+        headers: { "Content-Type": "application/json", "X-CSRF-Token": local.csrf },
+        body: JSON.stringify({ paths }),
+      });
+      const j = await r.json();
+      if (!r.ok || !j.success) throw new Error(j.error || "HTTP " + r.status);
+      const okN = (j.deleted || []).length, badN = (j.refused || []).length;
+      showMsg(badN ? "err" : "ok", tf("settings.scan.result", { n: okN, size: fmtBytes(j.bytes || 0) }) + (badN ? " · " + tf("settings.scan.refused", { n: badN }) : ""));
+      await runScan();
+    } catch (e) {
+      local.scan = { ...x, deleting: false };
+      showMsg("err", t("common.error") + ": " + (e.message || e));
+      window.App.rerender();
+    }
+  }
+
   /* ── render / mount ──────────────────────────────────────────── */
 
   function render() {
@@ -301,7 +419,8 @@
         <div style="grid-column:span 6" data-collapse>${brandCard()}</div>
       </div>
       ${updateCard()}
-      ${dbExportCard()}`;
+      ${dbExportCard()}
+      ${securityScanCard()}`;
   }
 
   /* ── v2 self-update ───────────────────────────────────────── */
@@ -502,6 +621,23 @@
   }
 
   function bind(root) {
+    document.getElementById("btnScanRun")?.addEventListener("click", runScan);
+    document.getElementById("btnScanDelete")?.addEventListener("click", deleteScanned);
+    document.getElementById("btnScanAll")?.addEventListener("click", () => {
+      local.scan.selected = new Set((local.scan.findings || []).map((f) => f.path));
+      window.App.rerender();
+    });
+    document.getElementById("btnScanNone")?.addEventListener("click", () => {
+      local.scan.selected = new Set();
+      window.App.rerender();
+    });
+    root?.querySelectorAll("[data-scan-path]").forEach((cb) => {
+      cb.addEventListener("change", () => {
+        const set = local.scan.selected || (local.scan.selected = new Set());
+        if (cb.checked) set.add(cb.dataset.scanPath); else set.delete(cb.dataset.scanPath);
+        window.App.rerender();
+      });
+    });
     document.getElementById("btnSaveProfile")?.addEventListener("click", saveProfile);
     document.getElementById("btnChangePwd")?.addEventListener("click", changePassword);
     document.getElementById("btnSaveRules")?.addEventListener("click", saveRules);
