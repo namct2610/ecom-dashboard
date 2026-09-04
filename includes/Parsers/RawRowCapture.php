@@ -205,6 +205,14 @@ final class RawRowCapture
 
     private static function readSheet(string $path, int $sheetIndex): array
     {
+        // Cùng lý do như trong SheetStream: PhpSpreadsheet nạp nguyên entry XML
+        // của sheet thành một chuỗi ~60MB, và bước này chạy BÊN TRONG transaction
+        // nên một lần OOM ở đây sẽ cuốn bay cả lần import đã làm xong.
+        $streamed = SheetStream::rows($path, $sheetIndex, 100);
+        if ($streamed !== null) {
+            return $streamed;
+        }
+
         $reader = IOFactory::createReaderForFile($path);
         $reader->setReadDataOnly(true);
         $reader->setReadFilter(new RawColumnFilter());

@@ -74,6 +74,17 @@ try {
                 'Quá thời gian xử lý (max_execution_time đang là %ss). Hãy nâng max_execution_time lên 300.',
                 ini_get('max_execution_time')
             );
+        } elseif (stripos($msg, 'Out of memory') !== false) {
+            // Not memory_limit: PHP asked the OS for memory and was refused, so
+            // the ceiling is the hosting account's (CloudLinux LVE and similar).
+            // Raising memory_limit does nothing about it.
+            $why = sprintf(
+                'Máy chủ từ chối cấp bộ nhớ ở mức tài khoản, KHÔNG phải do memory_limit (đang là %s) '
+                . 'nên chỉnh memory_limit sẽ không có tác dụng. Cần nhà cung cấp hosting nâng giới hạn '
+                . 'bộ nhớ của tài khoản. Chi tiết: %s',
+                ini_get('memory_limit'),
+                $msg
+            );
         } else {
             $why = 'Lỗi nghiêm trọng của PHP: ' . $msg;
         }

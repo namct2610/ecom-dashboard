@@ -141,7 +141,9 @@ final class SettlementParser
     public static function parse(string $path): array
     {
         $meta = self::detect($path);
-        $rows = self::sheetRows($path, $meta['sheet']);
+        // Stream first; PhpSpreadsheet stays as the fallback for anything the
+        // streamer cannot resolve (an unusual workbook layout, a missing rel).
+        $rows = SheetStream::rows($path, $meta['sheet'], 80) ?? self::sheetRows($path, $meta['sheet']);
 
         // detect() only reads workbook.xml, so it succeeds even when the sheet
         // itself never parses — which surfaced as "thiếu cột mã đơn hàng" and

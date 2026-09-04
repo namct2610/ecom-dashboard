@@ -1,7 +1,7 @@
 {
-  "version": "3.4.75",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.75/release/dashboard-v3-3.4.75.zip",
-  "changelog": "Tự chữa và tự chẩn đoán khi máy chủ nạp sheet về rỗng.\n- Khi sheet đọc ra không có ô nào, hệ thống tự đọc lại theo cách khác (lấy sheet theo tên từ toàn bộ workbook thay vì chỉ nạp một sheet). Nếu đây là nguyên nhân thì lần nhập tiếp theo sẽ chạy bình thường, không cần làm gì thêm.\n- Sheet nay được lấy theo TÊN thay vì theo vị trí, bỏ giả định vị trí luôn đúng.\n- Nếu đọc lại vẫn rỗng, thông báo lỗi sẽ kèm kích thước sheet mà file khai báo, số mục trong file nén, phiên bản PHP và phiên bản thư viện đọc Excel trên chính máy chủ đó.\n- Đã đối chiếu 29 báo cáo tài chính 04/2024–08/2026: số dòng nhập vào không đổi.",
+  "version": "3.4.76",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.76/release/dashboard-v3-3.4.76.zip",
+  "changelog": "Nhập được báo cáo tài chính trên hosting có trần bộ nhớ thấp.\n- Nguyên nhân thật của lỗi nhiều ngày qua: thư viện đọc Excel nạp nguyên phần dữ liệu của sheet thành MỘT chuỗi, với báo cáo doanh thu Shopee chuỗi này nặng khoảng 60MB sau giải nén. Nhà cung cấp hosting từ chối cấp phát một lần lớn như vậy, nên PHP báo \"Out of memory\" — đây là trần của tài khoản, chỉnh memory_limit không có tác dụng.\n- Nay sheet được đọc theo kiểu cuốn chiếu, dùng khoảng 24MB thay vì hơn 112MB. Cùng báo cáo đó chạy được ngay cả khi chỉ có 32MB.\n- Bước lưu dòng thô cũng đọc kiểu cũ và nằm trong transaction, nên chỉ một lần thiếu bộ nhớ là mất trắng cả lần nhập; bước này đã giảm từ 130MB xuống 30MB.\n- Thông báo lỗi nay phân biệt rõ trần của tài khoản với memory_limit, để không chỉnh nhầm chỗ.\n- Đã đối chiếu 29 báo cáo 04/2024–08/2026: số dòng, tổng chi phí và mã định dạng file đều không đổi.",
   "min_php": "8.1",
   "released_at": "2026-09-04"
 }
