@@ -694,7 +694,9 @@ body { transition: background .3s ease, color .3s ease; }
 
 /* donut center */
 .donut-wrap { position: relative; }
-.donut-center { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; pointer-events: none; }
+.donut-center { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; pointer-events: none; transition: opacity .12s ease; }
+/* Hidden while a slice tooltip is open — see donutCentreFade in charts.js. */
+.donut-wrap.tip-open .donut-center { opacity: 0; }
 .donut-center .big { font-size: 19px; font-weight: 800; letter-spacing: -.02em; font-variant-numeric: tabular-nums; line-height: 1.1; white-space: nowrap; }
 .donut-center .small { font-size: 10.5px; font-weight: 700; color: var(--ink-3);  letter-spacing: .03em; margin-top: 3px; white-space: nowrap; }
 

@@ -259,7 +259,21 @@
     },
   };
 
-  Chart.register(StackedRoundedTopPlugin, StackTotalLabelPlugin, AdaptiveBarWidthPlugin);
+  // The donut's centre total is an HTML overlay sitting on top of the canvas, so
+  // it paints over the canvas-drawn tooltip and the two texts collide. Nothing
+  // can raise a canvas tooltip above a sibling element, so fade the overlay out
+  // while a slice is hovered instead.
+  const DonutCentreFadePlugin = {
+    id: 'donutCentreFade',
+    afterDraw(chart) {
+      const wrap = chart.canvas && chart.canvas.parentElement;
+      if (!wrap || !wrap.classList.contains('donut-wrap')) return;
+      const open = !!(chart.tooltip && chart.tooltip.opacity > 0);
+      wrap.classList.toggle('tip-open', open);
+    },
+  };
+
+  Chart.register(StackedRoundedTopPlugin, StackTotalLabelPlugin, AdaptiveBarWidthPlugin, DonutCentreFadePlugin);
 
   function tip() {
     return {
