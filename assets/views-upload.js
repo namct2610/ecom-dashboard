@@ -14,6 +14,22 @@
     coverage: null,   // { loading, error, months, types }
   };
 
+  // PHP emits its "POST Content-Length exceeds the limit" warning at request
+  // startup, before any of our code can set display_errors — so the body is that
+  // HTML followed by our JSON. Parsing strictly turns a clear server message
+  // into "Unexpected token '<'", so pull the JSON object out of whatever came
+  // back and fall back to trimmed text.
+  async function readJson(resp) {
+    const text = await resp.text();
+    try { return JSON.parse(text); } catch (_) { /* fall through */ }
+    const i = text.indexOf("{"), j = text.lastIndexOf("}");
+    if (i >= 0 && j > i) {
+      try { return JSON.parse(text.slice(i, j + 1)); } catch (_) { /* fall through */ }
+    }
+    const plain = text.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+    return { success: false, error: plain.slice(0, 300) || ("HTTP " + resp.status) };
+  }
+
   async function fetchCsrf() {
     if (local.csrf) return local.csrf;
     const r = await fetch("api/auth.php", { credentials: "same-origin" });
@@ -300,7 +316,7 @@
         fd.append("files[]", item.raw);
         try {
           const r = await fetch("api/upload.php", { method: "POST", credentials: "same-origin", headers: { "X-CSRF-Token": csrf }, body: fd });
-          const j = await r.json();
+          const j = await readJson(r);
           // upload.php returns { success, message, results: [{file, success, ...}] }
           const file = j.results && j.results[0] ? j.results[0] : { success: false, error: t("common.no_results") };
           if (file.success) {

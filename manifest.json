@@ -1,7 +1,7 @@
 {
-  "version": "3.4.70",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.70/release/dashboard-v3-3.4.70.zip",
-  "changelog": "Thay lịch sử tải lên bằng bảng kiểm tra dữ liệu theo tháng.\n- Trang Tải dữ liệu nay hiển thị DANH SÁCH TỪNG THÁNG với 4 ô kiểm: Traffic, Đơn hàng, Tài chính, Quảng cáo. Ô XANH là tháng đã có dữ liệu trọn vẹn, Ô VÀNG là có file nhưng chưa phủ hết tháng, Ô XÁM là chưa có gì.\n- Mỗi ô ghi rõ con số để biết thiếu bao nhiêu, ví dụ \"10/31 ngày\" hoặc \"527/573 đơn\" — nhìn là biết nên tải lại file nào.\n- Tháng đang chạy chỉ tính tới ngày hôm nay, nên không bị báo thiếu oan.\n- LƯU Ý: cột Quảng cáo hiện để trống vì hệ thống chưa có chức năng nhập báo cáo quảng cáo. Nếu cần theo dõi, hãy gửi mẫu file quảng cáo của sàn để bổ sung."
+  "version": "3.4.71",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.71/release/dashboard-v3-3.4.71.zip",
+  "changelog": "Báo lỗi rõ ràng khi file tải lên vượt giới hạn của máy chủ.\n- Khi tải file báo cáo tài chính (Income) dung lượng lớn, hệ thống trước đây báo chung chung và hướng dẫn SAI là \"Tạo .user.ini\" — trong khi file .user.ini vốn đã có sẵn và đã đặt 50M. Nay thông báo ghi rõ: dung lượng file, giới hạn máy chủ đang áp dụng, và vì sao .user.ini không có tác dụng trên máy chủ đó.\n- Trường hợp file lớn hơn post_max_size trước đây báo nhầm là \"Không có file nào được gửi lên\" (vì PHP huỷ toàn bộ nội dung gửi lên). Nay báo đúng là file quá lớn kèm con số cụ thể.\n- Trang Tải dữ liệu không còn hiện lỗi khó hiểu kiểu \"Unexpected token\" khi máy chủ trả về cảnh báo lẫn với dữ liệu.\n- LƯU Ý: đây là giới hạn của MÁY CHỦ, không phải lỗi file. File Income vẫn đọc được bình thường — đã kiểm tra 30 file từ 04/2024 đến 08/2026 đều phân tích đúng. Nếu gặp lỗi, cần nâng upload_max_filesize và post_max_size trên hosting."
   ,
   "min_php": "8.1",
   "released_at": "2026-09-04"
