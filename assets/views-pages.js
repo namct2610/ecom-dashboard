@@ -150,12 +150,13 @@
 
   /* ===================== PRODUCTS ===================== */
   let prodMetric = "rev";
+  let prodGrouping = "single";
   window.Views.products = {
     titleKey: "page.products.title", eyebrowKey: "page.products.eyebrow",
     render() {
       const st = S.state;
-      const cats = S.categoryBreakdown(st.period, st.platform).filter((c) => c.revenue > 0);
-      const list = S.products(st.period, prodMetric, st.platform).slice(0, 15);
+      const cats = S.categoryBreakdown(st.period, st.platform, prodGrouping).filter((c) => c.revenue > 0);
+      const list = S.products(st.period, prodMetric, st.platform, prodGrouping).slice(0, 15);
       const maxV = Math.max(...list.map((p) => prodMetric === "qty" ? p.qty : p.revenue), 1);
       const rows = list.map((p, i) => `<tr>
         <td><div class="prod"><span class="rank">${i + 1}</span><div style="min-width:0"><div class="pname">${escHtml(p.cleanName)}</div><div class="psku">${escHtml(p.sku)}</div></div></div></td>
@@ -169,7 +170,9 @@
       return `
       <div class="g12">
         <div data-collapse style="grid-column:span 12" class="card">
-          <div class="card-head"><div><div class="card-title">${_t("ovw.category.title")}</div></div></div>
+          <div class="card-head" style="flex-wrap:wrap"><div><div class="card-title">${_t("ovw.category.title")}</div><div class="card-sub">${_t("products.grouping.label")}</div></div>
+            <div class="miniseg" id="prodGroupingSeg" role="group" aria-label="${_t("products.grouping.label")}"><button class="${prodGrouping === "combo" ? "active" : ""}" data-grouping="combo" aria-pressed="${prodGrouping === "combo"}">${_t("products.grouping.combo")}</button><button class="${prodGrouping === "single" ? "active" : ""}" data-grouping="single" aria-pressed="${prodGrouping === "single"}">${_t("products.grouping.single")}</button></div>
+          </div>
           <div class="card-pad" style="display:flex;flex-wrap:wrap;gap:24px;align-items:center"><div class="donut-wrap" style="height:180px;flex:0 0 240px;min-width:0;max-width:100%"><canvas id="catDonut2"></canvas><div class="donut-center"><div><div class="big tnum">${F.money(totalCatRev)}</div><div class="small">${_t("ovw.top_products.by_rev")}</div></div></div></div>
             <div style="flex:1 1 320px;min-width:0;display:flex;flex-direction:column;gap:10px">
               ${cats.map((c) => `<div><div style="display:flex;align-items:center;gap:9px;font-size:13px;margin-bottom:4px"><span class="legend-swatch" style="background:${UI.cssColor(c.color)}"></span><b>${S.catLabel(c.cat)}</b><span style="margin-left:auto;font-weight:800" class="tnum">${F.money(c.revenue)}</span></div><div class="cmp-track"><div class="cmp-fill" style="width:${c.revenue / (cats[0].revenue || 1) * 100}%;background:${UI.cssColor(c.color)}"></div></div></div>`).join("")}
@@ -184,8 +187,9 @@
       </div>`;
     },
     mount(root) {
-      const cats = S.categoryBreakdown(S.state.period, S.state.platform).filter((c) => c.revenue > 0);
+      const cats = S.categoryBreakdown(S.state.period, S.state.platform, prodGrouping).filter((c) => c.revenue > 0);
       const cn = root.querySelector("#catDonut2"); if (cn) C.donut(cn, cats.map((c) => ({ label: S.catLabel(c.cat), value: c.revenue, color: c.color })), { money: true });
+      root.querySelector("#prodGroupingSeg")?.addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) { prodGrouping = b.dataset.grouping; window.App.rerender(); } });
       root.querySelector("#prodSeg")?.addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) { prodMetric = b.dataset.m; window.App.rerender(); } });
       const cacheKey = S.state.period + "|" + S.state.platform;
       if (!S.getRangeDetail(S.state.period, S.state.platform) && detailLoadingKey !== cacheKey) {

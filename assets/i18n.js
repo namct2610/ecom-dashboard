@@ -222,6 +222,9 @@
     "ovw.top_products.view_all": "Xem tất cả →",
     "ovw.top_products.by_rev": "Doanh thu",
     "ovw.top_products.by_qty": "Số lượng",
+    "products.grouping.label": "Phân tích sản phẩm theo",
+    "products.grouping.combo": "COMBO",
+    "products.grouping.single": "SKU lẻ",
     "ovw.geo.by_orders": "theo số đơn",
 
     "compare.note": "Đang so sánh",
@@ -896,6 +899,9 @@
     "ovw.top_products.view_all": "View all →",
     "ovw.top_products.by_rev": "Revenue",
     "ovw.top_products.by_qty": "Quantity",
+    "products.grouping.label": "Analyze products by",
+    "products.grouping.combo": "COMBO",
+    "products.grouping.single": "Single SKU",
     "ovw.geo.by_orders": "by orders",
 
     "compare.note": "Comparing",

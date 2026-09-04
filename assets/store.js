@@ -561,17 +561,18 @@
     return rangeDetailInflight[cacheKey];
   }
 
-  function products(key, metric, platform) {
+  function products(key, metric, platform, grouping) {
     const activePlatform = platform || state.platform;
+    const field = (metric === "qty" ? "topQty" : "topRev") + (grouping === "combo" ? "Combo" : "");
     const cached = getRangeDetail(key, activePlatform);
-    if (cached && (cached.topRev || cached.topQty)) {
-      const src = metric === "qty" ? (cached.topQty || []) : (cached.topRev || []);
+    if (cached && Array.isArray(cached[field])) {
+      const src = cached[field];
       return src.map((p) => ({ ...p, cat: categoryOf(p.sku, p.name), cleanName: cleanName(p.name) }));
     }
     const months = detailMonths(key);
     const merged = {};
     months.forEach((ym) => {
-      const list = DASH.monthDetail[ym][metric === "qty" ? "topQty" : "topRev"];
+      const list = DASH.monthDetail[ym][field] || [];
       list.forEach((p) => {
         if (activePlatform && activePlatform !== "all" && p.platform !== activePlatform) return;
         const e = merged[p.sku] || (merged[p.sku] = { sku: p.sku, name: p.name, qty: 0, revenue: 0, platform: p.platform });
@@ -583,8 +584,8 @@
     return arr;
   }
 
-  function categoryBreakdown(key, platform) {
-    const arr = products(key, "rev", platform);
+  function categoryBreakdown(key, platform, grouping) {
+    const arr = products(key, "rev", platform, grouping);
     const map = {};
     arr.forEach((p) => {
       const c = p.cat; const e = map[c] || (map[c] = { cat: c, ...CAT[c], revenue: 0, qty: 0, count: 0 });

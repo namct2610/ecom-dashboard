@@ -53,6 +53,15 @@ try {
         'order_count' => (int) $row['order_count'],
     ], $prodStmt->fetchAll());
 
+    $normalizePlatform = static fn(string $platform): string => $platform === 'tiktokshop' ? 'tiktok' : $platform;
+    $comboProducts = array_map(static fn(array $row): array => [
+        'sku' => $row['sku'],
+        'name' => preg_replace('/\[.*?\]\s*/u', '', $row['name']),
+        'platform' => $normalizePlatform($row['platform']),
+        'qty' => $row['qty'],
+        'revenue' => $row['revenue'],
+    ], $products);
+
     $expander = new SkuExpander($pdo);
     $expandedProducts = $expander->expandAndAggregate(array_map(static fn(array $row): array => [
         'sku' => $row['sku'],
@@ -63,7 +72,6 @@ try {
         'order_count' => $row['order_count'],
     ], $products));
 
-    $normalizePlatform = static fn(string $platform): string => $platform === 'tiktokshop' ? 'tiktok' : $platform;
     $normalizeProduct = static fn(array $row): array => [
         'sku' => (string) ($row['sku'] ?? ''),
         'name' => preg_replace('/\[.*?\]\s*/u', '', (string) ($row['product_name'] ?? '')),
@@ -72,11 +80,14 @@ try {
         'revenue' => (float) ($row['total_revenue'] ?? 0),
     ];
     $expandedProducts = array_map($normalizeProduct, $expandedProducts);
-    usort($expandedProducts, static fn(array $a, array $b): int => $b['revenue'] <=> $a['revenue']);
-    $topRev = array_slice($expandedProducts, 0, 15);
-    $topQty = $expandedProducts;
-    usort($topQty, static fn(array $a, array $b): int => $b['qty'] <=> $a['qty']);
-    $topQty = array_slice($topQty, 0, 15);
+    $rankProducts = static function (array $rows, string $metric): array {
+        usort($rows, static fn(array $a, array $b): int => $b[$metric] <=> $a[$metric]);
+        return array_slice($rows, 0, 15);
+    };
+    $topRev = $rankProducts($expandedProducts, 'revenue');
+    $topQty = $rankProducts($expandedProducts, 'qty');
+    $topRevCombo = $rankProducts($comboProducts, 'revenue');
+    $topQtyCombo = $rankProducts($comboProducts, 'qty');
 
     $cityStmt = $pdo->prepare("
         SELECT COALESCE(NULLIF(TRIM(shipping_city),''),'(Không rõ)') AS city,
@@ -141,6 +152,8 @@ try {
         'status' => $status,
         'topRev' => $topRev,
         'topQty' => $topQty,
+        'topRevCombo' => $topRevCombo,
+        'topQtyCombo' => $topQtyCombo,
         'city' => $cities,
         'heat' => $heat,
         'recentOrders' => $recent,
