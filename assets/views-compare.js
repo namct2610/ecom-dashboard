@@ -39,7 +39,7 @@
         <div class="phead">${UI.platLogo(p.key)}<div><div style="font-weight:800;font-size:15px">${p.label}</div><div style="font-size:12px;color:var(--ink-3);font-weight:600">${F.pct(p.share)} ${_t("compare.share")}</div></div></div>
         <div style="padding:0 18px 8px"><div style="font-size:26px;font-weight:800;letter-spacing:-.02em" class="tnum">${F.money(p.revenue)}</div><div style="display:flex;align-items:center;gap:7px;font-size:12px;color:var(--ink-3);font-weight:600;margin-top:2px">${pc ? dd(p.revenue, pc.revenue) : ""}<span>${pc ? "vs " + F.money(pc.revenue) + " · " + cmpLab : _t("compare.revenue_period")}</span></div></div>
         ${rows.map((r) => `<div class="pmetric"><span class="lab">${r[0]}</span><span style="display:flex;align-items:center;gap:8px">${r[2]}<span class="val tnum">${r[1]}</span></span></div>`).join("")}
-        <div class="pmetric" style="flex-direction:column;align-items:flex-start;gap:5px"><span class="lab">${_t("compare.metric.top_product")}</span><span style="font-weight:600;font-size:13px;line-height:1.3">${tp ? (S.products(st.period, "rev", "all").filter((x) => x.platform === p.key)[0] || {}).cleanName || "—" : "—"}</span></div>
+        <div class="pmetric" style="flex-direction:column;align-items:flex-start;gap:5px"><span class="lab">${_t("compare.metric.top_product")}</span><span style="font-weight:600;font-size:13px;line-height:1.3">${tp ? (S.products(st.period, "rev", "all", "single", true).filter((x) => x.platform === p.key)[0] || {}).cleanName || "—" : "—"}</span></div>
       </div>`;
     }).join("");
 

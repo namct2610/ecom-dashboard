@@ -1,7 +1,7 @@
 {
-  "version": "3.4.80",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.80/release/dashboard-v3-3.4.80.zip",
-  "changelog": "Sửa triệt để phân tích COMBO và SKU lẻ.\n- COMBO cùng vị 2/3/6 được tự động quy về SKU gốc, bỏ hậu tố quà tặng và nhân đúng số lượng sản phẩm lẻ.\n- Bổ sung quy đổi MIX 4 vị Montinis và MIX 2 vị Milk Tiger còn thiếu trong dữ liệu lịch sử.\n- Biểu đồ danh mục dùng toàn bộ sản phẩm thay vì chỉ Top 15 nên tổng doanh thu COMBO và SKU lẻ luôn bằng nhau.\n- Tên sản phẩm ở chế độ SKU lẻ lấy từ SKU gốc hoặc tên đã loại bỏ phần COMBO; không còn tên COMBO sót lại.\n- Đã kiểm tra 170 nhóm COMBO thực tế, gồm 75 nhóm COMBO 6: số lượng và doanh thu đều khớp.",
+  "version": "3.4.81",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.81/release/dashboard-v3-3.4.81.zip",
+  "changelog": "Gộp dữ liệu sản phẩm trùng SKU giữa các sàn.\n- Khi chọn Tất cả sàn, mỗi SKU chỉ hiển thị một dòng với số lượng và doanh thu cộng từ Shopee, Lazada và TikTok.\n- Áp dụng đồng nhất cho cả chế độ COMBO và SKU lẻ, đồng thời giữ nguyên tổng số lượng và doanh thu.\n- Bộ lọc riêng từng sàn và phần top sản phẩm trong So sánh sàn vẫn hiển thị số liệu độc lập.",
   "min_php": "8.1",
   "released_at": "2026-09-05"
 }

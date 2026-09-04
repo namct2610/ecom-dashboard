@@ -34,7 +34,9 @@
   }
 
   const pdot = (k) => `<span class="pdot" style="background:var(--${k})"></span>`;
-  const pchip = (k) => `<span class="pchip">${pdot(k)}${S.PLAT[k].label}</span>`;
+  const pchip = (k) => k === "all"
+    ? `<span class="pchip">${window.t ? window.t("common.all_platforms", "tất cả sàn") : "tất cả sàn"}</span>`
+    : `<span class="pchip">${pdot(k)}${S.PLAT[k].label}</span>`;
 
   function platLogo(k) {
     return `<div class="plogo" style="background:var(--${k})">${S.PLAT[k].short}</div>`;

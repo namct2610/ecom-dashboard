@@ -561,24 +561,31 @@
     return rangeDetailInflight[cacheKey];
   }
 
-  function products(key, metric, platform, grouping) {
+  function products(key, metric, platform, grouping, splitPlatforms = false) {
     const activePlatform = platform || state.platform;
     const field = (metric === "qty" ? "topQty" : "topRev") + (grouping === "combo" ? "Combo" : "");
     const cached = getRangeDetail(key, activePlatform);
-    if (cached && Array.isArray(cached[field])) {
-      const src = cached[field];
-      return src.map((p) => ({ ...p, cat: categoryOf(p.sku, p.name), cleanName: cleanName(p.name) }));
-    }
-    const months = detailMonths(key);
+    const hasCachedRows = cached && Array.isArray(cached[field]);
+    const rows = hasCachedRows ? cached[field] : [];
+    const mergePlatforms = activePlatform === "all" && !splitPlatforms;
     const merged = {};
-    months.forEach((ym) => {
-      const list = DASH.monthDetail[ym][field] || [];
-      list.forEach((p) => {
-        if (activePlatform && activePlatform !== "all" && p.platform !== activePlatform) return;
-        const e = merged[p.sku] || (merged[p.sku] = { sku: p.sku, name: p.name, qty: 0, revenue: 0, platform: p.platform });
-        e.qty += p.qty; e.revenue += p.revenue;
+    const addRows = (list) => list.forEach((p) => {
+      if (activePlatform && activePlatform !== "all" && p.platform !== activePlatform) return;
+      const bucket = mergePlatforms ? p.sku : p.sku + "\u0000" + p.platform;
+      const e = merged[bucket] || (merged[bucket] = {
+        sku: p.sku,
+        name: p.name,
+        qty: 0,
+        revenue: 0,
+        platform: mergePlatforms ? "all" : p.platform,
       });
+      e.qty += Number(p.qty) || 0;
+      e.revenue += Number(p.revenue) || 0;
     });
+
+    if (hasCachedRows) addRows(rows);
+    else detailMonths(key).forEach((ym) => addRows(DASH.monthDetail[ym][field] || []));
+
     const arr = Object.values(merged).map((p) => ({ ...p, cat: categoryOf(p.sku, p.name), cleanName: cleanName(p.name) }));
     arr.sort((a, b) => (metric === "qty" ? b.qty - a.qty : b.revenue - a.revenue));
     return arr;
