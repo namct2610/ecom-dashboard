@@ -427,6 +427,25 @@ function ensure_managed_settings_schema(PDO $pdo): void
         INDEX idx_reconcile_combo_name (combo_name(100))
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
+    // Product master for the single SKUs used by the managed COMBO rules.
+    // Preserve any non-empty name that an admin has entered.
+    $pdo->exec("UPDATE reconcile_price_items SET product_name = CASE UPPER(sku)
+        WHEN 'MNF055GC04STB' THEN 'Phô mai tươi Montinis Dâu, vỉ 4 hũ'
+        WHEN 'MNF055GC04VAN' THEN 'Phô mai tươi Montinis Vani, vỉ 4 hũ'
+        WHEN 'MNS055GC04APL' THEN 'Sữa chua Montinis Táo, vỉ 4 hũ'
+        WHEN 'MNS055GC04MNG' THEN 'Sữa chua Montinis Xoài, vỉ 4 hũ'
+        WHEN 'MNS055GC04PLN' THEN 'Sữa chua Montinis Nguyên bản, vỉ 4 hũ'
+        WHEN 'MON055GH04CLA' THEN 'Váng sữa Monte Classic, vỉ 4 hũ'
+        WHEN 'MON055GH04SCO' THEN 'Váng sữa Monte Socola, vỉ 4 hũ'
+        WHEN 'MON055GH04VAN' THEN 'Váng sữa Monte Vani, vỉ 4 hũ'
+        WHEN 'MON095MC04SCO' THEN 'Monte Drink Socola, lốc 4 chai'
+        WHEN 'MON095MC04VAN' THEN 'Monte Drink Vani, lốc 4 chai'
+        ELSE product_name END
+        WHERE TRIM(product_name) = '' AND UPPER(sku) IN (
+            'MNF055GC04STB', 'MNF055GC04VAN', 'MNS055GC04APL', 'MNS055GC04MNG', 'MNS055GC04PLN',
+            'MON055GH04CLA', 'MON055GH04SCO', 'MON055GH04VAN', 'MON095MC04SCO', 'MON095MC04VAN'
+        )");
+
     // Dòng thô của file sàn, giữ nguyên văn để xuất ngược ra đúng format gốc.
     // Khoá theo mã tự nhiên của sàn nên tải file chồng kỳ chỉ ghi đè, không
     // nhân bản; cắt khoảng ngày nào cũng được, độc lập với kỳ của file gốc.
