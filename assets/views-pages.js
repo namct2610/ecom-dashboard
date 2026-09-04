@@ -289,14 +289,14 @@
 
       // City distribution
       const maxG = Math.max(...cities.map((g) => g.orders), 1);
-      const geoRows = cities.map((g) => `<tr><td>${escHtml(g.city)}</td><td class="num">${F.viInt(g.orders)}</td><td class="num">${F.pct(g.percentage ?? 0)}</td><td class="num" style="width:160px"><div class="cmp-track"><div class="cmp-fill" style="width:${g.orders / maxG * 100}%;background:var(--brand)"></div></div></td></tr>`).join("");
+      const geoRows = cities.map((g) => `<tr><td>${escHtml(g.city)}</td><td class="num">${F.viInt(g.orders)}</td><td class="num"><b>${F.money(g.revenue || 0)}</b></td><td class="num">${F.pct(g.percentage ?? 0)}</td><td class="num" style="width:90px"><div class="cmp-track"><div class="cmp-fill" style="width:${g.orders / maxG * 100}%;background:var(--brand)"></div></div></td></tr>`).join("");
 
       // Warehouse distribution. Populated only by re-imported order files, so it
       // can be empty on data uploaded before the warehouse column existed.
       const maxW = Math.max(...warehouses.map((w) => w.orders), 1);
       const whRows = warehouses.length
-        ? warehouses.map((w) => `<tr><td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(w.warehouse)}</td><td class="num">${F.viInt(w.orders)}</td><td class="num">${F.pct(w.percentage ?? 0)}</td><td class="num" style="width:160px"><div class="cmp-track"><div class="cmp-fill" style="width:${w.orders / maxW * 100}%;background:var(--lazada)"></div></div></td></tr>`).join("")
-        : `<tr><td colspan="4" style="text-align:center;color:var(--ink-3);padding:18px 0">${_t("customers.warehouse.empty")}</td></tr>`;
+        ? warehouses.map((w) => `<tr><td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(w.warehouse)}</td><td class="num">${F.viInt(w.orders)}</td><td class="num"><b>${F.money(w.revenue || 0)}</b></td><td class="num">${F.pct(w.percentage ?? 0)}</td><td class="num" style="width:90px"><div class="cmp-track"><div class="cmp-fill" style="width:${w.orders / maxW * 100}%;background:var(--lazada)"></div></div></td></tr>`).join("")
+        : `<tr><td colspan="5" style="text-align:center;color:var(--ink-3);padding:18px 0">${_t("customers.warehouse.empty")}</td></tr>`;
 
       const fRows = totalNF.map((p) => `<div class="cmp-row"><div class="cmp-name">${UI.pdot(p.key)}${p.label}</div><div class="cmp-track"><div class="cmp-fill" style="width:${totalNFVal ? p.nf / Math.max(...totalNF.map((x) => x.nf), 1) * 100 : 0}%;background:var(--${p.key})"></div></div><div class="cmp-val">${F.viInt(p.nf)}</div></div>`).join("");
 
@@ -309,11 +309,11 @@
         <div data-collapse style="grid-column:span 5;display:flex;flex-direction:column;gap:16px">
           <div class="card">
             <div class="card-head"><div><div class="card-title">${_t("customers.geo.title")}</div></div></div>
-            <div class="card-pad" style="padding:6px"><table class="tbl"><thead><tr><th>${_t("th.city")}</th><th class="num">${_t("th.orders")}</th><th class="num">${_t("th.share")}</th><th></th></tr></thead><tbody>${geoRows}</tbody></table></div>
+            <div class="card-pad" style="padding:6px"><table class="tbl"><thead><tr><th>${_t("th.city")}</th><th class="num">${_t("th.orders")}</th><th class="num">${_t("th.revenue")}</th><th class="num">${_t("th.share")}</th><th></th></tr></thead><tbody>${geoRows}</tbody></table></div>
           </div>
           <div class="card">
             <div class="card-head"><div><div class="card-title">${_t("customers.warehouse.title")}</div></div></div>
-            <div class="card-pad" style="padding:6px"><table class="tbl"><thead><tr><th>${_t("customers.warehouse.col")}</th><th class="num">${_t("th.orders")}</th><th class="num">${_t("th.share")}</th><th></th></tr></thead><tbody>${whRows}</tbody></table></div>
+            <div class="card-pad" style="padding:6px"><table class="tbl"><thead><tr><th>${_t("customers.warehouse.col")}</th><th class="num">${_t("th.orders")}</th><th class="num">${_t("th.revenue")}</th><th class="num">${_t("th.share")}</th><th></th></tr></thead><tbody>${whRows}</tbody></table></div>
           </div>
         </div>
       </div>
