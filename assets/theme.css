@@ -650,6 +650,20 @@ body { transition: background .3s ease, color .3s ease; }
 /* Fallback for contexts that refuse the Fullscreen API (embedded browser views
    reject it outright): fill the viewport in-page instead of doing nothing. */
 .card.chart-maximized { position: fixed; inset: 12px; z-index: 200; margin: 0; }
+
+/* Enlarged charts are read from further away — scale the heading with the plot
+   (charts.js scales the axis and bar labels on the canvas side). */
+.card:fullscreen .card-title,
+.card.chart-maximized .card-title { font-size: 20px; }
+.card:fullscreen .card-sub,
+.card.chart-maximized .card-sub { font-size: 13.5px; }
+.card:fullscreen .card-head,
+.card.chart-maximized .card-head { padding-bottom: 4px; }
+/* .legend is just the flex box — the visible text size lives on .legend-item. */
+.card:fullscreen .legend-item,
+.card.chart-maximized .legend-item { font-size: 14px; }
+.card:fullscreen .legend-swatch,
+.card.chart-maximized .legend-swatch { width: 13px; height: 13px; }
 .chart-fs-btn { padding: 6px 9px; }
 .chart-fs-btn svg { width: 16px; height: 16px; }
 

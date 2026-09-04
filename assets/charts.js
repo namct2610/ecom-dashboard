@@ -4,12 +4,35 @@
 (function () {
   const reg = {}; // canvasId -> Chart
 
+  // Chart.js parses colours with its own library, which does not understand
+  // oklch() — and most theme tokens (ink, surface, grid, invert-bg) are oklch.
+  // They were reaching the canvas as garbage: the tooltip backdrop painted as
+  // mid-grey instead of near-black, so its white text looked washed out. Let
+  // the browser resolve any CSS colour to concrete channels first.
+  let _probe = null;
+  function toRgb(v) {
+    if (!v) return v;
+    const t = String(v).trim();
+    if (t === "transparent" || t.startsWith("#") || t.startsWith("rgb")) return t;
+    try {
+      if (!_probe) _probe = document.createElement("canvas").getContext("2d", { willReadFrequently: true });
+      _probe.clearRect(0, 0, 1, 1);
+      _probe.fillStyle = "#000000";
+      _probe.fillStyle = t;
+      _probe.fillRect(0, 0, 1, 1);
+      const d = _probe.getImageData(0, 0, 1, 1).data;
+      return d[3] === 255 ? `rgb(${d[0]},${d[1]},${d[2]})` : `rgba(${d[0]},${d[1]},${d[2]},${(d[3] / 255).toFixed(3)})`;
+    } catch (_) {
+      return t;
+    }
+  }
+
   function col(v) {
     // resolve a CSS custom property (e.g. "--shopee") or pass through
     if (v && v.startsWith("--")) {
-      return getComputedStyle(document.documentElement).getPropertyValue(v).trim() || "#888";
+      return toRgb(getComputedStyle(document.documentElement).getPropertyValue(v).trim() || "#888");
     }
-    return v;
+    return toRgb(v);
   }
   const ink3 = () => col("--ink-3");
   const gridc = () => col("--grid");
@@ -106,16 +129,8 @@
       if (!len) return;
       const { ctx, chartArea } = chart;
       const format = opts.format || compactNumber;
-      // Scale with the plot width: a chart opened fullscreen would otherwise
-      // keep the 11.5px it needs inside a card.
-      const fontSize = opts.fontSize || (chart.width >= 1500 ? 14 : chart.width >= 1050 ? 12.5 : 11.5);
-      const h = opts.height || Math.round(fontSize * 1.92);
-      ctx.save();
-      ctx.font = `800 ${fontSize}px 'Be Vietnam Pro','Segoe UI',sans-serif`;
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
 
-      // Pass 1 — measure every candidate badge.
+      // Collect one entry per bar: total, top edge, centre x.
       const items = [];
       for (let i = 0; i < len; i++) {
         let total = 0, topY = Infinity, x = null;
@@ -131,20 +146,69 @@
           x = bar.x;
         }
         if (!total || x == null || !isFinite(topY)) continue;
-        const text = format(total);
-        items.push({ x, topY, text, w: Math.ceil(ctx.measureText(text).width) + 12 });
+        items.push({ x, topY, text: format(total) });
       }
+      if (!items.length) return;
 
-      // Pass 2 — draw left to right, dropping any badge that would touch the
-      // one before it. Widening the chart then genuinely reveals more numbers
-      // instead of packing them into an unreadable smear.
+      // Every bar should keep its number, so shrink and finally rotate to make
+      // them fit instead of dropping alternate labels. Only a slot too narrow
+      // for even upright text falls back to skipping.
+      const base = opts.fontSize || (chart.width >= 1600 ? 15 : chart.width >= 1200 ? 13.5 : chart.width >= 950 ? 12.5 : 11.5);
+      const slot = chartArea.width / items.length;
+      const font = (size) => `800 ${size}px 'Be Vietnam Pro','Segoe UI',sans-serif`;
+      const widest = (size) => {
+        ctx.font = font(size);
+        let m = 0;
+        for (const it of items) m = Math.max(m, ctx.measureText(it.text).width);
+        return m;
+      };
+
+      ctx.save();
+      // GAP is the separation the draw loop below insists on, so the fitting
+      // test has to allow for it too — sizing to `slot` while drawing at
+      // `slot + GAP` silently dropped the odd label that fell right on the edge.
+      const GAP = 1;
+      let fs = base, pad = 12, rotate = false;
+      let w = widest(fs);
+      if (w + pad + GAP > slot) pad = 5;
+      while (w + pad + GAP > slot && fs > 8) { fs -= 0.5; w = widest(fs); }
+      if (w + pad + GAP > slot) {
+        // Upright text cannot fit side by side — stand the labels on end, which
+        // needs only about one line-height of width each.
+        rotate = true;
+        fs = Math.max(7, Math.min(base, slot - 2));
+        ctx.font = font(fs);
+      }
+      const h = Math.round(fs * 1.92);
+
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
       let lastRight = -Infinity;
+
       for (const it of items) {
-        const x = it.x, topY = it.topY, text = it.text, w = it.w;
-        const left = x - w / 2;
-        if (left < lastRight + 5) continue;
-        lastRight = x + w / 2;
-        const y = Math.max(chartArea.top + h / 2 + 2, topY - h / 2 - 8);
+        const tw = ctx.measureText(it.text).width;
+        if (rotate) {
+          // No badge when rotated: a pill around vertical text just adds noise.
+          // Rotated text is only about one line-height wide, so pack them at
+          // exactly that pitch — any extra margin here starts dropping every
+          // other label again, which is what this rework exists to stop.
+          const gap = fs;
+          if (it.x - gap / 2 < lastRight) continue;
+          lastRight = it.x + gap / 2;
+          const y = Math.max(chartArea.top + tw / 2 + 2, it.topY - tw / 2 - 8);
+          ctx.save();
+          ctx.translate(it.x, y);
+          ctx.rotate(-Math.PI / 2);
+          ctx.fillStyle = opts.color || ink3();
+          ctx.fillText(it.text, 0, 0);
+          ctx.restore();
+          continue;
+        }
+        const bw = Math.ceil(tw) + pad;
+        const left = it.x - bw / 2;
+        if (left < lastRight + GAP) continue;
+        lastRight = it.x + bw / 2;
+        const y = Math.max(chartArea.top + h / 2 + 2, it.topY - h / 2 - 8);
         const r = h / 2;
         const top = y - h / 2;
         ctx.fillStyle = opts.backgroundColor || surface();
@@ -152,10 +216,10 @@
         ctx.lineWidth = 1;
         ctx.beginPath();
         ctx.moveTo(left + r, top);
-        ctx.lineTo(left + w - r, top);
-        ctx.quadraticCurveTo(left + w, top, left + w, top + r);
-        ctx.lineTo(left + w, top + h - r);
-        ctx.quadraticCurveTo(left + w, top + h, left + w - r, top + h);
+        ctx.lineTo(left + bw - r, top);
+        ctx.quadraticCurveTo(left + bw, top, left + bw, top + r);
+        ctx.lineTo(left + bw, top + h - r);
+        ctx.quadraticCurveTo(left + bw, top + h, left + bw - r, top + h);
         ctx.lineTo(left + r, top + h);
         ctx.quadraticCurveTo(left, top + h, left, top + h - r);
         ctx.lineTo(left, top + r);
@@ -164,7 +228,7 @@
         ctx.fill();
         ctx.stroke();
         ctx.fillStyle = opts.color || ink3();
-        ctx.fillText(text, x, y + 0.5);
+        ctx.fillText(it.text, it.x, y + 0.5);
       }
       ctx.restore();
     },
@@ -240,7 +304,7 @@
         interaction: { mode: "index", intersect: false },
         scales: {
           x: { stacked, grid: { display: false }, ticks: { color: ink3(), font: { size: 11 }, maxRotation: 0, autoSkip: true, maxTicksLimit: 10 }, border: { display: false } },
-          y: { stacked, grid: { color: gridc(), drawTicks: false }, ticks: { color: ink3(), font: (c) => ({ size: c.chart.width >= 1500 ? 13 : c.chart.width >= 1050 ? 12 : 11 }), callback: (v) => window.F.money(v) }, border: { display: false } },
+          y: { stacked, grid: { color: gridc(), drawTicks: false }, ticks: { color: ink3(), font: (c) => ({ size: c.chart.width >= 1600 ? 14.5 : c.chart.width >= 1200 ? 13 : c.chart.width >= 950 ? 12 : 11 }), callback: (v) => window.F.money(v) }, border: { display: false } },
         },
         plugins: { tooltip: { ...tip(), callbacks: { label: (c) => " " + c.dataset.label + ": " + window.F.moneyFull(c.raw) } } },
       },
@@ -276,8 +340,8 @@
         layout: { padding: { top: 18 } },
         interaction: { mode: "index", intersect: false },
         scales: {
-          x: { stacked, grid: { display: false }, ticks: { color: ink3(), font: (c) => ({ size: c.chart.width >= 1500 ? 13 : c.chart.width >= 1050 ? 12 : 10.5 }), maxRotation: 0, autoSkip: true }, border: { display: false } },
-          y: { stacked, grid: { color: gridc(), drawTicks: false }, ticks: { color: ink3(), font: (c) => ({ size: c.chart.width >= 1500 ? 13 : c.chart.width >= 1050 ? 12 : 11 }) }, border: { display: false }, beginAtZero: true },
+          x: { stacked, grid: { display: false }, ticks: { color: ink3(), font: (c) => ({ size: c.chart.width >= 1600 ? 14.5 : c.chart.width >= 1200 ? 13 : c.chart.width >= 950 ? 12 : 10.5 }), maxRotation: 0, autoSkip: true }, border: { display: false } },
+          y: { stacked, grid: { color: gridc(), drawTicks: false }, ticks: { color: ink3(), font: (c) => ({ size: c.chart.width >= 1600 ? 14.5 : c.chart.width >= 1200 ? 13 : c.chart.width >= 950 ? 12 : 11 }) }, border: { display: false }, beginAtZero: true },
         },
         plugins: {
           tooltip: { ...tip(), callbacks: { label: (c) => " " + c.dataset.label + ": " + window.F.viInt(c.raw) + " " + tr("common.orders_unit", "đơn"), footer: (items) => tr("common.total", "Tổng") + ": " + window.F.viInt(items.reduce((t, i) => t + i.raw, 0)) + " " + tr("common.orders_unit", "đơn") } },
@@ -310,7 +374,13 @@
         // c.formatted does not exist in Chart.js 4 (it is formattedValue), so this
         // read printed "undefined" in every donut tooltip. Use c.raw with the app
         // formatters, like every other tooltip in this file.
-        plugins: { tooltip: { ...tip(), callbacks: { label: (c) => " " + c.label + ": " + (opt.money ? window.F.moneyFull(c.raw) : window.F.viInt(c.raw)) } } },
+        // Share is what a donut is read for, so the tooltip gives the percentage
+        // only — the absolute figures already sit in the legend beside it.
+        plugins: { tooltip: { ...tip(), callbacks: { label: (c) => {
+          const data = c.dataset.data || [];
+          const total = data.reduce((t, v) => t + (+v || 0), 0);
+          return " " + c.label + ": " + window.F.pct(total ? (+c.raw || 0) / total * 100 : 0);
+        } } } },
       },
     });
   }
@@ -375,8 +445,8 @@
         layout: { padding: { top: 18 } },
         interaction: { mode: "index", intersect: false },
         scales: {
-          x: { stacked, grid: { display: false }, ticks: { color: ink3(), font: (c) => ({ size: c.chart.width >= 1500 ? 13 : c.chart.width >= 1050 ? 12 : 10.5 }), maxRotation: 0, autoSkip: true }, border: { display: false } },
-          y: { stacked, grid: { color: gridc(), drawTicks: false }, ticks: { color: ink3(), font: (c) => ({ size: c.chart.width >= 1500 ? 13 : c.chart.width >= 1050 ? 12 : 11 }), callback: (v) => window.F.money(v) }, border: { display: false } },
+          x: { stacked, grid: { display: false }, ticks: { color: ink3(), font: (c) => ({ size: c.chart.width >= 1600 ? 14.5 : c.chart.width >= 1200 ? 13 : c.chart.width >= 950 ? 12 : 10.5 }), maxRotation: 0, autoSkip: true }, border: { display: false } },
+          y: { stacked, grid: { color: gridc(), drawTicks: false }, ticks: { color: ink3(), font: (c) => ({ size: c.chart.width >= 1600 ? 14.5 : c.chart.width >= 1200 ? 13 : c.chart.width >= 950 ? 12 : 11 }), callback: (v) => window.F.money(v) }, border: { display: false } },
         },
         plugins: {
           tooltip: { ...tip(), callbacks: { label: (c) => " " + c.dataset.label + ": " + window.F.moneyFull(c.raw), footer: (items) => tr("common.total", "Tổng") + ": " + window.F.moneyFull(items.reduce((t, i) => t + i.raw, 0)) } },
