@@ -33,3 +33,8 @@ Thumbs.db
 
 # Database dumps (never commit — may contain customer data)
 *.sql
+
+# Dữ liệu thật của shop — không bao giờ commit
+file/
+*.xlsx
+*.xls
