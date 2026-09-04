@@ -1,7 +1,7 @@
 {
-  "version": "3.4.79",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.79/release/dashboard-v3-3.4.79.zip",
-  "changelog": "Chuẩn hóa tên và doanh thu khi quy đổi COMBO thành SKU lẻ.\n- Bổ sung tên sản phẩm chuẩn cho 10 SKU lẻ trong bảng quy đổi, chỉ điền vào tên còn trống.\n- Doanh thu lấy nguyên từ doanh thu COMBO; tổng trước và sau quy đổi khớp tuyệt đối.\n- COMBO MIX chia đều doanh thu theo số SKU thành phần, phần lẻ làm tròn được dồn vào SKU cuối.\n- Số lượng SKU lẻ tiếp tục nhân đúng theo định mức single_qty của từng COMBO.",
+  "version": "3.4.80",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.80/release/dashboard-v3-3.4.80.zip",
+  "changelog": "Sửa triệt để phân tích COMBO và SKU lẻ.\n- COMBO cùng vị 2/3/6 được tự động quy về SKU gốc, bỏ hậu tố quà tặng và nhân đúng số lượng sản phẩm lẻ.\n- Bổ sung quy đổi MIX 4 vị Montinis và MIX 2 vị Milk Tiger còn thiếu trong dữ liệu lịch sử.\n- Biểu đồ danh mục dùng toàn bộ sản phẩm thay vì chỉ Top 15 nên tổng doanh thu COMBO và SKU lẻ luôn bằng nhau.\n- Tên sản phẩm ở chế độ SKU lẻ lấy từ SKU gốc hoặc tên đã loại bỏ phần COMBO; không còn tên COMBO sót lại.\n- Đã kiểm tra 170 nhóm COMBO thực tế, gồm 75 nhóm COMBO 6: số lượng và doanh thu đều khớp.",
   "min_php": "8.1",
   "released_at": "2026-09-05"
 }

@@ -10,7 +10,8 @@ $pdo->exec('CREATE TABLE reconcile_combo_items (platform TEXT, combo_sku TEXT, c
 $pdo->exec("INSERT INTO reconcile_price_items VALUES
     ('SKU-A', 'Sản phẩm A', '', 100),
     ('SKU-B', 'Sản phẩm B', '', 200),
-    ('SKU-C', 'Sản phẩm C', '', 900)");
+    ('SKU-C', 'Sản phẩm C', '', 900),
+    ('MON055GH04VAN', 'Váng sữa Monte Vani, vỉ 4 hũ', '', 75)");
 $pdo->exec("INSERT INTO reconcile_combo_items VALUES
     ('shopee', 'COMBO-AB', 'Combo thường', 'SKU-A', 2),
     ('shopee', 'COMBO-AB', 'Combo thường', 'SKU-B', 1),
@@ -28,6 +29,10 @@ $mix = $expander->expandRow([
     'sku' => 'COMBO-MIX', 'product_name' => 'Combo mix ba vị', 'platform' => 'shopee',
     'total_qty' => 2, 'total_revenue' => 100, 'order_count' => 1,
 ]);
+$comboSix = $expander->expandRow([
+    'sku' => 'MON055GC24VAN-BMN', 'product_name' => 'COMBO 6 vỉ Váng sữa Monte Vani',
+    'platform' => 'shopee', 'total_qty' => 2, 'total_revenue' => 600, 'order_count' => 2,
+]);
 
 $checks = [
     isset($bySku['SKU-A'], $bySku['SKU-B']),
@@ -40,6 +45,11 @@ $checks = [
     array_column($mix, 'total_qty') === [2.0, 4.0, 6.0],
     array_column($mix, 'total_revenue') === [33.33, 33.33, 33.34],
     array_sum(array_column($mix, 'total_revenue')) === 100.0,
+    count($comboSix) === 1,
+    $comboSix[0]['sku'] === 'MON055GH04VAN',
+    $comboSix[0]['product_name'] === 'Váng sữa Monte Vani, vỉ 4 hũ',
+    $comboSix[0]['total_qty'] === 12.0,
+    $comboSix[0]['total_revenue'] === 600.0,
 ];
 
 if (in_array(false, $checks, true)) {

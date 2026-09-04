@@ -499,7 +499,7 @@
     const s = (sku || "").toUpperCase(); const n = (name || "").toLowerCase();
     if (s.startsWith("GIFT") || n.includes("hàng tặng") || n.includes("free gift")) return "gift";
     if (s.startsWith("MNS") || n.includes("sữa chua")) return "yogurt";
-    if (s.startsWith("MNF") || n.includes("phô mai tươi")) return "freshcheese";
+    if (s.startsWith("MNF") || s.startsWith("MTG") || n.includes("phô mai tươi")) return "freshcheese";
     if (s.startsWith("GMS") || n.includes("phô mai lát") || n.includes("gourmet slices")) return "slices";
     if (s.startsWith("MON") || n.includes("váng sữa")) return "monte";
     return "other";
