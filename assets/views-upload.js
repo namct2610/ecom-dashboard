@@ -126,7 +126,7 @@
         <div class="card-head">
           <div>
             <div class="card-title">${t("upload.card.title")}</div>
-            <div class="card-sub">${t("upload.card.sub")}</div>
+            
           </div>
           ${local.queue.length ? `<div style="font-size:12.5px;color:var(--ink-3);font-weight:700">${totalErr ? tf("upload.queue.summary_with_errors", { done: totalDone, total: local.queue.length, err: totalErr }) : tf("upload.queue.summary", { done: totalDone, total: local.queue.length })}</div>` : ""}
         </div>
@@ -173,7 +173,7 @@
     if (!cat.length) {
       return `
         <div class="card section-gap">
-          <div class="card-head"><div><div class="card-title">${t("export.title")}</div><div class="card-sub">${t("export.sub")}</div></div></div>
+          <div class="card-head"><div><div class="card-title">${t("export.title")}</div></div></div>
           <div class="card-pad"><div class="note" style="margin:0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>${t("export.empty")}</div></div>
         </div>`;
     }
@@ -196,7 +196,7 @@
     const ready = p.platform && p.file_type && p.from && p.to;
     return `
       <div class="card section-gap">
-        <div class="card-head"><div><div class="card-title">${t("export.title")}</div><div class="card-sub">${t("export.sub")}</div></div></div>
+        <div class="card-head"><div><div class="card-title">${t("export.title")}</div></div></div>
         <div class="card-pad" style="padding:6px;overflow-x:auto">
           <table class="tbl"><thead><tr>
             <th style="width:34px"></th><th>${t("th.platform")}</th><th>${t("export.col.type")}</th>
@@ -230,7 +230,7 @@
         <div class="card-head">
           <div>
             <div class="card-title">${t("upload.history.title")}</div>
-            <div class="card-sub">${t("upload.history.sub")}</div>
+            
           </div>
           <button class="ctrl-btn" id="btnReloadHist">${t("common.reload")}</button>
         </div>

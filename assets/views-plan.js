@@ -47,7 +47,7 @@
         <div class="card-head">
           <div>
             <div class="card-title">${planMetricTitle(m)}</div>
-            <div class="card-sub">${_tf("plan.sub", { year: local.year, elapsed: local.data.elapsed_months })}</div>
+            
           </div>
           ${statusPill(m.status)}
         </div>
@@ -104,7 +104,7 @@
       <div class="card-head">
         <div>
           <div class="card-title">${title}</div>
-          <div class="card-sub">${_tf("plan.chart.sub", { y: local.year })}</div>
+          
         </div>
       </div>
       <div class="card-pad">
@@ -120,7 +120,7 @@
           <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
             <div>
               <div class="card-title">${_tf("plan.modal.title", { y: local.year })}</div>
-              <div class="card-sub">${_t("plan.modal.sub")}</div>
+              
             </div>
             <button class="iconbtn-sq" id="planModalClose" aria-label="${_t("common.close")}">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
@@ -150,10 +150,10 @@
   function loadingCard(msg) {
     return `
       <div class="g12" style="grid-template-columns:repeat(12,1fr);gap:16px">
-        <div style="grid-column:span 6" data-collapse><div class="card"><div class="card-head"><div><div class="card-title">${_t("plan.title.revenue")}</div><div class="card-sub">${msg || _t("common.loading")}</div></div></div><div class="card-pad" style="height:260px"></div></div></div>
-        <div style="grid-column:span 6" data-collapse><div class="card"><div class="card-head"><div><div class="card-title">${_t("plan.title.visits")}</div><div class="card-sub">${msg || _t("common.loading")}</div></div></div><div class="card-pad" style="height:260px"></div></div></div>
-        <div style="grid-column:span 6" data-collapse><div class="card"><div class="card-head"><div><div class="card-title">${_t("plan.chart.revenue_title")}</div><div class="card-sub">${_t("common.loading")}</div></div></div><div class="card-pad" style="height:240px"></div></div></div>
-        <div style="grid-column:span 6" data-collapse><div class="card"><div class="card-head"><div><div class="card-title">${_t("plan.chart.visits_title")}</div><div class="card-sub">${_t("common.loading")}</div></div></div><div class="card-pad" style="height:240px"></div></div></div>
+        <div style="grid-column:span 6" data-collapse><div class="card"><div class="card-head"><div><div class="card-title">${_t("plan.title.revenue")}</div></div></div><div class="card-pad" style="height:260px"></div></div></div>
+        <div style="grid-column:span 6" data-collapse><div class="card"><div class="card-head"><div><div class="card-title">${_t("plan.title.visits")}</div></div></div><div class="card-pad" style="height:260px"></div></div></div>
+        <div style="grid-column:span 6" data-collapse><div class="card"><div class="card-head"><div><div class="card-title">${_t("plan.chart.revenue_title")}</div></div></div><div class="card-pad" style="height:240px"></div></div></div>
+        <div style="grid-column:span 6" data-collapse><div class="card"><div class="card-head"><div><div class="card-title">${_t("plan.chart.visits_title")}</div></div></div><div class="card-pad" style="height:240px"></div></div></div>
       </div>`;
   }
 

@@ -174,7 +174,7 @@
     const items = insights.bullets || insights.notes || [];
     if (!items.length) return "";
     return `<div class="card" style="margin-bottom:16px">
-      <div class="card-head"><div><div class="card-title">${_t("rec.insights.title")}</div><div class="card-sub">${_t("rec.insights.sub")}</div></div></div>
+      <div class="card-head"><div><div class="card-title">${_t("rec.insights.title")}</div></div></div>
       <div class="card-pad">
         <ul style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:7px;font-size:13.5px;line-height:1.55;color:var(--ink-2)">
           ${items.map((item) => `<li>${typeof item === "string" ? item : (item.text || item.message || JSON.stringify(item))}</li>`).join("")}
@@ -231,7 +231,7 @@
         <div class="card-head">
           <div>
             <div class="card-title">${_t("rec.files.title")}</div>
-            <div class="card-sub">${_t("rec.files.sub")}</div>
+            
           </div>
           <button class="ctrl-btn on" id="reAddFileBtn" style="background:var(--brand);border-color:var(--brand);color:#fff">${_t("rec.files.add")}</button>
           <input id="reFileInput" type="file" accept=".xlsx,.xls" style="display:none" />
@@ -275,7 +275,7 @@
            ${platformGrid()}
            ${insightsCard()}
            <div class="card section-gap">
-             <div class="card-head"><div><div class="card-title">${_t("rec.unmatched.title")}</div><div class="card-sub">${_t("rec.unmatched.sub")}</div></div></div>
+             <div class="card-head"><div><div class="card-title">${_t("rec.unmatched.title")}</div></div></div>
              ${unmatchedTable()}
            </div>`}
       ${filesCard()}`;

@@ -42,6 +42,27 @@
       .map((c) => ({ label: S.catLabel(c.cat), value: c.revenue, color: c.color }));
   }
 
+  // Switching grain normally re-renders the page, but that replaces the card
+  // node — and a node removed from the document drops out of fullscreen, so the
+  // view would snap shut on every click. While a chart is enlarged, update its
+  // toggle and redraw its canvas in place instead of rebuilding the page.
+  function grainHandler(segId, canvasId, setGrain, build) {
+    return (e) => {
+      const btn = e.target.closest("button");
+      if (!btn) return;
+      setGrain(btn.dataset.g);
+
+      const seg = document.getElementById(segId);
+      const card = seg && seg.closest(".card");
+      const enlarged = card && (document.fullscreenElement === card || card.classList.contains("chart-maximized"));
+      if (!enlarged) { window.App.rerender(); return; }
+
+      seg.querySelectorAll("button").forEach((b) => b.classList.toggle("active", b === btn));
+      const cv = card.querySelector("#" + canvasId);
+      if (cv) build(cv);
+    };
+  }
+
   const GRAINS = ["day", "week", "month", "year"];
   function grainSeg(id, active) {
     return `<div class="miniseg" id="${id}">${GRAINS.map((g) =>
@@ -193,17 +214,19 @@
     <div class="g12 section-gap">
         <div data-collapse style="grid-column:span 8" class="card">
           <div class="card-head">
-            <div><div class="card-title">${_t("ovw.trend.title")}</div><div class="card-sub">${trendSub}</div></div>
-            <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:flex-end">
-              ${plat === "all" ? `<div class="legend">${S.PKEYS.map((k) => `<span class="legend-item"><span class="legend-swatch" style="background:var(--${k})"></span>${S.PLAT[k].label}</span>`).join("")}</div>` : ""}
+            <div><div class="card-title">${_t("ovw.trend.title")}</div></div>
+            <div class="chart-tools">
               ${grainSeg("revGrainSeg", revG)}
               ${UI.fsBtn()}
             </div>
           </div>
-        <div class="card-pad" style="padding-top:14px"><div class="chart-wrap" style="height:280px"><canvas id="monthlyChart"></canvas></div></div>
+        <div class="card-pad" style="padding-top:14px">
+          <div class="chart-wrap" style="height:280px"><canvas id="monthlyChart"></canvas></div>
+          ${plat === "all" ? `<div class="legend chart-legend">${S.PKEYS.map((k) => `<span class="legend-item"><span class="legend-swatch" style="background:var(--${k})"></span>${S.PLAT[k].label}</span>`).join("")}</div>` : ""}
+        </div>
       </div>
       <div data-collapse style="grid-column:span 4" class="card">
-        <div class="card-head"><div><div class="card-title">${_t("ovw.share.title")}</div><div class="card-sub">${hideShopee ? _t("ovw.share.hiding") : S.periodLabel(st.period).toLowerCase()}</div></div></div>
+        <div class="card-head"><div><div class="card-title">${_t("ovw.share.title")}</div></div></div>
         <div class="card-pad">
           ${donutBlock("shareDonut", shareItems(range), hideShopee ? _t("ovw.share.total_lz_tt") : _t("ovw.share.total_revenue"))}
         </div>
@@ -214,17 +237,19 @@
     <div class="g12 section-gap">
       <div data-collapse style="grid-column:span 8" class="card">
         <div class="card-head">
-          <div><div class="card-title">${_t("ovw.daily.title")}</div><div class="card-sub">${S.periodLabel(st.period).toLowerCase()} · ${plat === "all" ? _t("ovw.trend.all_platforms") : S.PLAT[plat].label}</div></div>
-          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:flex-end">
-            ${plat === "all" ? `<div class="legend">${S.PKEYS.map((k) => `<span class="legend-item"><span class="legend-swatch" style="background:var(--${k})"></span>${S.PLAT[k].label}</span>`).join("")}</div>` : ""}
+          <div><div class="card-title">${_t("ovw.daily.title")}</div></div>
+          <div class="chart-tools">
             ${grainSeg("ordGrainSeg", ordG)}
-              ${UI.fsBtn()}
+            ${UI.fsBtn()}
           </div>
         </div>
-        <div class="card-pad" style="padding-top:14px"><div class="chart-wrap" style="height:280px"><canvas id="dailyChart"></canvas></div></div>
+        <div class="card-pad" style="padding-top:14px">
+          <div class="chart-wrap" style="height:280px"><canvas id="dailyChart"></canvas></div>
+          ${plat === "all" ? `<div class="legend chart-legend">${S.PKEYS.map((k) => `<span class="legend-item"><span class="legend-swatch" style="background:var(--${k})"></span>${S.PLAT[k].label}</span>`).join("")}</div>` : ""}
+        </div>
       </div>
       <div data-collapse style="grid-column:span 4" class="card">
-        <div class="card-head"><div><div class="card-title">${_t("ovw.category.title")}</div><div class="card-sub">${_t("ovw.category.by_revenue")} · ${S.periodLabel(st.period).toLowerCase()}</div></div></div>
+        <div class="card-head"><div><div class="card-title">${_t("ovw.category.title")}</div></div></div>
         <div class="card-pad">
           ${donutBlock("catDonut", cats, _t("ovw.category.by_revenue"))}
         </div>
@@ -235,7 +260,7 @@
     <div class="g12 section-gap">
       <div data-collapse style="grid-column:span 8" class="card">
         <div class="card-head">
-          <div><div class="card-title">${_t("ovw.cmp.title")}</div><div class="card-sub">${_t("ovw.cmp.metric_label")} <b>${metricLabel}</b> · ${S.periodLabel(st.period).toLowerCase()}</div></div>
+          <div><div class="card-title">${_t("ovw.cmp.title")}</div></div>
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
             <div class="miniseg" id="cmpSeg">
               <button class="${cmpMetric === "revenue" ? "active" : ""}" data-m="revenue">${_t("ovw.cmp.revenue")}</button>
@@ -257,7 +282,7 @@
         </div>
       </div>
       <div data-collapse style="grid-column:span 4" class="card">
-        <div class="card-head"><div><div class="card-title">${_t("ovw.geo.title")}</div><div class="card-sub">${_t("ovw.geo.by_orders")}</div></div></div>
+        <div class="card-head"><div><div class="card-title">${_t("ovw.geo.title")}</div></div></div>
         <div class="card-pad" style="display:flex;flex-direction:column;gap:2px">${geoRows}</div>
       </div>
     </div>
@@ -265,11 +290,11 @@
     <!-- Row 5: Top 3 products + Heatmap -->
     <div class="g12 section-gap">
       <div data-collapse style="grid-column:span 8" class="card">
-        <div class="card-head"><div><div class="card-title">${_t("ovw.heat.title")}</div><div class="card-sub">${_t("ovw.heat.density")} · ${_t("period.cal.mon")} × h · ${S.periodLabel(st.period).toLowerCase()}</div></div></div>
+        <div class="card-head"><div><div class="card-title">${_t("ovw.heat.title")}</div></div></div>
         <div class="card-pad" style="overflow-x:auto">${heat}</div>
       </div>
       <div data-collapse style="grid-column:span 4" class="card">
-        <div class="card-head"><div><div class="card-title">${_t("ovw.top_products.title")}</div><div class="card-sub">${S.periodLabel(st.period).toLowerCase()}</div></div><a class="tag" data-nav="products" style="cursor:pointer">${_t("ovw.top_products.view_all")}</a></div>
+        <div class="card-head"><div><div class="card-title">${_t("ovw.top_products.title")}</div></div><a class="tag" data-nav="products" style="cursor:pointer">${_t("ovw.top_products.view_all")}</a></div>
         <div class="card-pad" style="padding:6px 6px 8px"><table class="tbl"><thead><tr><th>${_t("th.product")}</th><th class="num">${_t("th.qty_sold")}</th><th class="num">${_t("th.revenue")}</th></tr></thead><tbody>${prodRows}</tbody></table></div>
       </div>
     </div>`;
@@ -288,8 +313,10 @@
     const dn = root.querySelector("#shareDonut"); if (dn) C.donut(dn, shareItems(range), { money: true });
     const cn = root.querySelector("#catDonut"); if (cn) C.donut(cn, catItems(st.period, plat), { money: true });
 
-    root.querySelector("#revGrainSeg")?.addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) { revGrain = b.dataset.g; window.App.rerender(); } });
-    root.querySelector("#ordGrainSeg")?.addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) { ordGrain = b.dataset.g; window.App.rerender(); } });
+    root.querySelector("#revGrainSeg")?.addEventListener("click", grainHandler("revGrainSeg", "monthlyChart",
+      (g) => { revGrain = g; }, (cv) => C.monthlyRevenue(cv, S.businessTrend(S.state.period, revGrain), { platform: S.state.platform })));
+    root.querySelector("#ordGrainSeg")?.addEventListener("click", grainHandler("ordGrainSeg", "dailyChart",
+      (g) => { ordGrain = g; }, (cv) => C.ordersTrend(cv, S.businessTrend(S.state.period, ordGrain), { platform: S.state.platform })));
     root.querySelector("#cmpSeg")?.addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) { cmpMetric = b.dataset.m; window.App.rerender(); } });
     root.querySelector("#hideShopeeBtn")?.addEventListener("click", () => { hideShopee = !hideShopee; window.App.rerender(); });
     root.querySelectorAll("[data-nav]").forEach((a) => a.addEventListener("click", () => window.App.go(a.dataset.nav)));

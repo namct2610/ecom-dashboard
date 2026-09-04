@@ -129,7 +129,7 @@
         <div class="card-head">
           <div>
             <div class="card-title">${tf("connect.cred.title", { label: cfg.label })}</div>
-            <div class="card-sub">${t("connect.cred.sub")}</div>
+            
           </div>
         </div>
         <div class="card-pad">
@@ -166,7 +166,7 @@
         <div class="card-head">
           <div>
             <div class="card-title">${tf("connect.list.title", { n: list.length })}</div>
-            <div class="card-sub">${t("connect.list.sub")}</div>
+            
           </div>
           ${list.length ? `<button class="ctrl-btn on" data-action="sync-all" style="background:var(--brand);border-color:var(--brand);color:#fff">${t("common.sync_all")}</button>` : ""}
         </div>

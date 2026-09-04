@@ -69,14 +69,14 @@
     <div class="g12">${cards}</div>
 
     <div class="card section-gap">
-      <div class="card-head"><div><div class="card-title">${_t("compare.trend.title")}</div><div class="card-sub">${S.periodLabel(st.period).toLowerCase()} · ${_t("compare.trend.sub")}</div></div>
+      <div class="card-head"><div><div class="card-title">${_t("compare.trend.title")}</div></div>
         <div class="legend">${S.PKEYS.map((k) => `<span class="legend-item"><span class="legend-swatch" style="background:var(--${k})"></span>${S.PLAT[k].label}</span>`).join("")}</div>
       </div>
       <div class="card-pad" style="padding-top:14px"><div class="chart-wrap" style="height:300px"><canvas id="trajChart"></canvas></div></div>
     </div>
 
     <div class="card section-gap">
-      <div class="card-head"><div><div class="card-title">${_t("compare.detail.title")}</div><div class="card-sub">${S.periodLabel(st.period).toLowerCase()}</div></div></div>
+      <div class="card-head"><div><div class="card-title">${_t("compare.detail.title")}</div></div></div>
       <div class="card-pad" style="overflow-x:auto;padding:6px">
         <table class="tbl"><thead><tr><th>${_t("th.platform")}</th><th class="num">${_t("th.revenue")}</th><th class="num">Δ ${st.compare === "yoy" ? _t("compare.yoy_short") : st.compare === "prev" ? _t("compare.prev_short") : ""}</th><th class="num">${_t("th.orders")}</th><th class="num">${_t("th.completion_rate_pct")}</th><th class="num">% ${_t("common.cancel")}</th><th class="num">${_t("kpi.aov")}</th><th class="num">${_t("kpi.visits")}</th><th class="num">${_t("th.conv_pct")}</th><th class="num">${_t("th.share")}</th></tr></thead><tbody>${tblRows}</tbody></table>
       </div>

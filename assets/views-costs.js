@@ -93,7 +93,7 @@
     const total = parts.reduce((t, p) => t + p.val, 0) || 1;
     return `
       <div data-collapse style="grid-column:span 5" class="card">
-        <div class="card-head"><div><div class="card-title">${_t("costs.mix.title")}</div><div class="card-sub">${_t("costs.mix.sub")}</div></div></div>
+        <div class="card-head"><div><div class="card-title">${_t("costs.mix.title")}</div></div></div>
         <div class="card-pad" style="display:flex;flex-wrap:wrap;gap:24px;align-items:center">
           <div class="donut-wrap" style="height:170px;flex:0 0 200px;min-width:0;max-width:100%">
             <canvas id="feeMixDonut"></canvas>
@@ -116,7 +116,7 @@
   function trendCard() {
     return `
       <div data-collapse style="grid-column:span 7" class="card">
-        <div class="card-head"><div><div class="card-title">${_t("costs.trend.title")}</div><div class="card-sub">${_t("costs.trend.sub")}</div></div></div>
+        <div class="card-head"><div><div class="card-title">${_t("costs.trend.title")}</div></div></div>
         <div class="card-pad" style="padding-top:14px"><div class="chart-wrap" style="height:230px"><canvas id="costTrend"></canvas></div></div>
       </div>`;
   }
@@ -147,7 +147,7 @@
 
     return `
       <div class="card section-gap">
-        <div class="card-head"><div><div class="card-title">${_t("costs.table.title")}</div><div class="card-sub">${_t("costs.table.sub")}</div></div></div>
+        <div class="card-head"><div><div class="card-title">${_t("costs.table.title")}</div></div></div>
         <div class="card-pad" style="padding:6px;overflow-x:auto">
           <table class="tbl"><thead><tr>
             <th>${_t("th.platform")}</th><th>${_t("costs.table.source")}</th>
@@ -182,7 +182,7 @@
     return `
       <div class="card section-gap">
         <div class="card-head">
-          <div><div class="card-title">${_t("costs.rates.title")}</div><div class="card-sub">${_t("costs.rates.sub")}</div></div>
+          <div><div class="card-title">${_t("costs.rates.title")}</div></div>
           ${isAdmin ? (local.editing
             ? `<div style="display:flex;gap:8px">
                  <button class="ctrl-btn" id="costRatesCancel">${_t("common.cancel")}</button>
@@ -215,11 +215,55 @@
     if (data.has_estimated) notes.unshift(_t("costs.note.estimated"));
     return `
       <div class="card section-gap">
-        <div class="card-head"><div><div class="card-title">${_t("costs.notes.title")}</div><div class="card-sub">${_t("costs.notes.sub")}</div></div></div>
+        <div class="card-head"><div><div class="card-title">${_t("costs.notes.title")}</div></div></div>
         <div class="card-pad">
           <ul style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:7px;font-size:13.5px;line-height:1.55;color:var(--ink-2)">
             ${notes.map((n) => `<li>${n}</li>`).join("")}
           </ul>
+        </div>
+      </div>`;
+  }
+
+  // Từng khoản phí đúng như tên trên sao kê của sàn. Ba nhóm lớn ở thẻ trên chỉ
+  // cho biết tiền thuộc loại nào; bảng này cho biết chính xác khoản nào ăn tiền.
+  const GROUP_COLOR = { platform: "--shopee", marketing: "--lazada", promotion: "--tiktok" };
+
+  function feeItemsCard(items, total) {
+    if (!items || !items.length) return "";
+    const max = items[0].amount || 1;
+    const rows = items.map((i) => {
+      const color = GROUP_COLOR[i.group] || "--ink-3";
+      return `<tr>
+        <td style="max-width:320px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span class="legend-swatch" style="background:var(${color});flex:none"></span>
+            <span style="font-weight:700;font-size:13px;word-break:break-word">${UI.esc(i.name)}</span>
+          </div>
+          <div style="color:var(--ink-3);font-size:11.5px;font-weight:600;margin-top:2px;padding-left:19px">${_t("costs.group." + i.group)}</div>
+        </td>
+        <td class="num tnum" style="white-space:nowrap"><b>${F.money(i.amount)}</b></td>
+        <td class="num tnum" style="color:var(--ink-3);white-space:nowrap">${F.viDec(i.share, 1)}%</td>
+        <td class="num tnum" style="color:var(--ink-3);white-space:nowrap">${F.viInt(i.orders)}</td>
+        <td style="width:150px"><div class="cmp-track"><div class="cmp-fill" style="width:${i.amount / max * 100}%;background:var(${color})"></div></div></td>
+      </tr>`;
+    }).join("");
+
+    return `
+      <div class="card section-gap">
+        <div class="card-head"><div><div class="card-title">${_t("costs.items.title")}</div></div>
+          <span style="color:var(--ink-3);font-size:12.5px;font-weight:700">${_tf("costs.items.count", { n: items.length, total: F.money(total || 0) })}</span>
+        </div>
+        <div class="card-pad" style="padding:6px 6px 10px;overflow-x:auto">
+          <table class="tbl">
+            <thead><tr>
+              <th>${_t("costs.items.col_name")}</th>
+              <th class="num">${_t("costs.items.col_amount")}</th>
+              <th class="num">${_t("th.share")}</th>
+              <th class="num">${_t("costs.items.col_orders")}</th>
+              <th></th>
+            </tr></thead>
+            <tbody>${rows}</tbody>
+          </table>
         </div>
       </div>`;
   }
@@ -235,7 +279,7 @@
 
     return (local.msg ? UI.flashMsg(local.msg) : "") + kpis(d.summary) + `
       <div class="g12 section-gap">${feeMixCard(d.summary)}${trendCard()}</div>`
-      + platformTable(d.platforms) + ratesCard(d) + notesCard(d);
+      + platformTable(d.platforms) + feeItemsCard(d.fee_items, d.fee_items_total) + ratesCard(d) + notesCard(d);
   }
 
   function mount(root) {

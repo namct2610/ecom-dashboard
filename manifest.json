@@ -1,7 +1,7 @@
 {
-  "version": "3.4.66",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.66/release/dashboard-v3-3.4.66.zip",
-  "changelog": "Thêm chức năng dọn dẹp máy chủ để tránh rò rỉ dữ liệu và mã nguồn.\n- MỚI: mục \"Dọn dẹp máy chủ\" ở trang Cài đặt (chỉ admin). Bấm Quét ngay để tìm những file thừa nằm trong thư mục cài đặt: bản sao lưu cơ sở dữ liệu (.sql), file cấu hình cũ (.bak, .orig, ~), thư mục .git, thư mục công cụ nội bộ, file nén, nhật ký và rác hệ điều hành.\n- Mỗi mục hiển thị mức nguy cơ, dung lượng và lý do vì sao không nên để trên máy chủ. Bạn tự chọn mục cần xoá rồi xác nhận — hệ thống KHÔNG tự xoá bất cứ thứ gì.\n- AN TOÀN: các thành phần lõi của ứng dụng (config.php, config.local.php, uploads, api, includes, assets, vendor, index.html…) không bao giờ được liệt kê và không thể bị xoá qua chức năng này, kể cả khi có yêu cầu cố tình gửi lên. Mọi lần xoá đều được ghi vào nhật ký hệ thống.\n- Vì sao cần: khi cập nhật, hệ thống chỉ chép đè file mới chứ không xoá file cũ, nên các file thừa từ những bản trước vẫn nằm lại trên máy chủ và có thể bị tải về từ trình duyệt."
+  "version": "3.4.67",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.67/release/dashboard-v3-3.4.67.zip",
+  "changelog": "Bóc tách chi phí theo từng khoản, dọn giao diện và sửa lỗi biểu đồ.\n- MỚI ở trang Chi phí sàn: bảng \"Bóc tách từng khoản phí\" liệt kê CHÍNH XÁC từng khoản đúng như tên trên sao kê của sàn (Phí cố định, Phí Dịch Vụ, Mã ưu đãi do Người Bán chịu, Phí hoa hồng Tiếp thị liên kết…), kèm số tiền, tỷ trọng, số đơn và thuộc nhóm nào. Trước đây chỉ thấy ba nhóm lớn nên không biết cụ thể tiền đi đâu.\n- Bỏ toàn bộ dòng mô tả phụ dưới tiêu đề của các thẻ trên mọi trang cho gọn.\n- Chú giải (Shopee/Lazada/TikTok) của biểu đồ cột chuyển xuống dưới biểu đồ và căn giữa.\n- SỬA LỖI: đang xem biểu đồ ở chế độ toàn màn hình mà bấm đổi Ngày/Tuần/Tháng/Năm thì bị thoát ra. Nay giữ nguyên chế độ toàn màn hình.\n- Nút phóng to đổi thành biểu tượng kính lúp, bo tròn và đặt sát cạnh nhóm nút chọn Ngày/Tuần/Tháng/Năm, cao bằng đúng nhóm nút đó."
   ,
   "min_php": "8.1",
   "released_at": "2026-09-04"
