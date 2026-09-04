@@ -1,7 +1,7 @@
 {
-  "version": "3.4.82",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.82/release/dashboard-v3-3.4.82.zip",
-  "changelog": "Tinh gọn báo cáo Sản phẩm.\n- Bỏ cột Sàn khi phân tích theo SKU lẻ.\n- Loại toàn bộ quà tặng khỏi biểu đồ danh mục và bảng sản phẩm bán chạy ở cả chế độ COMBO lẫn SKU lẻ, kể cả khi xếp hạng theo số lượng.",
+  "version": "3.4.83",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.83/release/dashboard-v3-3.4.83.zip",
+  "changelog": "Bổ sung tỷ trọng doanh thu theo danh mục trong báo cáo Sản phẩm.\n- Hiển thị phần trăm ngay cạnh doanh thu của từng danh mục.\n- Tỷ trọng được tính trên tổng doanh thu báo cáo sau khi loại quà tặng.",
   "min_php": "8.1",
   "released_at": "2026-09-05"
 }
