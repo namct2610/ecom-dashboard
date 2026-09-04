@@ -691,6 +691,20 @@ body { transition: background .3s ease, color .3s ease; }
 .ppl svg { display: block; width: 19px; height: 22px; }
 .ppl-fill { position: absolute; inset: 0; overflow: hidden; }
 
+/* Data-coverage grid on the upload page. One pill per month/type: green when
+   the month is covered end to end, amber when only part of it arrived, grey when
+   nothing did. The count stays visible so an amber cell says whether it is
+   10/31 days or 30/31. */
+.cov { display: inline-flex; align-items: center; gap: 7px; padding: 4px 10px; border-radius: 99px; font-size: 12px; font-weight: 700; white-space: nowrap; }
+.cov-dot { width: 9px; height: 9px; border-radius: 99px; flex: none; background: currentColor; }
+.cov-full { color: var(--pos); background: color-mix(in oklch, var(--pos) 13%, transparent); }
+.cov-partial { color: var(--warn); background: color-mix(in oklch, var(--warn) 15%, transparent); }
+.cov-none { color: var(--ink-3); background: var(--surface-2); }
+.cov-unsupported { color: var(--ink-3); background: transparent; }
+.cov-cell { width: 1%; }
+.cov-legend { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 700; color: var(--ink-3); }
+.cov-legend .cov { padding: 0; background: none; }
+
 /* legend */
 .legend { display: flex; flex-wrap: wrap; gap: 14px; }
 .legend-item { display: inline-flex; align-items: center; gap: 7px; font-size: 12.5px; font-weight: 700; color: var(--ink-2); cursor: pointer; user-select: none; }
