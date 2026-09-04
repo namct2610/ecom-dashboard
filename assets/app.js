@@ -40,7 +40,7 @@
         { key: "month", label: T("period.mode.month", "Tháng") },
         { key: "year", label: T("period.mode.year", "Năm") },
         { key: "custom", label: T("period.mode.custom", "Tùy chỉnh") },
-        { key: "all", label: T("period.mode.all", "Toàn thời gian") },
+        { key: "all", label: T("period.mode.all", "Tất cả") },
       ],
       currentMode,
       latest,
