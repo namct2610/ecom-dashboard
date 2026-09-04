@@ -250,7 +250,22 @@ try {
                 'file'      => $e->getFile() . ':' . $e->getLine(),
                 'trace'     => array_slice(explode("\n", $e->getTraceAsString()), 0, 6),
             ]);
-            $results[] = ['file' => $originalName, 'success' => false, 'upload_id' => $uploadId, 'error' => is_local() ? $e->getMessage() : 'Lỗi xử lý file.'];
+            // Every other endpoint shows the real message to an admin (see
+            // json_exception); this one hid it behind "Lỗi xử lý file." unless the
+            // request came from localhost, which left the operator on a live
+            // server with no way to tell a memory limit from a bad sheet. The
+            // detail is already written to upload_history and app_logs — showing
+            // it to an admin here just saves digging for it.
+            $viewer   = function_exists('current_user') ? current_user() : null;
+            $showReal = is_local() || (($viewer['role'] ?? '') === 'admin');
+            $results[] = [
+                'file'      => $originalName,
+                'success'   => false,
+                'upload_id' => $uploadId,
+                'error'     => $showReal
+                    ? sprintf('%s (%s)', $e->getMessage(), basename($e->getFile()) . ':' . $e->getLine())
+                    : 'Lỗi xử lý file.',
+            ];
         } finally {
             if (is_file($dest)) @unlink($dest);
         }
