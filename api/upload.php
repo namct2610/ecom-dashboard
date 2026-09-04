@@ -8,6 +8,45 @@ require_auth();
 require_method('POST');
 require_csrf();
 
+/** Turn a php.ini shorthand size ("50M", "8M", "1G") into bytes. */
+function upload_ini_bytes(string $key): int
+{
+    $raw = trim((string) ini_get($key));
+    if ($raw === '') return 0;
+    $unit = strtolower(substr($raw, -1));
+    $n = (int) $raw;
+    return match ($unit) {
+        'g' => $n * 1024 * 1024 * 1024,
+        'm' => $n * 1024 * 1024,
+        'k' => $n * 1024,
+        default => (int) $raw,
+    };
+}
+
+function upload_human_size(int $bytes): string
+{
+    if ($bytes >= 1048576) return round($bytes / 1048576, 1) . ' MB';
+    if ($bytes >= 1024) return round($bytes / 1024) . ' KB';
+    return $bytes . ' B';
+}
+
+/**
+ * The project ships a .user.ini asking for 50M, so "create .user.ini" is useless
+ * advice — it already exists. It only takes effect on PHP-FPM/CGI, which is the
+ * part worth telling the user.
+ */
+function upload_limit_hint(): string
+{
+    $sapi = PHP_SAPI;
+    if (in_array($sapi, ['fpm-fcgi', 'cgi-fcgi', 'cgi'], true)) {
+        return 'File .user.ini ở thư mục gốc đã đặt 50M — nếu vẫn lỗi thì nhà cung cấp hosting đang khoá mức cao hơn, cần liên hệ để nâng.';
+    }
+    return sprintf(
+        'Máy chủ đang chạy PHP dạng "%s" nên KHÔNG đọc file .user.ini; phải nâng upload_max_filesize và post_max_size trong php.ini (hoặc nhờ hosting nâng).',
+        $sapi
+    );
+}
+
 try {
     set_time_limit(300);
     ini_set('memory_limit', '256M');
@@ -15,6 +54,17 @@ try {
     $pdo = db($config);
 
     if (empty($_FILES)) {
+        // PHP throws the whole body away when it is larger than post_max_size —
+        // $_FILES and $_POST both come back empty. Reporting "no file" there
+        // sends the user hunting for the wrong problem, so name the real cause.
+        $sent = (int) ($_SERVER['CONTENT_LENGTH'] ?? 0);
+        $postMax = upload_ini_bytes('post_max_size');
+        if ($postMax > 0 && $sent > $postMax) {
+            json_error(sprintf(
+                'File quá lớn so với giới hạn của máy chủ: gửi %s nhưng post_max_size chỉ %s. %s',
+                upload_human_size($sent), upload_human_size($postMax), upload_limit_hint()
+            ), 413);
+        }
         json_error('Không có file nào được gửi lên.', 422);
     }
 
@@ -51,7 +101,14 @@ try {
 
         if ($uploadError !== UPLOAD_ERR_OK) {
             $errMsgs = [
-                UPLOAD_ERR_INI_SIZE  => 'File vượt quá upload_max_filesize. Tạo .user.ini: upload_max_filesize = 50M',
+                // PHP zeroes ['size'] when it rejects on this error, so fall back
+                // to the request length rather than printing a useless "0 B".
+                UPLOAD_ERR_INI_SIZE  => sprintf(
+                    'File%s vượt giới hạn upload_max_filesize của máy chủ (%s). %s',
+                    (($sz = (int) ($file['size'] ?: ($_SERVER['CONTENT_LENGTH'] ?? 0))) > 0 ? ' (' . upload_human_size($sz) . ')' : ''),
+                    upload_human_size(upload_ini_bytes('upload_max_filesize')),
+                    upload_limit_hint()
+                ),
                 UPLOAD_ERR_FORM_SIZE => 'File vượt quá giới hạn form.',
                 UPLOAD_ERR_PARTIAL   => 'File chỉ upload được một phần.',
                 UPLOAD_ERR_NO_FILE   => 'Không có file.',
