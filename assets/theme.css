@@ -24,6 +24,7 @@
   /* semantic deltas */
   --pos: oklch(0.60 0.13 155);
   --neg: #E2001A;
+  --warn: #B45309;           /* medium-severity accent (housekeeping scan) */
 
   --r-card: 16px;
   --r-ctrl: 11px;
@@ -85,6 +86,7 @@
   --brand-ink: #ff5566;
   --brand-tint: oklch(0.30 0.07 18);
   --neg: #ff5566;
+  --warn: #F0A868;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }

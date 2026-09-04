@@ -1,7 +1,7 @@
 {
-  "version": "3.4.65",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.65/release/dashboard-v3-3.4.65.zip",
-  "changelog": "Sửa nốt lỗi chữ trong khung chú thích của biểu đồ tròn bị che.\n- Khi trỏ chuột vào biểu đồ tròn, con số tổng ở giữa vòng tròn nằm đè lên khung chú thích, khiến chữ trong đó khó đọc. Bản 3.4.64 đã sửa màu nền của khung chú thích nhưng chưa xử lý phần bị che này.\n- Nay số tổng ở giữa tự ẩn đi trong lúc bạn trỏ vào biểu đồ, và hiện lại ngay khi rời chuột. Áp dụng cho tất cả biểu đồ tròn: Thị phần doanh thu, Doanh thu theo danh mục, Trạng thái đơn hàng và Phân loại khách hàng."
+  "version": "3.4.66",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.66/release/dashboard-v3-3.4.66.zip",
+  "changelog": "Thêm chức năng dọn dẹp máy chủ để tránh rò rỉ dữ liệu và mã nguồn.\n- MỚI: mục \"Dọn dẹp máy chủ\" ở trang Cài đặt (chỉ admin). Bấm Quét ngay để tìm những file thừa nằm trong thư mục cài đặt: bản sao lưu cơ sở dữ liệu (.sql), file cấu hình cũ (.bak, .orig, ~), thư mục .git, thư mục công cụ nội bộ, file nén, nhật ký và rác hệ điều hành.\n- Mỗi mục hiển thị mức nguy cơ, dung lượng và lý do vì sao không nên để trên máy chủ. Bạn tự chọn mục cần xoá rồi xác nhận — hệ thống KHÔNG tự xoá bất cứ thứ gì.\n- AN TOÀN: các thành phần lõi của ứng dụng (config.php, config.local.php, uploads, api, includes, assets, vendor, index.html…) không bao giờ được liệt kê và không thể bị xoá qua chức năng này, kể cả khi có yêu cầu cố tình gửi lên. Mọi lần xoá đều được ghi vào nhật ký hệ thống.\n- Vì sao cần: khi cập nhật, hệ thống chỉ chép đè file mới chứ không xoá file cũ, nên các file thừa từ những bản trước vẫn nằm lại trên máy chủ và có thể bị tải về từ trình duyệt."
   ,
   "min_php": "8.1",
   "released_at": "2026-09-04"
