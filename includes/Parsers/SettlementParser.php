@@ -148,11 +148,21 @@ final class SettlementParser
         // sent everyone looking at the export layout instead of at the reader.
         // Separate the two: an empty load is a reading failure, and says so.
         if (self::isBlank($rows)) {
+            // setLoadSheetsOnly is the one assumption in the read that can
+            // yield a sheet with no cells and no error. Retry without it and
+            // pick the sheet out of the whole workbook instead. Dropping the
+            // column filter as well was measured at over 1GB on a real report,
+            // so that stays: the point is to test the assumption, not to read
+            // more. The other three sheets are tiny, so the retry costs little.
+            $rows = self::sheetRows($path, $meta['sheet'], false);
+        }
+
+        if (self::isBlank($rows)) {
             throw new RuntimeException(sprintf(
-                'Đọc được sheet "%s" nhưng không có dữ liệu nào (%d dòng). File tải lên có thể hỏng, '
-                . 'hoặc thư viện đọc Excel của máy chủ không xử lý được sheet lớn này.%s',
+                'Đọc được sheet "%s" nhưng không có dữ liệu nào (%d dòng). %s%s',
                 self::sheetNames($path)[$meta['sheet']] ?? '?',
                 count($rows),
+                self::readDiagnostics($path, $meta['sheet']),
                 self::xmlErrorHint()
             ));
         }
@@ -342,20 +352,53 @@ final class SettlementParser
         return $reader->listWorksheetNames($path);
     }
 
-    private static function sheetRows(string $path, int $sheetIndex): array
+    /** @param bool $singleSheet false = nạp cả workbook rồi lấy sheet theo tên. */
+    private static function sheetRows(string $path, int $sheetIndex, bool $singleSheet = true): array
     {
         $reader = IOFactory::createReaderForFile($path);
         $reader->setReadDataOnly(true);
         $reader->setReadFilter(new SettlementColumnFilter());
         $names = $reader->listWorksheetNames($path);
-        if (isset($names[$sheetIndex])) {
-            $reader->setLoadSheetsOnly($names[$sheetIndex]);
+        $name = $names[$sheetIndex] ?? null;
+        if ($name !== null && $singleSheet) {
+            $reader->setLoadSheetsOnly($name);
         }
         $spreadsheet = $reader->load($path);
-        $rows = $spreadsheet->getSheet(0)->toArray(null, false, true, false);
+        // getSheet(0) assumed setLoadSheetsOnly had applied; address it by the
+        // name we asked for and only fall back to position.
+        $sheet = ($name !== null ? $spreadsheet->getSheetByName($name) : null) ?? $spreadsheet->getSheet(0);
+        $rows = $sheet->toArray(null, false, true, false);
         $spreadsheet->disconnectWorksheets();
         unset($spreadsheet);
 
         return $rows;
+    }
+
+    /** Số liệu thô của khâu đọc, để phân biệt lỗi thư viện với lỗi file. */
+    private static function readDiagnostics(string $path, int $sheetIndex): string
+    {
+        try {
+            $reader = IOFactory::createReaderForFile($path);
+            $reader->setReadDataOnly(true);
+            $info = $reader->listWorksheetInfo($path)[$sheetIndex] ?? [];
+            $zipOk = 'không đọc được';
+            $zip = new \ZipArchive();
+            if ($zip->open($path) === true) {
+                $zipOk = $zip->numFiles . ' mục';
+                $zip->close();
+            }
+            return sprintf(
+                'Sheet khai báo %d dòng x %d cột, zip %s, PHP %s, PhpSpreadsheet %s. ',
+                (int) ($info['totalRows'] ?? 0),
+                (int) ($info['totalColumns'] ?? 0),
+                $zipOk,
+                PHP_VERSION,
+                class_exists('\Composer\InstalledVersions')
+                    ? (string) \Composer\InstalledVersions::getPrettyVersion('phpoffice/phpspreadsheet')
+                    : '?'
+            );
+        } catch (\Throwable $e) {
+            return 'Không lấy được thông tin sheet: ' . $e->getMessage() . '. ';
+        }
     }
 }
