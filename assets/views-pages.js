@@ -314,11 +314,11 @@
         <div data-collapse style="grid-column:span 5;display:flex;flex-direction:column;gap:16px">
           <div class="card">
             <div class="card-head"><div><div class="card-title">${_t("customers.geo.title")}</div></div></div>
-            <div class="card-pad" style="padding:6px"><table class="tbl"><thead><tr><th>${_t("th.city")}</th><th class="num">${_t("th.orders")}</th><th class="num">${_t("th.revenue")}</th><th class="num">${_t("th.share")}</th><th></th></tr></thead><tbody>${geoRows}</tbody></table></div>
+            <div class="card-pad" style="padding:6px;overflow-x:auto"><table class="tbl"><thead><tr><th>${_t("th.city")}</th><th class="num">${_t("th.orders")}</th><th class="num">${_t("th.revenue")}</th><th class="num">${_t("th.share")}</th><th></th></tr></thead><tbody>${geoRows}</tbody></table></div>
           </div>
           <div class="card">
             <div class="card-head"><div><div class="card-title">${_t("customers.warehouse.title")}</div></div></div>
-            <div class="card-pad" style="padding:6px"><table class="tbl"><thead><tr><th>${_t("customers.warehouse.col")}</th><th class="num">${_t("th.orders")}</th><th class="num">${_t("th.revenue")}</th><th class="num">${_t("th.share")}</th><th></th></tr></thead><tbody>${whRows}</tbody></table></div>
+            <div class="card-pad" style="padding:6px;overflow-x:auto"><table class="tbl"><thead><tr><th>${_t("customers.warehouse.col")}</th><th class="num">${_t("th.orders")}</th><th class="num">${_t("th.revenue")}</th><th class="num">${_t("th.share")}</th><th></th></tr></thead><tbody>${whRows}</tbody></table></div>
           </div>
         </div>
       </div>
