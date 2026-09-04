@@ -1,7 +1,7 @@
 {
-  "version": "3.4.78",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.78/release/dashboard-v3-3.4.78.zip",
-  "changelog": "Bổ sung nút chuyển phân tích sản phẩm theo COMBO hoặc SKU lẻ.\n- Tab Sản phẩm có lựa chọn COMBO / SKU lẻ ngay trên biểu đồ danh mục.\n- Lựa chọn áp dụng đồng thời cho biểu đồ phân bổ danh mục và bảng sản phẩm bán chạy.\n- API trả sẵn cả hai dạng dữ liệu trong cùng response nên chuyển chế độ tức thời, không gọi lại server.\n- Hỗ trợ đầy đủ tiếng Việt và tiếng Anh, mặc định giữ chế độ SKU lẻ như bản trước.",
+  "version": "3.4.79",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.79/release/dashboard-v3-3.4.79.zip",
+  "changelog": "Chuẩn hóa tên và doanh thu khi quy đổi COMBO thành SKU lẻ.\n- Bổ sung tên sản phẩm chuẩn cho 10 SKU lẻ trong bảng quy đổi, chỉ điền vào tên còn trống.\n- Doanh thu lấy nguyên từ doanh thu COMBO; tổng trước và sau quy đổi khớp tuyệt đối.\n- COMBO MIX chia đều doanh thu theo số SKU thành phần, phần lẻ làm tròn được dồn vào SKU cuối.\n- Số lượng SKU lẻ tiếp tục nhân đúng theo định mức single_qty của từng COMBO.",
   "min_php": "8.1",
-  "released_at": "2026-09-04"
+  "released_at": "2026-09-05"
 }

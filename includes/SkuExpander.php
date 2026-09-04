@@ -6,11 +6,12 @@ declare(strict_types=1);
  * SkuExpander — quy đổi COMBO về SKU đơn lẻ.
  *
  * Data nguồn:
- *  - reconcile_combo_items: (platform, combo_sku, single_sku, single_qty)
+ *  - reconcile_combo_items: (platform, combo_sku, combo_name, single_sku, single_qty)
  *  - reconcile_price_items: (sku, product_name, brand, unit_price)
  *
  * Thuật toán cho mỗi dòng COMBO {sku=combo, qty=Q, revenue=R, ...}:
- *  weight_i = price(single_i) * qty_i_in_combo
+ *  COMBO MIX: chia đều doanh thu theo số SKU thành phần.
+ *  COMBO thường: weight_i = price(single_i) * qty_i_in_combo
  *  W = Σ weight_i
  *  Output i = {
  *      sku        = single_i,
@@ -18,12 +19,13 @@ declare(strict_types=1);
  *      total_revenue = R * (weight_i / W)
  *  }
  *  Nếu W <= 0 (chưa cấu hình giá): fallback chia theo qty_i_in_combo.
+ *  Phần lẻ làm tròn được dồn vào SKU cuối để tổng doanh thu luôn khớp COMBO.
  *
  * Dòng không phải COMBO: trả lại nguyên dạng.
  */
 final class SkuExpander
 {
-    /** combo_sku (upper) => list<array{single_sku:string, single_qty:float, platform:string}> */
+    /** combo_sku (upper) => list<array{single_sku:string, single_qty:float, platform:string, combo_name:string}> */
     private array $combos = [];
     /** single_sku (upper) => float */
     private array $prices = [];
@@ -48,7 +50,7 @@ final class SkuExpander
         }
 
         try {
-            $rows = $pdo->query("SELECT platform, combo_sku, single_sku, single_qty FROM reconcile_combo_items")->fetchAll();
+            $rows = $pdo->query("SELECT platform, combo_sku, combo_name, single_sku, single_qty FROM reconcile_combo_items")->fetchAll();
             foreach ($rows as $r) {
                 $combo = strtoupper(trim((string) $r['combo_sku']));
                 $single = strtoupper(trim((string) $r['single_sku']));
@@ -57,6 +59,7 @@ final class SkuExpander
                     'single_sku' => $single,
                     'single_qty' => (float) $r['single_qty'],
                     'platform'   => (string) $r['platform'],
+                    'combo_name' => (string) ($r['combo_name'] ?? ''),
                 ];
             }
         } catch (\Throwable $e) {
@@ -105,11 +108,21 @@ final class SkuExpander
         $rev = (float) ($row['total_revenue'] ?? 0);
         $orderCount = (int) ($row['order_count'] ?? 0);
 
-        // weights
+        $isMix = str_contains($combo, 'MIX');
+        if (!$isMix) {
+            foreach ($mappings as $m) {
+                if (stripos($m['combo_name'], 'MIX') !== false) {
+                    $isMix = true;
+                    break;
+                }
+            }
+        }
+
+        // MIX chia đều theo SKU; COMBO thường chia theo giá trị thành phần.
         $weights = [];
         $totalWeight = 0.0;
         foreach ($mappings as $m) {
-            $w = $this->priceOf($m['single_sku']) * (float) $m['single_qty'];
+            $w = $isMix ? 1.0 : $this->priceOf($m['single_sku']) * (float) $m['single_qty'];
             $weights[] = $w;
             $totalWeight += $w;
         }
@@ -121,16 +134,22 @@ final class SkuExpander
         }
 
         $out = [];
+        $remainingRevenue = round($rev, 2);
+        $lastIndex = count($mappings) - 1;
         foreach ($mappings as $i => $m) {
             $share = $useFallback
                 ? ((float) $m['single_qty'] / $fallbackTotal)
                 : ($totalWeight > 0 ? ($weights[$i] / $totalWeight) : 0.0);
             $singleSku = $m['single_sku'];
+            $allocatedRevenue = $i === $lastIndex
+                ? $remainingRevenue
+                : round($rev * $share, 2);
+            $remainingRevenue = round($remainingRevenue - $allocatedRevenue, 2);
             $out[] = array_merge($row, [
                 'sku'           => $singleSku,
                 'product_name'  => $this->nameOf($singleSku) ?: ($row['product_name'] ?? $singleSku),
                 'total_qty'     => $qty * (float) $m['single_qty'],
-                'total_revenue' => $rev * $share,
+                'total_revenue' => $allocatedRevenue,
                 'order_count'   => $orderCount, // each order still counted once per output sku
                 '_expanded_from'=> $combo,
             ]);
@@ -176,7 +195,7 @@ final class SkuExpander
     }
 
     /**
-     * @return list<array{single_sku:string, single_qty:float, platform:string}>
+     * @return list<array{single_sku:string, single_qty:float, platform:string, combo_name:string}>
      */
     private function selectMappings(string $combo, string $platform): array
     {
