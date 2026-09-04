@@ -1,7 +1,7 @@
 {
-  "version": "3.4.84",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.84/release/dashboard-v3-3.4.84.zip",
-  "changelog": "Sửa lỗi tràn bảng ở phần Khách hàng trên màn hình hẹp.\n- Hai bảng \"Phân bố đơn theo khu vực\" và \"Phân bổ đơn theo kho hàng\" từ khi có thêm cột doanh thu đã rộng hơn khung chứa, nên trên điện thoại phần cuối bảng bị tràn ra ngoài thẻ. Nay hai bảng này tự cuộn ngang trong khung, giống bảng Top khách hàng.",
+  "version": "3.4.85",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.85/release/dashboard-v3-3.4.85.zip",
+  "changelog": "Sửa lại ghi chú nhóm Khách tiềm năng trong phần Phân loại khách hàng.\n- Ghi chú mới: \"Khách tiềm năng là khách không hoàn thành đơn hàng (không thanh toán/huỷ đơn) trong 12 tháng, bao gồm cả khách đã từng đặt hàng trước đó.\"\n- Đã cập nhật cả bản tiếng Việt và tiếng Anh. Chỉ đổi phần chữ, cách tính số liệu giữ nguyên.",
   "min_php": "8.1",
   "released_at": "2026-09-05"
 }
