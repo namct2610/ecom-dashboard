@@ -3,10 +3,10 @@ const fs = require("node:fs");
 const vm = require("node:vm");
 
 const rows = [
-  { sku: "SKU-1", name: "Product 1", platform: "shopee", qty: 2, revenue: 200 },
-  { sku: "SKU-1", name: "Product 1", platform: "lazada", qty: 3, revenue: 300 },
-  { sku: "SKU-1", name: "Product 1", platform: "tiktok", qty: 1, revenue: 100 },
-  { sku: "SKU-2", name: "Product 2", platform: "shopee", qty: 1, revenue: 50 },
+  { sku: "SKU-1", name: "Váng sữa Product 1", platform: "shopee", qty: 2, revenue: 200 },
+  { sku: "SKU-1", name: "Váng sữa Product 1", platform: "lazada", qty: 3, revenue: 300 },
+  { sku: "SKU-1", name: "Váng sữa Product 1", platform: "tiktok", qty: 1, revenue: 100 },
+  { sku: "SKU-2", name: "Sữa chua Product 2", platform: "shopee", qty: 1, revenue: 50 },
   { sku: "GIFT-1", name: "Gift item", platform: "shopee", qty: 50, revenue: 0 },
 ];
 
@@ -90,6 +90,9 @@ vm.runInNewContext(fs.readFileSync("assets/store.js", "utf8"), context);
   const singleHtml = window.Views.products.render();
   assert.equal(singleHtml.includes("th.platform"), false);
   assert.equal(singleHtml.includes("Gift item"), false);
+  const shares = Array.from(singleHtml.matchAll(/cat-share[^>]*>([\d,.]+)%/g), (match) => Number(match[1].replace(",", ".")));
+  assert.equal(shares.length, 2);
+  assert.ok(Math.abs(shares.reduce((sum, share) => sum + share, 0) - 100) < 0.01);
 
   handlers["#prodGroupingSeg"]({ target: { closest: () => ({ dataset: { grouping: "combo" } }) } });
   const comboHtml = window.Views.products.render();
