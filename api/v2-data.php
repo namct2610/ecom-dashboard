@@ -9,6 +9,7 @@ declare(strict_types=1);
  */
 
 require dirname(__DIR__) . '/includes/bootstrap.php';
+require_once dirname(__DIR__) . '/includes/SkuExpander.php';
 
 require_auth();
 require_method('GET');
@@ -133,51 +134,41 @@ try {
 
     // ───────── monthDetail (last 12 months — covers 3m/6m/ytd periods) ─────────
     $monthDetail = [];
+    $skuExpander = new SkuExpander($pdo);
     foreach ($detailMonths as $ym) {
         $monthStart = $ym . '-01';
         $monthEnd   = (new DateTimeImmutable($monthStart))->modify('first day of next month')->format('Y-m-d');
         $bind = [':s' => $monthStart, ':e' => $monthEnd];
 
-        // Top products by qty / revenue.
-        // NOTE: query is split into 2 statements (instead of one with a correlated
-        // subquery) because PDO native prepares (ATTR_EMULATE_PREPARES=false in
-        // includes/db.php) do NOT permit the same named placeholder to appear
-        // twice — and a correlated per-row subquery would also be very slow.
+        // Top products by qty / revenue, expanded from COMBO to single SKUs.
         $prodStmt = $pdo->prepare("
             SELECT UPPER(TRIM(sku)) AS sku,
                    COALESCE(MAX(NULLIF(product_name,'')),'') AS name,
+                   platform,
                    SUM(quantity) AS qty,
-                   SUM(subtotal_after_discount) AS revenue
-            FROM orders
-            WHERE order_created_at >= :s AND order_created_at < :e
-              AND normalized_status IN ('completed','delivered')
-              AND sku IS NOT NULL AND TRIM(sku) <> ''
-            GROUP BY UPPER(TRIM(sku))
-        ");
-        $prodStmt->execute($bind);
-        $prods = $prodStmt->fetchAll();
-
-        // Dominant platform per SKU (top platform by units within the same window).
-        $platStmt = $pdo->prepare("
-            SELECT UPPER(TRIM(sku)) AS sku, platform, SUM(quantity) AS q
+                   SUM(subtotal_after_discount) AS revenue,
+                   COUNT(DISTINCT CONCAT(platform, ':', order_id)) AS order_count
             FROM orders
             WHERE order_created_at >= :s AND order_created_at < :e
               AND normalized_status IN ('completed','delivered')
               AND sku IS NOT NULL AND TRIM(sku) <> ''
             GROUP BY UPPER(TRIM(sku)), platform
         ");
-        $platStmt->execute($bind);
-        $domPlat = [];
-        foreach ($platStmt->fetchAll() as $r) {
-            $sku = $r['sku'];
-            if (!isset($domPlat[$sku]) || (int)$r['q'] > $domPlat[$sku][1]) {
-                $domPlat[$sku] = [$r['platform'], (int)$r['q']];
-            }
-        }
-        foreach ($prods as &$p) {
-            $p['plat'] = $domPlat[$p['sku']][0] ?? '';
-        }
-        unset($p);
+        $prodStmt->execute($bind);
+        $prods = array_map(static fn(array $p): array => [
+            'sku' => (string) $p['sku'],
+            'name' => (string) ($p['product_name'] ?? ''),
+            'qty' => (int) $p['total_qty'],
+            'revenue' => (float) $p['total_revenue'],
+            'plat' => (string) $p['platform'],
+        ], $skuExpander->expandAndAggregate(array_map(static fn(array $p): array => [
+            'sku' => (string) $p['sku'],
+            'product_name' => (string) ($p['name'] ?? ''),
+            'platform' => (string) $p['platform'],
+            'total_qty' => (int) $p['qty'],
+            'total_revenue' => (float) $p['revenue'],
+            'order_count' => (int) $p['order_count'],
+        ], $prodStmt->fetchAll())));
 
         $topRev = $prods;
         usort($topRev, fn($a,$b) => (float)$b['revenue'] <=> (float)$a['revenue']);

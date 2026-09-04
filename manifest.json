@@ -1,7 +1,7 @@
 {
-  "version": "3.4.76",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.76/release/dashboard-v3-3.4.76.zip",
-  "changelog": "Nhập được báo cáo tài chính trên hosting có trần bộ nhớ thấp.\n- Nguyên nhân thật của lỗi nhiều ngày qua: thư viện đọc Excel nạp nguyên phần dữ liệu của sheet thành MỘT chuỗi, với báo cáo doanh thu Shopee chuỗi này nặng khoảng 60MB sau giải nén. Nhà cung cấp hosting từ chối cấp phát một lần lớn như vậy, nên PHP báo \"Out of memory\" — đây là trần của tài khoản, chỉnh memory_limit không có tác dụng.\n- Nay sheet được đọc theo kiểu cuốn chiếu, dùng khoảng 24MB thay vì hơn 112MB. Cùng báo cáo đó chạy được ngay cả khi chỉ có 32MB.\n- Bước lưu dòng thô cũng đọc kiểu cũ và nằm trong transaction, nên chỉ một lần thiếu bộ nhớ là mất trắng cả lần nhập; bước này đã giảm từ 130MB xuống 30MB.\n- Thông báo lỗi nay phân biệt rõ trần của tài khoản với memory_limit, để không chỉnh nhầm chỗ.\n- Đã đối chiếu 29 báo cáo 04/2024–08/2026: số dòng, tổng chi phí và mã định dạng file đều không đổi.",
+  "version": "3.4.77",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.77/release/dashboard-v3-3.4.77.zip",
+  "changelog": "Bổ sung doanh thu theo khu vực/kho và quy đổi COMBO trong phân tích sản phẩm.\n- Bảng phân bổ đơn theo khu vực và kho hàng hiển thị thêm doanh thu tương ứng.\n- Phân tích sản phẩm từ dữ liệu khởi tạo nay dùng bảng quy đổi GBS để tách COMBO thành SKU lẻ theo từng sàn.\n- Doanh thu được phân bổ theo giá SKU, có fallback theo số lượng; tổng doanh thu được giữ nguyên và số lượng SKU lẻ nhân đúng định mức COMBO.\n- Bỏ truy vấn xác định sàn chiếm ưu thế không còn cần thiết, giúp giảm tải lúc mở dashboard.",
   "min_php": "8.1",
   "released_at": "2026-09-04"
 }
