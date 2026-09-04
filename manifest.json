@@ -1,8 +1,7 @@
 {
-  "version": "3.4.72",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.72/release/dashboard-v3-3.4.72.zip",
-  "changelog": "Hiện lỗi thật khi import thất bại, thay vì thông báo chung chung.\n- Trước đây khi import file lỗi, giao diện chỉ hiện \"Lỗi xử lý file.\" — nguyên nhân thật bị giấu và chỉ ghi vào nhật ký. Nay TÀI KHOẢN ADMIN nhìn thấy ngay thông báo lỗi thật kèm vị trí dòng code, giống các chức năng khác trong hệ thống.\n- Trường hợp \"Không có kết quả\" nay ghi rõ mã lỗi HTTP máy chủ trả về, để phân biệt được máy chủ hết bộ nhớ, hết thời gian chờ, hay từ chối file.\n- Đã kiểm tra lại toàn bộ 30 file Income (04/2024 – 08/2026): tải lên qua đường thật đều import thành công, kể cả file 6 MB. File không có vấn đề — lỗi đến từ giới hạn cấu hình của máy chủ."
-  ,
+  "version": "3.4.73",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.73/release/dashboard-v3-3.4.73.zip",
+  "changelog": "Lỗi \"HTTP 500\" khi tải báo cáo tài chính nay nói rõ nguyên nhân.\n- Khi PHP hết bộ nhớ hoặc quá thời gian, lỗi này thoát khỏi mọi try/catch nên trình duyệt chỉ nhận về một trang trắng 500. Nay hệ thống bắt được và trả về thông báo nêu đúng giới hạn đang vướng kèm mức cần nâng, đồng thời ghi trạng thái thất bại vào lịch sử tải lên.\n- Lỗi \"Báo cáo thiếu cột mã đơn hàng\" nay kèm sàn đã nhận diện và danh sách cột đọc được, để phân biệt giữa file đổi định dạng và file bị nhận nhầm sàn.\n- Báo cáo doanh thu Shopee có tới ~1000 cột nên rất tốn RAM: nếu máy chủ báo hết bộ nhớ, cần nâng memory_limit lên 512M.",
   "min_php": "8.1",
   "released_at": "2026-09-04"
 }

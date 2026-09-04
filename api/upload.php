@@ -50,6 +50,55 @@ function upload_limit_hint(): string
 try {
     set_time_limit(300);
     ini_set('memory_limit', '256M');
+
+    // A memory_limit or max_execution_time fatal unwinds past every try/catch,
+    // so the browser gets a blank 500 and the operator learns nothing — that is
+    // what most of the failures in the field looked like. Both limits are the
+    // foreseeable outcome of a big sheet on a shared host, so answer them with
+    // JSON that names the limit instead of with an empty response. Shared hosts
+    // often block set_time_limit/ini_set outright, hence reporting the value
+    // that is actually in force rather than the one we asked for.
+    $fatalCtx = ['file' => null, 'upload_id' => null, 'pdo' => null];
+    register_shutdown_function(function () use (&$fatalCtx) {
+        $err = error_get_last();
+        if (!$err || !in_array($err['type'], [E_ERROR, E_CORE_ERROR, E_COMPILE_ERROR], true)) return;
+
+        $msg = (string) $err['message'];
+        if (stripos($msg, 'memory size') !== false) {
+            $why = sprintf(
+                'Máy chủ hết bộ nhớ khi đọc file (memory_limit đang là %s). File báo cáo Shopee có tới ~1000 cột nên cần nhiều RAM; hãy nâng memory_limit lên 512M.',
+                ini_get('memory_limit')
+            );
+        } elseif (stripos($msg, 'Maximum execution time') !== false) {
+            $why = sprintf(
+                'Quá thời gian xử lý (max_execution_time đang là %ss). Hãy nâng max_execution_time lên 300.',
+                ini_get('max_execution_time')
+            );
+        } else {
+            $why = 'Lỗi nghiêm trọng của PHP: ' . $msg;
+        }
+
+        if ($fatalCtx['pdo'] instanceof PDO && $fatalCtx['upload_id']) {
+            try {
+                if ($fatalCtx['pdo']->inTransaction()) $fatalCtx['pdo']->rollBack();
+                update_upload_history($fatalCtx['pdo'], (int) $fatalCtx['upload_id'], 'failed', ['error_message' => $why]);
+            } catch (\Throwable $ignore) {}
+        }
+
+        if (headers_sent()) return;
+        http_response_code(500);
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode([
+            'success' => false,
+            'message' => '0/1 file được import thành công.',
+            'results' => [[
+                'file'      => $fatalCtx['file'] ?? 'unknown',
+                'success'   => false,
+                'upload_id' => $fatalCtx['upload_id'],
+                'error'     => $why,
+            ]],
+        ], JSON_UNESCAPED_UNICODE);
+    });
     ensure_upload_dir($config);
     $pdo = db($config);
 
@@ -97,6 +146,9 @@ try {
 
     foreach ($files as $file) {
         $originalName = (string)($file['name'] ?? 'unknown');
+        $fatalCtx['file'] = $originalName;
+        $fatalCtx['pdo']  = $pdo;
+        $fatalCtx['upload_id'] = null;
         $uploadError  = (int)($file['error'] ?? UPLOAD_ERR_NO_FILE);
 
         if ($uploadError !== UPLOAD_ERR_OK) {
@@ -160,6 +212,7 @@ try {
              VALUES (:p, :dt, :fn, :ofn, 'processing')"
         )->execute([':p' => $platform, ':dt' => $dataType, ':fn' => $stored, ':ofn' => $originalName]);
         $uploadId = (int)$pdo->lastInsertId();
+        $fatalCtx['upload_id'] = $uploadId;
 
         try {
             if ($isSettlement) {
