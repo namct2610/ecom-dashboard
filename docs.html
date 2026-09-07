@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tài liệu · Zott Monte Analytics</title>
+<link rel="icon" type="image/svg+xml" href="assets/logo.svg?v=43">
+<style>
+  :root{
+    --bg:#f7f8fa; --surface:#ffffff; --surface-2:#f1f3f6;
+    --ink:#1e2430; --ink-2:#525a68; --ink-3:#8a92a0;
+    --line:#e3e7ee; --brand:#E2001A; --brand-tint:#FCE6E8;
+    --code-bg:#f4f6f9; --ok:#1a7f4b; --warn:#B45309;
+    --shopee:#EE4D2D; --lazada:#1F5FAE; --tiktok:#111827;
+    --radius:14px; --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+    --sans:"Be Vietnam Pro",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+  }
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+    --bg:#14171d; --surface:#1c2028; --surface-2:#232833;
+    --ink:#eef1f5; --ink-2:#b3bbc7; --ink-3:#7f8794;
+    --line:#2b313c; --brand:#ff3347; --brand-tint:#3a1418;
+    --code-bg:#20252e; --ok:#4ec98a; --warn:#F0A868;
+    --shopee:#FF7A5C; --lazada:#4f8fde; --tiktok:#e5e7eb;
+  }}
+  :root[data-theme="dark"]{
+    --bg:#14171d; --surface:#1c2028; --surface-2:#232833;
+    --ink:#eef1f5; --ink-2:#b3bbc7; --ink-3:#7f8794;
+    --line:#2b313c; --brand:#ff3347; --brand-tint:#3a1418;
+    --code-bg:#20252e; --ok:#4ec98a; --warn:#F0A868;
+    --shopee:#FF7A5C; --lazada:#4f8fde; --tiktok:#e5e7eb;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);
+    font-size:15px;line-height:1.65;-webkit-font-smoothing:antialiased}
+  .wrap{display:grid;grid-template-columns:250px minmax(0,1fr);gap:0;max-width:1280px;margin:0 auto}
+  /* Sidebar TOC */
+  aside{position:sticky;top:0;align-self:start;height:100vh;overflow-y:auto;
+    border-right:1px solid var(--line);padding:26px 18px 40px;background:var(--surface)}
+  .logo{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+  .logo img{width:34px;height:34px}
+  .logo b{font-size:16px;font-weight:800}
+  .logo span{display:block;font-size:11px;color:var(--ink-3);font-weight:600}
+  aside nav{margin-top:22px;display:flex;flex-direction:column;gap:2px}
+  aside nav a{color:var(--ink-2);text-decoration:none;font-size:13.5px;font-weight:600;
+    padding:7px 11px;border-radius:9px;transition:.12s}
+  aside nav a:hover{background:var(--surface-2);color:var(--ink)}
+  aside nav a.grp{margin-top:14px;color:var(--ink-3);font-size:11px;font-weight:700;
+    text-transform:uppercase;letter-spacing:.06em;pointer-events:none;padding-bottom:2px}
+  main{padding:40px 46px 120px;min-width:0}
+  h1{font-size:30px;font-weight:800;margin:0 0 6px;letter-spacing:-.02em}
+  .lead{color:var(--ink-2);font-size:16px;margin:0 0 8px}
+  h2{font-size:22px;font-weight:800;margin:52px 0 14px;padding-top:14px;
+    border-top:1px solid var(--line);letter-spacing:-.01em}
+  h2:first-of-type{border-top:none;padding-top:0}
+  h3{font-size:16.5px;font-weight:700;margin:26px 0 8px}
+  p{margin:10px 0}
+  a{color:var(--brand)}
+  code{font-family:var(--mono);font-size:.88em;background:var(--code-bg);
+    padding:2px 6px;border-radius:6px;border:1px solid var(--line)}
+  pre{background:var(--code-bg);border:1px solid var(--line);border-radius:var(--radius);
+    padding:16px 18px;overflow-x:auto;margin:14px 0}
+  pre code{background:none;border:none;padding:0;font-size:13px;line-height:1.6}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+    padding:18px 22px;margin:16px 0}
+  .formula{background:var(--brand-tint);border:1px solid transparent;border-left:3px solid var(--brand);
+    border-radius:10px;padding:12px 16px;margin:12px 0;font-family:var(--mono);font-size:13.5px;color:var(--ink)}
+  .note{border-left:3px solid var(--warn);background:var(--surface-2);border-radius:10px;
+    padding:11px 15px;margin:14px 0;font-size:14px;color:var(--ink-2)}
+  .note b{color:var(--ink)}
+  table{width:100%;border-collapse:collapse;margin:14px 0;font-size:13.5px}
+  th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{font-weight:700;color:var(--ink-2);background:var(--surface-2)}
+  td code{font-size:12px}
+  .tag{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;
+    background:var(--surface-2);color:var(--ink-2);border:1px solid var(--line)}
+  .tag.s{color:var(--shopee)} .tag.l{color:var(--lazada)} .tag.t{color:var(--tiktok)}
+  .pill{display:inline-block;font-family:var(--mono);font-size:11px;font-weight:700;padding:2px 7px;
+    border-radius:6px;background:var(--surface-2);border:1px solid var(--line);color:var(--ink-2)}
+  .get{color:var(--ok)}
+  ul{margin:10px 0;padding-left:22px} li{margin:5px 0}
+  .foot{margin-top:60px;padding-top:20px;border-top:1px solid var(--line);color:var(--ink-3);font-size:13px}
+  .topbar{display:none}
+  @media(max-width:860px){
+    .wrap{grid-template-columns:1fr}
+    aside{display:none}
+    main{padding:24px 18px 80px}
+    .topbar{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--line);
+      position:sticky;top:0;background:var(--surface);z-index:5}
+    .topbar img{width:28px;height:28px}
+  }
+</style>
+</head>
+<body>
+<div class="topbar"><img src="assets/logo.svg?v=43" alt="Zott"><b>Tài liệu Analytics</b></div>
+<div class="wrap">
+  <aside>
+    <div class="logo">
+      <img src="assets/logo.svg?v=43" alt="Zott">
+      <div><b>Zott Monte</b><span>Tài liệu kỹ thuật</span></div>
+    </div>
+    <nav>
+      <a class="grp">Tổng quan</a>
+      <a href="#intro">Giới thiệu</a>
+      <a href="#model">Mô hình dữ liệu</a>
+      <a href="#pipeline">Luồng nhập liệu</a>
+      <a class="grp">Cách tính chỉ số</a>
+      <a href="#revenue">Doanh thu &amp; đơn hàng</a>
+      <a href="#conversion">Chuyển đổi &amp; AOV</a>
+      <a href="#costs">Chi phí sàn</a>
+      <a href="#net">Lợi nhuận ròng</a>
+      <a href="#customers">Phân loại khách hàng</a>
+      <a href="#geo">Khu vực &amp; kho hàng</a>
+      <a href="#traffic">Lưu lượng truy cập</a>
+      <a class="grp">Tích hợp</a>
+      <a href="#api">API cho Power BI</a>
+      <a href="#api-datasets">Danh mục dataset</a>
+      <a href="#api-powerbi">Kết nối Power BI</a>
+    </nav>
+  </aside>
+
+  <main>
+    <h1>Tài liệu kỹ thuật — Marketplace Analytics</h1>
+    <p class="lead">Cách hệ thống nhận file từ các sàn, chuẩn hoá dữ liệu, và tính ra từng chỉ số trên dashboard — cùng API để trích xuất dữ liệu sang Power BI.</p>
+
+    <h2 id="intro">Giới thiệu</h2>
+    <p>Hệ thống nhận các file báo cáo Excel xuất từ Seller Centre của <span class="tag s">Shopee</span> <span class="tag l">Lazada</span> <span class="tag t">TikTok Shop</span>, chuẩn hoá về một khuôn chung rồi lưu vào cơ sở dữ liệu. Mọi chỉ số trên dashboard đều được tính trực tiếp từ dữ liệu đã chuẩn hoá này — không có số liệu nào nhập tay.</p>
+    <p>Có ba loại báo cáo được nhận diện tự động theo cấu trúc file:</p>
+    <ul>
+      <li><b>Đơn hàng</b> — chi tiết từng đơn, từng dòng sản phẩm. Đây là bảng gốc để tính doanh thu, số đơn, khách hàng, khu vực.</li>
+      <li><b>Lưu lượng</b> — số liệu truy cập theo ngày (lượt xem, phiên, khách mới/quay lại).</li>
+      <li><b>Báo cáo tài chính</b> — bảng đối soát chi phí thật mà sàn thu (hoa hồng, phí dịch vụ, quảng cáo, voucher…).</li>
+    </ul>
+
+    <h2 id="model">Mô hình dữ liệu</h2>
+    <p>Bốn bảng chính chứa toàn bộ số liệu phân tích:</p>
+    <table>
+      <thead><tr><th>Bảng</th><th>Mức chi tiết</th><th>Nguồn</th></tr></thead>
+      <tbody>
+        <tr><td><code>orders</code></td><td>Một dòng = một dòng sản phẩm trong đơn. Đơn nhiều sản phẩm có nhiều dòng cùng <code>order_id</code>.</td><td>File đơn hàng</td></tr>
+        <tr><td><code>order_settlements</code></td><td>Một dòng = một đơn, kèm chi phí thật đã tách nhóm.</td><td>Báo cáo tài chính</td></tr>
+        <tr><td><code>traffic_daily</code></td><td>Một dòng = một (ngày × sàn × loại thiết bị).</td><td>File lưu lượng</td></tr>
+        <tr><td><code>upload_history</code></td><td>Nhật ký mỗi lần tải file lên.</td><td>Hệ thống</td></tr>
+      </tbody>
+    </table>
+    <p>Cột trạng thái <code>normalized_status</code> quy mọi cách gọi của ba sàn về bốn giá trị chuẩn: <code>completed</code>, <code>delivered</code>, <code>cancelled</code>, <code>pending</code>. Đây là cột quyết định một đơn có được tính vào doanh thu hay không.</p>
+
+    <h2 id="pipeline">Luồng nhập liệu</h2>
+    <p>Mỗi file đi qua các bước:</p>
+    <ul>
+      <li><b>Nhận diện</b> — đọc tên sheet và tiêu đề cột để xác định sàn và loại báo cáo.</li>
+      <li><b>Đọc theo luồng</b> — file báo cáo Shopee có sheet ~1000 cột, nếu nạp cả sheet vào bộ nhớ sẽ vượt giới hạn của hosting. Hệ thống đọc kiểu cuốn chiếu (streaming) qua từng dòng, chỉ dùng ~24MB thay vì hơn 112MB.</li>
+      <li><b>Chuẩn hoá</b> — quy tên cột, trạng thái, định dạng tiền/ngày của từng sàn về khuôn chung.</li>
+      <li><b>Ghi có kiểm soát trùng</b> — cùng một đơn tải lại nhiều lần sẽ được cập nhật (upsert) chứ không nhân đôi.</li>
+    </ul>
+    <div class="note"><b>Doanh thu dùng cùng một cơ sở ở mọi nơi:</b> cột <code>subtotal_after_discount</code> — tiền hàng sau chiết khấu của từng dòng sản phẩm. Trang Đơn hàng, Khách hàng, Chi phí đều tính từ cột này để không ra hai con số khác nhau.</p></div>
+
+    <h2 id="revenue">Doanh thu &amp; đơn hàng</h2>
+    <h3>Doanh thu</h3>
+    <p>Chỉ tính các dòng có đơn <b>hoàn thành</b> hoặc <b>đã giao</b>. Đơn huỷ và đơn chờ xử lý không tính vào doanh thu.</p>
+    <div class="formula">Doanh thu = Σ subtotal_after_discount<br>&nbsp;&nbsp;WHERE normalized_status ∈ ('completed', 'delivered')</div>
+    <h3>Số đơn</h3>
+    <p>Đếm số đơn <b>duy nhất</b> — vì một đơn nhiều sản phẩm chiếm nhiều dòng, phải đếm theo cặp (sàn, mã đơn) để không tính trùng.</p>
+    <div class="formula">Số đơn = COUNT(DISTINCT platform + order_id)</div>
+    <div class="note">Bộ lọc sàn và khoảng thời gian áp dụng cho mọi chỉ số. Ngày lọc dựa trên <code>order_created_at</code> (ngày tạo đơn).</div>
+
+    <h2 id="conversion">Tỷ lệ chuyển đổi &amp; giá trị đơn trung bình</h2>
+    <h3>Tỷ lệ chuyển đổi</h3>
+    <p>Ghép số đơn (từ bảng đơn hàng) với số lượt truy cập (từ bảng lưu lượng) trong cùng kỳ.</p>
+    <div class="formula">Tỷ lệ chuyển đổi (%) = Số đơn / Σ visits × 100</div>
+    <h3>Giá trị đơn trung bình (AOV)</h3>
+    <div class="formula">AOV = Doanh thu / Số đơn hoàn thành</div>
+
+    <h2 id="costs">Chi phí sàn</h2>
+    <p>Chi phí được lấy theo hai nguồn, ưu tiên số thật:</p>
+    <ul>
+      <li><b>Số thật</b> <span class="pill">source: settlement</span> — khi đã tải báo cáo tài chính của kỳ đó, chi phí lấy chính xác từ bảng đối soát.</li>
+      <li><b>Số ước tính</b> <span class="pill">source: estimated</span> — khi chưa có báo cáo tài chính, hệ thống ước tính theo tỷ lệ phí cấu hình sẵn (hoa hồng + phí thanh toán) trên doanh thu.</li>
+    </ul>
+    <p>Chi phí thật được tách thành ba nhóm để phân biệt tiền buộc phải trả với tiền tự chọn chi:</p>
+    <table>
+      <thead><tr><th>Nhóm</th><th>Gồm những gì</th></tr></thead>
+      <tbody>
+        <tr><td><code>fee_platform</code></td><td>Phí bắt buộc: hoa hồng, phí cố định, phí dịch vụ, phí thanh toán, phí hạ tầng.</td></tr>
+        <tr><td><code>fee_marketing</code></td><td>Tự chọn để đẩy đơn: quảng cáo, affiliate, các gói Voucher Xtra, flash sale, chiến dịch.</td></tr>
+        <tr><td><code>fee_promotion</code></td><td>Khuyến mãi shop tự chịu: mã giảm giá, mã hoàn xu do người bán chịu.</td></tr>
+      </tbody>
+    </table>
+    <div class="formula">fee_total = fee_platform + fee_marketing + fee_promotion</div>
+    <div class="note">Khoản phí lạ chưa phân loại được xếp tạm vào <code>fee_platform</code> và giữ nguyên tên gốc trong cột <code>details</code> để truy lại sau. Chi phí quảng cáo Shopee Ads <b>không</b> nằm trong báo cáo tài chính (sàn trừ từ ví quảng cáo riêng) nên không phản ánh ở đây.</div>
+
+    <h2 id="net">Lợi nhuận ròng</h2>
+    <div class="formula">Lợi nhuận ròng = Doanh thu − fee_total</div>
+    <p>Đây là phần còn lại sau khi trừ chi phí sàn, chưa tính giá vốn hàng hoá.</p>
+
+    <h2 id="customers">Phân loại khách hàng</h2>
+    <p>Khách trong kỳ được chia theo số đơn đã đặt trong kỳ:</p>
+    <table>
+      <thead><tr><th>Nhóm</th><th>Định nghĩa</th></tr></thead>
+      <tbody>
+        <tr><td><b>Khách mới</b></td><td>Có đúng 1 đơn trong kỳ.</td></tr>
+        <tr><td><b>Khách quay lại</b></td><td>Có từ 2 đơn trở lên trong kỳ.</td></tr>
+        <tr><td><b>Khách tiềm năng</b></td><td>Có đơn hoàn thành/đã giao trong 12 tháng trước kỳ nhưng không mua trong kỳ. Nhóm này nằm <b>ngoài</b> tổng khách trong kỳ.</td></tr>
+      </tbody>
+    </table>
+    <div class="note"><b>Lưu ý khi đọc:</b> "Khách mới" nghĩa là mua 1 đơn trong kỳ, không nhất thiết là lần đầu mua hàng. Tổng khách trong kỳ = khách mới + khách quay lại; khách tiềm năng được tính riêng.</div>
+
+    <h2 id="geo">Phân bổ khu vực &amp; kho hàng</h2>
+    <p>Từ mỗi đơn lấy ra tỉnh/thành giao hàng và kho xuất, rồi gộp số đơn và doanh thu theo từng nhóm.</p>
+    <ul>
+      <li><b>Theo khu vực</b> — gộp theo <code>shipping_city</code>. Lazada không có cột này nên bị loại khỏi bảng khu vực.</li>
+      <li><b>Theo kho hàng</b> — gộp theo <code>warehouse</code>. Cùng một kho được các sàn ghi bằng nhiều tên (ví dụ "Kho Gò Vấp" và "NPP Gò Vấp (Dũng Tiến)") sẽ được chuẩn hoá về một dòng. Chỉ có ở các file đơn hàng nhập gần đây.</li>
+    </ul>
+
+    <h2 id="traffic">Lưu lượng truy cập</h2>
+    <p>Số liệu lấy trực tiếp từ file lưu lượng của sàn, cộng theo kỳ:</p>
+    <table>
+      <thead><tr><th>Chỉ số</th><th>Cột</th></tr></thead>
+      <tbody>
+        <tr><td>Lượt truy cập</td><td><code>visits</code></td></tr>
+        <tr><td>Lượt xem trang</td><td><code>page_views</code></td></tr>
+        <tr><td>Khách mới / quay lại</td><td><code>new_visitors</code> / <code>returning_visitors</code></td></tr>
+        <tr><td>Người theo dõi mới</td><td><code>new_followers</code></td></tr>
+        <tr><td>Tỷ lệ thoát</td><td><code>bounce_rate</code></td></tr>
+      </tbody>
+    </table>
+
+    <h2 id="api">API cho Power BI</h2>
+    <p>Endpoint <code>api/export.php</code> trả dữ liệu dạng JSON phẳng để Power BI, Excel hay các công cụ BI khác nạp thẳng thành bảng. API này <b>chỉ đọc</b> và tách riêng khỏi phần đăng nhập của dashboard, vì công cụ BI làm mới theo lịch không có phiên trình duyệt.</p>
+
+    <h3>Xác thực</h3>
+    <p>Dùng API key gửi qua header hoặc tham số URL:</p>
+    <pre><code>Authorization: Bearer &lt;API_KEY&gt;
+hoặc:  api/export.php?dataset=orders&amp;key=&lt;API_KEY&gt;</code></pre>
+    <p>Key được cấu hình trong file <code>config.local.php</code> trên máy chủ (không nằm trong mã nguồn). Quản trị viên thêm dòng:</p>
+    <pre><code>'export' =&gt; ['api_keys' =&gt; ['dán-chuỗi-ngẫu-nhiên-dài-ở-đây']],</code></pre>
+    <p>Có thể khai nhiều key (mỗi người dùng/công cụ một key). Chưa cấu hình key thì API đóng hoàn toàn (trả 503).</p>
+
+    <h3 id="api-datasets">Danh mục dataset</h3>
+    <p>Gọi <code>api/export.php?dataset=datasets</code> để xem danh mục và toàn bộ cột của từng dataset.</p>
+    <table>
+      <thead><tr><th>Dataset</th><th>Nội dung</th><th>Lọc theo ngày</th></tr></thead>
+      <tbody>
+        <tr><td><span class="pill">orders</span></td><td>Đơn hàng, chi tiết từng dòng sản phẩm</td><td><code>order_created_at</code></td></tr>
+        <tr><td><span class="pill">settlements</span></td><td>Chi phí sàn đã đối soát, một dòng một đơn</td><td>—</td></tr>
+        <tr><td><span class="pill">traffic</span></td><td>Lưu lượng theo ngày</td><td><code>traffic_date</code></td></tr>
+      </tbody>
+    </table>
+    <p>Tham số truy vấn:</p>
+    <table>
+      <thead><tr><th>Tham số</th><th>Ý nghĩa</th></tr></thead>
+      <tbody>
+        <tr><td><code>dataset</code></td><td>Tên dataset (bắt buộc): <code>orders</code>, <code>settlements</code>, <code>traffic</code>, hoặc <code>datasets</code> để xem danh mục.</td></tr>
+        <tr><td><code>from</code>, <code>to</code></td><td>Khoảng ngày <code>YYYY-MM-DD</code>, tính cả ngày cuối. Chỉ áp cho dataset có cột ngày.</td></tr>
+        <tr><td><code>limit</code></td><td>Số dòng mỗi trang (mặc định 50.000, tối đa 100.000).</td></tr>
+        <tr><td><code>offset</code></td><td>Vị trí bắt đầu để lấy trang tiếp theo.</td></tr>
+      </tbody>
+    </table>
+    <p>Phản hồi mẫu:</p>
+    <pre><code>{
+  "success": true,
+  "dataset": "orders",
+  "count": 50000,
+  "limit": 50000,
+  "offset": 0,
+  "next_offset": 50000,     // null khi đã hết dữ liệu
+  "rows": [ { ... }, { ... } ]
+}</code></pre>
+    <p>Lấy hết dữ liệu bằng cách gọi lặp lại, mỗi lần dùng <code>next_offset</code> của lần trước, cho đến khi <code>next_offset</code> là <code>null</code>.</p>
+
+    <h3 id="api-powerbi">Kết nối từ Power BI</h3>
+    <p>Trong Power BI Desktop: <b>Get Data → Blank Query → Advanced Editor</b>, dán đoạn M sau (thay <code>BASE_URL</code> và <code>API_KEY</code>). Đoạn này tự lật trang cho đến hết:</p>
+    <pre><code>let
+    BaseUrl = "https://ten-mien-cua-ban/api/export.php",
+    ApiKey  = "API_KEY_CUA_BAN",
+    Dataset = "orders",
+    PageSize = 50000,
+    GetPage = (offset as number) as record =>
+        let
+            Url = BaseUrl & "?dataset=" & Dataset
+                & "&limit=" & Text.From(PageSize)
+                & "&offset=" & Text.From(offset),
+            Resp = Json.Document(
+                Web.Contents(Url, [Headers=[Authorization="Bearer " & ApiKey]])
+            )
+        in
+            Resp,
+    Pages = List.Generate(
+        () => [res = GetPage(0), off = 0],
+        each [res][count] > 0,
+        each [res = GetPage([off] + PageSize), off = [off] + PageSize],
+        each [res][rows]
+    ),
+    Rows = List.Combine(Pages),
+    Table = Table.FromRecords(Rows)
+in
+    Table</code></pre>
+    <p>Lặp lại query cho từng dataset (<code>orders</code>, <code>settlements</code>, <code>traffic</code>), sau đó trong Power BI nối bảng <code>settlements</code> với <code>orders</code> qua cặp cột <code>platform</code> + <code>order_id</code>, và nối <code>traffic</code> theo ngày. Mọi công thức ở phần trên của tài liệu này áp dụng nguyên vẹn khi dựng chỉ số trong Power BI.</p>
+
+    <div class="foot">Tài liệu này mô tả cách hệ thống xử lý dữ liệu tại thời điểm phát hành. Khi công thức tính thay đổi, tài liệu được cập nhật kèm bản phát hành.</div>
+  </main>
+</div>
+</body>
+</html>

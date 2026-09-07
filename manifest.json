@@ -1,7 +1,7 @@
 {
-  "version": "3.4.85",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.4.85/release/dashboard-v3-3.4.85.zip",
-  "changelog": "Sửa lại ghi chú nhóm Khách tiềm năng trong phần Phân loại khách hàng.\n- Ghi chú mới: \"Khách tiềm năng là khách không hoàn thành đơn hàng (không thanh toán/huỷ đơn) trong 12 tháng, bao gồm cả khách đã từng đặt hàng trước đó.\"\n- Đã cập nhật cả bản tiếng Việt và tiếng Anh. Chỉ đổi phần chữ, cách tính số liệu giữ nguyên.",
+  "version": "3.5.0",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.5.0/release/dashboard-v3-3.5.0.zip",
+  "changelog": "Thêm trang Tài liệu và API xuất dữ liệu cho Power BI.\n- Trang Tài liệu (mục \"Tài liệu\" ở menu trái) giải thích cách hệ thống nhận file, chuẩn hoá và tính ra từng chỉ số: doanh thu, số đơn, chuyển đổi, chi phí sàn (3 nhóm), lợi nhuận ròng, phân loại khách hàng, khu vực/kho, lưu lượng.\n- API mới api/export.php cho phép trích xuất dữ liệu sang Power BI/Excel: ba dataset orders, settlements, traffic dạng JSON phẳng, lọc theo ngày và tự phân trang.\n- API chỉ đọc, xác thực bằng API key khai trong config.local.php (không nằm trong mã nguồn); chưa khai key thì API đóng hoàn toàn. Trang Tài liệu có sẵn đoạn M để dán vào Power BI.",
   "min_php": "8.1",
   "released_at": "2026-09-05"
 }
