@@ -1,7 +1,7 @@
 {
-  "version": "3.5.0",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.5.0/release/dashboard-v3-3.5.0.zip",
-  "changelog": "Thêm trang Tài liệu và API xuất dữ liệu cho Power BI.\n- Trang Tài liệu (mục \"Tài liệu\" ở menu trái) giải thích cách hệ thống nhận file, chuẩn hoá và tính ra từng chỉ số: doanh thu, số đơn, chuyển đổi, chi phí sàn (3 nhóm), lợi nhuận ròng, phân loại khách hàng, khu vực/kho, lưu lượng.\n- API mới api/export.php cho phép trích xuất dữ liệu sang Power BI/Excel: ba dataset orders, settlements, traffic dạng JSON phẳng, lọc theo ngày và tự phân trang.\n- API chỉ đọc, xác thực bằng API key khai trong config.local.php (không nằm trong mã nguồn); chưa khai key thì API đóng hoàn toàn. Trang Tài liệu có sẵn đoạn M để dán vào Power BI.",
+  "version": "3.5.1",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.5.1/release/dashboard-v3-3.5.1.zip",
+  "changelog": "Trang Tài liệu: thêm nút đổi giao diện sáng/tối và menu tự bám theo nội dung đang đọc.\n- Nút sáng/tối ở góc menu trái (và trên thanh tiêu đề khi xem trên điện thoại). Mặc định theo hệ điều hành; khi bấm chọn tay thì ghi nhớ lựa chọn cho lần sau.\n- Mục trong menu trái tự sáng lên theo phần đang đọc khi cuộn trang.",
   "min_php": "8.1",
-  "released_at": "2026-09-05"
+  "released_at": "2026-09-07"
 }
