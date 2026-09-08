@@ -125,6 +125,11 @@
       <a href="#intro">Giới thiệu</a>
       <a href="#model">Mô hình dữ liệu</a>
       <a href="#pipeline">Luồng nhập liệu</a>
+      <a class="grp">Trích xuất từ file sàn</a>
+      <a href="#map-how">Cách khớp cột</a>
+      <a href="#map-orders">Đơn hàng theo sàn</a>
+      <a href="#map-traffic">Lưu lượng theo sàn</a>
+      <a href="#map-settlement">Báo cáo tài chính</a>
       <a class="grp">Cách tính chỉ số</a>
       <a href="#revenue">Doanh thu &amp; đơn hàng</a>
       <a href="#conversion">Chuyển đổi &amp; AOV</a>
@@ -133,6 +138,11 @@
       <a href="#customers">Phân loại khách hàng</a>
       <a href="#geo">Khu vực &amp; kho hàng</a>
       <a href="#traffic">Lưu lượng truy cập</a>
+      <a class="grp">Tham chiếu trường dữ liệu</a>
+      <a href="#dict-orders">Từ điển: orders</a>
+      <a href="#dict-traffic">Từ điển: traffic_daily</a>
+      <a href="#dict-settlement">Từ điển: order_settlements</a>
+      <a href="#field-metric">Trường → chỉ số</a>
       <a class="grp">Tích hợp</a>
       <a href="#api">API cho Power BI</a>
       <a href="#api-datasets">Danh mục dataset</a>
@@ -175,6 +185,134 @@
       <li><b>Ghi có kiểm soát trùng</b> — cùng một đơn tải lại nhiều lần sẽ được cập nhật (upsert) chứ không nhân đôi.</li>
     </ul>
     <div class="note"><b>Doanh thu dùng cùng một cơ sở ở mọi nơi:</b> cột <code>subtotal_after_discount</code> — tiền hàng sau chiết khấu của từng dòng sản phẩm. Trang Đơn hàng, Khách hàng, Chi phí đều tính từ cột này để không ra hai con số khác nhau.</p></div>
+
+    <h2 id="map-how">Cách khớp cột từ file Excel</h2>
+    <p>Hệ thống <b>không đọc theo địa chỉ ô cố định</b> (như <code>C2</code>, <code>D5</code>). Các sàn thường đổi thứ tự cột, thêm/bớt cột giữa các phiên bản báo cáo, nên nếu đọc theo vị trí cố định sẽ sai ngay khi sàn cập nhật. Thay vào đó hệ thống <b>khớp theo tên tiêu đề cột</b>:</p>
+    <ul>
+      <li><b>Tìm dòng tiêu đề</b> — với đơn hàng, tiêu đề nằm ở dòng đầu; TikTok có thêm một dòng mô tả ngay dưới tiêu đề nên dữ liệu bắt đầu từ dòng thứ 3; file lưu lượng thì dò tiêu đề trong 15 dòng đầu; báo cáo tài chính Shopee có tiêu đề ở dòng thứ 3.</li>
+      <li><b>So khớp tên</b> — mỗi trường trong hệ thống có một danh sách tên tiêu đề "ứng viên". So khớp <b>khớp tuyệt đối trước</b>, không thấy mới <b>khớp chứa chuỗi con</b>. Đều bỏ qua hoa/thường và chuẩn hoá dấu tiếng Việt.</li>
+      <li><b>Thiếu cột thì bỏ trống</b> — cột không tìm thấy được gán rỗng/0, không làm hỏng cả dòng; chỉ khi thiếu <code>order_id</code>, <code>sku</code> hoặc ngày tạo thì dòng đó mới bị bỏ qua và ghi vào nhật ký lỗi.</li>
+    </ul>
+    <p>Các bảng dưới đây liệt kê <b>tên trường chuẩn hoá</b> (cột trong database, cũng là tên xuất qua API) và <b>tên tiêu đề nguồn</b> mà hệ thống tìm trong file của từng sàn.</p>
+
+    <h2 id="map-orders">Đơn hàng — bảng khớp cột theo sàn</h2>
+    <p>Ba sàn xuất file đơn hàng khác nhau, cùng quy về bảng <code>orders</code>. Mỗi dòng file = một dòng sản phẩm trong đơn.</p>
+
+    <h3><span class="tag s">Shopee</span> — tiêu đề ở dòng 1</h3>
+    <table>
+      <thead><tr><th>Trường (DB / API)</th><th>Tên cột trong file Shopee</th><th>Ghi chú</th></tr></thead>
+      <tbody>
+        <tr><td><code>order_id</code></td><td>Mã đơn hàng</td><td>Khoá đơn</td></tr>
+        <tr><td><code>sku</code></td><td>SKU sản phẩm / Seller SKU</td><td>Bắt buộc</td></tr>
+        <tr><td><code>product_name</code></td><td>Tên sản phẩm</td><td></td></tr>
+        <tr><td><code>variation</code></td><td>Tên phân loại hàng</td><td></td></tr>
+        <tr><td><code>quantity</code></td><td>Số lượng</td><td>Tối thiểu 1</td></tr>
+        <tr><td><code>unit_price</code></td><td>Giá gốc</td><td></td></tr>
+        <tr><td><code>subtotal_after_discount</code></td><td>Giá ưu đãi / Giá sau giảm</td><td>× số lượng — <b>cơ sở tính doanh thu</b></td></tr>
+        <tr><td><code>seller_discount</code></td><td>Tổng số tiền được người bán trợ giá</td><td>Nếu trống thì lấy "Người bán trợ giá" × số lượng</td></tr>
+        <tr><td><code>platform_discount</code></td><td>Được Shopee trợ giá</td><td></td></tr>
+        <tr><td><code>seller_voucher</code></td><td>Mã giảm giá của shop</td><td>Chỉ tính 1 lần cho mỗi đơn</td></tr>
+        <tr><td><code>order_total</code></td><td>Tổng giá trị đơn hàng</td><td></td></tr>
+        <tr><td><code>shipping_fee</code></td><td>Phí vận chuyển mà người mua trả</td><td></td></tr>
+        <tr><td><code>platform_fee_fixed</code> / <code>_service</code> / <code>_payment</code></td><td>Phí cố định / Phí dịch vụ / Phí thanh toán</td><td>Phí trong file đơn (chỉ Shopee có)</td></tr>
+        <tr><td><code>status</code> → <code>normalized_status</code></td><td>Trạng thái đơn hàng</td><td>Quy về completed/delivered/cancelled/pending</td></tr>
+        <tr><td><code>buyer_username</code> / <code>buyer_name</code></td><td>Người mua / Tên người nhận</td><td></td></tr>
+        <tr><td><code>shipping_city</code> / <code>shipping_district</code></td><td>Tỉnh/Thành phố / TP – Quận – Huyện</td><td>Tỉnh được chuẩn hoá tên</td></tr>
+        <tr><td><code>warehouse</code></td><td>Tên kho hàng</td><td></td></tr>
+        <tr><td><code>payment_method</code></td><td>Phương thức thanh toán</td><td></td></tr>
+        <tr><td><code>order_created_at</code> / <code>order_paid_at</code> / <code>order_completed_at</code></td><td>Ngày đặt hàng / Thời gian thanh toán / Thời gian hoàn thành đơn hàng</td><td>Ngày tạo bắt buộc</td></tr>
+      </tbody>
+    </table>
+
+    <h3><span class="tag l">Lazada</span> — tiêu đề ở dòng 1, tên cột tiếng Anh</h3>
+    <table>
+      <thead><tr><th>Trường (DB / API)</th><th>Tên cột trong file Lazada</th><th>Ghi chú</th></tr></thead>
+      <tbody>
+        <tr><td><code>order_id</code></td><td>orderNumber</td><td>Thiếu thì lấy orderItemId</td></tr>
+        <tr><td><code>sku</code></td><td>sellerSku</td><td>Bắt buộc</td></tr>
+        <tr><td><code>product_name</code> / <code>variation</code></td><td>itemName / variation</td><td></td></tr>
+        <tr><td><code>quantity</code></td><td>—</td><td>Luôn = 1 (mỗi dòng Lazada là một sản phẩm)</td></tr>
+        <tr><td><code>unit_price</code></td><td>unitPrice</td><td></td></tr>
+        <tr><td><code>subtotal_after_discount</code> / <code>order_total</code></td><td>paidPrice</td><td><b>Cơ sở tính doanh thu</b></td></tr>
+        <tr><td><code>seller_discount</code></td><td>sellerDiscTotal</td><td></td></tr>
+        <tr><td><code>shipping_fee</code></td><td>shippingFee</td><td></td></tr>
+        <tr><td><code>status</code> → <code>normalized_status</code></td><td>status</td><td></td></tr>
+        <tr><td><code>buyer_name</code></td><td>customerName / shippingName</td><td><code>buyer_username</code> luôn trống</td></tr>
+        <tr><td><code>shipping_city</code></td><td>shippingCity (hoặc shippingRegion)</td><td>Địa chỉ &amp; quận/huyện bị Lazada che → luôn trống</td></tr>
+        <tr><td><code>warehouse</code> / <code>payment_method</code></td><td>warehouse / payMethod</td><td></td></tr>
+        <tr><td><code>order_created_at</code> / <code>order_completed_at</code></td><td>createTime / ttsSLA (hoặc deliveredDate)</td><td></td></tr>
+      </tbody>
+    </table>
+    <div class="note">File đơn Lazada không có phí sàn nên <code>platform_fee_*</code> = 0; chi phí thật lấy từ báo cáo tài chính (sao kê "Income Overview").</div>
+
+    <h3><span class="tag t">TikTok Shop</span> — tiêu đề ở dòng 1, dòng 2 là mô tả (bỏ qua), dữ liệu từ dòng 3</h3>
+    <table>
+      <thead><tr><th>Trường (DB / API)</th><th>Tên cột trong file TikTok</th><th>Ghi chú</th></tr></thead>
+      <tbody>
+        <tr><td><code>order_id</code></td><td>Order ID</td><td>Bắt buộc</td></tr>
+        <tr><td><code>sku</code> / <code>product_name</code> / <code>variation</code></td><td>Seller SKU / Product Name / Variation</td><td></td></tr>
+        <tr><td><code>quantity</code></td><td>Quantity</td><td></td></tr>
+        <tr><td><code>unit_price</code></td><td>SKU Unit Original Price</td><td></td></tr>
+        <tr><td><code>subtotal_before_discount</code></td><td>SKU Subtotal Before Discount</td><td></td></tr>
+        <tr><td><code>subtotal_after_discount</code></td><td>SKU Subtotal After Discount</td><td><b>Cơ sở tính doanh thu</b></td></tr>
+        <tr><td><code>platform_discount</code> / <code>seller_discount</code></td><td>SKU Platform Discount / SKU Seller Discount</td><td></td></tr>
+        <tr><td><code>order_total</code></td><td>Order Amount</td><td></td></tr>
+        <tr><td><code>shipping_fee</code></td><td>Shipping Fee After Discount</td><td></td></tr>
+        <tr><td><code>status</code> → <code>normalized_status</code></td><td>Order Status + Order Substatus</td><td>Dùng cả hai cột để quy trạng thái</td></tr>
+        <tr><td><code>buyer_username</code> / <code>buyer_name</code></td><td>Buyer Username / Recipient</td><td></td></tr>
+        <tr><td><code>shipping_city</code> / <code>shipping_district</code> / <code>shipping_address</code></td><td>Province (hoặc City) / District / Detail Address</td><td></td></tr>
+        <tr><td><code>warehouse</code> / <code>payment_method</code></td><td>Warehouse Name / Payment Method</td><td></td></tr>
+        <tr><td><code>order_created_at</code> / <code>order_paid_at</code> / <code>order_completed_at</code></td><td>Created Time / Paid Time / Delivered Time</td><td></td></tr>
+      </tbody>
+    </table>
+
+    <h2 id="map-traffic">Lưu lượng — bảng khớp cột theo sàn</h2>
+    <p>Mỗi sàn để số liệu lưu lượng ở một sheet riêng; hệ thống chọn đúng sheet rồi dò dòng tiêu đề trong 15 dòng đầu (dòng tiêu đề phải có một ô đúng bằng "Ngày"/"Date"). Kết quả quy về bảng <code>traffic_daily</code>.</p>
+    <table>
+      <thead><tr><th>Sàn</th><th>Sheet lấy số liệu</th></tr></thead>
+      <tbody>
+        <tr><td><span class="tag s">Shopee</span></td><td>Sheet <b>"Tất cả"</b> (bắt buộc phải có, nếu không sẽ báo lỗi)</td></tr>
+        <tr><td><span class="tag l">Lazada</span></td><td>Sheet <b>"Các chỉ số quan trọng"</b></td></tr>
+        <tr><td><span class="tag t">TikTok Shop</span></td><td>Sheet <b>"Sheet1"</b></td></tr>
+      </tbody>
+    </table>
+    <table>
+      <thead><tr><th>Trường (DB / API)</th><th>Tên cột trong file</th></tr></thead>
+      <tbody>
+        <tr><td><code>traffic_date</code></td><td>Ngày / Date</td></tr>
+        <tr><td><code>page_views</code></td><td>Lượt xem / Tổng lượt xem / Page views</td></tr>
+        <tr><td><code>visits</code></td><td>Lượt truy cập / Số khách hàng độc nhất / Lượt truy cập trang cửa hàng</td></tr>
+        <tr><td><code>new_visitors</code></td><td>Số khách truy cập mới</td></tr>
+        <tr><td><code>returning_visitors</code></td><td>Số khách truy cập hiện tại</td></tr>
+        <tr><td><code>new_followers</code></td><td>Người theo dõi mới</td></tr>
+        <tr><td><code>bounce_rate</code></td><td>Tỉ lệ thoát trang</td></tr>
+        <tr><td><code>avg_session_duration</code></td><td>Thời gian xem trung bình</td></tr>
+        <tr><td><code>avg_page_views</code></td><td>Số lượt xem trung bình</td></tr>
+        <tr><td><code>device_type</code></td><td>Suy ra từ <b>tên sheet</b>: "máy tính"→desktop, "ứng dụng/app"→mobile, còn lại→all</td></tr>
+      </tbody>
+    </table>
+
+    <h2 id="map-settlement">Báo cáo tài chính — bảng khớp cột theo sàn</h2>
+    <p>Báo cáo tài chính là chứng từ tiền thật sàn thu, quy về bảng <code>order_settlements</code> (một dòng một đơn). Mỗi sàn một dạng:</p>
+    <table>
+      <thead><tr><th>Sàn</th><th>Sheet &amp; dạng</th><th>Cột mã đơn</th></tr></thead>
+      <tbody>
+        <tr><td><span class="tag s">Shopee</span></td><td>Sheet <b>"Doanh thu"</b>, tiêu đề ở dòng 3. Dạng <b>ngang</b>: mỗi đơn một dòng, mỗi loại phí một cột.</td><td>Mã đơn hàng</td></tr>
+        <tr><td><span class="tag t">TikTok Shop</span></td><td>Sheet chứa <b>"Chi tiết đơn hàng / Order details"</b>. Dạng <b>ngang</b>.</td><td>ID đơn hàng/điều chỉnh</td></tr>
+        <tr><td><span class="tag l">Lazada</span></td><td>Sheet <b>"Income Overview"</b>. Dạng <b>dọc</b>: mỗi dòng một khoản phí, gộp theo mã đơn.</td><td>Mã đơn hàng</td></tr>
+      </tbody>
+    </table>
+    <p>Cách bóc phí: cột/dòng có tên chứa "phí", "fee", "hoa hồng", "commission", "mã ưu đãi", "mã hoàn xu"… mới được coi là khoản chi (bỏ qua cột tỷ lệ "(%)"/"rate"). Mỗi khoản được xếp vào một trong ba nhóm bằng bộ từ khoá:</p>
+    <table>
+      <thead><tr><th>Trường</th><th>Từ khoá nhận nhóm</th></tr></thead>
+      <tbody>
+        <tr><td><code>fee_platform</code></td><td>hoa hồng, phí cố định, phí dịch vụ, phí giao dịch, xử lý, hạ tầng, PayLater, PiShip, quản lý</td></tr>
+        <tr><td><code>fee_marketing</code></td><td>liên kết/affiliate, quảng cáo, Voucher Xtra/Max, flash sale, flexi combo, LazCoins, GMV Max, chiến dịch, NTTD</td></tr>
+        <tr><td><code>fee_promotion</code></td><td>mã ưu đãi, mã hoàn xu, mã giảm giá, giảm giá bằng xu (do người bán chịu)</td></tr>
+      </tbody>
+    </table>
+    <p>Các khoản <b>không phải chi phí</b> của shop bị bỏ qua hoàn toàn: giá trị sản phẩm, tổng doanh thu, vận chuyển, thuế, trợ giá/trợ cấp, hoàn tiền, điều chỉnh… Khoản phí lạ chưa khớp từ khoá nào được xếp tạm vào <code>fee_platform</code> và giữ nguyên tên gốc trong cột <code>details</code> (JSON) để phân loại lại sau. Với Shopee, hệ thống chỉ lấy dòng cấp "Order" (bỏ dòng cấp "Sku" trùng) để phí không bị nhân đôi.</p>
+    <div class="note"><b>Giới hạn đã biết:</b> ở sheet chính của Shopee, khoản "Phí Dịch Vụ" là một cột gộp (đã bao gồm các gói Voucher Xtra và Phí Hạ Tầng). Bản đối soát chi tiết nằm ở sheet phụ "Service Fee Details" và hiện chưa được bóc riêng, nên phần này đang nằm trong <code>fee_platform</code>.</div>
 
     <h2 id="revenue">Doanh thu &amp; đơn hàng</h2>
     <h3>Doanh thu</h3>
@@ -243,6 +381,88 @@
         <tr><td>Khách mới / quay lại</td><td><code>new_visitors</code> / <code>returning_visitors</code></td></tr>
         <tr><td>Người theo dõi mới</td><td><code>new_followers</code></td></tr>
         <tr><td>Tỷ lệ thoát</td><td><code>bounce_rate</code></td></tr>
+      </tbody>
+    </table>
+
+    <h2 id="dict-orders">Từ điển trường: <code>orders</code></h2>
+    <p>Một dòng = một dòng sản phẩm trong đơn. Đây cũng là cột của dataset <span class="pill">orders</span> khi xuất qua API.</p>
+    <table>
+      <thead><tr><th>Trường</th><th>Kiểu</th><th>Ý nghĩa</th></tr></thead>
+      <tbody>
+        <tr><td><code>id</code></td><td>int</td><td>Khoá dòng nội bộ</td></tr>
+        <tr><td><code>platform</code></td><td>string</td><td>shopee / lazada / tiktokshop</td></tr>
+        <tr><td><code>order_id</code></td><td>string</td><td>Mã đơn của sàn. (platform, order_id) là khoá nối với settlements</td></tr>
+        <tr><td><code>sku</code> / <code>product_name</code> / <code>variation</code></td><td>string</td><td>Mã SKU, tên sản phẩm, phân loại</td></tr>
+        <tr><td><code>quantity</code></td><td>int</td><td>Số lượng của dòng sản phẩm</td></tr>
+        <tr><td><code>unit_price</code></td><td>decimal</td><td>Đơn giá gốc</td></tr>
+        <tr><td><code>subtotal_before_discount</code></td><td>decimal</td><td>Tiền hàng trước chiết khấu</td></tr>
+        <tr><td><code>platform_discount</code></td><td>decimal</td><td>Sàn trợ giá</td></tr>
+        <tr><td><code>seller_voucher</code></td><td>decimal</td><td>Mã giảm giá shop (1 lần/đơn)</td></tr>
+        <tr><td><code>seller_discount</code></td><td>decimal</td><td>Người bán trợ giá</td></tr>
+        <tr><td><code>subtotal_after_discount</code></td><td>decimal</td><td><b>Tiền hàng sau chiết khấu — cơ sở tính doanh thu</b></td></tr>
+        <tr><td><code>order_total</code></td><td>decimal</td><td>Tổng tiền đơn theo sàn (tham khảo)</td></tr>
+        <tr><td><code>shipping_fee</code></td><td>decimal</td><td>Phí vận chuyển người mua trả</td></tr>
+        <tr><td><code>normalized_status</code></td><td>string</td><td>completed / delivered / cancelled / pending</td></tr>
+        <tr><td><code>original_status</code></td><td>string</td><td>Trạng thái gốc của sàn</td></tr>
+        <tr><td><code>buyer_username</code> / <code>buyer_name</code></td><td>string</td><td>Tài khoản / tên người nhận (Lazada che username)</td></tr>
+        <tr><td><code>shipping_city</code> / <code>shipping_district</code></td><td>string</td><td>Tỉnh/thành, quận/huyện giao hàng</td></tr>
+        <tr><td><code>warehouse</code> / <code>payment_method</code></td><td>string</td><td>Kho xuất, phương thức thanh toán</td></tr>
+        <tr><td><code>order_created_at</code></td><td>datetime</td><td>Ngày tạo đơn — <b>mốc lọc thời gian</b></td></tr>
+        <tr><td><code>order_paid_at</code> / <code>order_completed_at</code></td><td>datetime</td><td>Thời điểm thanh toán / hoàn thành</td></tr>
+        <tr><td><code>upload_id</code></td><td>int</td><td>Lần tải file đã tạo dòng này</td></tr>
+      </tbody>
+    </table>
+
+    <h2 id="dict-traffic">Từ điển trường: <code>traffic_daily</code></h2>
+    <p>Một dòng = một (ngày × sàn × loại thiết bị). Cột của dataset <span class="pill">traffic</span>.</p>
+    <table>
+      <thead><tr><th>Trường</th><th>Kiểu</th><th>Ý nghĩa</th></tr></thead>
+      <tbody>
+        <tr><td><code>platform</code></td><td>string</td><td>shopee / lazada / tiktokshop</td></tr>
+        <tr><td><code>traffic_date</code></td><td>date</td><td>Ngày — mốc lọc thời gian</td></tr>
+        <tr><td><code>device_type</code></td><td>string</td><td>all / desktop / mobile</td></tr>
+        <tr><td><code>page_views</code></td><td>int</td><td>Lượt xem trang</td></tr>
+        <tr><td><code>visits</code></td><td>int</td><td>Lượt truy cập — mẫu số tính tỷ lệ chuyển đổi</td></tr>
+        <tr><td><code>new_visitors</code> / <code>returning_visitors</code></td><td>int</td><td>Khách truy cập mới / quay lại</td></tr>
+        <tr><td><code>new_followers</code></td><td>int</td><td>Người theo dõi mới</td></tr>
+        <tr><td><code>bounce_rate</code></td><td>decimal</td><td>Tỷ lệ thoát (%)</td></tr>
+        <tr><td><code>avg_session_duration</code></td><td>int</td><td>Thời gian xem trung bình (giây)</td></tr>
+        <tr><td><code>avg_page_views</code></td><td>decimal</td><td>Số lượt xem trung bình</td></tr>
+        <tr><td><code>upload_id</code></td><td>int</td><td>Lần tải file đã tạo dòng này</td></tr>
+      </tbody>
+    </table>
+
+    <h2 id="dict-settlement">Từ điển trường: <code>order_settlements</code></h2>
+    <p>Một dòng = một đơn. Cột của dataset <span class="pill">settlements</span>. Nối với <code>orders</code> qua cặp (<code>platform</code>, <code>order_id</code>).</p>
+    <table>
+      <thead><tr><th>Trường</th><th>Kiểu</th><th>Ý nghĩa</th></tr></thead>
+      <tbody>
+        <tr><td><code>platform</code> / <code>order_id</code></td><td>string</td><td>Khoá nối với orders</td></tr>
+        <tr><td><code>fee_platform</code></td><td>decimal</td><td>Phí bắt buộc (hoa hồng, cố định, dịch vụ, thanh toán, hạ tầng)</td></tr>
+        <tr><td><code>fee_marketing</code></td><td>decimal</td><td>Phí tự chọn đẩy đơn (quảng cáo, affiliate, gói Xtra)</td></tr>
+        <tr><td><code>fee_promotion</code></td><td>decimal</td><td>Khuyến mãi shop tự chịu (mã giảm giá, hoàn xu)</td></tr>
+        <tr><td><code>fee_total</code></td><td>decimal</td><td>Tổng ba nhóm — chi phí sàn thật của đơn</td></tr>
+        <tr><td><code>details</code></td><td>json</td><td>Chi tiết từng khoản theo tên gốc, để truy lại</td></tr>
+        <tr><td><code>upload_id</code> / <code>updated_at</code></td><td>int / datetime</td><td>Lần tải & lần cập nhật gần nhất</td></tr>
+      </tbody>
+    </table>
+
+    <h2 id="field-metric">Trường → biểu đồ / chỉ số</h2>
+    <p>Bảng tra ngược: mỗi chỉ số trên dashboard dùng những trường nào, để dựng lại đúng con số đó trong Power BI.</p>
+    <table>
+      <thead><tr><th>Chỉ số / biểu đồ</th><th>Trường dùng</th><th>Cách tính</th></tr></thead>
+      <tbody>
+        <tr><td>Doanh thu</td><td><code>subtotal_after_discount</code>, <code>normalized_status</code></td><td>Σ khi status ∈ (completed, delivered)</td></tr>
+        <tr><td>Số đơn</td><td><code>platform</code>, <code>order_id</code></td><td>COUNT(DISTINCT platform+order_id)</td></tr>
+        <tr><td>AOV</td><td>Doanh thu, Số đơn</td><td>Doanh thu ÷ số đơn</td></tr>
+        <tr><td>Tỷ lệ chuyển đổi</td><td>Số đơn, <code>visits</code></td><td>Số đơn ÷ Σ visits × 100</td></tr>
+        <tr><td>Sản phẩm bán chạy</td><td><code>sku</code>, <code>product_name</code>, <code>quantity</code>, <code>subtotal_after_discount</code></td><td>Gộp theo SKU</td></tr>
+        <tr><td>Phân bổ theo khu vực</td><td><code>shipping_city</code>, <code>subtotal_after_discount</code></td><td>Gộp theo tỉnh/thành (Lazada không có)</td></tr>
+        <tr><td>Phân bổ theo kho</td><td><code>warehouse</code>, <code>subtotal_after_discount</code></td><td>Gộp theo kho (chuẩn hoá tên)</td></tr>
+        <tr><td>Phân loại khách hàng</td><td><code>buyer_username</code>, <code>order_id</code>, <code>order_created_at</code></td><td>Đếm đơn/khách trong kỳ &amp; 12 tháng trước</td></tr>
+        <tr><td>Chi phí sàn</td><td><code>fee_platform</code>, <code>fee_marketing</code>, <code>fee_promotion</code></td><td>Từ settlements, nối theo (platform, order_id)</td></tr>
+        <tr><td>Lợi nhuận ròng</td><td>Doanh thu, <code>fee_total</code></td><td>Doanh thu − fee_total</td></tr>
+        <tr><td>Lưu lượng</td><td><code>visits</code>, <code>page_views</code>, <code>new_visitors</code>…</td><td>Cộng theo kỳ</td></tr>
       </tbody>
     </table>
 

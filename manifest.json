@@ -1,7 +1,7 @@
 {
-  "version": "3.5.1",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.5.1/release/dashboard-v3-3.5.1.zip",
-  "changelog": "Trang Tài liệu: thêm nút đổi giao diện sáng/tối và menu tự bám theo nội dung đang đọc.\n- Nút sáng/tối ở góc menu trái (và trên thanh tiêu đề khi xem trên điện thoại). Mặc định theo hệ điều hành; khi bấm chọn tay thì ghi nhớ lựa chọn cho lần sau.\n- Mục trong menu trái tự sáng lên theo phần đang đọc khi cuộn trang.",
+  "version": "3.5.2",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.5.2/release/dashboard-v3-3.5.2.zip",
+  "changelog": "Trang Tài liệu: bổ sung guideline chi tiết cách trích xuất dữ liệu từ file sàn.\n- Nhóm \"Trích xuất từ file sàn\": giải thích cách khớp cột (theo TÊN tiêu đề, không theo địa chỉ ô cố định) và bảng khớp cột nguồn → trường chuẩn hoá cho từng sàn (Shopee/Lazada/TikTok), cho cả đơn hàng, lưu lượng và báo cáo tài chính.\n- Nhóm \"Tham chiếu trường dữ liệu\": từ điển đầy đủ của orders, traffic_daily, order_settlements (tên trường, kiểu, ý nghĩa) và bảng tra ngược trường → biểu đồ/chỉ số.\n- Đây cũng chính là tên trường xuất qua API Power BI, giúp người dùng API dựng lại đúng chỉ số.",
   "min_php": "8.1",
-  "released_at": "2026-09-07"
+  "released_at": "2026-09-08"
 }
