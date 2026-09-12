@@ -185,11 +185,17 @@
   3. bump `version.txt`
   4. cập nhật `manifest.json`
   5. build zip release
-  6. commit
-  7. tag
-  8. push `main`
-  9. push tag
-  10. kiểm tra public URL trả `HTTP 200`
+  6. `git rm` zip của bản phát hành TRƯỚC trong `release/` (chỉ giữ zip bản hiện tại trên `main`)
+  7. commit (stage theo tên: code + `version.txt` + `manifest.json` + zip mới + zip cũ đã xoá)
+  8. tag
+  9. push `main`
+  10. push tag
+  11. kiểm tra public URL trả `HTTP 200`
+- **Chỉ giữ MỘT zip trên `main`** — zip của bản hiện tại. Production tải bản cập nhật từ
+  zip theo **tag** (`.../vX.Y.Z/release/...zip`), không đọc `release/` từ `main`, nên mỗi
+  tag đã tự giữ zip riêng của nó; giữ zip cũ trên `main` chỉ làm phình repo (100 zip ≈ 155MB
+  đã dọn ở 3.5.3). Tuyệt đối không viết lại lịch sử/tag để xoá zip — sẽ làm hỏng
+  `download_url` mà production đang trỏ tới.
 - Các release gần đây đã theo pattern `v1.2.x`.
 - Production chỉ dùng một manifest cố định:
   - `https://raw.githubusercontent.com/namct2610/ecom-dashboard/main/manifest.json`
