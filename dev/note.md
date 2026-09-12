@@ -239,3 +239,28 @@
 - Mục tiêu hotfix gần nhất:
   - tự nhận diện traffic theo nội dung workbook
   - Shopee traffic chỉ import sheet `Tất cả`
+
+## 12. Chạy repo phát hành ở chế độ PRIVATE (nếu cần)
+
+Repo `namct2610/ecom-dashboard` là public. Nếu chuyển sang **private** để chặn rò
+rỉ lịch sử, auto-update sẽ gãy nếu không có token, vì updater fetch ẩn danh:
+- manifest qua `api.github.com/...` → private trả 404
+- zip qua `raw.githubusercontent.com/...` → private KHÔNG phục vụ file
+
+Updater (từ 3.5.3) hỗ trợ token: nếu có `update.github_token` trong
+`config.local.php` thì manifest gửi kèm `Authorization: Bearer`, và zip được tải
+qua API contents (`Accept: application/vnd.github.raw`) thay cho raw. Không có
+token thì giữ nguyên hành vi public như cũ.
+
+**Thứ tự chuyển private (bắt buộc đúng thứ tự, nếu không production tự khoá mình):**
+1. Phát hành bản có updater hỗ trợ token (≥ 3.5.3) khi repo CÒN public.
+2. Chờ production tự cập nhật lên bản đó (kiểm tra version trên máy chủ).
+3. Tạo GitHub Personal Access Token (fine-grained, chỉ repo này, quyền Contents: Read).
+4. Trên máy chủ, thêm vào `config.local.php`:
+   `'update' => ['github_token' => 'ghp_...'],`
+5. Bấm "Kiểm tra cập nhật" trên dashboard — phải vẫn thấy manifest (token chạy).
+6. Chuyển repo sang Private trong GitHub Settings.
+7. Kiểm lại: "Kiểm tra cập nhật" vẫn trả version, và thử một bản cập nhật nhỏ
+   để chắc luồng tải zip qua API chạy.
+- Token nằm trong `config.local.php` (đã gitignore, đã nằm trong preservedPaths
+  nên không bị ghi đè khi update). Tuyệt đối không commit token.

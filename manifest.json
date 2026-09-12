@@ -1,7 +1,7 @@
 {
-  "version": "3.5.2",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.5.2/release/dashboard-v3-3.5.2.zip",
-  "changelog": "Trang Tài liệu: bổ sung guideline chi tiết cách trích xuất dữ liệu từ file sàn.\n- Nhóm \"Trích xuất từ file sàn\": giải thích cách khớp cột (theo TÊN tiêu đề, không theo địa chỉ ô cố định) và bảng khớp cột nguồn → trường chuẩn hoá cho từng sàn (Shopee/Lazada/TikTok), cho cả đơn hàng, lưu lượng và báo cáo tài chính.\n- Nhóm \"Tham chiếu trường dữ liệu\": từ điển đầy đủ của orders, traffic_daily, order_settlements (tên trường, kiểu, ý nghĩa) và bảng tra ngược trường → biểu đồ/chỉ số.\n- Đây cũng chính là tên trường xuất qua API Power BI, giúp người dùng API dựng lại đúng chỉ số.",
+  "version": "3.5.3",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.5.3/release/dashboard-v3-3.5.3.zip",
+  "changelog": "Updater hỗ trợ token để chạy được khi repo phát hành ở chế độ private.\n- Nếu khai 'update.github_token' trong config.local.php: manifest gửi kèm Authorization, và zip tải qua GitHub API (raw.githubusercontent không phục vụ repo private).\n- Không khai token thì giữ nguyên hành vi cũ cho repo public — không ảnh hưởng gì.\n- Dọn lịch sử repo: đã gỡ toàn bộ file dữ liệu thật (xlsx/xls/others) khỏi mọi commit và tag; zip release trong tag giữ nguyên nên cập nhật không bị ảnh hưởng.",
   "min_php": "8.1",
-  "released_at": "2026-09-08"
+  "released_at": "2026-09-12"
 }

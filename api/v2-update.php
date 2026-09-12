@@ -31,6 +31,9 @@ $pdo = db($config);
 // across updates.
 $appRoot = dirname(__DIR__);
 $updater = new Updater($appRoot);
+// Only needed when the release repo is private; empty for a public repo, which
+// leaves the updater on its anonymous path. Lives in config.local.php (gitignored).
+$updater->setGithubToken((string) ($config['update']['github_token'] ?? ''));
 
 // GitHub API contents endpoint — 60s CDN cache + ETag revalidation,
 // much more reliable than raw.githubusercontent.com (5-min cache + edge

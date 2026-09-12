@@ -31,6 +31,21 @@ class Updater
     private array $preservedPaths;
 
     /**
+     * Optional GitHub token. Only needed when the release repo is PRIVATE: the
+     * anonymous api.github.com / raw.githubusercontent.com paths 404 on a private
+     * repo, so both the manifest fetch and the zip download must authenticate.
+     * Left null for a public repo, in which case nothing about the request
+     * changes and the existing anonymous behaviour is preserved exactly.
+     */
+    private ?string $githubToken = null;
+
+    public function setGithubToken(?string $token): void
+    {
+        $token = $token !== null ? trim($token) : null;
+        $this->githubToken = ($token === '') ? null : $token;
+    }
+
+    /**
      * @param string        $appRoot          absolute path of the app (extraction target)
      * @param string|null   $versionFilePath  optional override (default: $appRoot/version.txt).
      *                                        Useful for channel/sub-app updaters (e.g. old/version.txt
@@ -269,11 +284,47 @@ class Updater
     }
 
     /** Stream-download a URL to a local file path. */
+    /**
+     * raw.githubusercontent.com does not serve a PRIVATE repo's files, so when a
+     * token is configured the raw URL is rewritten to the API contents endpoint,
+     * which streams the same bytes with `Accept: application/vnd.github.raw` when
+     * authenticated. The input is the manifest's download_url, already validated
+     * by update_url_is_trusted(); this only reshapes it, it does not widen where
+     * the download may come from.
+     */
+    private function apiDownloadUrl(string $rawUrl): ?string
+    {
+        if (!preg_match(
+            '#^https://raw\.githubusercontent\.com/([^/]+)/([^/]+)/([^/]+)/(.+)$#',
+            $rawUrl,
+            $m
+        )) {
+            return null;
+        }
+        // Strip a cache-buster query if present on the path tail.
+        $path = preg_replace('/\?.*$/', '', $m[4]);
+        return sprintf(
+            'https://api.github.com/repos/%s/%s/contents/%s?ref=%s',
+            $m[1], $m[2], $path, rawurlencode($m[3])
+        );
+    }
+
     private function downloadFile(string $url, string $dest): void
     {
         $fp = @fopen($dest, 'wb');
         if (!$fp) {
             throw new \RuntimeException("Không thể tạo file tạm: $dest");
+        }
+
+        $headers = ['Accept: application/octet-stream'];
+        if ($this->githubToken !== null) {
+            // Private repo: go through the API with the raw media type + token.
+            $apiUrl = $this->apiDownloadUrl($url);
+            if ($apiUrl !== null) {
+                $url = $apiUrl;
+                $headers = ['Accept: application/vnd.github.raw'];
+            }
+            $headers[] = 'Authorization: Bearer ' . $this->githubToken;
         }
 
         $ch = curl_init();
@@ -283,6 +334,7 @@ class Updater
             CURLOPT_TIMEOUT        => 120,
             CURLOPT_SSL_VERIFYPEER => true,
             CURLOPT_USERAGENT      => 'DashboardV3-Updater/1.0',
+            CURLOPT_HTTPHEADER     => $headers,
             CURLOPT_FOLLOWLOCATION => true,
             CURLOPT_MAXREDIRS      => 3,
             // Redirects are followed, so pin both hops to HTTP(S): a redirect to
@@ -319,11 +371,11 @@ class Updater
             CURLOPT_USERAGENT      => 'DashboardV3-Updater/1.0',
             CURLOPT_FOLLOWLOCATION => true,
             CURLOPT_MAXREDIRS      => 3,
-            CURLOPT_HTTPHEADER     => [
+            CURLOPT_HTTPHEADER     => array_merge([
                 'Accept: application/vnd.github+json, application/json',
                 'Cache-Control: no-cache',
                 'Pragma: no-cache',
-            ],
+            ], $this->githubToken !== null ? ['Authorization: Bearer ' . $this->githubToken] : []),
         ]);
         $response = curl_exec($ch);
         $errno    = curl_errno($ch);
