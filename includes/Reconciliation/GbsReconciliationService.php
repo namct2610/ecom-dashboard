@@ -913,7 +913,7 @@ final class GbsReconciliationService
                    order_created_at, order_completed_at
             FROM orders
             WHERE platform = :platform
-              AND normalized_status <> 'cancelled'
+              AND normalized_status IN ('completed', 'delivered')
               AND order_completed_at >= :start_at
               AND order_completed_at < :end_at
             ORDER BY order_completed_at DESC, order_id ASC, sku ASC
@@ -947,7 +947,7 @@ final class GbsReconciliationService
                        order_created_at, order_completed_at
                 FROM orders
                 WHERE platform = ?
-                  AND normalized_status <> 'cancelled'
+                  AND normalized_status IN ('completed', 'delivered')
                   AND order_id IN ({$placeholders})
                 ORDER BY order_completed_at DESC, order_id ASC, sku ASC
             ";

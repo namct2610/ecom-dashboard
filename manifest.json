@@ -1,7 +1,7 @@
 {
-  "version": "3.5.3",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.5.3/release/dashboard-v3-3.5.3.zip",
-  "changelog": "Updater hỗ trợ token để chạy được khi repo phát hành ở chế độ private.\n- Nếu khai 'update.github_token' trong config.local.php: manifest gửi kèm Authorization, và zip tải qua GitHub API (raw.githubusercontent không phục vụ repo private).\n- Không khai token thì giữ nguyên hành vi cũ cho repo public — không ảnh hưởng gì.\n- Dọn lịch sử repo: đã gỡ toàn bộ file dữ liệu thật (xlsx/xls/others) khỏi mọi commit và tag; zip release trong tag giữ nguyên nên cập nhật không bị ảnh hưởng.",
+  "version": "3.5.4",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.5.4/release/dashboard-v3-3.5.4.zip",
+  "changelog": "Đối soát tài chính (GBS) chỉ lọc đơn hàng thành công.\n- Trước đây phần check lấy mọi đơn khác 'đã hủy', nên còn lẫn đơn 'pending' (chưa hoàn thành) — không khớp với GBS và làm lệch số đơn từng tháng.\n- Nay chỉ đếm đơn có trạng thái completed/delivered, đúng như cách tính doanh thu/chi phí ở các phần khác.",
   "min_php": "8.1",
-  "released_at": "2026-09-12"
+  "released_at": "2026-09-13"
 }
