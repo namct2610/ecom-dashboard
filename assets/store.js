@@ -136,6 +136,25 @@
     return new URL(String(path || "").replace(/^\/+/, ""), appBaseHref());
   }
 
+  // Shared guard for live API calls. index.html bounces to the login page at
+  // startup when the session is missing, but a session that expires AFTER the
+  // app loaded only shows up on the next live call (the Customers tab fetches
+  // fresh every visit, so it is usually the first to hit it). Treat a 401 the
+  // same way startup does — send the user to log in again — instead of letting a
+  // raw "HTTP 401" land in the view.
+  let authRedirecting = false;
+  function checkApiResponse(r) {
+    if (r.status === 401) {
+      if (!authRedirecting) {
+        authRedirecting = true;
+        window.location.replace(buildApiUrl("login.html").toString());
+      }
+      throw new Error("HTTP 401");
+    }
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    return r;
+  }
+
   function normalizeRange(start, end, mode) {
     if (start > end) [start, end] = [end, start];
     return { mode, start, end };
@@ -545,10 +564,8 @@
       url.searchParams.set("platform", activePlatform === "tiktok" ? "tiktokshop" : activePlatform);
     }
     rangeDetailInflight[cacheKey] = fetch(url.toString(), { credentials: "same-origin" })
-      .then((r) => {
-        if (!r.ok) throw new Error("HTTP " + r.status);
-        return r.json();
-      })
+      .then(checkApiResponse)
+      .then((r) => r.json())
       .then((data) => {
         rangeDetailCache[cacheKey] = data;
         delete rangeDetailInflight[cacheKey];
@@ -659,7 +676,7 @@
     url.searchParams.set("date_to", range.end);
     if (state.platform !== "all") url.searchParams.set("platform", state.platform === "tiktok" ? "tiktokshop" : state.platform);
     customerInflight[cacheKey] = fetch(url.toString(), { credentials: "same-origin" })
-      .then((r) => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+      .then(checkApiResponse).then((r) => r.json())
       .then((data) => { customerCache[cacheKey] = data; delete customerInflight[cacheKey]; return data; })
       .catch((err) => { delete customerInflight[cacheKey]; throw err; });
     return customerInflight[cacheKey];
@@ -674,7 +691,7 @@
     url.searchParams.set("date_to", range.end);
     if (state.platform !== "all") url.searchParams.set("platform", state.platform === "tiktok" ? "tiktokshop" : state.platform);
     return fetch(url.toString(), { credentials: "same-origin" })
-      .then((r) => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); });
+      .then(checkApiResponse).then((r) => r.json());
   }
 
   /* ---- traffic ---- */

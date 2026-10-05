@@ -1,7 +1,7 @@
 {
-  "version": "3.5.4",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.5.4/release/dashboard-v3-3.5.4.zip",
-  "changelog": "Đối soát tài chính (GBS) chỉ lọc đơn hàng thành công.\n- Trước đây phần check lấy mọi đơn khác 'đã hủy', nên còn lẫn đơn 'pending' (chưa hoàn thành) — không khớp với GBS và làm lệch số đơn từng tháng.\n- Nay chỉ đếm đơn có trạng thái completed/delivered, đúng như cách tính doanh thu/chi phí ở các phần khác.",
+  "version": "3.5.5",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.5.5/release/dashboard-v3-3.5.5.zip",
+  "changelog": "Phiên hết hạn ở tab Khách hàng: tự đưa về trang đăng nhập thay vì báo lỗi 401.\n- Trước đây khi phiên đăng nhập hết hạn lúc đang dùng, tab Khách hàng (gọi API trực tiếp mỗi lần vào) hiện thẳng \"Lỗi: HTTP 401\". Các tab khác không bị vì đọc từ dữ liệu đã tải sẵn.\n- Nay mọi lời gọi API trực tiếp khi gặp 401 sẽ tự chuyển về trang đăng nhập (giống lúc mở app), để đăng nhập lại cho sạch.",
   "min_php": "8.1",
-  "released_at": "2026-09-13"
+  "released_at": "2026-10-05"
 }
