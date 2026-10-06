@@ -54,211 +54,6 @@
   Chart.defaults.animation = false;
   Chart.defaults.maintainAspectRatio = false;
 
-  /* Stacked bar rounded-top plugin.
-     Default Chart.js applies borderRadius per-segment, so inner stack
-     segments show ridges on every layer. This plugin clips drawing to a
-     rounded-top shape spanning the FULL stack column — so the top corners
-     are consistent regardless of how thin the topmost layer is. */
-  function compactNumber(v) {
-    const n = Math.abs(+v || 0);
-    const sign = v < 0 ? "-" : "";
-    const fmt = (x) => (x >= 10 ? Math.round(x) : Math.round(x * 10) / 10).toString().replace(".0", "");
-    if (n >= 1e9) return sign + fmt(n / 1e9) + "B";
-    if (n >= 1e6) return sign + fmt(n / 1e6) + "M";
-    if (n >= 1e3) return sign + fmt(n / 1e3) + "K";
-    return sign + Math.round(n).toString();
-  }
-
-  const StackedRoundedTopPlugin = {
-    id: 'stackedRoundedTop',
-    beforeDatasetsDraw(chart, _args, opts) {
-      if (!opts || !opts.enabled) return;
-      const radius = opts.radius || 6;
-      const { ctx } = chart;
-      const datasets = chart.data.datasets;
-      if (!datasets.length) return;
-      const len = (datasets[0].data || []).length;
-      if (!len) return;
-      ctx.save();
-      ctx.beginPath();
-      let any = false;
-      for (let i = 0; i < len; i++) {
-        let topY = Infinity, bottomY = -Infinity, x = null, w = null;
-        for (let dsIdx = 0; dsIdx < datasets.length; dsIdx++) {
-          const v = +datasets[dsIdx].data[i];
-          if (!v) continue;
-          const meta = chart.getDatasetMeta(dsIdx);
-          if (meta.hidden) continue;
-          const bar = meta.data[i];
-          if (!bar) continue;
-          if (bar.y < topY) topY = bar.y;
-          if (bar.base > bottomY) bottomY = bar.base;
-          x = bar.x - bar.width / 2;
-          w = bar.width;
-        }
-        if (x == null || !isFinite(topY) || !isFinite(bottomY)) continue;
-        const h = Math.abs(bottomY - topY);
-        const r = Math.min(radius, w / 2, h);
-        ctx.moveTo(x, topY + r);
-        ctx.quadraticCurveTo(x, topY, x + r, topY);
-        ctx.lineTo(x + w - r, topY);
-        ctx.quadraticCurveTo(x + w, topY, x + w, topY + r);
-        ctx.lineTo(x + w, bottomY);
-        ctx.lineTo(x, bottomY);
-        ctx.closePath();
-        any = true;
-      }
-      if (any) ctx.clip();
-      else ctx.restore();
-      chart.$srtClipped = any;
-    },
-    afterDatasetsDraw(chart, _args, opts) {
-      if (!opts || !opts.enabled) return;
-      if (chart.$srtClipped) {
-        chart.ctx.restore();
-        chart.$srtClipped = false;
-      }
-    },
-  };
-  const StackTotalLabelPlugin = {
-    id: 'stackTotalLabel',
-    afterDatasetsDraw(chart, _args, opts) {
-      if (!opts || !opts.enabled) return;
-      const datasets = chart.data.datasets || [];
-      const len = datasets[0]?.data?.length || 0;
-      if (!len) return;
-      const { ctx, chartArea } = chart;
-      const format = opts.format || compactNumber;
-
-      // Collect one entry per bar: total, top edge, centre x.
-      const items = [];
-      for (let i = 0; i < len; i++) {
-        let total = 0, topY = Infinity, x = null;
-        for (let dsIdx = 0; dsIdx < datasets.length; dsIdx++) {
-          const meta = chart.getDatasetMeta(dsIdx);
-          if (meta.hidden) continue;
-          const v = +datasets[dsIdx].data[i] || 0;
-          if (!v) continue;
-          const bar = meta.data[i];
-          if (!bar) continue;
-          total += v;
-          topY = Math.min(topY, bar.y);
-          x = bar.x;
-        }
-        if (!total || x == null || !isFinite(topY)) continue;
-        items.push({ x, topY, text: format(total) });
-      }
-      if (!items.length) return;
-
-      // Every bar should keep its number, so shrink and finally rotate to make
-      // them fit instead of dropping alternate labels. Only a slot too narrow
-      // for even upright text falls back to skipping.
-      const base = opts.fontSize || (chart.width >= 1600 ? 15 : chart.width >= 1200 ? 13.5 : chart.width >= 950 ? 12.5 : 11.5);
-      const slot = chartArea.width / items.length;
-      const font = (size) => `800 ${size}px 'Be Vietnam Pro','Segoe UI',sans-serif`;
-      const widest = (size) => {
-        ctx.font = font(size);
-        let m = 0;
-        for (const it of items) m = Math.max(m, ctx.measureText(it.text).width);
-        return m;
-      };
-
-      ctx.save();
-      // GAP is the separation the draw loop below insists on, so the fitting
-      // test has to allow for it too — sizing to `slot` while drawing at
-      // `slot + GAP` silently dropped the odd label that fell right on the edge.
-      const GAP = 1;
-      let fs = base, pad = 12, rotate = false;
-      let w = widest(fs);
-      if (w + pad + GAP > slot) pad = 5;
-      while (w + pad + GAP > slot && fs > 8) { fs -= 0.5; w = widest(fs); }
-      if (w + pad + GAP > slot) {
-        // Upright text cannot fit side by side — stand the labels on end, which
-        // needs only about one line-height of width each.
-        rotate = true;
-        fs = Math.max(7, Math.min(base, slot - 2));
-        ctx.font = font(fs);
-      }
-      const h = Math.round(fs * 1.92);
-
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      let lastRight = -Infinity;
-
-      for (const it of items) {
-        const tw = ctx.measureText(it.text).width;
-        if (rotate) {
-          // No badge when rotated: a pill around vertical text just adds noise.
-          // Rotated text is only about one line-height wide, so pack them at
-          // exactly that pitch — any extra margin here starts dropping every
-          // other label again, which is what this rework exists to stop.
-          const gap = fs;
-          if (it.x - gap / 2 < lastRight) continue;
-          lastRight = it.x + gap / 2;
-          const y = Math.max(chartArea.top + tw / 2 + 2, it.topY - tw / 2 - 8);
-          ctx.save();
-          ctx.translate(it.x, y);
-          ctx.rotate(-Math.PI / 2);
-          ctx.fillStyle = opts.color || ink3();
-          ctx.fillText(it.text, 0, 0);
-          ctx.restore();
-          continue;
-        }
-        const bw = Math.ceil(tw) + pad;
-        const left = it.x - bw / 2;
-        if (left < lastRight + GAP) continue;
-        lastRight = it.x + bw / 2;
-        const y = Math.max(chartArea.top + h / 2 + 2, it.topY - h / 2 - 8);
-        const r = h / 2;
-        const top = y - h / 2;
-        ctx.fillStyle = opts.backgroundColor || surface();
-        ctx.strokeStyle = opts.borderColor || gridc();
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.moveTo(left + r, top);
-        ctx.lineTo(left + bw - r, top);
-        ctx.quadraticCurveTo(left + bw, top, left + bw, top + r);
-        ctx.lineTo(left + bw, top + h - r);
-        ctx.quadraticCurveTo(left + bw, top + h, left + bw - r, top + h);
-        ctx.lineTo(left + r, top + h);
-        ctx.quadraticCurveTo(left, top + h, left, top + h - r);
-        ctx.lineTo(left, top + r);
-        ctx.quadraticCurveTo(left, top, left + r, top);
-        ctx.closePath();
-        ctx.fill();
-        ctx.stroke();
-        ctx.fillStyle = opts.color || ink3();
-        ctx.fillText(it.text, it.x, y + 0.5);
-      }
-      ctx.restore();
-    },
-  };
-
-  // maxBarThickness is a fixed number chosen for the in-card width, so a chart
-  // opened fullscreen keeps card-sized bars stranded in huge gaps. Recompute the
-  // cap from the real plot width on each update (a resize triggers one). It only
-  // ever widens — the in-card appearance is left exactly as it was.
-  const AdaptiveBarWidthPlugin = {
-    id: 'adaptiveBarWidth',
-    beforeUpdate(chart, _args, opts) {
-      if (!opts || !opts.enabled) return;
-      const n = chart.data.labels ? chart.data.labels.length : 0;
-      const plotW = (chart.chartArea && chart.chartArea.width) || chart.width || 0;
-      if (!n || !plotW) return;
-      const slot = plotW / n;
-      // Only engage once the plot is genuinely large (i.e. fullscreen). Inside a
-      // card the original barSizing() caps must stand, or a three-bar chart would
-      // silently get fatter bars than it has always had.
-      const wide = plotW >= 1000;
-      chart.data.datasets.forEach((ds) => {
-        if (ds._baseMaxBar == null) ds._baseMaxBar = ds.maxBarThickness;
-        ds.maxBarThickness = wide
-          ? Math.max(ds._baseMaxBar || 0, Math.min(180, Math.round(slot * 0.68)))
-          : ds._baseMaxBar;
-      });
-    },
-  };
-
   // The donut's centre total is an HTML overlay sitting on top of the canvas, so
   // it paints over the canvas-drawn tooltip and the two texts collide. Nothing
   // can raise a canvas tooltip above a sibling element, so fade the overlay out
@@ -273,7 +68,7 @@
     },
   };
 
-  Chart.register(StackedRoundedTopPlugin, StackTotalLabelPlugin, AdaptiveBarWidthPlugin, DonutCentreFadePlugin);
+  Chart.register(DonutCentreFadePlugin);
 
   function tip() {
     return {
@@ -284,95 +79,6 @@
       titleFont: { weight: 800, size: 12.5 }, bodyFont: { weight: 600, size: 12.5 },
       borderColor: "transparent",
     };
-  }
-
-  const tr = (k, f) => (window.t ? window.t(k, f) : (f || k));
-  const tfmt = (k, v) => (window.tf ? window.tf(k, v) : tr(k));
-  const dayLabel = (d) => { const p = d.split("-"); return p[2] + "/" + p[1]; };
-
-  /* ---- revenue trend: stacked area by platform (all) or single line ---- */
-  function revenueTrend(canvas, series, opt) {
-    opt = opt || {};
-    const labels = series.map((s) => dayLabel(s.date));
-    const stacked = opt.platform === "all";
-    let datasets;
-    if (stacked) {
-      datasets = ["shopee", "lazada", "tiktok"].map((k) => ({
-        label: window.Store.PLAT[k].label, data: series.map((s) => s[k]),
-        backgroundColor: hexA(col("--" + k), 0.16), borderColor: col("--" + k),
-        borderWidth: 2, fill: true, tension: 0.34, pointRadius: 0, pointHoverRadius: 4,
-        pointBackgroundColor: col("--" + k), stack: "rev",
-      }));
-    } else {
-      const c = col("--" + opt.platform);
-      datasets = [{
-        label: window.Store.PLAT[opt.platform].label, data: series.map((s) => s.revenue),
-        backgroundColor: grad(canvas, hexA(c, 0.28), hexA(c, 0)), borderColor: c,
-        borderWidth: 2.5, fill: true, tension: 0.34, pointRadius: 0, pointHoverRadius: 4, pointBackgroundColor: c,
-      }];
-    }
-    return mk(canvas, {
-      type: "line",
-      data: { labels, datasets },
-      options: {
-        interaction: { mode: "index", intersect: false },
-        scales: {
-          x: { stacked, grid: { display: false }, ticks: { color: ink3(), font: { size: 11 }, maxRotation: 0, autoSkip: true, maxTicksLimit: 10 }, border: { display: false } },
-          y: { stacked, grid: { color: gridc(), drawTicks: false }, ticks: { color: ink3(), font: (c) => ({ size: c.chart.width >= 1600 ? 14.5 : c.chart.width >= 1200 ? 13 : c.chart.width >= 950 ? 12 : 11 }), callback: (v) => window.F.money(v) }, border: { display: false } },
-        },
-        plugins: { tooltip: { ...tip(), callbacks: { label: (c) => " " + c.dataset.label + ": " + window.F.moneyFull(c.raw) } } },
-      },
-    });
-  }
-
-  function barSizing(count) {
-    return {
-      categoryPercentage: count <= 4 ? 0.92 : count <= 8 ? 0.84 : 0.86,
-      barPercentage: count <= 4 ? 0.98 : 0.96,
-      maxBarThickness: count <= 4 ? 112 : count <= 8 ? 76 : 52,
-    };
-  }
-
-  /* ---- orders trend grouped bars ---- */
-  /* ---- orders trend: stacked area by platform (all) or single filled line ----
-     Line rather than bars: a daily order series is a flow over time, and at 30+
-     points the bars were thin slivers. Stacking still shows the platform split
-     and the total silhouette. */
-  function ordersTrend(canvas, series, opt) {
-    opt = opt || {};
-    const labels = series.map((s) => s.label || dayLabel(s.date));
-    const stacked = opt.platform === "all";
-    const lineOf = (key, label) => {
-      const c = col("--" + key);
-      return {
-        label, data: series.map((s) => s["o_" + key] || 0),
-        borderColor: c, backgroundColor: hexA(c, 0.35),
-        borderWidth: 2, tension: 0.32, fill: true,
-        pointRadius: 0, pointHoverRadius: 4, pointBackgroundColor: c, pointBorderWidth: 0,
-      };
-    };
-    const datasets = stacked
-      ? ["shopee", "lazada", "tiktok"].map((k) => lineOf(k, window.Store.PLAT[k].label))
-      : [lineOf(opt.platform, window.Store.PLAT[opt.platform].label)];
-
-    return mk(canvas, {
-      type: "line", data: { labels, datasets },
-      options: {
-        layout: { padding: { top: 18 } },
-        interaction: { mode: "index", intersect: false },
-        scales: {
-          x: { grid: { display: false }, ticks: { color: ink3(), font: (c) => ({ size: c.chart.width >= 1600 ? 14.5 : c.chart.width >= 1200 ? 13 : c.chart.width >= 950 ? 12 : 10.5 }), maxRotation: 0, autoSkip: true }, border: { display: false } },
-          y: { stacked, grid: { color: gridc(), drawTicks: false }, ticks: { color: ink3(), font: (c) => ({ size: c.chart.width >= 1600 ? 14.5 : c.chart.width >= 1200 ? 13 : c.chart.width >= 950 ? 12 : 11 }) }, border: { display: false }, beginAtZero: true },
-        },
-        plugins: {
-          tooltip: { ...tip(), callbacks: { label: (c) => " " + c.dataset.label + ": " + window.F.viInt(c.raw) + " " + tr("common.orders_unit", "đơn"), footer: (items) => tr("common.total", "Tổng") + ": " + window.F.viInt(items.reduce((t, i) => t + i.raw, 0)) + " " + tr("common.orders_unit", "đơn") } },
-          // stackedRoundedTop / adaptiveBarWidth are bar-only; stackTotalLabel
-          // reads meta.data[i].x/y, which line points expose too, so the totals
-          // above each step still work.
-          stackTotalLabel: { enabled: true },
-        },
-      },
-    });
   }
 
   /* ---- donut ---- */
@@ -407,24 +113,6 @@
     });
   }
 
-  /* ---- sparkline (no axes) ---- */
-  function spark(canvas, values, color, type) {
-    const c = col(color);
-    // size the backing store to the canvas's intended box and lock it (non-responsive)
-    const w = canvas.width || 88, h = canvas.height || 30;
-    return mk(canvas, {
-      type: type || "line",
-      data: { labels: values.map((_, i) => i), datasets: [{ data: values, borderColor: c, backgroundColor: type === "bar" ? c : grad(canvas, hexA(c, 0.3), hexA(c, 0)), borderWidth: 2, fill: type !== "bar", tension: 0.4, pointRadius: 0, borderRadius: 6, maxBarThickness: 5 }] },
-      options: { responsive: false, maintainAspectRatio: false, animation: false, scales: { x: { display: false }, y: { display: false, min: 0 } }, plugins: { tooltip: { enabled: false } } },
-    });
-  }
-
-  /* ---- horizontal compare bars (mini, per platform) ---- */
-  function miniBars(canvas, series, platform) {
-    const c = col("--" + (platform === "all" ? "shopee" : platform));
-    return spark(canvas, series, "--ink-3");
-  }
-
   // helpers
   // col() now normalises every colour to rgb()/rgba(), so this has to read that
   // form first — parsing "rgb(238,77,45)" as hex silently produced rgba(0,11,35)
@@ -439,52 +127,6 @@
     const r = parseInt(full.slice(0, 2), 16), g = parseInt(full.slice(2, 4), 16), b = parseInt(full.slice(4, 6), 16);
     return `rgba(${r},${g},${b},${a})`;
   }
-  function grad(canvas, c1, c2) {
-    const ctx = canvas.getContext("2d");
-    const g = ctx.createLinearGradient(0, 0, 0, canvas.height || 200);
-    g.addColorStop(0, c1); g.addColorStop(1, c2);
-    return g;
-  }
-
-  /* ---- monthly revenue: stacked bars by platform + optional compare line ----
-     No maxTicksLimit on the x axis here or in ordersTrend: both can be opened
-     fullscreen, and a hard cap would keep hiding the same labels however big
-     the chart gets. autoSkip already prevents overlap at any width. */
-  function monthlyRevenue(canvas, trend, opt) {
-    opt = opt || {};
-    const labels = trend.map((t) => t.label);
-    const stacked = opt.platform === "all";
-    const sizing = barSizing(labels.length);
-    let datasets;
-    if (stacked) {
-      datasets = ["shopee", "lazada", "tiktok"].map((k) => ({
-        label: window.Store.PLAT[k].label, data: trend.map((t) => t[k]),
-        backgroundColor: trend.map((t) => t.partial ? hexA(col("--" + k), 0.4) : col("--" + k)),
-        borderRadius: 0, borderSkipped: false, borderWidth: 0, stack: "rev", ...sizing,
-      }));
-    } else {
-      const c = col("--" + opt.platform);
-      datasets = [{ label: window.Store.PLAT[opt.platform].label, data: trend.map((t) => t[opt.platform]), backgroundColor: trend.map((t) => t.partial ? hexA(c, 0.4) : c), borderRadius: 6, borderSkipped: "bottom", borderWidth: 0, ...sizing }];
-    }
-    return mk(canvas, {
-      type: "bar", data: { labels, datasets },
-      options: {
-        layout: { padding: { top: 18 } },
-        interaction: { mode: "index", intersect: false },
-        scales: {
-          x: { stacked, grid: { display: false }, ticks: { color: ink3(), font: (c) => ({ size: c.chart.width >= 1600 ? 14.5 : c.chart.width >= 1200 ? 13 : c.chart.width >= 950 ? 12 : 10.5 }), maxRotation: 0, autoSkip: true }, border: { display: false } },
-          y: { stacked, grid: { color: gridc(), drawTicks: false }, ticks: { color: ink3(), font: (c) => ({ size: c.chart.width >= 1600 ? 14.5 : c.chart.width >= 1200 ? 13 : c.chart.width >= 950 ? 12 : 11 }), callback: (v) => window.F.money(v) }, border: { display: false } },
-        },
-        plugins: {
-          tooltip: { ...tip(), callbacks: { label: (c) => " " + c.dataset.label + ": " + window.F.moneyFull(c.raw), footer: (items) => tr("common.total", "Tổng") + ": " + window.F.moneyFull(items.reduce((t, i) => t + i.raw, 0)) } },
-          stackedRoundedTop: { enabled: stacked, radius: 6 },
-          stackTotalLabel: { enabled: true },
-          adaptiveBarWidth: { enabled: true },
-        },
-      },
-    });
-  }
-
   /* ---- generic multi-line ---- */
   function lineSeries(canvas, labels, defs, opt) {
     opt = opt || {};
@@ -502,5 +144,5 @@
     });
   }
 
-  window.Charts = { revenueTrend, ordersTrend, monthlyRevenue, lineSeries, donut, spark, miniBars, destroy, destroyAll: () => Object.keys(reg).forEach(destroy), col, mk };
+  window.Charts = { lineSeries, donut, destroy, destroyAll: () => Object.keys(reg).forEach(destroy), col, mk };
 })();

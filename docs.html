@@ -328,8 +328,8 @@
 
     <h2 id="conversion">Tỷ lệ chuyển đổi &amp; giá trị đơn trung bình</h2>
     <h3>Tỷ lệ chuyển đổi</h3>
-    <p>Ghép số đơn (từ bảng đơn hàng) với số lượt truy cập (từ bảng lưu lượng) trong cùng kỳ.</p>
-    <div class="formula">Tỷ lệ chuyển đổi (%) = Số đơn / Σ visits × 100</div>
+    <p>Ghép số đơn hoàn thành (từ bảng đơn hàng) với số lượt truy cập (từ bảng lưu lượng) trong cùng kỳ. Trang <b>Sàn &amp; lưu lượng</b> vẽ thêm phễu lượt xem → truy cập → đơn hoàn thành, mỗi sàn tự quy về 100% lượt xem của chính nó.</p>
+    <div class="formula">Tỷ lệ chuyển đổi (%) = Số đơn hoàn thành / Σ visits × 100</div>
     <h3>Giá trị đơn trung bình (AOV)</h3>
     <div class="formula">AOV = Doanh thu / Số đơn hoàn thành</div>
 
@@ -458,8 +458,10 @@
       <tbody>
         <tr><td>Doanh thu</td><td><code>subtotal_after_discount</code>, <code>normalized_status</code></td><td>Σ khi status ∈ (completed, delivered)</td></tr>
         <tr><td>Số đơn</td><td><code>platform</code>, <code>order_id</code></td><td>COUNT(DISTINCT platform+order_id)</td></tr>
-        <tr><td>AOV</td><td>Doanh thu, Số đơn</td><td>Doanh thu ÷ số đơn</td></tr>
-        <tr><td>Tỷ lệ chuyển đổi</td><td>Số đơn, <code>visits</code></td><td>Số đơn ÷ Σ visits × 100</td></tr>
+        <tr><td>AOV</td><td>Doanh thu, Số đơn</td><td>Doanh thu ÷ số đơn hoàn thành</td></tr>
+        <tr><td>Tỷ lệ chuyển đổi</td><td>Số đơn, <code>visits</code></td><td>Số đơn hoàn thành ÷ Σ visits × 100</td></tr>
+        <tr><td>Phễu chuyển đổi</td><td><code>page_views</code>, <code>visits</code>, <code>normalized_status</code></td><td>Lượt xem → truy cập → đơn hoàn thành của từng sàn, tính % trên lượt xem của chính sàn đó</td></tr>
+        <tr><td>Đơn theo trạng thái</td><td><code>normalized_status</code>, <code>order_created_at</code></td><td>Mỗi cột thời gian: đơn hoàn thành/đã giao · huỷ · còn lại (đang xử lý)</td></tr>
         <tr><td>Sản phẩm bán chạy</td><td><code>sku</code>, <code>product_name</code>, <code>quantity</code>, <code>subtotal_after_discount</code></td><td>Gộp theo SKU</td></tr>
         <tr><td>Phân bổ theo khu vực</td><td><code>shipping_city</code>, <code>subtotal_after_discount</code></td><td>Gộp theo tỉnh/thành (Lazada không có)</td></tr>
         <tr><td>Phân bổ theo kho</td><td><code>warehouse</code>, <code>subtotal_after_discount</code></td><td>Gộp theo kho (chuẩn hoá tên)</td></tr>
@@ -467,7 +469,7 @@
         <tr><td>Giữ chân khách hàng</td><td><code>platform</code>, <code>buyer_username</code>, <code>order_created_at</code>, <code>normalized_status</code></td><td>Khách = (sàn, tên đăng nhập); đơn vị là ngày mua khác nhau (2 đơn cùng ngày = 1 lần). Tỷ lệ mua lại = khách có ≥2 ngày mua ÷ tổng khách; bảng giữ chân = % nhóm khách theo tháng mua đầu có mua lại ở tháng +k. Chỉ Shopee & TikTok (Lazada che tên)</td></tr>
         <tr><td>Phân loại khách hàng</td><td><code>buyer_username</code>, <code>order_id</code>, <code>order_created_at</code></td><td>Đếm đơn/khách trong kỳ &amp; 12 tháng trước</td></tr>
         <tr><td>Chi phí sàn</td><td><code>fee_platform</code>, <code>fee_marketing</code>, <code>fee_promotion</code></td><td>Từ settlements, nối theo (platform, order_id)</td></tr>
-        <tr><td>Lãi sau phí theo SKU &amp; hạng ABC</td><td><code>sku</code>, <code>subtotal_after_discount</code>, <code>quantity</code>, <code>fee_total</code> (settlements)</td><td>Phí của đơn chia xuống SKU theo tỷ trọng doanh thu trong đơn. Nguồn phí theo từng đơn: đối soát → tỷ lệ phí thật của sàn (cần ≥30 đơn đã đối soát) → phí trong file đơn → biểu phí cấu hình. ABC theo doanh thu luỹ kế: A 80%, B 15%, C 5%. Chưa trừ giá vốn</td></tr>
+        <tr><td>Lãi sau phí theo SKU &amp; hạng ABC</td><td><code>sku</code>, <code>subtotal_after_discount</code>, <code>quantity</code>, <code>fee_total</code> (settlements)</td><td>Phí của đơn chia xuống SKU theo tỷ trọng doanh thu trong đơn. Nguồn phí theo từng đơn: đối soát → tỷ lệ phí thật của sàn (cần ≥30 đơn đã đối soát) → phí trong file đơn → biểu phí cấu hình. ABC theo doanh thu luỹ kế: A 80%, B 15%, C 5%. Chưa trừ giá vốn. Chế độ “Theo SKU” tách combo thành SKU lẻ bằng bảng quy đổi combo trước khi chia phí; “Theo listing” giữ nguyên SKU như trên sàn</td></tr>
         <tr><td>Lợi nhuận ròng</td><td>Doanh thu, <code>fee_total</code></td><td>Doanh thu − fee_total</td></tr>
         <tr><td>Lưu lượng</td><td><code>visits</code>, <code>page_views</code>, <code>new_visitors</code>…</td><td>Cộng theo kỳ</td></tr>
       </tbody>

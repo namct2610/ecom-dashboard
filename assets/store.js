@@ -231,10 +231,6 @@
     const span = diffDays(cur.start, cur.end) + 1;
     return shiftRange(cur, -span);
   }
-  function compareMonths(key, mode) {
-    const r = compareRange(key, mode);
-    return r ? monthsInRange(r) : null;
-  }
   const _T = (k, f) => (window.t ? window.t(k, f) : f || k);
   const _TF = (k, v) => (window.tf ? window.tf(k, v) : k);
 
@@ -270,33 +266,6 @@
   function periodMode(key) {
     return rangeFromKey(key).mode;
   }
-  function coercePeriod(key, mode) {
-    const r = rangeFromKey(key);
-    if (mode === "day") return "d:" + r.end;
-    if (mode === "week") return "w:" + r.end;
-    if (mode === "month") return "m:" + r.end.slice(0, 7);
-    if (mode === "year") return "y:" + r.end.slice(0, 4);
-    if (mode === "custom") return "c:" + r.start + ":" + r.end;
-    return key;
-  }
-
-  /* ---- aggregate over a set of months (exact, from monthly) ---- */
-  function aggMonths(months, platform) {
-    if (!months) return null;
-    let revenue = 0, orders = 0, completed = 0, cancelled = 0;
-    months.forEach((ym) => {
-      const m = monthlyMap[ym]; if (!m) return;
-      if (platform === "all") { revenue += m.revenue; orders += m.orders; completed += m.completed; cancelled += m.cancelled; }
-      else { const p = m.plat[platform]; revenue += p.rev; orders += p.ord; completed += p.done; cancelled += p.canc; }
-    });
-    return {
-      revenue, orders, completed, cancelled,
-      aov: completed ? revenue / completed : 0,
-      cancelRate: orders ? cancelled / orders * 100 : 0,
-      completionRate: orders ? completed / orders * 100 : 0,
-    };
-  }
-
   function aggRange(range, platform) {
     if (!range) return null;
     let revenue = 0, orders = 0, completed = 0, cancelled = 0;
@@ -327,190 +296,96 @@
     };
   }
 
-  function platformMetrics(months) {
-    const totalRev = PKEYS.reduce((t, k) => t + aggMonths(months, k).revenue, 0);
-    return PKEYS.map((k) => {
-      const a = aggMonths(months, k);
-      return { key: k, ...PLAT[k], ...a, share: totalRev ? a.revenue / totalRev * 100 : 0 };
-    });
-  }
-
-  /* ---- daily series for charts ---- */
-  function dailySeries(months, platform) {
-    const set = new Set(months);
-    return DASH.daily.filter((d) => set.has(d.date.slice(0, 7))).map((d) => {
-      const s = d.s, l = d.l, t = d.t; // [rev,ord,done,canc]
-      const rev = { shopee: s[0], lazada: l[0], tiktok: t[0] };
-      const ord = { shopee: s[1], lazada: l[1], tiktok: t[1] };
-      return {
-        date: d.date,
-        revenue: platform === "all" ? s[0] + l[0] + t[0] : rev[platform],
-        orders: platform === "all" ? s[1] + l[1] + t[1] : ord[platform],
-        shopee: s[0], lazada: l[0], tiktok: t[0],
-        o_shopee: s[1], o_lazada: l[1], o_tiktok: t[1],
-      };
-    });
-  }
-  function dailySeriesRange(range, platform) {
-    return (DASH.daily || []).filter((d) => d.date >= range.start && d.date <= range.end).map((d) => {
-      const s = d.s, l = d.l, t = d.t;
-      const rev = { shopee: s[0], lazada: l[0], tiktok: t[0] };
-      const ord = { shopee: s[1], lazada: l[1], tiktok: t[1] };
-      return {
-        date: d.date,
-        revenue: platform === "all" ? s[0] + l[0] + t[0] : rev[platform],
-        orders: platform === "all" ? s[1] + l[1] + t[1] : ord[platform],
-        shopee: s[0], lazada: l[0], tiktok: t[0],
-        o_shopee: s[1], o_lazada: l[1], o_tiktok: t[1],
-      };
-    });
-  }
-
-  // Current calendar month in YYYY-MM. Used to mark "the bar that's still
-  // accumulating" with dimmed fill — past months are complete, so they
-  // should NOT be dimmed even if DASH.latestMonth happens to equal them.
-  function currentMonthYM() {
-    const d = new Date();
-    return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0");
-  }
-
-  /* ---- monthly trend (last n months) ---- */
-  function monthlyTrend(n) {
-    const arr = DASH.monthly.slice(-n);
-    const cur = currentMonthYM();
-    return arr.map((m) => ({
-      ym: m.ym, label: MONTH_VI(m.ym), revenue: m.revenue, orders: m.orders,
-      shopee: m.plat.shopee.rev, lazada: m.plat.lazada.rev, tiktok: m.plat.tiktok.rev,
-      partial: m.ym === cur,
-    }));
-  }
-  // ── Trend granularity ──────────────────────────────────────────────────────
-  // The overview trend charts let the user pick day/week/month/year explicitly.
-  // A grain is applied over a WINDOW ending at the selected period's end, never
-  // shorter than the period itself and never fewer than GRAIN_MIN buckets — a
-  // bare one-month range bucketed by month would otherwise draw a single bar.
-  // This generalises what businessTrend already did per period mode (30 days for
-  // day, ~12 months for month, all years for year).
-  const GRAIN_MIN = { day: 30, week: 12, month: 12, year: 0 };
-
   function mondayOf(dateStr) {
     const d = parseDate(dateStr);
     const dow = (d.getDay() + 6) % 7; // 0 = Monday
     return addDays(dateStr, -dow);
   }
 
-  function grainWindow(range, grain) {
-    const end = range.end;
-    let start;
-    if (grain === "day")   start = addDays(end, -(GRAIN_MIN.day - 1));
-    else if (grain === "week")  start = addDays(mondayOf(end), -7 * (GRAIN_MIN.week - 1));
-    else if (grain === "month") start = monthStart(addMonth(end.slice(0, 7), -(GRAIN_MIN.month - 1)));
-    else start = allDates()[0] || range.start;
-    return normalizeRange(start < range.start ? start : range.start, end, range.mode);
+  /* ---- period series ----
+     Buckets that cover EXACTLY the selected range, so a chart's total is the
+     same number the KPI cards show. Days after the newest data are left out
+     rather than drawn as empty bars. A bucket that runs past either edge (the
+     first and last week of a month, the week still in progress) is marked
+     partial and drawn dimmed. */
+  const BUCKET_OF = { day: (d) => d, week: mondayOf, month: (d) => d.slice(0, 7), year: (d) => d.slice(0, 4) };
+  function bucketSpan(k, grain) {
+    if (grain === "day") return [k, k];
+    if (grain === "week") return [k, addDays(k, 6)];
+    if (grain === "month") return [monthStart(k), monthEnd(k)];
+    return [yearStart(k), yearEnd(k)];
   }
-
-  function trendByGrain(range, grain) {
-    const win = grainWindow(range, grain);
-    const bucketOf = {
-      day:   (d) => d.date,
-      week:  (d) => mondayOf(d.date),
-      month: (d) => d.date.slice(0, 7),
-      year:  (d) => d.date.slice(0, 4),
-    }[grain];
-    const labelOf = {
-      day:   (k) => fmtDateShort(k).slice(0, 5),
-      week:  (k) => fmtDateShort(k).slice(0, 5),
-      month: (k) => MONTH_VI(k),
-      year:  (k) => _TF("period.year_short", { y: k }),
-    }[grain];
-    const map = new Map();
-    dailySeriesRange(win, "all").forEach((d) => {
-      const k = bucketOf(d);
-      let e = map.get(k);
-      if (!e) { e = { k, shopee: 0, lazada: 0, tiktok: 0, o_shopee: 0, o_lazada: 0, o_tiktok: 0, orders: 0, partial: false }; map.set(k, e); }
-      e.shopee += d.shopee; e.lazada += d.lazada; e.tiktok += d.tiktok;
-      e.o_shopee += d.o_shopee; e.o_lazada += d.o_lazada; e.o_tiktok += d.o_tiktok;
-      e.orders += d.orders;
-    });
-    return [...map.values()].sort((a, b) => (a.k < b.k ? -1 : 1)).map((e) => ({ ...e, label: labelOf(e.k) }));
+  function bucketLabel(k, grain) {
+    if (grain === "day" || grain === "week") return fmtDateShort(k).slice(0, 5);
+    if (grain === "month") return MONTH_VI(k);
+    return _TF("period.year_short", { y: k });
   }
-
-  // Grain the auto behaviour below already produces, so the toggle can show the
-  // right button as active before the user picks anything.
-  function autoGrain(key) {
-    const mode = rangeFromKey(key).mode;
-    return mode === "year" ? "year" : mode === "month" ? "month" : "day";
+  function bucketFull(k, grain) {
+    if (grain === "day") return _TF("period.day_n", { date: fmtDateShort(k) });
+    if (grain === "week") return _TF("period.week_n", { start: fmtDateShort(k), end: fmtDateShort(addDays(k, 6)) });
+    if (grain === "month") return MONTH_VI_LONG(k);
+    return _TF("period.year_n", { y: k });
   }
-
-  function businessTrend(key, grain) {
-    if (grain) return trendByGrain(rangeFromKey(key), grain);
+  const zero3 = () => ({ shopee: 0, lazada: 0, tiktok: 0 });
+  function periodSeries(key, grain) {
     const range = rangeFromKey(key);
-    if (range.mode === "year") {
-      const years = Array.from(new Set(allMonths().map((ym) => ym.slice(0, 4)))).sort();
-      return years.map((y) => {
-        const months = allMonths().filter((ym) => ym.startsWith(y));
-        const shopee = aggMonths(months, "shopee");
-        const lazada = aggMonths(months, "lazada");
-        const tiktok = aggMonths(months, "tiktok");
-        return {
-          label: _TF("period.year_short", { y }),
-          shopee: shopee.revenue,
-          lazada: lazada.revenue,
-          tiktok: tiktok.revenue,
-          o_shopee: shopee.orders,
-          o_lazada: lazada.orders,
-          o_tiktok: tiktok.orders,
-          orders: shopee.orders + lazada.orders + tiktok.orders,
-          partial: false,
-        };
+    const dates = allDates();
+    const last = dates[dates.length - 1] || range.end;
+    const end = range.end < last ? range.end : last;
+    const map = new Map();
+    for (let d = range.start; d <= end; d = addDays(d, 1)) {
+      const k = BUCKET_OF[grain](d);
+      let b = map.get(k);
+      if (!b) {
+        const [s, e] = bucketSpan(k, grain);
+        b = { k, label: bucketLabel(k, grain), full: bucketFull(k, grain), partial: s < range.start || e > end,
+              rev: zero3(), ord: zero3(), done: zero3(), canc: zero3() };
+        map.set(k, b);
+      }
+      const day = dailyMap[d];
+      if (!day) continue;
+      [["shopee", day.s], ["lazada", day.l], ["tiktok", day.t]].forEach(([p, r]) => {
+        b.rev[p] += r[0] || 0; b.ord[p] += r[1] || 0; b.done[p] += r[2] || 0; b.canc[p] += r[3] || 0;
       });
     }
-    if (range.mode === "month") {
-      const center = range.start.slice(0, 7);
-      const cur    = currentMonthYM();
-      const months = [];
-      for (let i = -6; i <= 5; i++) months.push(addMonth(center, i));
-      return months.filter((ym) => monthlyMap[ym]).map((ym) => ({
-        label: MONTH_VI(ym),
-        shopee: monthlyMap[ym].plat.shopee.rev,
-        lazada: monthlyMap[ym].plat.lazada.rev,
-        tiktok: monthlyMap[ym].plat.tiktok.rev,
-        o_shopee: monthlyMap[ym].plat.shopee.ord,
-        o_lazada: monthlyMap[ym].plat.lazada.ord,
-        o_tiktok: monthlyMap[ym].plat.tiktok.ord,
-        orders: monthlyMap[ym].plat.shopee.ord + monthlyMap[ym].plat.lazada.ord + monthlyMap[ym].plat.tiktok.ord,
-        // Only dim the bar if it represents the CURRENT calendar month
-        // (still accumulating). Past months are complete — don't dim them
-        // just because the backend treats them as "latestMonth".
-        partial: ym === cur,
-      }));
-    }
-    if (range.mode === "day") {
-      const from = addDays(range.end, -29);
-      return dailySeriesRange(normalizeRange(from, range.end, "day"), "all").map((d) => ({
-        label: fmtDateShort(d.date).slice(0, 5),
-        shopee: d.shopee,
-        lazada: d.lazada,
-        tiktok: d.tiktok,
-        o_shopee: d.o_shopee,
-        o_lazada: d.o_lazada,
-        o_tiktok: d.o_tiktok,
-        orders: d.orders,
-        partial: false,
-      }));
-    }
-    const data = dailySeriesRange(range, "all");
-    return data.map((d) => ({
-      label: fmtDateShort(d.date).slice(0, 5),
-      shopee: d.shopee,
-      lazada: d.lazada,
-      tiktok: d.tiktok,
-      o_shopee: d.o_shopee,
-      o_lazada: d.o_lazada,
-      o_tiktok: d.o_tiktok,
-      orders: d.orders,
-      partial: false,
-    }));
+    return [...map.values()];
+  }
+  // Grains worth offering for a period: at least two bars, and few enough that
+  // each bar is still visible. A single day falls back to one bar.
+  const GRAIN_LIMIT = [["day", 62], ["week", 26], ["month", 36], ["year", Infinity]];
+  function grainCounts(key) {
+    const range = rangeFromKey(key);
+    const sets = { day: new Set(), week: new Set(), month: new Set(), year: new Set() };
+    for (let d = range.start; d <= range.end; d = addDays(d, 1)) Object.keys(sets).forEach((g) => sets[g].add(BUCKET_OF[g](d)));
+    const n = {}; Object.keys(sets).forEach((g) => { n[g] = sets[g].size; });
+    return n;
+  }
+  function grainOptions(key) {
+    const n = grainCounts(key);
+    const opts = ["day", "week", "month", "year"].filter((g) => n[g] >= 2 && n[g] <= 400);
+    return opts.length ? opts : ["day"];
+  }
+  function defaultGrain(key) {
+    const n = grainCounts(key), opts = grainOptions(key);
+    const hit = GRAIN_LIMIT.find(([g, lim]) => opts.includes(g) && n[g] <= lim);
+    return hit ? hit[0] : opts[0];
+  }
+
+  // Twelve months ending at the selected period's last month — the platform
+  // page's small multiples. Traffic comes from trafficMonthly, orders from monthly.
+  const trafficMonthMap = {}; (DASH.trafficMonthly || []).forEach((m) => { trafficMonthMap[m.ym] = m; });
+  function last12Months(key) {
+    let endYm = rangeFromKey(key).end.slice(0, 7);
+    if (DASH.latestMonth && endYm > DASH.latestMonth) endYm = DASH.latestMonth;
+    return Array.from({ length: 12 }, (_, i) => addMonth(endYm, i - 11)).map((ym) => {
+      const m = monthlyMap[ym], tm = trafficMonthMap[ym];
+      const row = { ym, label: MONTH_VI(ym), rev: zero3(), done: zero3(), visits: zero3() };
+      PKEYS.forEach((p) => {
+        if (m) { row.rev[p] = m.plat[p].rev || 0; row.done[p] = m.plat[p].done || 0; }
+        if (tm && tm[p]) row.visits[p] = tm[p].visits || 0;
+      });
+      return row;
+    });
   }
 
   /* ---- products (merge across focus months if needed) ---- */
@@ -618,26 +493,6 @@
     return Object.values(map).sort((a, b) => b.revenue - a.revenue);
   }
 
-  function cityDistribution(key, platform) {
-    const activePlatform = platform || state.platform;
-    const cached = getRangeDetail(key, activePlatform);
-    if (cached && Array.isArray(cached.city)) {
-      const total = cached.city.reduce((t, r) => t + (r.orders || 0), 0);
-      const top = cached.city.filter((r) => r.city !== "Khác").slice(0, 6);
-      const known = top.reduce((t, r) => t + r.orders, 0);
-      if (total - known > 0) top.push({ city: "Khác", orders: total - known, other: true, revenue: 0 });
-      return top.map((r) => ({ ...r, pct: total ? r.orders / total * 100 : 0 }));
-    }
-    const months = detailMonths(key); const agg = {};
-    months.forEach((ym) => DASH.monthDetail[ym].city.forEach((c) => (agg[c.city] = (agg[c.city] || 0) + c.orders)));
-    const total = Object.values(agg).reduce((t, v) => t + v, 0);
-    const rows = Object.entries(agg).map(([city, orders]) => ({ city, orders })).sort((a, b) => b.orders - a.orders);
-    const top = rows.filter((r) => r.city !== "Khác").slice(0, 6);
-    const known = top.reduce((t, r) => t + r.orders, 0);
-    if (total - known > 0) top.push({ city: "Khác", orders: total - known, other: true });
-    return top.map((r) => ({ ...r, pct: total ? r.orders / total * 100 : 0 }));
-  }
-
   function heatMatrix(key, platform) {
     const activePlatform = platform || state.platform;
     const cached = getRangeDetail(key, activePlatform);
@@ -651,15 +506,6 @@
     months.forEach((ym) => DASH.monthDetail[ym].heat.forEach((h) => { m[h.weekday][h.hour] += h.orders; }));
     for (let d = 0; d < 7; d++) for (let h = 0; h < 24; h++) if (m[d][h] > max) max = m[d][h];
     return { m, max };
-  }
-
-  function statusBreakdown(key, platform) {
-    const activePlatform = platform || state.platform;
-    const cached = getRangeDetail(key, activePlatform);
-    if (cached && cached.status) return cached.status;
-    const months = detailMonths(key); const st = { completed: 0, delivered: 0, cancelled: 0, pending: 0 };
-    months.forEach((ym) => { const s = DASH.monthDetail[ym].status; Object.keys(st).forEach((k) => (st[k] += s[k] || 0)); });
-    return st;
   }
 
   /* ---- customer data ---- */
@@ -710,6 +556,7 @@
   const cancelApi = cachedApi("api/cancellations.php");
   const retentionApi = cachedApi("api/retention.php");
   const skuProfitApi = cachedApi("api/costs.php?view=sku");
+  const skuProfitSingleApi = cachedApi("api/costs.php?view=sku&group=single");
 
   function fetchCustomerDetail(buyerUsername) {
     const range = rangeFromKey(state.period);
@@ -724,13 +571,6 @@
   }
 
   /* ---- traffic ---- */
-  function trafficSeries(months, platform) {
-    const set = new Set(months);
-    return DASH.trafficDaily.filter((d) => set.has(d.date.slice(0, 7))).map((d) => {
-      const get = (k) => (platform === "all" ? PKEYS.reduce((t, p) => t + ((d[p] && d[p][k]) || 0), 0) : (d[platform] ? d[platform][k] : 0));
-      return { date: d.date, pv: get("pv"), visits: get("visits"), nf: get("nf") };
-    });
-  }
   function trafficSeriesRange(range, platform) {
     return (DASH.trafficDaily || []).filter((d) => d.date >= range.start && d.date <= range.end).map((d) => {
       const get = (k) => (platform === "all" ? PKEYS.reduce((t, p) => t + ((d[p] && d[p][k]) || 0), 0) : (d[platform] ? d[platform][k] : 0));
@@ -744,20 +584,12 @@
     const ord = aggRange(range, platform);
     return { pv, visits, nf, nv, orders: ord.orders, completed: ord.completed, conv: visits ? ord.completed / visits * 100 : 0 };
   }
-  function trafficAgg(months, platform) {
-    const s = trafficSeries(months, platform);
-    const pv = s.reduce((t, d) => t + d.pv, 0), visits = s.reduce((t, d) => t + d.visits, 0), nf = s.reduce((t, d) => t + d.nf, 0);
-    const ord = aggMonths(months, platform);
-    return { pv, visits, nf, orders: ord.orders, completed: ord.completed, conv: visits ? ord.completed / visits * 100 : 0 };
-  }
-  function trafficByPlatform(months) {
-    return PKEYS.map((k) => ({ key: k, ...PLAT[k], ...trafficAgg(months, k) }));
-  }
-
   /* ---- state ---- */
   const saved = JSON.parse(localStorage.getItem("zm_state_v3") || "{}");
+  // 3.6.0 merged "compare" and "traffic" into one "platforms" page.
+  const MOVED = { compare: "platforms", traffic: "platforms" };
   const state = {
-    page: saved.page || "overview",
+    page: MOVED[saved.page] || saved.page || "overview",
     platform: saved.platform || "all",
     period: saved.period || (DASH.latestMonth ? "m:" + DASH.latestMonth : "3m"),
     compare: saved.compare || "prev", // prev | yoy | none
@@ -770,16 +602,15 @@
     _customerCache: customerCache,
     DASH, PLAT, PKEYS, CAT, state, save, F,
     MONTH_VI, MONTH_VI_LONG, addMonth, parseDate, fmtDate, fmtDateShort, catLabel,
-    curMonths, compareMonths, periodLabel, compareLabel, periodMode, rangeFromKey, compareRange, coercePeriod,
-    aggMonths, aggRange, platformMetrics, dailySeries, dailySeriesRange, monthlyTrend, businessTrend, autoGrain,
-    products, categoryBreakdown, cityDistribution, heatMatrix, statusBreakdown, categoryOf, ensureRangeDetail, getRangeDetail,
-    trafficSeries, trafficSeriesRange, trafficAgg, trafficAggRange, trafficByPlatform,
+    curMonths, periodLabel, compareLabel, periodMode, rangeFromKey, compareRange, aggRange,
+    periodSeries, grainOptions, defaultGrain, last12Months, MOVED,
+    products, categoryBreakdown, heatMatrix, categoryOf, ensureRangeDetail, getRangeDetail,
+    trafficSeriesRange, trafficAggRange,
     fetchCustomers, fetchCustomerDetail,
     getCancellations: cancelApi.get, fetchCancellations: cancelApi.fetch,
     getRetention: retentionApi.get, fetchRetention: retentionApi.fetch,
     getSkuProfit: skuProfitApi.get, fetchSkuProfit: skuProfitApi.fetch,
-    cur: () => curMonths(state.period),
-    cmp: () => compareMonths(state.period, state.compare),
+    getSkuProfitSingle: skuProfitSingleApi.get, fetchSkuProfitSingle: skuProfitSingleApi.fetch,
     currentRange: () => rangeFromKey(state.period),
     compareCurrentRange: () => compareRange(state.period, state.compare),
   };

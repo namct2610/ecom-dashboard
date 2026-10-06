@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 require dirname(__DIR__) . '/includes/bootstrap.php';
 require dirname(__DIR__) . '/includes/sku-profit.php';
+require_once dirname(__DIR__) . '/includes/SkuExpander.php';
 
 require_auth();
 
@@ -285,15 +286,30 @@ function build_sku_profit(PDO $pdo): array
         GROUP BY platform, order_id, sku
     ");
     $lineStmt->execute($params);
+    // group=single: tách COMBO thành SKU lẻ (cùng SkuExpander với danh sách sản
+    // phẩm), trước khi chia phí — phí của đơn vẫn chia theo tỷ trọng doanh thu,
+    // nên phần của combo tự rơi về các SKU lẻ theo đúng phần doanh thu của chúng.
+    $expander = ($_GET['group'] ?? '') === 'single' ? new SkuExpander($pdo) : null;
     $lines = [];
     foreach ($lineStmt->fetchAll() as $r) {
-        $lines[] = [
-            'order'   => $r['platform'] . '|' . $r['order_id'],
-            'sku'     => (string) $r['sku'],
-            'name'    => (string) ($r['name'] ?? ''),
-            'qty'     => (float) $r['qty'],
-            'revenue' => (float) $r['revenue'],
-        ];
+        $order = $r['platform'] . '|' . $r['order_id'];
+        $parts = $expander
+            ? $expander->expandRow([
+                'sku' => (string) $r['sku'], 'product_name' => (string) ($r['name'] ?? ''),
+                'total_qty' => (float) $r['qty'], 'total_revenue' => (float) $r['revenue'],
+                'platform' => (string) $r['platform'],
+            ])
+            : [['sku' => (string) $r['sku'], 'product_name' => (string) ($r['name'] ?? ''),
+                'total_qty' => (float) $r['qty'], 'total_revenue' => (float) $r['revenue']]];
+        foreach ($parts as $p) {
+            $lines[] = [
+                'order'   => $order,
+                'sku'     => (string) $p['sku'],
+                'name'    => (string) ($p['product_name'] ?? ''),
+                'qty'     => (float) ($p['total_qty'] ?? 0),
+                'revenue' => (float) ($p['total_revenue'] ?? 0),
+            ];
+        }
     }
 
     // Phí ở cấp đơn lặp lại trên mọi dòng SKU, nên lấy MAX theo đơn (xem

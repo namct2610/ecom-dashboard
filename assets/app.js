@@ -3,7 +3,6 @@
    ============================================================ */
 (function () {
   const S = window.Store, st = S.state;
-  const PAGES = ["overview", "compare", "orders", "products", "customers", "traffic", "plan", "upload", "reconcile", "connect", "users", "settings"];
   const T = window.t || ((k, f) => f || k);
   const TF = window.tf || ((k, v) => k);
 
@@ -77,17 +76,26 @@
     if (txt) txt.textContent = (window.I18n && window.I18n.getLang() === "en") ? "EN" : "VI";
   }
 
-  function renderControls() {
-    const periodLabel = S.periodLabel(st.period);
-    const allTime = st.period === "all";
-    return `
-      <div class="segment hide-sm" id="platSeg">
+  // Same three filters in two places: the header on wide screens, and a block
+  // under it on phones (the 860px header has no room). Wired by class, so both
+  // copies behave the same. A view can drop the platform filter (noPlatform)
+  // when it already compares every platform side by side.
+  function platSeg(cls) {
+    return `<div class="segment js-plat ${cls}">
         <button class="${st.platform === "all" ? "active" : ""}" data-p="all">${T("common.all")}</button>
         ${S.PKEYS.map((k) => `<button class="${st.platform === k ? "active" : ""}" data-p="${k}"><span class="pdot" style="background:var(--${k})"></span>${S.PLAT[k].label.replace(" Shop", "")}</button>`).join("")}
-      </div>
-      <button class="period" id="periodBtn">${ICON.cal}<span class="ptxt">${periodLabel}</span><span class="pcaret">▾</span></button>
-      <button class="ctrl-btn hide-sm ${st.compare !== "none" && !allTime ? "on" : ""}" id="compareBtn" ${allTime ? `disabled title="${escHtml(T("period.all_hint"))}" style="opacity:.5;cursor:not-allowed"` : ""}>${ICON.cmp}<span>${allTime ? T("compare.none") : (COMPARES.find((c) => c.key === st.compare) || COMPARES[0]).label}</span><span class="pcaret">▾</span></button>
-    `;
+      </div>`;
+  }
+  function periodBtns(cls) {
+    const allTime = st.period === "all";
+    return `<button class="period js-period ${cls}">${ICON.cal}<span class="ptxt">${S.periodLabel(st.period)}</span><span class="pcaret">▾</span></button>
+      <button class="ctrl-btn js-compare ${cls} ${st.compare !== "none" && !allTime ? "on" : ""}" ${allTime ? `disabled title="${escHtml(T("period.all_hint"))}" style="opacity:.5;cursor:not-allowed"` : ""}>${ICON.cmp}<span>${allTime ? T("compare.none") : (COMPARES.find((c) => c.key === st.compare) || COMPARES[0]).label}</span><span class="pcaret">▾</span></button>`;
+  }
+  function renderControls(showPlat) {
+    return (showPlat ? platSeg("hide-sm") : "") + periodBtns("hide-sm");
+  }
+  function renderMobileControls(showPlat) {
+    return `<div class="mctl-row">${periodBtns("")}</div>${showPlat ? platSeg("") : ""}`;
   }
 
   /* ---- popover menu ---- */
@@ -348,9 +356,9 @@
   });
 
   function wireControls() {
-    document.getElementById("platSeg")?.addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) { st.platform = b.dataset.p; commit(); } });
-    document.getElementById("periodBtn")?.addEventListener("click", (e) => { e.stopPropagation(); periodPopover(e.currentTarget); });
-    document.getElementById("compareBtn")?.addEventListener("click", (e) => { e.stopPropagation(); popover(e.currentTarget, COMPARES, st.compare, (k) => { st.compare = k; commit(); }, T("period.compare.title")); });
+    document.querySelectorAll(".js-plat").forEach((el) => el.addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) { st.platform = b.dataset.p; commit(); } }));
+    document.querySelectorAll(".js-period").forEach((el) => el.addEventListener("click", (e) => { e.stopPropagation(); periodPopover(e.currentTarget); }));
+    document.querySelectorAll(".js-compare").forEach((el) => el.addEventListener("click", (e) => { e.stopPropagation(); popover(e.currentTarget, COMPARES, st.compare, (k) => { st.compare = k; commit(); }, T("period.compare.title")); }));
   }
 
   /* ---- render page ---- */
@@ -369,12 +377,19 @@
     // string — t() returns the key when missing).
     const titleText = v.titleKey ? T(v.titleKey) : T(v.title || "", v.title || "—");
     const eyebrowText = v.eyebrowKey ? T(v.eyebrowKey) : T(v.eyebrow || "", v.eyebrow || T("header.eyebrow.default"));
-    document.getElementById("headerTitle").textContent = titleText;
-    document.getElementById("headerEyebrow").textContent = eyebrowText;
+    // The static header carries data-i18n only for the boot paint; drop it, or
+    // applyDom() below would put "Tổng quan" back on every page.
+    const ht = document.getElementById("headerTitle"), he = document.getElementById("headerEyebrow");
+    ht.removeAttribute("data-i18n"); he.removeAttribute("data-i18n");
+    ht.textContent = titleText;
+    he.textContent = eyebrowText;
     document.querySelectorAll(".nav-item").forEach((n) => n.classList.toggle("active", n.dataset.page === st.page));
 
-    document.getElementById("controls").innerHTML = view && view.customToolbar ? "" : renderControls();
-    if (!view || !view.customToolbar) wireControls();
+    const toolbar = !view || !view.customToolbar;
+    const showPlat = !(view && view.noPlatform);
+    document.getElementById("controls").innerHTML = toolbar ? renderControls(showPlat) : "";
+    document.getElementById("mobileControls").innerHTML = toolbar ? renderMobileControls(showPlat) : "";
+    if (toolbar) wireControls();
 
     if (!view) {
       root.innerHTML = `<div class="note">${window.UI.ICON.info}<span>${T("boot.app_missing", "Trang chưa được dựng.")}</span></div>`;
@@ -391,13 +406,15 @@
   // ── Hash-based routing ────────────────────────────────────────────────────
   // Valid page keys — used to validate hash values before applying.
   const VALID_PAGES = new Set([
-    "overview","compare","orders","products","customers","traffic","plan",
+    "overview","platforms","orders","products","customers","costs","plan",
     "reconcile","upload","connect","users","settings",
   ]);
 
+  // Old bookmarks (#compare, #traffic) land on the page that replaced them.
   function pageFromHash() {
     const h = window.location.hash.replace(/^#\/?/, "").split("?")[0].toLowerCase();
-    return VALID_PAGES.has(h) ? h : null;
+    const p = S.MOVED[h] || h;
+    return VALID_PAGES.has(p) ? p : null;
   }
 
   function setHash(page, push) {

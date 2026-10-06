@@ -1,64 +1,100 @@
 /* ============================================================
    View: Overview (Tổng quan)
+   KPI + one trend chart (revenue/orders tabs) + platform share +
+   top products + categories. Platform comparison moved to the
+   Platforms page, the heatmap to Orders, regions to Customers.
    ============================================================ */
 (function () {
-  const S = window.Store, F = window.F, UI = window.UI, C = window.Charts;
+  const S = window.Store, F = window.F, UI = window.UI;
   const _t = (k, f) => (window.t ? window.t(k, f) : (f || k));
   const _tf = (k, v) => (window.tf ? window.tf(k, v) : k);
   let detailLoadingKey = null;
 
-  let cmpMetric = "revenue";
-  let hideShopee = false;
-  // null = follow the period's natural grain (S.autoGrain); a string pins it.
-  let revGrain = null;
-  let ordGrain = null;
+  // Trend card state. grain null = the period's natural grain (S.defaultGrain).
+  let metric = "revenue";
+  let grain = null;
+  const off = {};
 
-  // Both overview donuts render through this. They had drifted apart — 172px vs
-  // 150px tall, a centre total on one only, share as % on one and đồng on the
-  // other — so size, centre and legend units now come from one place.
-  function donutBlock(canvasId, items, centerLabel) {
-    const total = items.reduce((t, i) => t + i.value, 0);
-    return `
-      <div class="donut-wrap" style="height:172px"><canvas id="${canvasId}"></canvas>
-        <div class="donut-center"><div><div class="big tnum">${F.money(total)}</div><div class="small">${centerLabel}</div></div></div>
-      </div>
-      <div style="margin-top:14px;display:flex;flex-direction:column;gap:9px">
-        ${items.map((i) => `<div style="display:flex;align-items:center;gap:9px;font-size:13px">
-          <span class="legend-swatch" style="background:${UI.cssColor(i.color)}"></span><b>${UI.esc(i.label)}</b>
-          <span style="margin-left:auto;font-weight:800" class="tnum">${F.money(i.value)}<span style="color:var(--ink-3);font-weight:600;margin-left:6px">${F.pct(total ? i.value / total * 100 : 0)}</span></span>
-        </div>`).join("")}
-      </div>`;
-  }
-
-  // Slice definitions shared by render (legend) and mount (canvas), so the two
-  // can never disagree about order, colour or value.
-  function shareItems(range) {
-    const all = S.PKEYS.map((k) => ({ key: k, ...S.PLAT[k], ...S.aggRange(range, k) }));
-    const shown = hideShopee ? all.filter((p) => p.key !== "shopee") : all;
-    return shown.map((p) => ({ label: p.label, value: p.revenue, color: "--" + p.key }));
-  }
-  function catItems(key, plat) {
-    return S.categoryBreakdown(key, plat).filter((c) => c.revenue > 0)
-      .map((c) => ({ label: S.catLabel(c.cat), value: c.revenue, color: c.color }));
-  }
-
-  const grainSeg = UI.grainSeg, grainHandler = UI.grainHandler;
-
-  function ppChip(cur, prev, invert) {
-    if (prev == null) return "";
-    const pp = cur - prev;
-    let dir = Math.abs(pp) < 0.05 ? "flat" : pp > 0 ? "up" : "down";
-    let cls = invert ? (dir === "up" ? "down" : dir === "down" ? "up" : "flat") : dir;
-    const arrow = dir === "up" ? UI.ICON.up : dir === "down" ? UI.ICON.down : "";
-    return `<span class="delta ${cls}">${arrow}${pp > 0 ? "+" : ""}${F.viDec(pp, 1)}%</span>`;
-  }
+  const pc = (k) => `var(--${k})`;
 
   function kpiCard(o) {
     return `<div class="card kpi reveal">
-      <div class="kpi-label">${o.ico} ${o.label}</div>
+      <div class="kpi-label"><span class="kpi-ico">${o.ico}</span><span class="kl">${o.label}</span>${UI.tip(o.tip, o.tipRight ? { right: true } : null)}</div>
       <div class="kpi-value tnum">${o.value}${o.unit ? `<span class="unit">${o.unit}</span>` : ""}</div>
       <div class="kpi-foot">${o.delta || ""}<span>${o.foot}</span></div>
+      <div class="kpi-viz">${o.viz}</div>
     </div>`;
+  }
+
+  // ---- trend card (rebuilt in place on its own controls, so fullscreen survives) ----
+  function trendState() {
+    const st = S.state, opts = S.grainOptions(st.period);
+    const g = grain && opts.includes(grain) ? grain : S.defaultGrain(st.period);
+    const isRev = metric === "revenue";
+    const plats = st.platform === "all" ? S.PKEYS.filter((k) => !off[k]) : [st.platform];
+    const series = S.periodSeries(st.period, g);
+    const val = (b, k) => (isRev ? b.rev[k] : b.done[k]);
+    const totals = series.map((b) => plats.reduce((t, k) => t + val(b, k), 0));
+    return { st, opts, g, isRev, plats, series, val, totals };
+  }
+  const fmtV = (isRev, v) => (isRev ? F.money(v) : F.viInt(v) + " " + _t("common.orders_unit"));
+  const axisFmt = (isRev) => (v) => (isRev ? (v ? F.money(v) : "0") : F.viInt(v));
+
+  function readoutHTML(ts, i) {
+    const { isRev, plats, series, val, totals, g, st } = ts;
+    if (i == null) {
+      const sum = totals.reduce((t, v) => t + v, 0);
+      const cmpR = S.compareCurrentRange();
+      let prev = null;
+      if (cmpR) prev = plats.reduce((t, k) => { const a = S.aggRange(cmpR, k); return t + (isRev ? a.revenue : a.completed); }, 0);
+      const peak = Math.max(...totals, 0), pi = totals.indexOf(peak);
+      const avgKey = { day: "ovw.trend.avg_day", week: "ovw.trend.avg_week", month: "ovw.trend.avg_month", year: "ovw.trend.avg_year" }[g];
+      return `<div class="readout"><span class="big-val">${fmtV(isRev, sum)}</span>${cmpR ? UI.deltaChip(F.delta(sum, prev)) : ""}</div>
+        <div class="sub3" style="display:flex;gap:4px 16px;flex-wrap:wrap;margin-top:3px">
+          <span>${_tf(avgKey, { v: fmtV(isRev, series.length ? sum / series.length : 0) })}</span>
+          ${pi >= 0 && peak > 0 ? `<span>${_tf("ovw.trend.peak", { label: series[pi].label, v: fmtV(isRev, peak) })}</span>` : ""}
+        </div>`;
+    }
+    const b = series[i];
+    const parts = plats.length > 1 ? plats.map((k) => `<span class="part"><span class="sw" style="background:${pc(k)}"></span>${S.PLAT[k].label.replace(" Shop", "")}<b>${isRev ? F.money(val(b, k)) : F.viInt(val(b, k))}</b></span>`).join("") : "";
+    return `<div class="sub3" style="font-weight:700">${UI.esc(b.full)}</div>
+      <div class="readout"><span class="big-val">${fmtV(isRev, totals[i])}</span>${parts}</div>`;
+  }
+
+  function trendInner(ts) {
+    const { st, opts, g, isRev, plats, series, val } = ts;
+    const grainItems = opts.map((k) => [k, _t("period.mode." + k)]);
+    const chart = series.length
+      ? UI.bars(series.map((b) => ({ label: b.label, partial: b.partial, segs: plats.map((k) => ({ v: val(b, k), c: pc(k) })) })),
+          axisFmt(isRev), (v) => (isRev ? F.money(v) : F.viInt(v)))
+      : `<div class="empty-chart">${_t("common.empty_data")}</div>`;
+    const legend = st.platform === "all"
+      ? `<div class="lgd-btns">${S.PKEYS.map((k) => `<button type="button" class="${off[k] ? "off" : ""}" data-off="${k}"><span class="sw" style="background:${pc(k)}"></span>${S.PLAT[k].label}</button>`).join("")}</div>`
+      : "";
+    return `${UI.head(_t("ovw.trend.title"), _t("ovw.trend.tip"),
+        UI.seg("trendMetric", [["revenue", _t("ovw.cmp.revenue")], ["orders", _t("ovw.trend.orders")]], metric)
+        + (grainItems.length > 1 ? UI.seg("trendGrain", grainItems, g) : "")
+        + `<span class="only-wide">${UI.fsBtn()}</span>`, { w: "320px" })}
+      <div class="cread" id="trendRead">${readoutHTML(ts, null)}</div>
+      <div id="trendChart">${chart}</div>
+      ${legend}`;
+  }
+
+  function mountTrend(card) {
+    if (!card) return;
+    const ts = trendState();
+    card.innerHTML = trendInner(ts);
+    const read = card.querySelector("#trendRead");
+    UI.wireBars(card.querySelector(".bchart"), (i) => { read.innerHTML = readoutHTML(ts, i); });
+    const redo = () => mountTrend(card);
+    card.querySelector("#trendMetric")?.addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) { metric = b.dataset.k; redo(); } });
+    card.querySelector("#trendGrain")?.addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) { grain = b.dataset.k; redo(); } });
+    card.querySelectorAll("[data-off]").forEach((b) => b.addEventListener("click", () => {
+      const k = b.dataset.off;
+      off[k] = !off[k];
+      if (S.PKEYS.every((x) => off[x])) off[k] = false; // keep at least one platform drawn
+      redo();
+    }));
   }
 
   function render() {
@@ -68,239 +104,145 @@
     const plat = st.platform;
     const cur = S.aggRange(range, plat);
     const cmp = cmpRange ? S.aggRange(cmpRange, plat) : null;
-    const cmpLab = S.compareLabel(st.period, st.compare);
     const dd = (c, p, inv) => UI.deltaChip(F.delta(c, p), inv);
+    const periodTxt = S.periodLabel(st.period);
+    const cmpTip = cmpRange ? " " + _tf("ovw.kpi.cmp_suffix", { cmp: S.compareLabel(st.period, st.compare).toLowerCase() }) : "";
 
-    // KPI cards
-    const cards = [
+    // Spark bars follow the trend's default grain so a long period stays readable.
+    const g = S.defaultGrain(st.period);
+    const series = S.periodSeries(st.period, g);
+    const sumP = (b, f) => (plat === "all" ? S.PKEYS.reduce((t, k) => t + b[f][k], 0) : b[f][plat]);
+    const sparkColor = plat === "all" ? "var(--ink-3)" : pc(plat);
+    const sRev = series.map((b) => sumP(b, "rev"));
+    const sDone = series.map((b) => sumP(b, "done"));
+    const sAov = series.map((b, i) => (sDone[i] ? sRev[i] / sDone[i] : 0));
+    const other = Math.max(0, cur.orders - cur.completed - cur.cancelled);
+    const ppChip = (c, p) => {
+      if (p == null) return "";
+      const v = c - p, dir = Math.abs(v) < 0.05 ? "flat" : v > 0 ? "up" : "down";
+      return `<span class="delta ${dir}">${dir === "up" ? UI.ICON.up : dir === "down" ? UI.ICON.down : ""}${v > 0 ? "+" : ""}${F.viDec(v, 1)}%</span>`;
+    };
+
+    const kpis = [
       kpiCard({
-        label: _t("kpi.revenue"), ico: `<span class="kpi-ico">${UI.ICON.revenue}</span>`,
-        value: F.money(cur.revenue),
-        delta: cmp ? dd(cur.revenue, cmp.revenue) : "",
-        foot: cmp ? `vs ${F.money(cmp.revenue)}` : S.periodLabel(st.period).toLowerCase(),
+        ico: UI.ICON.revenue, label: _t("kpi.revenue"), tip: _t("ovw.kpi.revenue_tip") + cmpTip,
+        value: F.money(cur.revenue), delta: cmp ? dd(cur.revenue, cmp.revenue) : "",
+        foot: cmp ? `vs ${F.money(cmp.revenue)}` : periodTxt, viz: UI.spark(sRev, sparkColor),
       }),
       kpiCard({
-        label: _t("kpi.orders"), ico: `<span class="kpi-ico">${UI.ICON.orders}</span>`,
-        value: F.viInt(cur.orders), unit: " " + _t("common.orders_unit"),
-        delta: cmp ? dd(cur.orders, cmp.orders) : "",
+        ico: UI.ICON.orders, label: _t("kpi.orders"), tip: _t("ovw.kpi.orders_tip"),
+        value: F.viInt(cur.orders), unit: " " + _t("common.orders_unit"), delta: cmp ? dd(cur.orders, cmp.orders) : "",
         foot: cmp ? `vs ${F.viInt(cmp.orders)} ${_t("common.orders_unit")}` : `${F.viInt(cur.completed)} ${_t("kpi.completed_unit")}`,
+        viz: UI.spark(sDone, sparkColor),
       }),
       kpiCard({
-        label: _t("kpi.aov"), ico: `<span class="kpi-ico">${UI.ICON.aov}</span>`,
-        value: F.money(cur.aov),
-        delta: cmp ? dd(cur.aov, cmp.aov) : "",
-        foot: cmp ? `vs ${F.money(cmp.aov)}` : _t("kpi.avg_order_foot"),
+        ico: UI.ICON.aov, label: _t("kpi.aov"), tip: _t("ovw.kpi.aov_tip"),
+        value: F.money(cur.aov), delta: cmp ? dd(cur.aov, cmp.aov) : "",
+        foot: cmp ? `vs ${F.money(cmp.aov)}` : _t("kpi.avg_order_foot"), viz: UI.spark(sAov, sparkColor),
       }),
       kpiCard({
-        label: _t("kpi.completion_rate"), ico: `<span class="kpi-ico">${UI.ICON.check}</span>`,
-        value: F.viDec(cur.completionRate, 1), unit: "%",
-        delta: cmp ? ppChip(cur.completionRate, cmp.completionRate) : `<span class="tag" style="color:var(--neg)">${F.pct(cur.cancelRate)} ${_t("kpi.cancelled_foot").split(" ")[0]}</span>`,
-        foot: `${F.pct(cur.cancelRate)} ${_t("kpi.cancelled_foot")}`,
+        ico: UI.ICON.check, label: _t("kpi.completion_rate"), tip: _t("ovw.kpi.cr_tip"), tipRight: true,
+        value: F.viDec(cur.completionRate, 1), unit: "%", delta: cmp ? ppChip(cur.completionRate, cmp.completionRate) : "",
+        foot: cmp ? `vs ${F.pct(cmp.completionRate)}` : `${F.pct(cur.cancelRate)} ${_t("kpi.cancelled_foot")}`,
+        viz: UI.stack([{ v: cur.completed, c: "var(--pos)" }, { v: cur.cancelled, c: "var(--neg)" }, { v: other, c: "var(--ink-3)" }])
+          + UI.legend([
+            { c: "var(--pos)", text: `${F.viInt(cur.completed)} ${_t("ovw.kpi.seg_done")}` },
+            { c: "var(--neg)", text: `${F.viInt(cur.cancelled)} ${_t("ovw.kpi.seg_cancel")}` },
+            { c: "var(--ink-3)", text: `${F.viInt(other)} ${_t("ovw.kpi.seg_other")}` },
+          ].filter((x, i) => [cur.completed, cur.cancelled, other][i] > 0)),
       }),
-    ].map((c) => `<div data-collapse style="grid-column:span 3">${c}</div>`).join("");
+    ].join("");
 
-    // ── Row 2: Revenue trend + Share donut ──
-    const autoG = S.autoGrain(st.period);
-    const revG = revGrain || autoG;
-    const ordG = ordGrain || autoG;
-    const trend = S.businessTrend(st.period, revGrain);
-    const trendModeName = S.periodMode(st.period);
-    const trendSub = trendModeName === "month"
-      ? `${_tf("period.month_n", { n: +(S.periodLabel(st.period).match(/\d+/) || [0])[0], y: range.start.slice(0, 4) })} · ${plat === "all" ? _t("ovw.trend.all_platforms") : S.PLAT[plat].label}`
-      : trendModeName === "year"
-        ? `${_t("ovw.trend.title").toLowerCase()} · ${plat === "all" ? _t("ovw.trend.all_platforms") : S.PLAT[plat].label}`
-        : `${S.periodLabel(st.period).toLowerCase()} · ${plat === "all" ? _t("ovw.trend.all_platforms") : S.PLAT[plat].label}`;
-
-    const pmAll = S.PKEYS.map((k) => ({ key: k, ...S.PLAT[k], ...S.aggRange(range, k) }));
-    const totalRev = pmAll.reduce((t, p) => t + p.revenue, 0);
-    pmAll.forEach((p) => { p.share = totalRev ? p.revenue / totalRev * 100 : 0; });
-    const pm = hideShopee ? pmAll.filter((p) => p.key !== "shopee") : pmAll;
-
-    // ── Row 3: Order trend + Category donut ──
-
-    // ── Row 4: Platform comparison + Geo distribution ──
-    const metricLabel = { revenue: _t("ovw.cmp.revenue"), orders: _t("ovw.cmp.orders"), aov: _t("ovw.cmp.aov") }[cmpMetric];
-    const accessor = { revenue: (p) => p.revenue, orders: (p) => p.orders, aov: (p) => p.aov }[cmpMetric];
-    const fmt = { revenue: (v) => F.money(v), orders: (v) => F.viInt(v), aov: (v) => F.money(v) }[cmpMetric];
-    const maxV = Math.max(...pm.map(accessor), 1);
-    const cmpRows = pm.map((p) => `
-      <div class="cmp-row reveal">
-        <div class="cmp-name">${UI.pdot(p.key)}${p.label}</div>
-        <div class="cmp-track"><div class="cmp-fill" style="width:${accessor(p) / maxV * 100}%;background:var(--${p.key})"></div></div>
-        <div class="cmp-val">${fmt(accessor(p))}</div>
+    // ---- share by platform: 100% bars instead of a donut (Shopee is ~99%,
+    // so the small slices were unreadable) ----
+    const pm = S.PKEYS.map((k) => ({ key: k, ...S.aggRange(range, k) }));
+    const totRev = pm.reduce((t, p) => t + p.revenue, 0), totOrd = pm.reduce((t, p) => t + p.orders, 0);
+    const shareBars = [["ovw.share.rev_bar", "revenue"], ["ovw.share.ord_bar", "orders"]].map(([lk, f]) => `<div>
+        <div class="lab3" style="margin-bottom:6px">${_t(lk)}</div>
+        ${UI.stack(pm.map((p) => ({ v: p[f], c: pc(p.key) })), 14)}
+      </div>`).join("");
+    const shareRows = pm.map((p) => `<div style="display:grid;grid-template-columns:minmax(0,1fr) 62px 62px;align-items:center;gap:8px;padding:10px 8px;margin:0 -8px;border-top:1px solid var(--border);border-radius:8px;${plat === p.key ? "background:var(--surface-2)" : ""}">
+        <div style="min-width:0">
+          <div class="pname-dot">${UI.pdot(p.key)}${S.PLAT[p.key].label}</div>
+          <div class="sub3 tnum" style="margin-top:2px;padding-left:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${F.money(p.revenue)} · ${F.viInt(p.orders)} ${_t("common.orders_unit")}</div>
+        </div>
+        <div class="r v15" style="font-size:14px">${F.pct(totRev ? p.revenue / totRev * 100 : 0)}</div>
+        <div class="r tnum" style="font-size:13px;font-weight:700;color:var(--ink-2)">${F.pct(totOrd ? p.orders / totOrd * 100 : 0)}</div>
       </div>`).join("");
 
-    const tblRows = pmAll.map((p) => {
-      const pc = cmpRange ? S.aggRange(cmpRange, p.key) : null;
-      return `<tr>
-        <td><span class="pchip">${UI.pdot(p.key)}<b>${p.label}</b></span></td>
-        <td class="num"><b>${F.money(p.revenue)}</b></td>
-        <td class="num">${cmpRange ? dd(p.revenue, pc.revenue) : "—"}</td>
-        <td class="num">${F.viInt(p.orders)}</td>
-        <td class="num">${F.money(p.aov)}</td>
-        <td class="num" style="color:${p.cancelRate > 16 ? "var(--neg)" : "var(--ink-2)"}">${F.pct(p.cancelRate)}</td>
-        <td class="num"><div style="display:flex;align-items:center;gap:8px;justify-content:flex-end"><span style="min-width:42px;text-align:right"><b>${F.pct(p.share)}</b></span><div class="cmp-track" style="width:80px"><div class="cmp-fill" style="width:${p.share}%;background:var(--${p.key})"></div></div></div></td>
-      </tr>`;
-    }).join("");
-
-    // geo
-    const geo = S.cityDistribution(st.period, plat);
-    const geoRows = geo.map((g) => `
-      <div class="cmp-row" style="grid-template-columns:140px 1fr auto">
-        <div class="cmp-name" style="font-weight:600">${UI.esc(g.city)}</div>
-        <div class="cmp-track"><div class="cmp-fill" style="width:${g.pct}%;background:${g.other ? "var(--ink-3)" : "var(--brand)"}"></div></div>
-        <div class="cmp-val">${F.viInt(g.orders)} <span style="color:var(--ink-3);font-weight:600">(${F.pct(g.pct, 0)})</span></div>
+    // ---- top 5 products (gifts left out, as on the Products page) ----
+    const top = S.products(st.period, "rev", plat).filter((p) => p.cat !== "gift").slice(0, 5);
+    const tMax = Math.max(...top.map((p) => p.revenue), 1);
+    const tColor = (p) => (p.platform && p.platform !== "all" ? pc(p.platform) : "var(--brand)");
+    const topWide = top.map((p, i) => `<div class="gt-row">
+        <span class="rk${i === 0 ? " first" : ""}">${i + 1}</span>
+        <div style="min-width:0"><div class="nm">${UI.esc(p.cleanName)}</div><div class="meta"><span class="mono">${UI.esc(p.sku)}</span><span>·</span><span>${S.catLabel(p.cat)}</span></div></div>
+        <div class="r tnum" style="font-size:13.5px">${F.viInt(p.qty)}</div>
+        <div class="cell-bar">${UI.track(p.revenue / tMax, tColor(p))}<b style="min-width:64px">${F.money(p.revenue)}</b></div>
       </div>`).join("");
+    const topNarrow = top.map((p, i) => `<div class="mrow" style="display:grid;grid-template-columns:22px minmax(0,1fr);gap:10px">
+        <span class="rk${i === 0 ? " first" : ""}">${i + 1}</span>
+        <div style="min-width:0">
+          <div class="nm">${UI.esc(p.cleanName)}</div>
+          <div class="meta"><span class="mono">${UI.esc(p.sku)}</span><span>·</span><span>${F.viInt(p.qty)} ${_t("ovw.top.qty_unit")}</span></div>
+          <div class="cell-bar" style="margin-top:8px">${UI.track(p.revenue / tMax, tColor(p), 6)}<b>${F.money(p.revenue)}</b></div>
+        </div>
+      </div>`).join("");
+    const topBody = top.length ? `<div class="gt only-wide" style="--cols:28px minmax(0,2fr) 80px minmax(0,1.3fr)">
+        <div class="gt-head"><span>#</span><span>${_t("th.product")}</span><span class="r">${_t("th.qty_sold")}</span><span>${_t("th.revenue")}</span></div>${topWide}</div>
+      <div class="mlist only-narrow">${topNarrow}</div>` : `<div class="empty-chart">${_t("common.empty_data")}</div>`;
 
-    // category donut
-    const cats = catItems(st.period, plat);
+    // ---- categories (horizontal bars instead of a donut) ----
+    const cats = S.categoryBreakdown(st.period, plat).filter((c) => c.revenue > 0);
+    const cTot = cats.reduce((t, c) => t + c.revenue, 0), cMax = Math.max(...cats.map((c) => c.revenue), 1);
+    const catRows = cats.map((c) => `<div style="display:flex;flex-direction:column;gap:6px;padding:9px 0">
+        <div style="display:flex;align-items:baseline;gap:8px;font-size:13px">
+          <span class="nm" style="flex:1;font-size:13px">${S.catLabel(c.cat)}</span>
+          <b class="tnum" style="font-weight:800">${F.money(c.revenue)}</b>
+          <span class="tnum" style="color:var(--ink-3);font-weight:600;width:46px;text-align:right">${F.pct(cTot ? c.revenue / cTot * 100 : 0)}</span>
+        </div>${UI.track(c.revenue / cMax, "var(--ink-2)")}
+      </div>`).join("") || `<div class="empty-chart">${_t("common.empty_data")}</div>`;
 
-    // ── Row 5: Top 3 products + Heatmap ──
-    const prods = S.products(st.period, "rev", plat).slice(0, 3);
-    const prodRows = prods.map((p, i) => `
-      <tr>
-        <td><div class="prod"><span class="rank">${i + 1}</span><div style="min-width:0"><div class="pname">${UI.esc(p.cleanName)}</div><div class="psku">${UI.esc(p.sku)} · ${UI.pchip(p.platform)}</div></div></div></td>
-        <td class="num">${F.viInt(p.qty)}</td>
-        <td class="num"><b>${F.money(p.revenue)}</b></td>
-      </tr>`).join("");
-
-    // heatmap
-    const { m, max } = S.heatMatrix(st.period, plat);
-    const days = dayLabels();
-    let heat = `<div style="display:grid;grid-template-columns:30px 1fr;gap:6px;align-items:center;min-width:560px">`;
-    heat += `<div></div><div style="display:grid;grid-template-columns:repeat(24,1fr);gap:3px;font-size:9.5px;color:var(--ink-3);font-weight:700">`;
-    for (let h = 0; h < 24; h++) heat += `<div style="text-align:center">${h % 3 === 0 ? h : ""}</div>`;
-    heat += `</div>`;
-    for (let d = 0; d < 7; d++) {
-      heat += `<div style="font-size:11px;font-weight:700;color:var(--ink-3)">${days[d]}</div><div class="heat-grid" style="grid-template-columns:repeat(24,1fr)">`;
-      for (let h = 0; h < 24; h++) {
-        const v = m[d][h], t = max ? v / max : 0;
-        const bg = v === 0 ? "var(--track)" : `color-mix(in oklch, var(--brand) ${14 + t * 70}%, var(--surface))`;
-        heat += `<div class="heat-cell" ${v ? `data-v="${v}"` : ""} title="${days[d]} ${h}h · ${v} ${_t("common.orders_unit")}" style="background:${bg}"></div>`;
-      }
-      heat += `</div>`;
-    }
-    heat += `</div>`;
-
-    return `
-    <div class="g12">${cards}</div>
-
-    <!-- Row 2: Revenue trend + Share donut -->
-    <div class="g12 section-gap">
-        <div data-collapse style="grid-column:span 8" class="card">
-          <div class="card-head">
-            <div><div class="card-title">${_t("ovw.trend.title")}</div></div>
-            <div class="chart-tools">
-              ${grainSeg("revGrainSeg", revG)}
-              ${UI.fsBtn()}
+    return `<div class="pg">
+      <div class="kpis">${kpis}</div>
+      <div class="frow">
+        <div class="card" id="trendCard" style="flex:2 1 560px"></div>
+        <div class="card" style="flex:1 1 300px;display:flex;flex-direction:column">
+          ${UI.head(_t("ovw.share.title"), _t("ovw.share.tip"))}
+          <div class="cbody" style="display:flex;flex-direction:column;gap:16px;flex:1;padding-top:18px">
+            <div style="display:flex;align-items:baseline;gap:8px"><span class="big-val">${F.money(totRev)}</span><span class="lab3" style="font-size:11px;letter-spacing:.03em">${_t("ovw.share.total_revenue")}</span></div>
+            <div style="display:flex;flex-direction:column;gap:12px">${shareBars}</div>
+            <div>
+              <div style="display:grid;grid-template-columns:minmax(0,1fr) 62px 62px;gap:8px;font-size:11px;font-weight:700;letter-spacing:.04em;color:var(--ink-3);padding-bottom:8px">
+                <span>${_t("th.platform")}</span><span class="r">${_t("ovw.share.col_rev")}</span><span class="r">${_t("ovw.share.col_ord")}</span>
+              </div>${shareRows}
             </div>
           </div>
-        <div class="card-pad" style="padding-top:14px">
-          <div class="chart-wrap" style="height:280px"><canvas id="monthlyChart"></canvas></div>
-          ${plat === "all" ? `<div class="legend chart-legend">${S.PKEYS.map((k) => `<span class="legend-item"><span class="legend-swatch" style="background:var(--${k})"></span>${S.PLAT[k].label}</span>`).join("")}</div>` : ""}
         </div>
       </div>
-      <div data-collapse style="grid-column:span 4" class="card">
-        <div class="card-head"><div><div class="card-title">${_t("ovw.share.title")}</div></div></div>
-        <div class="card-pad">
-          ${donutBlock("shareDonut", shareItems(range), hideShopee ? _t("ovw.share.total_lz_tt") : _t("ovw.share.total_revenue"))}
+      <div class="frow">
+        <div class="card" style="flex:2 1 560px">
+          ${UI.head(_t("ovw.top_products.title"), _t("ovw.top.tip"), `<a class="tag" data-nav="products" style="cursor:pointer">${_t("ovw.top_products.view_all")}</a>`)}
+          ${topBody}
         </div>
-      </div>
-    </div>
-
-    <!-- Row 3: Order trend + Category donut -->
-    <div class="g12 section-gap">
-      <div data-collapse style="grid-column:span 8" class="card">
-        <div class="card-head">
-          <div><div class="card-title">${_t("ovw.daily.title")}</div></div>
-          <div class="chart-tools">
-            ${grainSeg("ordGrainSeg", ordG)}
-            ${UI.fsBtn()}
-          </div>
+        <div class="card" style="flex:1 1 300px">
+          ${UI.head(_t("ovw.category.title"), _t("ovw.category.tip"), "", { right: true })}
+          <div class="clist">${catRows}</div>
         </div>
-        <div class="card-pad" style="padding-top:14px">
-          <div class="chart-wrap" style="height:280px"><canvas id="dailyChart"></canvas></div>
-          ${plat === "all" ? `<div class="legend chart-legend">${S.PKEYS.map((k) => `<span class="legend-item"><span class="legend-swatch" style="background:var(--${k})"></span>${S.PLAT[k].label}</span>`).join("")}</div>` : ""}
-        </div>
-      </div>
-      <div data-collapse style="grid-column:span 4" class="card">
-        <div class="card-head"><div><div class="card-title">${_t("ovw.category.title")}</div></div></div>
-        <div class="card-pad">
-          ${donutBlock("catDonut", cats, _t("ovw.category.by_revenue"))}
-        </div>
-      </div>
-    </div>
-
-    <!-- Row 4: Platform comparison + Geo distribution -->
-    <div class="g12 section-gap">
-      <div data-collapse style="grid-column:span 8" class="card">
-        <div class="card-head">
-          <div><div class="card-title">${_t("ovw.cmp.title")}</div></div>
-          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-            <div class="miniseg" id="cmpSeg">
-              <button class="${cmpMetric === "revenue" ? "active" : ""}" data-m="revenue">${_t("ovw.cmp.revenue")}</button>
-              <button class="${cmpMetric === "orders" ? "active" : ""}" data-m="orders">${_t("ovw.cmp.orders")}</button>
-              <button class="${cmpMetric === "aov" ? "active" : ""}" data-m="aov">${_t("ovw.cmp.aov")}</button>
-            </div>
-            <button class="ctrl-btn ${hideShopee ? "on" : ""}" id="hideShopeeBtn" style="padding:6px 11px;font-size:12.5px">${UI.ICON.eye}<span>${hideShopee ? _t("ovw.cmp.show_shopee") : _t("ovw.cmp.hide_shopee")}</span></button>
-          </div>
-        </div>
-        <div class="card-pad" style="padding-top:14px">
-          ${hideShopee ? `<div class="note" style="margin-bottom:14px">${UI.ICON.info} ${_tf("ovw.cmp.hiding_note", { pct: F.pct(pmAll[0].share) })}</div>` : ""}
-          <div style="display:flex;flex-direction:column;gap:2px;margin-bottom:8px">${cmpRows}</div>
-          <div style="overflow-x:auto;margin-top:8px">
-            <table class="tbl">
-              <thead><tr><th>${_t("th.platform")}</th><th class="num">${_t("th.revenue")}</th><th class="num">${cmpLab ? "Δ " + (st.compare === "yoy" ? _t("compare.yoy_short") : _t("compare.prev_short")) : "Δ"}</th><th class="num">${_t("th.orders")}</th><th class="num">${_t("kpi.aov")}</th><th class="num">% ${_t("common.cancel")}</th><th class="num">${_t("th.share")}</th></tr></thead>
-              <tbody>${tblRows}</tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-      <div data-collapse style="grid-column:span 4" class="card">
-        <div class="card-head"><div><div class="card-title">${_t("ovw.geo.title")}</div></div></div>
-        <div class="card-pad" style="display:flex;flex-direction:column;gap:2px">${geoRows}</div>
-      </div>
-    </div>
-
-    <!-- Row 5: Top 3 products + Heatmap -->
-    <div class="g12 section-gap">
-      <div data-collapse style="grid-column:span 8" class="card">
-        <div class="card-head"><div><div class="card-title">${_t("ovw.heat.title")}</div></div></div>
-        <div class="card-pad" style="overflow-x:auto">${heat}</div>
-      </div>
-      <div data-collapse style="grid-column:span 4" class="card">
-        <div class="card-head"><div><div class="card-title">${_t("ovw.top_products.title")}</div></div><a class="tag" data-nav="products" style="cursor:pointer">${_t("ovw.top_products.view_all")}</a></div>
-        <div class="card-pad" style="padding:6px 6px 8px"><table class="tbl"><thead><tr><th>${_t("th.product")}</th><th class="num">${_t("th.qty_sold")}</th><th class="num">${_t("th.revenue")}</th></tr></thead><tbody>${prodRows}</tbody></table></div>
       </div>
     </div>`;
   }
 
-  const CAL_D = ["mon","tue","wed","thu","fri","sat","sun"];
-  function dayLabels() { return CAL_D.map((d) => _t("period.cal." + d)); }
-
   function mount(root) {
-    const st = S.state, range = S.currentRange(), plat = st.platform;
-
-    // Each chart carries its own grain, so they are built from separate series.
-    const mc = root.querySelector("#monthlyChart"); if (mc) C.monthlyRevenue(mc, S.businessTrend(st.period, revGrain), { platform: plat });
-    const dc = root.querySelector("#dailyChart"); if (dc) C.ordersTrend(dc, S.businessTrend(st.period, ordGrain), { platform: plat });
-
-    const dn = root.querySelector("#shareDonut"); if (dn) C.donut(dn, shareItems(range), { money: true });
-    const cn = root.querySelector("#catDonut"); if (cn) C.donut(cn, catItems(st.period, plat), { money: true });
-
-    root.querySelector("#revGrainSeg")?.addEventListener("click", grainHandler("revGrainSeg", "monthlyChart",
-      (g) => { revGrain = g; }, (cv) => C.monthlyRevenue(cv, S.businessTrend(S.state.period, revGrain), { platform: S.state.platform })));
-    root.querySelector("#ordGrainSeg")?.addEventListener("click", grainHandler("ordGrainSeg", "dailyChart",
-      (g) => { ordGrain = g; }, (cv) => C.ordersTrend(cv, S.businessTrend(S.state.period, ordGrain), { platform: S.state.platform })));
-    root.querySelector("#cmpSeg")?.addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) { cmpMetric = b.dataset.m; window.App.rerender(); } });
-    root.querySelector("#hideShopeeBtn")?.addEventListener("click", () => { hideShopee = !hideShopee; window.App.rerender(); });
+    const st = S.state;
+    mountTrend(root.querySelector("#trendCard"));
     root.querySelectorAll("[data-nav]").forEach((a) => a.addEventListener("click", () => window.App.go(a.dataset.nav)));
 
     const cacheKey = st.period + "|" + st.platform;
     if (!S.getRangeDetail(st.period, st.platform) && detailLoadingKey !== cacheKey) {
       detailLoadingKey = cacheKey;
       S.ensureRangeDetail(st.period, st.platform).then(() => {
-        if (detailLoadingKey === cacheKey) window.App.rerender();
+        if (detailLoadingKey === cacheKey && S.state.page === "overview") window.App.rerender();
       }).catch(() => {}).finally(() => {
         if (detailLoadingKey === cacheKey) detailLoadingKey = null;
       });

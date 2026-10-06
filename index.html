@@ -4,11 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Zott Monte · Marketplace Analytics</title>
-<link rel="icon" type="image/svg+xml" href="assets/logo.svg?v=43">
+<link rel="icon" type="image/svg+xml" href="assets/logo.svg?v=44">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/theme.css?v=43">
+<link rel="stylesheet" href="assets/theme.css?v=44">
 <script>
   // Redirect to login page when auth is enabled and session is not active.
   // Runs before any app JS loads to prevent flash of unauthenticated content.
@@ -33,7 +33,7 @@
   <nav id="sidebar">
     <div class="brand">
       <div class="brand-mark">
-        <img src="assets/logo.svg?v=43" alt="Zott" width="38" height="38">
+        <img src="assets/logo.svg?v=44" alt="Zott" width="38" height="38">
       </div>
       <div class="brand-text">
         <div class="brand-name">Zott Monte</div>
@@ -47,9 +47,9 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
         <span class="nav-label" data-i18n="nav.overview">Tổng quan</span>
       </a>
-      <a class="nav-item" data-page="compare" data-screen-label="So sánh sàn">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.7l-7-4a2 2 0 0 0-2 0l-7 4M3 8l9 5 9-5M3 8v8a2 2 0 0 0 1 1.7l7 4a2 2 0 0 0 2 0"/><path d="M12 22V12"/></svg>
-        <span class="nav-label" data-i18n="nav.compare">So sánh sàn</span>
+      <a class="nav-item" data-page="platforms" data-screen-label="Sàn &amp; lưu lượng">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18M8 17v-6M13 17V7M18 17v-4"/></svg>
+        <span class="nav-label" data-i18n="nav.platforms">Sàn &amp; lưu lượng</span>
       </a>
       <a class="nav-item" data-page="orders" data-screen-label="Đơn hàng">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
@@ -62,10 +62,6 @@
       <a class="nav-item" data-page="customers" data-screen-label="Khách hàng">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/></svg>
         <span class="nav-label" data-i18n="nav.customers">Khách hàng</span>
-      </a>
-      <a class="nav-item" data-page="traffic" data-screen-label="Lưu lượng">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-4 4"/></svg>
-        <span class="nav-label" data-i18n="nav.traffic">Lưu lượng</span>
       </a>
       <a class="nav-item" data-page="costs" data-screen-label="Chi phí sàn">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
@@ -138,13 +134,14 @@
     </header>
 
     <main id="content">
+      <div class="mctl" id="mobileControls"></div>
       <div id="pageRoot"></div>
       <div style="height:8px"></div>
     </main>
   </div>
 </div>
 
-<script src="assets/i18n.js?v=43"></script>
+<script src="assets/i18n.js?v=44"></script>
 <script>
   // i18n.js loads synchronously above — t() must be available before any view
   // IIFE runs. Apply translations to the static markup immediately so the
@@ -160,14 +157,14 @@
     var root = document.getElementById('pageRoot');
     root.innerHTML = '<div style="padding:48px 24px;color:var(--ink-3);font-weight:600;text-align:center">' + (window.t ? window.t('boot.loading_data') : 'Đang tải dữ liệu…') + '</div>';
 
-    var V = 43; // cache-bust for assets
+    var V = 44; // cache-bust for assets
     var MODULES = [
       'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js',
       'assets/store.js?v=' + V,
       'assets/charts.js?v=' + V,
       'assets/ui.js?v=' + V,
       'assets/views-overview.js?v=' + V,
-      'assets/views-compare.js?v=' + V,
+      'assets/views-platforms.js?v=' + V,
       'assets/views-pages.js?v=' + V,
       'assets/views-plan.js?v=' + V,
       'assets/views-settings.js?v=' + V,

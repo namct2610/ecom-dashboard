@@ -103,7 +103,8 @@ function build_customers_overview(PDO $pdo): array
                COALESCE(NULLIF(MAX(buyer_name), ''), buyer_username) AS buyer_name,
                COUNT(*) AS order_count,
                COALESCE(SUM(item_qty), 0) AS item_qty,
-               COALESCE(SUM(order_revenue), 0) AS revenue
+               COALESCE(SUM(order_revenue), 0) AS revenue,
+               MAX(order_created_at) AS last_order_at
         FROM tmp_customer_orders
         WHERE buyer_username != ''
         GROUP BY buyer_username
@@ -116,6 +117,7 @@ function build_customers_overview(PDO $pdo): array
         'order_count'    => (int) $row['order_count'],
         'item_qty'       => (int) $row['item_qty'],
         'revenue'        => (float) $row['revenue'],
+        'last_order_at'  => (string) ($row['last_order_at'] ?? ''),
     ], $buyerStmt->fetchAll());
 
     $totalOrders = (int) ($summary['total_orders'] ?? 0);

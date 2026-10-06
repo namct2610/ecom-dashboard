@@ -39,7 +39,9 @@ function sku_profit_compute(array $lines, array $orderFees): array
 
         $k = $l['sku'];
         $skus[$k] ??= ['sku' => $k, 'names' => [], 'revenue' => 0.0, 'units' => 0.0,
-                       'orders' => [], 'fees' => 0.0, 'settled_revenue' => 0.0];
+                       'orders' => [], 'fees' => 0.0, 'settled_revenue' => 0.0, 'platforms' => []];
+        // Khoá đơn có dạng "sàn|mã đơn" — giữ lại các sàn bán SKU này.
+        $skus[$k]['platforms'][strstr($o, '|', true) ?: ''] = true;
         $skus[$k]['revenue'] += (float) $l['revenue'];
         $skus[$k]['units']   += (float) $l['qty'];
         $skus[$k]['fees']    += $alloc;
@@ -80,6 +82,7 @@ function sku_profit_compute(array $lines, array $orderFees): array
             'margin'    => $rev > 0 ? round($net / $rev * 100, 1) : 0.0,
             'fee_rate'  => $rev > 0 ? round($s['fees'] / $rev * 100, 1) : 0.0,
             'coverage'  => $rev > 0 ? round($s['settled_revenue'] / $rev * 100, 1) : 0.0,
+            'platforms' => array_values(array_filter(array_keys($s['platforms']))),
         ];
         $abc[$class]['count']++;
         $abc[$class]['revenue'] += $rev;
