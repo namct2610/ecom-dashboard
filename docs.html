@@ -464,6 +464,7 @@
         <tr><td>Phân bổ theo khu vực</td><td><code>shipping_city</code>, <code>subtotal_after_discount</code></td><td>Gộp theo tỉnh/thành (Lazada không có)</td></tr>
         <tr><td>Phân bổ theo kho</td><td><code>warehouse</code>, <code>subtotal_after_discount</code></td><td>Gộp theo kho (chuẩn hoá tên)</td></tr>
         <tr><td>Phân tích huỷ đơn</td><td><code>normalized_status</code>, <code>payment_method</code>, <code>cancel_reason</code></td><td>Tỷ lệ huỷ = đơn huỷ ÷ tổng đơn, theo nhóm thanh toán; lý do gom thành "ai huỷ" + nhóm lý do</td></tr>
+        <tr><td>Giữ chân khách hàng</td><td><code>platform</code>, <code>buyer_username</code>, <code>order_created_at</code>, <code>normalized_status</code></td><td>Khách = (sàn, tên đăng nhập); đơn vị là ngày mua khác nhau (2 đơn cùng ngày = 1 lần). Tỷ lệ mua lại = khách có ≥2 ngày mua ÷ tổng khách; bảng giữ chân = % nhóm khách theo tháng mua đầu có mua lại ở tháng +k. Chỉ Shopee & TikTok (Lazada che tên)</td></tr>
         <tr><td>Phân loại khách hàng</td><td><code>buyer_username</code>, <code>order_id</code>, <code>order_created_at</code></td><td>Đếm đơn/khách trong kỳ &amp; 12 tháng trước</td></tr>
         <tr><td>Chi phí sàn</td><td><code>fee_platform</code>, <code>fee_marketing</code>, <code>fee_promotion</code></td><td>Từ settlements, nối theo (platform, order_id)</td></tr>
         <tr><td>Lợi nhuận ròng</td><td>Doanh thu, <code>fee_total</code></td><td>Doanh thu − fee_total</td></tr>

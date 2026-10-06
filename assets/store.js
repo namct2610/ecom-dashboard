@@ -682,28 +682,33 @@
     return customerInflight[cacheKey];
   }
 
-  // Phân tích huỷ đơn (tab Đơn hàng). Cache theo kỳ + sàn như fetchCustomers;
-  // getCancellations chỉ đọc cache để render đồng bộ, mount mới gọi fetch.
-  const cancelCache = {};
-  const cancelInflight = {};
-  function getCancellations(period, platform) {
-    return cancelCache[period + "|" + platform] || null;
+  // API phụ cho từng thẻ (phân tích huỷ đơn, giữ chân khách...). Cache theo
+  // kỳ + sàn như fetchCustomers; get() chỉ đọc cache để render đồng bộ, còn
+  // fetch() mới gọi mạng — view gọi nó trong mount rồi vẽ lại khi có dữ liệu.
+  function cachedApi(path) {
+    const cache = {};
+    const inflight = {};
+    return {
+      get(period, platform) { return cache[period + "|" + platform] || null; },
+      fetch() {
+        const range = rangeFromKey(state.period);
+        const cacheKey = state.period + "|" + state.platform;
+        if (cache[cacheKey]) return Promise.resolve(cache[cacheKey]);
+        if (inflight[cacheKey]) return inflight[cacheKey];
+        const url = buildApiUrl(path);
+        url.searchParams.set("date_from", range.start);
+        url.searchParams.set("date_to", range.end);
+        if (state.platform !== "all") url.searchParams.set("platform", state.platform === "tiktok" ? "tiktokshop" : state.platform);
+        inflight[cacheKey] = fetch(url.toString(), { credentials: "same-origin" })
+          .then(checkApiResponse).then((r) => r.json())
+          .then((data) => { cache[cacheKey] = data; delete inflight[cacheKey]; return data; })
+          .catch((err) => { delete inflight[cacheKey]; throw err; });
+        return inflight[cacheKey];
+      },
+    };
   }
-  function fetchCancellations() {
-    const range = rangeFromKey(state.period);
-    const cacheKey = state.period + "|" + state.platform;
-    if (cancelCache[cacheKey]) return Promise.resolve(cancelCache[cacheKey]);
-    if (cancelInflight[cacheKey]) return cancelInflight[cacheKey];
-    const url = buildApiUrl("api/cancellations.php");
-    url.searchParams.set("date_from", range.start);
-    url.searchParams.set("date_to", range.end);
-    if (state.platform !== "all") url.searchParams.set("platform", state.platform === "tiktok" ? "tiktokshop" : state.platform);
-    cancelInflight[cacheKey] = fetch(url.toString(), { credentials: "same-origin" })
-      .then(checkApiResponse).then((r) => r.json())
-      .then((data) => { cancelCache[cacheKey] = data; delete cancelInflight[cacheKey]; return data; })
-      .catch((err) => { delete cancelInflight[cacheKey]; throw err; });
-    return cancelInflight[cacheKey];
-  }
+  const cancelApi = cachedApi("api/cancellations.php");
+  const retentionApi = cachedApi("api/retention.php");
 
   function fetchCustomerDetail(buyerUsername) {
     const range = rangeFromKey(state.period);
@@ -768,7 +773,9 @@
     aggMonths, aggRange, platformMetrics, dailySeries, dailySeriesRange, monthlyTrend, businessTrend, autoGrain,
     products, categoryBreakdown, cityDistribution, heatMatrix, statusBreakdown, categoryOf, ensureRangeDetail, getRangeDetail,
     trafficSeries, trafficSeriesRange, trafficAgg, trafficAggRange, trafficByPlatform,
-    fetchCustomers, fetchCustomerDetail, fetchCancellations, getCancellations,
+    fetchCustomers, fetchCustomerDetail,
+    getCancellations: cancelApi.get, fetchCancellations: cancelApi.fetch,
+    getRetention: retentionApi.get, fetchRetention: retentionApi.fetch,
     cur: () => curMonths(state.period),
     cmp: () => compareMonths(state.period, state.compare),
     currentRange: () => rangeFromKey(state.period),

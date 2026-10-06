@@ -9,10 +9,24 @@
   let detailLoadingKey = null;
   // null = theo cấp độ tự nhiên của kỳ đang chọn (S.autoGrain)
   let ordersGrain = null;
-  let cancelLoadingKey = null;
-  // Kỳ đã tải lỗi: không tự gọi lại cho kỳ này, nếu không mount → lỗi → vẽ lại
-  // → mount sẽ lặp vô hạn khi API hỏng. Đổi kỳ/sàn hoặc tải lại trang để thử lại.
-  let cancelFailedKey = null;
+  // Tải nền cho các thẻ phụ: gọi một lần cho mỗi (kỳ|sàn), vẽ lại khi có dữ
+  // liệu. Lỗi thì đánh dấu và KHÔNG tự gọi lại cho kỳ đó — nếu không, mount →
+  // lỗi → vẽ lại → mount sẽ lặp vô hạn khi API hỏng. Đổi kỳ/sàn hoặc tải lại
+  // trang để thử lại.
+  function lazyCard(state, key, has, load, page) {
+    if (has || state.loading === key || state.failed === key) return;
+    state.loading = key;
+    load().then(() => {
+      if (state.loading === key && S.state.page === page) window.App.rerender();
+    }).catch(() => {
+      state.failed = key;
+      if (S.state.page === page) window.App.rerender();
+    }).finally(() => {
+      if (state.loading === key) state.loading = null;
+    });
+  }
+  const cancelState = { loading: null, failed: null };
+  const retentionState = { loading: null, failed: null };
 
   // Hai thẻ phân tích huỷ đơn. Lý do chỉ có cho đơn nhập từ 3.5.6 (hoặc còn dòng
   // thô để điền bù), nên luôn ghi rõ "có lý do cho n/m đơn huỷ" — không trình
@@ -120,6 +134,51 @@
     ];
   }
 
+  // Thẻ giữ chân khách hàng (tab Khách hàng). Tính theo toàn bộ lịch sử đến
+  // ngày cuối kỳ, nên ghi rõ ngày cắt và vì sao Lazada không có mặt.
+  function retentionCardHTML(data, failed, platform) {
+    const wrap = (body) => `<div data-collapse class="card section-gap">
+      <div class="card-head"><div><div class="card-title">${_t("customers.retention.title")}</div></div></div>
+      <div class="card-pad">${body}</div></div>`;
+    const msg = (text, color) => `<div style="color:var(${color || "--ink-3"});font-size:13px;font-weight:${color ? 700 : 400};padding:6px 0">${text}</div>`;
+
+    if (platform === "lazada") return wrap(msg(_t("customers.retention.lazada_only")));
+    if (!data) return wrap(failed ? msg(_t("common.error"), "--neg") : msg(_t("customers.retention.loading")));
+    if (!data.buyers) return wrap(msg(_t("customers.retention.empty")));
+
+    const iv = data.interval || {};
+    const stat = (label, value, sub) => `<div style="padding:12px 14px;border:1px solid var(--line);border-radius:12px">
+        <div style="font-size:12px;font-weight:700;color:var(--ink-3)">${label}</div>
+        <div style="font-size:24px;font-weight:800;letter-spacing:-.02em;margin-top:4px" class="tnum">${value}</div>
+        <div style="font-size:11.5px;color:var(--ink-3);margin-top:2px">${sub}</div></div>`;
+    const stats = `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px">
+      ${stat(_t("customers.retention.repeat_rate"), F.pct(data.repeat_rate), _tf("customers.retention.repeat_sub", { n: F.viInt(data.repeat_buyers), m: F.viInt(data.buyers) }))}
+      ${stat(_t("customers.retention.median_gap"), iv.median_days == null ? "—" : `${F.viInt(iv.median_days)} <span style="font-size:13px;color:var(--ink-3)">${_t("customers.retention.days_unit")}</span>`, _t("customers.retention.median_sub"))}
+      ${stat(_t("customers.retention.within30"), F.pct(iv.within_30 || 0), _t("customers.retention.within_sub"))}
+      ${stat(_t("customers.retention.within90"), F.pct(iv.within_90 || 0), _t("customers.retention.within_sub"))}
+    </div>`;
+
+    const cohorts = data.cohorts || [];
+    const horizon = cohorts.length ? cohorts[0].retention.length : 0;
+    const vals = cohorts.flatMap((c) => c.retention.filter((v) => v != null));
+    const maxV = Math.max(...vals, 1);
+    const head = `<tr><th>${_t("customers.retention.col_cohort")}</th><th class="num">${_t("customers.retention.col_size")}</th>${
+      Array.from({ length: horizon }, (_, i) => `<th class="num">${_tf("customers.retention.col_month", { k: i + 1 })}</th>`).join("")}</tr>`;
+    const body = cohorts.map((c) => {
+      const [y, m] = c.ym.split("-");
+      const cells = c.retention.map((v) => v == null
+        ? `<td class="num" style="color:var(--ink-3)">—</td>`
+        : `<td class="num tnum" style="background:color-mix(in srgb, var(--brand) ${Math.round(6 + 52 * v / maxV)}%, transparent)">${F.pct(v)}</td>`).join("");
+      return `<tr><td style="font-weight:700">${escHtml(_tf("period.month_short", { n: +m, y }))}</td><td class="num tnum">${F.viInt(c.size)}</td>${cells}</tr>`;
+    }).join("");
+    const [cy, cm, cd] = String(data.cutoff || "").split("-");
+
+    return wrap(`${stats}
+      <div style="margin:20px 0 6px;font-weight:700;font-size:13.5px">${_t("customers.retention.cohort_title")}</div>
+      <div style="overflow-x:auto"><table class="tbl">${head}${body}</table></div>
+      <div class="note" style="margin-top:14px">${UI.ICON.people} ${_tf("customers.retention.note", { date: cd ? `${cd}/${cm}/${cy}` : "" })}</div>`);
+  }
+
   /* ===================== ORDERS ===================== */
   window.Views.orders = {
     titleKey: "page.orders.title", eyebrowKey: "page.orders.eyebrow", 
@@ -175,7 +234,7 @@
             </div></div>
         </div>
       </div>
-      ${cancelCardsHTML(S.getCancellations(st.period, plat), cancelFailedKey === st.period + "|" + plat)}
+      ${cancelCardsHTML(S.getCancellations(st.period, plat), cancelState.failed === st.period + "|" + plat)}
        <div class="card section-gap"><div class="card-head"><div><div class="card-title">${_t("ovw.heat.title")}</div></div></div><div class="card-pad" style="overflow-x:auto">${heatHTML(st.period, plat)}</div></div>
       <div class="card section-gap"><div class="card-head"><div><div class="card-title">${_t("ovw.recent_orders.title")}</div></div></div>
         <div class="card-pad" style="padding:6px;overflow-x:auto"><table class="tbl"><thead><tr><th>${_t("th.order_id")}</th><th>${_t("th.platform")}</th><th>${_t("th.product")}</th><th>${_t("th.region")}</th><th class="num">${_t("th.revenue")}</th><th>${_t("th.status")}</th><th class="hide-md">${_t("th.uploaded_at")}</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
@@ -191,17 +250,7 @@
       const cur = S.aggRange(range, plat);
       const sd = root.querySelector("#statusDonut"); if (sd) C.donut(sd, [{ label: _t("status.completed"), value: cur.completed, color: "--pos" }, { label: _t("status.cancelled"), value: cur.cancelled, color: "--neg" }, { label: _t("status.other"), value: Math.max(0, cur.orders - cur.completed - cur.cancelled), color: "--border-strong" }]);
       const cacheKey = st.period + "|" + st.platform;
-      if (!S.getCancellations(st.period, st.platform) && cancelLoadingKey !== cacheKey && cancelFailedKey !== cacheKey) {
-        cancelLoadingKey = cacheKey;
-        S.fetchCancellations().then(() => {
-          if (cancelLoadingKey === cacheKey && S.state.page === "orders") window.App.rerender();
-        }).catch(() => {
-          cancelFailedKey = cacheKey;
-          if (S.state.page === "orders") window.App.rerender();
-        }).finally(() => {
-          if (cancelLoadingKey === cacheKey) cancelLoadingKey = null;
-        });
-      }
+      lazyCard(cancelState, cacheKey, !!S.getCancellations(st.period, st.platform), S.fetchCancellations, "orders");
       if (!S.getRangeDetail(st.period, st.platform) && detailLoadingKey !== cacheKey) {
         detailLoadingKey = cacheKey;
         S.ensureRangeDetail(st.period, st.platform).then(() => {
@@ -412,10 +461,14 @@
           </div>
         </div>
       </div>
+      ${retentionCardHTML(S.getRetention(st.period, st.platform), retentionState.failed === st.period + "|" + st.platform, st.platform)}
       <div id="customerDetailPanel"></div>`;
     },
     mount(root) {
       const cacheKey = S.state.period + "|" + S.state.platform;
+      if (S.state.platform !== "lazada") {
+        lazyCard(retentionState, cacheKey, !!S.getRetention(S.state.period, S.state.platform), S.fetchRetention, "customers");
+      }
       const cached = (window.Store._customerCache || {})[cacheKey];
       const customerError = customerErrors[cacheKey];
       if (!cached && !customerLoadingKey && !customerError) {

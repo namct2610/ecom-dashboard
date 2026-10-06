@@ -1,7 +1,7 @@
 {
-  "version": "3.5.6",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.5.6/release/dashboard-v3-3.5.6.zip",
-  "changelog": "Lưu và phân tích lý do huỷ đơn.\n- Lý do huỷ của cả 3 sàn nay được lưu (trước đây hệ thống đọc cột này nhưng bỏ đi). Đơn cũ còn dữ liệu thô được tự điền bù ngay khi cập nhật; đơn cũ hơn sẽ có lý do khi tải lại file đơn hàng.\n- Tab Đơn hàng thêm 2 thẻ: \"Lý do huỷ đơn\" (ai huỷ + nhóm lý do) và \"Tỷ lệ huỷ theo thanh toán\" (COD, thẻ, ngân hàng, ví, trả sau). Tên phương thức của các sàn được gộp về cùng nhóm, ví dụ \"COD\" và \"Thanh toán khi nhận hàng\".\n- Thẻ luôn ghi rõ có lý do cho bao nhiêu đơn huỷ, để không hiểu nhầm một phần dữ liệu là toàn bộ.\n- API Power BI: dataset orders có thêm cột cancel_reason.",
+  "version": "3.5.7",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.5.7/release/dashboard-v3-3.5.7.zip",
+  "changelog": "Tab Khách hàng: thêm phần Giữ chân khách hàng.\n- 4 chỉ số: tỷ lệ khách mua lại, khoảng cách trung vị giữa hai lần mua, tỷ lệ mua lại trong 30 ngày và trong 90 ngày.\n- Bảng nhiệt tỷ lệ quay lại theo tháng mua đầu tiên: 12 nhóm khách gần nhất, theo dõi từ tháng +1 đến tháng +6.\n- Tính trên toàn bộ lịch sử đến hết kỳ đang chọn, chỉ đơn hoàn thành. Hai đơn trong cùng một ngày được tính là một lần mua để không thổi phồng tỷ lệ mua lại.\n- Chỉ có Shopee và TikTok Shop vì Lazada che tên người mua; khi lọc Lazada, thẻ sẽ ghi rõ lý do.",
   "min_php": "8.1",
   "released_at": "2026-10-06"
 }
