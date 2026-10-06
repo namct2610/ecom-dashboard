@@ -105,6 +105,9 @@ final class TiktokShopParser extends BaseParser
                     $this->cell($row, $col['substatus'] ?? null) ?? ''
                 ),
                 'original_status'        => $this->cell($row, $col['status'] ?? null) ?? '',
+                // Lý do cụ thể; trống thì lấy loại huỷ/trả (Cancel / Return / Refund).
+                'cancel_reason'          => $this->cell($row, $col['cancel_reason'] ?? null)
+                                            ?? $this->cell($row, $col['cancel_type'] ?? null),
                 'order_created_at'       => $createdAt,
                 'order_paid_at'          => parse_datetime_value($this->cell($row, $col['order_paid_at'] ?? null)),
                 'order_completed_at'     => parse_datetime_value($this->cell($row, $col['order_completed_at'] ?? null)),

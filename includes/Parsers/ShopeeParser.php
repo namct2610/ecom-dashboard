@@ -111,6 +111,7 @@ final class ShopeeParser extends BaseParser
                 'platform_fee_payment'   => parse_amount($this->cell($row, $col['platform_fee_payment'] ?? null)),
                 'normalized_status'      => $this->normalizeStatus($this->cell($row, $col['status'] ?? null) ?? ''),
                 'original_status'        => $this->cell($row, $col['status'] ?? null) ?? '',
+                'cancel_reason'          => $this->cell($row, $col['cancel_reason'] ?? null),
                 'order_created_at'       => $createdAt,
                 'order_paid_at'          => parse_datetime_value($this->cell($row, $col['order_paid_at'] ?? null)),
                 'order_completed_at'     => parse_datetime_value($this->cell($row, $col['order_completed_at'] ?? null)),

@@ -9,6 +9,59 @@
   let detailLoadingKey = null;
   // null = theo cấp độ tự nhiên của kỳ đang chọn (S.autoGrain)
   let ordersGrain = null;
+  let cancelLoadingKey = null;
+  // Kỳ đã tải lỗi: không tự gọi lại cho kỳ này, nếu không mount → lỗi → vẽ lại
+  // → mount sẽ lặp vô hạn khi API hỏng. Đổi kỳ/sàn hoặc tải lại trang để thử lại.
+  let cancelFailedKey = null;
+
+  // Hai thẻ phân tích huỷ đơn. Lý do chỉ có cho đơn nhập từ 3.5.6 (hoặc còn dòng
+  // thô để điền bù), nên luôn ghi rõ "có lý do cho n/m đơn huỷ" — không trình
+  // bày một phần dữ liệu như thể là toàn bộ.
+  function cancelCardsHTML(data, failed) {
+    const wideRow = 'style="grid-template-columns:minmax(150px,230px) 1fr auto"';
+    const msg = (k, vars) => `<div style="color:var(--ink-3);font-size:13px;padding:6px 0">${vars ? _tf(k, vars) : _t(k)}</div>`;
+    const card = (titleKey, body) => `<div data-collapse style="grid-column:span 6" class="card">
+      <div class="card-head"><div><div class="card-title">${_t(titleKey)}</div></div></div>
+      <div class="card-pad">${body}</div></div>`;
+
+    if (!data) {
+      const m = failed ? `<div style="color:var(--neg);font-size:13px;font-weight:700;padding:6px 0">${_t("common.error")}</div>` : msg("orders.cancel.loading");
+      return `<div class="g12 section-gap">${card("orders.cancel.reasons_title", m)}${card("orders.cancel.payment_title", m)}</div>`;
+    }
+
+    // --- lý do huỷ ---
+    const cov = data.reason_coverage || { with_reason: 0, cancelled: 0 };
+    let reasons;
+    if (!data.cancelled) {
+      reasons = msg("orders.cancel.no_cancel");
+    } else if (!cov.with_reason) {
+      reasons = msg("orders.cancel.no_reason");
+    } else {
+      const who = (data.by_who || []).map((w) =>
+        `<span class="tag" style="margin:0 6px 6px 0">${escHtml(_t("orders.cancel.who." + w.who))} <b class="tnum">${F.pct(w.share)}</b></span>`).join("");
+      const maxShare = Math.max(...(data.reasons || []).map((r) => r.share), 1);
+      const bars = (data.reasons || []).map((r) => `<div class="cmp-row" ${wideRow}>
+          <div class="cmp-name" style="font-weight:600">${escHtml(_t("orders.cancel.group." + r.group))}</div>
+          <div class="cmp-track"><div class="cmp-fill" style="width:${r.share / maxShare * 100}%;background:var(--brand)"></div></div>
+          <div class="cmp-val">${F.pct(r.share)}</div></div>`).join("");
+      const note = cov.with_reason < cov.cancelled
+        ? `<div style="margin-top:10px;font-size:12px;color:var(--ink-3)">${_tf("orders.cancel.coverage", { n: F.viInt(cov.with_reason), m: F.viInt(cov.cancelled) })}</div>` : "";
+      reasons = `<div style="display:flex;flex-wrap:wrap;margin-bottom:6px">${who}</div>${bars}${note}`;
+    }
+
+    // --- tỷ lệ huỷ theo thanh toán ---
+    const pays = (data.by_payment || []).filter((p) => p.orders > 0);
+    // Nhóm 'none' gần như 100% là đơn huỷ — lấy nó làm chuẩn sẽ ép mọi thanh
+    // còn lại thành vệt nhỏ, mất khả năng so COD với thẻ. Chuẩn theo nhóm thật.
+    const maxRate = Math.max(...pays.filter((p) => p.method !== "none").map((p) => p.rate), 1);
+    const payBody = pays.length ? pays.map((p) => `<div class="cmp-row" ${wideRow}>
+        <div class="cmp-name" style="font-weight:600">${escHtml(_t("orders.cancel.pay." + p.method))}</div>
+        <div class="cmp-track"><div class="cmp-fill" style="width:${Math.min(100, p.rate / maxRate * 100)}%;background:var(--neg)"></div></div>
+        <div class="cmp-val">${F.pct(p.rate)}<div style="font-size:11px;font-weight:600;color:var(--ink-3)">${_tf("orders.cancel.of_orders", { n: F.viInt(p.orders) })}</div></div></div>`).join("")
+      : msg("orders.cancel.no_cancel");
+
+    return `<div class="g12 section-gap">${card("orders.cancel.reasons_title", reasons)}${card("orders.cancel.payment_title", payBody)}</div>`;
+  }
 
   const CAL_D = ["mon","tue","wed","thu","fri","sat","sun"];
   const dayLabels = () => CAL_D.map((d) => _t("period.cal." + d));
@@ -122,6 +175,7 @@
             </div></div>
         </div>
       </div>
+      ${cancelCardsHTML(S.getCancellations(st.period, plat), cancelFailedKey === st.period + "|" + plat)}
        <div class="card section-gap"><div class="card-head"><div><div class="card-title">${_t("ovw.heat.title")}</div></div></div><div class="card-pad" style="overflow-x:auto">${heatHTML(st.period, plat)}</div></div>
       <div class="card section-gap"><div class="card-head"><div><div class="card-title">${_t("ovw.recent_orders.title")}</div></div></div>
         <div class="card-pad" style="padding:6px;overflow-x:auto"><table class="tbl"><thead><tr><th>${_t("th.order_id")}</th><th>${_t("th.platform")}</th><th>${_t("th.product")}</th><th>${_t("th.region")}</th><th class="num">${_t("th.revenue")}</th><th>${_t("th.status")}</th><th class="hide-md">${_t("th.uploaded_at")}</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
@@ -137,6 +191,17 @@
       const cur = S.aggRange(range, plat);
       const sd = root.querySelector("#statusDonut"); if (sd) C.donut(sd, [{ label: _t("status.completed"), value: cur.completed, color: "--pos" }, { label: _t("status.cancelled"), value: cur.cancelled, color: "--neg" }, { label: _t("status.other"), value: Math.max(0, cur.orders - cur.completed - cur.cancelled), color: "--border-strong" }]);
       const cacheKey = st.period + "|" + st.platform;
+      if (!S.getCancellations(st.period, st.platform) && cancelLoadingKey !== cacheKey && cancelFailedKey !== cacheKey) {
+        cancelLoadingKey = cacheKey;
+        S.fetchCancellations().then(() => {
+          if (cancelLoadingKey === cacheKey && S.state.page === "orders") window.App.rerender();
+        }).catch(() => {
+          cancelFailedKey = cacheKey;
+          if (S.state.page === "orders") window.App.rerender();
+        }).finally(() => {
+          if (cancelLoadingKey === cacheKey) cancelLoadingKey = null;
+        });
+      }
       if (!S.getRangeDetail(st.period, st.platform) && detailLoadingKey !== cacheKey) {
         detailLoadingKey = cacheKey;
         S.ensureRangeDetail(st.period, st.platform).then(() => {

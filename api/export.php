@@ -53,7 +53,7 @@ function export_datasets(): array
                        quantity, unit_price,
                        subtotal_before_discount, platform_discount, seller_voucher,
                        seller_discount, subtotal_after_discount, order_total,
-                       shipping_fee, normalized_status, original_status,
+                       shipping_fee, normalized_status, original_status, cancel_reason,
                        buyer_username, buyer_name,
                        shipping_city, shipping_district, warehouse, payment_method,
                        order_created_at, order_paid_at, order_completed_at, upload_id
@@ -67,7 +67,7 @@ function export_datasets(): array
                 'seller_voucher' => 'decimal', 'seller_discount' => 'decimal',
                 'subtotal_after_discount' => 'decimal', 'order_total' => 'decimal',
                 'shipping_fee' => 'decimal', 'normalized_status' => 'string',
-                'original_status' => 'string', 'buyer_username' => 'string',
+                'original_status' => 'string', 'cancel_reason' => 'string', 'buyer_username' => 'string',
                 'buyer_name' => 'string', 'shipping_city' => 'string',
                 'shipping_district' => 'string', 'warehouse' => 'string',
                 'payment_method' => 'string', 'order_created_at' => 'datetime',

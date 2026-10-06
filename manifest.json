@@ -1,7 +1,7 @@
 {
-  "version": "3.5.5",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.5.5/release/dashboard-v3-3.5.5.zip",
-  "changelog": "Phiên hết hạn ở tab Khách hàng: tự đưa về trang đăng nhập thay vì báo lỗi 401.\n- Trước đây khi phiên đăng nhập hết hạn lúc đang dùng, tab Khách hàng (gọi API trực tiếp mỗi lần vào) hiện thẳng \"Lỗi: HTTP 401\". Các tab khác không bị vì đọc từ dữ liệu đã tải sẵn.\n- Nay mọi lời gọi API trực tiếp khi gặp 401 sẽ tự chuyển về trang đăng nhập (giống lúc mở app), để đăng nhập lại cho sạch.",
+  "version": "3.5.6",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.5.6/release/dashboard-v3-3.5.6.zip",
+  "changelog": "Lưu và phân tích lý do huỷ đơn.\n- Lý do huỷ của cả 3 sàn nay được lưu (trước đây hệ thống đọc cột này nhưng bỏ đi). Đơn cũ còn dữ liệu thô được tự điền bù ngay khi cập nhật; đơn cũ hơn sẽ có lý do khi tải lại file đơn hàng.\n- Tab Đơn hàng thêm 2 thẻ: \"Lý do huỷ đơn\" (ai huỷ + nhóm lý do) và \"Tỷ lệ huỷ theo thanh toán\" (COD, thẻ, ngân hàng, ví, trả sau). Tên phương thức của các sàn được gộp về cùng nhóm, ví dụ \"COD\" và \"Thanh toán khi nhận hàng\".\n- Thẻ luôn ghi rõ có lý do cho bao nhiêu đơn huỷ, để không hiểu nhầm một phần dữ liệu là toàn bộ.\n- API Power BI: dataset orders có thêm cột cancel_reason.",
   "min_php": "8.1",
-  "released_at": "2026-10-05"
+  "released_at": "2026-10-06"
 }

@@ -100,6 +100,7 @@ final class LazadaParser extends BaseParser
                 'platform_fee_payment'   => 0,
                 'normalized_status'      => $this->normalizeStatus($this->cell($row, $col['status'] ?? null) ?? ''),
                 'original_status'        => $this->cell($row, $col['status'] ?? null) ?? '',
+                'cancel_reason'          => $this->cell($row, $col['cancel_reason'] ?? null),
                 'order_created_at'       => $createdAt,
                 'order_paid_at'          => null,
                 'order_completed_at'     => $completedAt,

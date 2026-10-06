@@ -64,6 +64,16 @@ function ensure_schema(PDO $pdo, array $config = []): void
         if (empty($warehouseCol)) {
             $pdo->exec("ALTER TABLE orders ADD COLUMN warehouse VARCHAR(255) NULL AFTER shipping_city");
         }
+
+        // Lý do huỷ: parser đã đọc cột này từ lâu nhưng chưa bao giờ lưu, nên
+        // 17-25% đơn huỷ không phân tích được nguyên nhân. Thêm cột, rồi điền
+        // ngay cho các đơn còn dòng thô trong import_rows (lưu từ 3.4.60) để
+        // không bắt tải lại file; đơn cũ hơn sẽ tự điền khi tải lại file đơn.
+        $cancelCol = $pdo->query("SHOW COLUMNS FROM orders LIKE 'cancel_reason'")->fetchAll();
+        if (empty($cancelCol)) {
+            $pdo->exec("ALTER TABLE orders ADD COLUMN cancel_reason VARCHAR(500) NULL AFTER original_status");
+        }
+        ensure_cancel_reason_backfill($pdo);
     }
 
     if (in_array('reconcile_price_items', $tables, true)) {
@@ -251,6 +261,7 @@ function ensure_schema(PDO $pdo, array $config = []): void
         platform_fee_payment DECIMAL(15,2) DEFAULT 0,
         normalized_status ENUM('completed','delivered','cancelled','pending') NOT NULL,
         original_status VARCHAR(500),
+        cancel_reason VARCHAR(500) NULL,
         order_created_at DATETIME NOT NULL,
         order_paid_at DATETIME NULL,
         order_completed_at DATETIME NULL,
@@ -780,6 +791,114 @@ function replace_sku_brand_rules(PDO $pdo, array $rows): void
 
 // ── Upsert helpers ──────────────────────────────────────────────────────────
 
+/**
+ * Chạy backfill_cancel_reasons đúng một lần cho mỗi cơ sở dữ liệu. Cờ chỉ được
+ * đánh "done" khi chạy thành công; nếu lỗi thì lần sau thử lại, nhưng tối đa
+ * một lần mỗi giờ — ensure_schema chạy theo từng request nên một lỗi lặp lại
+ * không được phép làm chậm mọi request.
+ */
+function ensure_cancel_reason_backfill(PDO $pdo): void
+{
+    try {
+        $state = get_app_setting($pdo, 'cancel_reason_backfill', '');
+    } catch (\Throwable $e) {
+        return; // app_settings chưa có (cài mới) — lần sau sẽ chạy
+    }
+    if ($state === 'done') { return; }
+    if (ctype_digit($state) && time() - (int) $state < 3600) { return; }
+
+    set_app_setting($pdo, 'cancel_reason_backfill', (string) time());
+    try {
+        $n = backfill_cancel_reasons($pdo);
+        set_app_setting($pdo, 'cancel_reason_backfill', 'done');
+        log_activity('info', 'system', "Đã điền lý do huỷ cho {$n} dòng đơn từ dữ liệu thô.");
+    } catch (\Throwable $e) {
+        log_activity('error', 'system', 'Điền lý do huỷ thất bại: ' . $e->getMessage());
+    }
+}
+
+/**
+ * Điền lý do huỷ cho các đơn đã nhập trước khi có cột cancel_reason, lấy từ
+ * dòng thô import_rows. Mã đơn được đọc thẳng từ payload theo tên cột của từng
+ * sàn — không tách từ row_key, vì row_key của Lazada là orderItemId chứ không
+ * phải orderNumber. Chỉ điền ô đang trống nên chạy lại bao nhiêu lần cũng được.
+ *
+ * @return int số dòng orders được điền
+ */
+function backfill_cancel_reasons(PDO $pdo): int
+{
+    $cols = [
+        'shopee'     => ['id' => ['mã đơn hàng'],                 'reason' => ['lý do hủy', 'lý do huỷ']],
+        'lazada'     => ['id' => ['ordernumber', 'order number'], 'reason' => ['buyerfaileddeliveryreason', 'cancelreason', 'cancel reason']],
+        'tiktokshop' => ['id' => ['order id'],                    'reason' => ['cancel reason']],
+    ];
+    $fold = static function (string $s): string {
+        $s = mb_strtolower(trim($s));
+        if (class_exists('\\Normalizer')) {
+            $n = \Normalizer::normalize($s, \Normalizer::FORM_C);
+            if (is_string($n)) { $s = $n; }
+        }
+        return $s;
+    };
+    $path = static fn(string $key): string => '$."' . str_replace(['\\', '"'], ['\\\\', '\\"'], $key) . '"';
+
+    $layouts = $pdo->query("
+        SELECT DISTINCT r.platform, r.layout_hash, l.headers
+        FROM import_rows r
+        JOIN import_layouts l ON l.layout_hash = r.layout_hash
+        WHERE r.file_type = 'orders'
+    ")->fetchAll(PDO::FETCH_ASSOC);
+
+    // orders có thể mang collation cũ (dump từ server khác) trong khi giá trị
+    // JSON lấy theo mặc định của server -> lỗi 1267 khi so sánh. Ép giá trị JSON
+    // về đúng collation của orders.order_id (cùng cách customers.php đã làm).
+    $coll = $pdo->query("
+        SELECT collation_name FROM information_schema.columns
+        WHERE table_schema = DATABASE() AND table_name = 'orders' AND column_name = 'order_id'
+    ")->fetchColumn();
+    $collate = (is_string($coll) && preg_match('/^utf8mb4_[a-z0-9_]+$/', $coll)) ? " COLLATE {$coll}" : '';
+
+    $filled = 0;
+    foreach ($layouts as $lay) {
+        $platform = (string) $lay['platform'];
+        if (!isset($cols[$platform])) { continue; }
+        $headers = json_decode((string) $lay['headers'], true);
+        if (!is_array($headers)) { continue; }
+
+        $find = static function (array $candidates) use ($headers, $fold): ?string {
+            foreach ($candidates as $c) {
+                foreach ($headers as $h) {
+                    if ($fold((string) $h) === $fold($c)) { return (string) $h; }
+                }
+            }
+            return null;
+        };
+        $idKey     = $find($cols[$platform]['id']);
+        $reasonKey = $find($cols[$platform]['reason']);
+        if ($idKey === null || $reasonKey === null) { continue; }
+
+        $stmt = $pdo->prepare("
+            UPDATE orders o
+            JOIN import_rows r
+              ON o.order_id = (JSON_UNQUOTE(JSON_EXTRACT(r.payload, :idp)){$collate})
+            SET o.cancel_reason = LEFT(TRIM(JSON_UNQUOTE(JSON_EXTRACT(r.payload, :rp))), 500)
+            WHERE o.platform = :pf
+              AND r.layout_hash = :lh
+              AND r.file_type = 'orders'
+              AND (o.cancel_reason IS NULL OR o.cancel_reason = '')
+              AND JSON_EXTRACT(r.payload, :rp2) IS NOT NULL
+              AND TRIM(JSON_UNQUOTE(JSON_EXTRACT(r.payload, :rp3))) NOT IN ('', 'null')
+        ");
+        $stmt->execute([
+            ':idp' => $path($idKey), ':rp' => $path($reasonKey),
+            ':rp2' => $path($reasonKey), ':rp3' => $path($reasonKey),
+            ':lh'  => $lay['layout_hash'], ':pf' => $platform,
+        ]);
+        $filled += $stmt->rowCount();
+    }
+    return $filled;
+}
+
 function upsert_order(PDO $pdo, array $row): void
 {
     static $stmt;
@@ -791,7 +910,7 @@ function upsert_order(PDO $pdo, array $row): void
                  variation, quantity, unit_price, subtotal_before_discount, platform_discount,
                  seller_voucher, seller_discount, subtotal_after_discount, order_total, shipping_fee,
                  platform_fee_fixed, platform_fee_service, platform_fee_payment,
-                 normalized_status, original_status, order_created_at, order_paid_at,
+                 normalized_status, original_status, cancel_reason, order_created_at, order_paid_at,
                  order_completed_at, upload_id)
             VALUES
                 (:platform, :order_id, :buyer_name, :buyer_username, :shipping_address,
@@ -799,7 +918,7 @@ function upsert_order(PDO $pdo, array $row): void
                  :variation, :quantity, :unit_price, :subtotal_before_discount, :platform_discount,
                  :seller_voucher, :seller_discount, :subtotal_after_discount, :order_total, :shipping_fee,
                  :platform_fee_fixed, :platform_fee_service, :platform_fee_payment,
-                 :normalized_status, :original_status, :order_created_at, :order_paid_at,
+                 :normalized_status, :original_status, :cancel_reason, :order_created_at, :order_paid_at,
                  :order_completed_at, :upload_id)
             ON DUPLICATE KEY UPDATE
                 buyer_name               = COALESCE(NULLIF(VALUES(buyer_name), ''), buyer_name),
@@ -829,6 +948,7 @@ function upsert_order(PDO $pdo, array $row): void
                 platform_fee_payment     = GREATEST(platform_fee_payment, VALUES(platform_fee_payment)),
                 normalized_status        = VALUES(normalized_status),
                 original_status          = COALESCE(NULLIF(VALUES(original_status), ''), original_status),
+                cancel_reason            = COALESCE(NULLIF(VALUES(cancel_reason), ''), cancel_reason),
                 order_created_at         = LEAST(order_created_at, VALUES(order_created_at)),
                 order_paid_at            = COALESCE(VALUES(order_paid_at), order_paid_at),
                 order_completed_at       = COALESCE(VALUES(order_completed_at), order_completed_at),
@@ -862,6 +982,8 @@ function upsert_order(PDO $pdo, array $row): void
         ':platform_fee_payment'    => $row['platform_fee_payment'] ?? 0,
         ':normalized_status'       => $row['normalized_status'],
         ':original_status'         => $row['original_status'] ?? '',
+        ':cancel_reason'           => isset($row['cancel_reason']) && $row['cancel_reason'] !== ''
+                                          ? mb_substr((string) $row['cancel_reason'], 0, 500) : null,
         ':order_created_at'        => $row['order_created_at'],
         ':order_paid_at'           => $row['order_paid_at'] ?? null,
         ':order_completed_at'      => $row['order_completed_at'] ?? null,
