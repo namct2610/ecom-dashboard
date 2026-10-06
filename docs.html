@@ -467,6 +467,7 @@
         <tr><td>Giữ chân khách hàng</td><td><code>platform</code>, <code>buyer_username</code>, <code>order_created_at</code>, <code>normalized_status</code></td><td>Khách = (sàn, tên đăng nhập); đơn vị là ngày mua khác nhau (2 đơn cùng ngày = 1 lần). Tỷ lệ mua lại = khách có ≥2 ngày mua ÷ tổng khách; bảng giữ chân = % nhóm khách theo tháng mua đầu có mua lại ở tháng +k. Chỉ Shopee & TikTok (Lazada che tên)</td></tr>
         <tr><td>Phân loại khách hàng</td><td><code>buyer_username</code>, <code>order_id</code>, <code>order_created_at</code></td><td>Đếm đơn/khách trong kỳ &amp; 12 tháng trước</td></tr>
         <tr><td>Chi phí sàn</td><td><code>fee_platform</code>, <code>fee_marketing</code>, <code>fee_promotion</code></td><td>Từ settlements, nối theo (platform, order_id)</td></tr>
+        <tr><td>Lãi sau phí theo SKU &amp; hạng ABC</td><td><code>sku</code>, <code>subtotal_after_discount</code>, <code>quantity</code>, <code>fee_total</code> (settlements)</td><td>Phí của đơn chia xuống SKU theo tỷ trọng doanh thu trong đơn. Nguồn phí theo từng đơn: đối soát → tỷ lệ phí thật của sàn (cần ≥30 đơn đã đối soát) → phí trong file đơn → biểu phí cấu hình. ABC theo doanh thu luỹ kế: A 80%, B 15%, C 5%. Chưa trừ giá vốn</td></tr>
         <tr><td>Lợi nhuận ròng</td><td>Doanh thu, <code>fee_total</code></td><td>Doanh thu − fee_total</td></tr>
         <tr><td>Lưu lượng</td><td><code>visits</code>, <code>page_views</code>, <code>new_visitors</code>…</td><td>Cộng theo kỳ</td></tr>
       </tbody>

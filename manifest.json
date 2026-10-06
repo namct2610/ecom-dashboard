@@ -1,7 +1,7 @@
 {
-  "version": "3.5.7",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.5.7/release/dashboard-v3-3.5.7.zip",
-  "changelog": "Tab Khách hàng: thêm phần Giữ chân khách hàng.\n- 4 chỉ số: tỷ lệ khách mua lại, khoảng cách trung vị giữa hai lần mua, tỷ lệ mua lại trong 30 ngày và trong 90 ngày.\n- Bảng nhiệt tỷ lệ quay lại theo tháng mua đầu tiên: 12 nhóm khách gần nhất, theo dõi từ tháng +1 đến tháng +6.\n- Tính trên toàn bộ lịch sử đến hết kỳ đang chọn, chỉ đơn hoàn thành. Hai đơn trong cùng một ngày được tính là một lần mua để không thổi phồng tỷ lệ mua lại.\n- Chỉ có Shopee và TikTok Shop vì Lazada che tên người mua; khi lọc Lazada, thẻ sẽ ghi rõ lý do.",
+  "version": "3.5.8",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.5.8/release/dashboard-v3-3.5.8.zip",
+  "changelog": "Tab Sản phẩm: thêm Lãi sau phí sàn theo SKU và phân loại ABC.\n- Mỗi SKU có doanh thu, phí sàn được chia xuống theo tỷ trọng doanh thu trong đơn, lãi sau phí, biên lãi, và cột Đã đối soát cho biết bao nhiêu phần là số thật.\n- Phân loại ABC: hạng A là nhóm SKU tạo 80% doanh thu đầu tiên, hạng B là 15% tiếp theo, hạng C là 5% còn lại. SKU có biên lãi thấp hơn mức chung từ 5 điểm trở lên được tô đỏ.\n- Đơn chưa có báo cáo tài chính được ước tính theo tỷ lệ phí thực tế của các đơn đã đối soát cùng sàn. Phí ghi trong file đơn hàng thiếu voucher và marketing nên trước đây làm biên lãi bị thổi phồng gần gấp đôi; cách mới giúp các kỳ so sánh được với nhau. Sàn có dưới 30 đơn đã đối soát dùng biểu phí cấu hình.\n- Kỳ mà phần lớn phí là số ước tính sẽ có cảnh báo riêng. Chưa trừ giá vốn hàng hoá.",
   "min_php": "8.1",
   "released_at": "2026-10-06"
 }

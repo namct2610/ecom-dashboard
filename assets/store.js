@@ -709,6 +709,7 @@
   }
   const cancelApi = cachedApi("api/cancellations.php");
   const retentionApi = cachedApi("api/retention.php");
+  const skuProfitApi = cachedApi("api/costs.php?view=sku");
 
   function fetchCustomerDetail(buyerUsername) {
     const range = rangeFromKey(state.period);
@@ -776,6 +777,7 @@
     fetchCustomers, fetchCustomerDetail,
     getCancellations: cancelApi.get, fetchCancellations: cancelApi.fetch,
     getRetention: retentionApi.get, fetchRetention: retentionApi.fetch,
+    getSkuProfit: skuProfitApi.get, fetchSkuProfit: skuProfitApi.fetch,
     cur: () => curMonths(state.period),
     cmp: () => compareMonths(state.period, state.compare),
     currentRange: () => rangeFromKey(state.period),

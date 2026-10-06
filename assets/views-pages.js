@@ -27,6 +27,7 @@
   }
   const cancelState = { loading: null, failed: null };
   const retentionState = { loading: null, failed: null };
+  const skuProfitState = { loading: null, failed: null };
 
   // Hai thẻ phân tích huỷ đơn. Lý do chỉ có cho đơn nhập từ 3.5.6 (hoặc còn dòng
   // thô để điền bù), nên luôn ghi rõ "có lý do cho n/m đơn huỷ" — không trình
@@ -179,6 +180,70 @@
       <div class="note" style="margin-top:14px">${UI.ICON.people} ${_tf("customers.retention.note", { date: cd ? `${cd}/${cm}/${cy}` : "" })}</div>`);
   }
 
+  // Thẻ lãi sau phí theo SKU (tab Sản phẩm). Luôn nói rõ bao nhiêu phần trăm
+  // phí là số thật (đối soát) và phần còn lại được ước tính bằng cách nào.
+  function skuProfitCardHTML(data, failed) {
+    const wrap = (body) => `<div data-collapse style="grid-column:span 12" class="card">
+      <div class="card-head"><div><div class="card-title">${_t("products.sku_profit.title")}</div></div></div>
+      <div class="card-pad">${body}</div></div>`;
+    const msg = (text, color) => `<div style="color:var(${color || "--ink-3"});font-size:13px;font-weight:${color ? 700 : 400};padding:6px 0">${text}</div>`;
+    if (!data) return wrap(failed ? msg(_t("common.error"), "--neg") : msg(_t("products.sku_profit.loading")));
+    // Bỏ hàng tặng như danh sách sản phẩm bên trên (cùng S.categoryOf): doanh thu
+    // gần 0 nên mọi phần phí chia vào đều thành "lỗ" hàng trăm phần trăm — báo
+    // động giả. Tổng vẫn giữ nguyên vì phí đó là thật.
+    const skus = (data.skus || []).filter((x) => x.revenue > 0 && S.categoryOf(x.sku, x.name) !== "gift");
+    if (!skus.length) return wrap(msg(_t("products.sku_profit.empty")));
+
+    const t = data.totals || {};
+    // Đếm lại hạng trên đúng các dòng đang hiện, để dải ABC khớp với bảng.
+    const visRev = skus.reduce((sum, x) => sum + x.revenue, 0);
+    const abc = {};
+    ["A", "B", "C"].forEach((k) => {
+      const rows = skus.filter((x) => x.class === k);
+      abc[k] = { count: rows.length, share: visRev ? rows.reduce((sum, x) => sum + x.revenue, 0) / visRev * 100 : 0 };
+    });
+    const classColor = { A: "--brand", B: "--lazada", C: "--ink-3" };
+    const chip = (k) => `<span class="tag" style="border-color:transparent;font-weight:800;background:color-mix(in srgb, var(${classColor[k]}) 16%, transparent);color:var(${classColor[k]})">${k}</span>`;
+
+    const abcStrip = ["A", "B", "C"].map((k) => {
+      const v = abc[k] || { count: 0, share: 0 };
+      return `<div style="padding:10px 14px;border:1px solid var(--line);border-radius:12px;display:flex;align-items:center;gap:10px">
+        ${chip(k)}<div><div style="font-weight:800" class="tnum">${_tf("products.sku_profit.abc_count", { n: F.viInt(v.count) })}</div>
+        <div style="font-size:11.5px;color:var(--ink-3)">${_tf("products.sku_profit.abc_share", { p: F.pct(v.share) })}</div></div></div>`;
+    }).join("");
+    const stat = (label, value, color) => `<div><div style="font-size:12px;font-weight:700;color:var(--ink-3)">${label}</div>
+      <div style="font-size:20px;font-weight:800;letter-spacing:-.02em${color ? ";color:var(" + color + ")" : ""}" class="tnum">${value}</div></div>`;
+    const totals = `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:14px;margin-top:16px">
+      ${stat(_t("th.revenue"), F.money(t.revenue || 0))}
+      ${stat(_t("products.sku_profit.col_fees"), F.money(t.fees || 0), "--neg")}
+      ${stat(_t("products.sku_profit.col_net"), F.money(t.net || 0))}
+      ${stat(_t("products.sku_profit.col_margin"), F.pct(t.margin || 0))}
+    </div>`;
+
+    const thin = (t.margin || 0) - 5;
+    const rows = skus.map((x) => `<tr>
+        <td>${chip(x.class)}</td>
+        <td><div style="min-width:0"><div class="pname" style="max-width:300px">${escHtml((x.name || x.sku).replace(/^\[.*?\]\s*/, ""))}</div><div class="psku">${escHtml(x.sku)}</div></div></td>
+        <td class="num tnum">${F.viInt(x.units)}</td>
+        <td class="num"><b>${F.money(x.revenue)}</b></td>
+        <td class="num tnum">${F.money(x.fees)} <span style="font-size:11px;color:var(--ink-3)">${F.pct(x.fee_rate)}</span></td>
+        <td class="num"><b>${F.money(x.net)}</b></td>
+        <td class="num tnum" style="font-weight:800${x.margin < thin ? ";color:var(--neg)" : ""}">${F.pct(x.margin)}</td>
+        <td class="num tnum" style="color:var(--ink-3)">${F.pct(x.coverage)}</td></tr>`).join("");
+    const head = `<tr><th>${_t("products.sku_profit.col_class")}</th><th>${_t("th.product")}</th><th class="num">${_t("th.qty_sold")}</th><th class="num">${_t("th.revenue")}</th><th class="num">${_t("products.sku_profit.col_fees")}</th><th class="num">${_t("products.sku_profit.col_net")}</th><th class="num">${_t("products.sku_profit.col_margin")}</th><th class="num">${_t("products.sku_profit.col_coverage")}</th></tr>`;
+
+    const plabel = (p) => (S.PLAT[p === "tiktokshop" ? "tiktok" : p] || { label: p }).label;
+    const methods = (data.estimate || []).map((e) => _tf("products.sku_profit.method." + e.method, { p: plabel(e.platform), r: e.rate == null ? "" : F.viDec(e.rate, 1) })).join("; ");
+    const lowCov = (t.coverage || 0) < 50
+      ? `<div class="note" style="margin-top:12px;border-color:var(--warn);color:var(--ink)">${_t("products.sku_profit.low_coverage")}</div>` : "";
+
+    return wrap(`<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px">${abcStrip}</div>
+      <div style="font-size:11.5px;color:var(--ink-3);margin-top:8px">${_t("products.sku_profit.abc_hint")}</div>
+      ${totals}${lowCov}
+      <div style="margin-top:16px;max-height:520px;overflow:auto"><table class="tbl">${head}${rows}</table></div>
+      <div class="note" style="margin-top:12px">${_tf("products.sku_profit.note", { cov: F.pct(t.coverage || 0), methods: methods || "—" })}</div>`);
+  }
+
   /* ===================== ORDERS ===================== */
   window.Views.orders = {
     titleKey: "page.orders.title", eyebrowKey: "page.orders.eyebrow", 
@@ -299,6 +364,7 @@
           </div>
           <div class="card-pad" style="padding:6px;overflow-x:auto"><table class="tbl"><thead><tr><th>${_t("th.product")}</th><th>${_t("th.category")}</th>${showPlatform ? `<th>${_t("th.platform")}</th>` : ""}<th class="num">${_t("th.qty_sold")}</th><th class="num">${_t("th.revenue")}</th><th class="num">${prodMetric === "qty" ? _t("th.qty_sold") : _t("th.revenue")}</th></tr></thead><tbody>${rows}</tbody></table></div>
         </div>
+        ${skuProfitCardHTML(S.getSkuProfit(st.period, st.platform), skuProfitState.failed === st.period + "|" + st.platform)}
       </div>`;
     },
     mount(root) {
@@ -307,6 +373,7 @@
       root.querySelector("#prodGroupingSeg")?.addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) { prodGrouping = b.dataset.grouping; window.App.rerender(); } });
       root.querySelector("#prodSeg")?.addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) { prodMetric = b.dataset.m; window.App.rerender(); } });
       const cacheKey = S.state.period + "|" + S.state.platform;
+      lazyCard(skuProfitState, cacheKey, !!S.getSkuProfit(S.state.period, S.state.platform), S.fetchSkuProfit, "products");
       if (!S.getRangeDetail(S.state.period, S.state.platform) && detailLoadingKey !== cacheKey) {
         detailLoadingKey = cacheKey;
         S.ensureRangeDetail(S.state.period, S.state.platform).then(() => {

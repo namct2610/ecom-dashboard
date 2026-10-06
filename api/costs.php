@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 require dirname(__DIR__) . '/includes/bootstrap.php';
+require dirname(__DIR__) . '/includes/sku-profit.php';
 
 require_auth();
 
@@ -255,6 +256,121 @@ function build_cost_analysis(PDO $pdo): array
     ];
 }
 
+/**
+ * Lãi sau phí theo SKU cho tab Sản phẩm (?view=sku).
+ *
+ * Nguồn phí chọn theo TỪNG ĐƠN. Khác build_cost_analysis (chọn theo cả sàn),
+ * nên kỳ chỉ đối soát một phần vẫn cho tỷ lệ phí đúng:
+ *   1. đơn có đối soát      → phí thật của đơn
+ *   2. sàn có lịch sử đối soát → doanh thu × tỷ lệ phí thật của sàn (toàn lịch sử)
+ *   3. phí ghi trong file đơn  → chỉ khi sàn chưa có đơn nào đối soát
+ *   4. biểu phí cấu hình       → khi không có gì khác
+ * Bước 2 đứng trước bước 3 có chủ đích: phí trong file đơn chỉ gồm phí cố
+ * định/dịch vụ/thanh toán, thiếu voucher shop chịu, affiliate, gói Xtra — trên dữ
+ * liệu thật nó chỉ bằng ~16% doanh thu trong khi đối soát cho ~34%, tức biên lãi
+ * bị thổi phồng gần gấp đôi và các kỳ không so sánh được với nhau.
+ */
+function build_sku_profit(PDO $pdo): array
+{
+    $params = [];
+    $where  = sql_filters($params);
+    $where .= " AND normalized_status IN ('completed','delivered')";
+
+    $lineStmt = $pdo->prepare("
+        SELECT platform, order_id, sku,
+               MAX(product_name)                          AS name,
+               COALESCE(SUM(quantity), 0)                 AS qty,
+               COALESCE(SUM(subtotal_after_discount), 0)  AS revenue
+        FROM orders {$where}
+        GROUP BY platform, order_id, sku
+    ");
+    $lineStmt->execute($params);
+    $lines = [];
+    foreach ($lineStmt->fetchAll() as $r) {
+        $lines[] = [
+            'order'   => $r['platform'] . '|' . $r['order_id'],
+            'sku'     => (string) $r['sku'],
+            'name'    => (string) ($r['name'] ?? ''),
+            'qty'     => (float) $r['qty'],
+            'revenue' => (float) $r['revenue'],
+        ];
+    }
+
+    // Phí ở cấp đơn lặp lại trên mọi dòng SKU, nên lấy MAX theo đơn (xem
+    // build_cost_analysis). Đơn có dòng đối soát dùng số đối soát kể cả khi = 0.
+    $feeStmt = $pdo->prepare("
+        SELECT po.platform, po.order_id, po.revenue, po.fee_from_orders,
+               (s.order_id IS NOT NULL)    AS settled,
+               COALESCE(s.fee_total, 0)    AS s_total
+        FROM (
+            SELECT platform, order_id,
+                   COALESCE(SUM(subtotal_after_discount), 0) AS revenue,
+                   COALESCE(MAX(platform_fee_fixed), 0)
+                     + COALESCE(MAX(platform_fee_service), 0)
+                     + COALESCE(MAX(platform_fee_payment), 0) AS fee_from_orders
+            FROM orders {$where}
+            GROUP BY platform, order_id
+        ) po
+        LEFT JOIN order_settlements s
+               ON s.platform = po.platform AND s.order_id = po.order_id
+    ");
+    $feeStmt->execute($params);
+
+    // Tỷ lệ phí thật theo sàn trên toàn bộ đơn hoàn thành đã đối soát (không
+    // giới hạn trong kỳ) — dùng để ước tính cho đơn chưa đối soát. Cần một mẫu
+    // tối thiểu: trên dữ liệu thật Lazada mới có 10 đơn đối soát và cho ra
+    // tỷ lệ 90%, đem nhân lên mọi đơn Lazada sẽ sai hoàn toàn.
+    $minSettled = 30;
+    $histRate = [];
+    foreach ($pdo->query("
+        SELECT po.platform, COUNT(*) AS n, SUM(s.fee_total) AS fee, SUM(po.revenue) AS revenue
+        FROM (
+            SELECT platform, order_id, COALESCE(SUM(subtotal_after_discount), 0) AS revenue
+            FROM orders WHERE normalized_status IN ('completed','delivered')
+            GROUP BY platform, order_id
+        ) po
+        JOIN order_settlements s ON s.platform = po.platform AND s.order_id = po.order_id
+        GROUP BY po.platform
+    ")->fetchAll() as $r) {
+        if ((int) $r['n'] >= $minSettled && (float) $r['revenue'] > 0) {
+            $histRate[(string) $r['platform']] = (float) $r['fee'] / (float) $r['revenue'];
+        }
+    }
+
+    $rates = cost_load_rates($pdo);
+    $orderFees = [];
+    $methods = [];
+    foreach ($feeStmt->fetchAll() as $r) {
+        $key = $r['platform'] . '|' . $r['order_id'];
+        $platform = (string) $r['platform'];
+        if ((int) $r['settled'] === 1) {
+            $orderFees[$key] = ['source' => 'settlement', 'fee' => (float) $r['s_total']];
+            continue;
+        }
+        if (isset($histRate[$platform])) {
+            $orderFees[$key] = ['source' => 'estimated', 'fee' => (float) $r['revenue'] * $histRate[$platform]];
+            $methods[$platform] = 'settled_rate';
+        } elseif ((float) $r['fee_from_orders'] > 0) {
+            $methods[$platform] ??= 'order_file';
+            $orderFees[$key] = ['source' => 'order_file', 'fee' => (float) $r['fee_from_orders']];
+        } else {
+            $rate = $rates[(string) $r['platform']] ?? ['commission' => 0.0, 'payment' => 0.0];
+            $orderFees[$key] = ['source' => 'estimated',
+                                'fee' => (float) $r['revenue'] * ($rate['commission'] + $rate['payment']) / 100];
+            $methods[$platform] ??= 'config_rate';
+        }
+    }
+
+    // Cho giao diện biết phần ước tính được tính bằng cách nào, theo từng sàn.
+    $estimate = [];
+    foreach ($methods as $platform => $method) {
+        $estimate[] = ['platform' => $platform, 'method' => $method,
+                       'rate' => $method === 'settled_rate' ? round($histRate[$platform] * 100, 1) : null];
+    }
+
+    return sku_profit_compute($lines, $orderFees) + ['estimate' => $estimate];
+}
+
 try {
     $pdo = db($config);
 
@@ -286,6 +402,10 @@ try {
     }
 
     require_method('GET');
+
+    if (($_GET['view'] ?? '') === 'sku') {
+        json_response(['success' => true] + build_sku_profit($pdo));
+    }
 
     json_response([
         'success'      => true,
