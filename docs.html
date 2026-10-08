@@ -472,6 +472,8 @@
         <tr><td>Lãi sau phí theo SKU &amp; hạng ABC</td><td><code>sku</code>, <code>subtotal_after_discount</code>, <code>quantity</code>, <code>fee_total</code> (settlements)</td><td>Phí của đơn chia xuống SKU theo tỷ trọng doanh thu trong đơn. Nguồn phí theo từng đơn: đối soát → tỷ lệ phí thật của sàn (cần ≥30 đơn đã đối soát) → phí trong file đơn → biểu phí cấu hình. ABC theo doanh thu luỹ kế: A 80%, B 15%, C 5%. Chưa trừ giá vốn. Chế độ “Theo SKU” tách combo thành SKU lẻ bằng bảng quy đổi combo trước khi chia phí; “Theo listing” giữ nguyên SKU như trên sàn</td></tr>
         <tr><td>Lợi nhuận ròng</td><td>Doanh thu, <code>fee_total</code></td><td>Doanh thu − fee_total</td></tr>
         <tr><td>Lưu lượng</td><td><code>visits</code>, <code>page_views</code>, <code>new_visitors</code>…</td><td>Cộng theo kỳ</td></tr>
+        <tr><td>Tỷ lệ khớp đối soát GBS</td><td>Đơn sàn (<code>orders</code>), file GBS</td><td>(Khớp + Khớp combo) ÷ số đơn có ở cả hai nguồn. Đơn chỉ có ở một bên tính riêng ở Thiếu GBS / Thiếu sàn. Tỷ lệ của từng tháng trên dải tháng được lưu lại mỗi khi mở tháng đó, và bỏ đi khi file GBS của tháng thay đổi</td></tr>
+        <tr><td>Độ phủ dữ liệu theo tháng</td><td><code>order_created_at</code>, <code>traffic_date</code>, <code>order_settlements</code></td><td>Đơn hàng &amp; lưu lượng: số ngày có dữ liệu ÷ số ngày của tháng (tháng đang chạy tính tới hôm nay). Tài chính: đơn hoàn thành đã có đối soát tiền ÷ đơn hoàn thành</td></tr>
       </tbody>
     </table>
 

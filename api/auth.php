@@ -81,6 +81,17 @@ if ($method === 'GET') {
         $loggedIn = true;
     }
 
+    // Settings → Account shows when this session signed in.
+    if ($loggedIn && is_array($user) && ($user['username'] ?? '') !== '' && ($user['username'] ?? '') !== 'guest') {
+        try {
+            $stmt = db($config)->prepare('SELECT last_login_at FROM users WHERE username = ? LIMIT 1');
+            $stmt->execute([(string) $user['username']]);
+            $user['last_login_at'] = $stmt->fetchColumn() ?: null;
+        } catch (\Throwable $e) {
+            $user['last_login_at'] = null;
+        }
+    }
+
     json_response([
         'logged_in'    => $loggedIn,
         'auth_enabled' => $authEnabled,

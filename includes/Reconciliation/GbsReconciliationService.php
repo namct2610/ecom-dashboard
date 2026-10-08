@@ -140,6 +140,9 @@ final class GbsReconciliationService
             $totals['nmv_mismatch_orders'] += $comparison['summary']['nmv_mismatch_orders'];
         }
 
+        $this->rememberMonthStats($selectedMonth, $monthSummaries, $totals);
+        $monthSummaries = $this->attachMonthStats($monthSummaries);
+
         $selectedMonthMeta = null;
         foreach ($monthSummaries as $summary) {
             if (($summary['month'] ?? '') === $selectedMonth) {
@@ -868,6 +871,59 @@ final class GbsReconciliationService
         );
 
         return $result;
+    }
+
+    /**
+     * Dải tháng trên trang đối soát hiện tỷ lệ khớp của từng tháng, nhưng mỗi
+     * lần so khớp phải đọc cả GBS lẫn bảng orders — không thể tính lại hết các
+     * tháng cho mỗi request. Nên mỗi lần một tháng được mở, lưu lại tỷ lệ của
+     * nó kèm dấu của file GBS tháng đó; file đổi thì số cũ bị bỏ qua.
+     */
+    private function monthStatsSignature(array $summary): string
+    {
+        return implode('|', [
+            (string) ($summary['latest_modified_at'] ?? ''),
+            (int) ($summary['file_count'] ?? 0),
+            (int) ($summary['row_count'] ?? 0),
+        ]);
+    }
+
+    private function rememberMonthStats(string $month, array $monthSummaries, array $totals): void
+    {
+        $signature = null;
+        foreach ($monthSummaries as $summary) {
+            if (($summary['month'] ?? '') === $month) {
+                $signature = $this->monthStatsSignature($summary);
+                break;
+            }
+        }
+        if ($signature === null) {
+            return;
+        }
+
+        $common = (int) ($totals['common_orders'] ?? 0);
+        $matched = (int) ($totals['matched_orders'] ?? 0) + (int) ($totals['bundle_match_orders'] ?? 0);
+        $stats = $this->cacheRead('month-stats') ?? [];
+        $stats[$month] = [
+            'sig'         => $signature,
+            'match_pct'   => $common > 0 ? round($matched / $common * 100, 2) : null,
+            'common'      => $common,
+            'matched'     => $matched,
+            'computed_at' => date('Y-m-d H:i:s'),
+        ];
+        $this->cacheWrite('month-stats', $stats);
+    }
+
+    private function attachMonthStats(array $monthSummaries): array
+    {
+        $stats = $this->cacheRead('month-stats') ?? [];
+        foreach ($monthSummaries as $i => $summary) {
+            $row = $stats[$summary['month'] ?? ''] ?? null;
+            $fresh = is_array($row) && ($row['sig'] ?? null) === $this->monthStatsSignature($summary);
+            $monthSummaries[$i]['match_pct'] = $fresh ? $row['match_pct'] : null;
+        }
+
+        return $monthSummaries;
     }
 
     private function resolveSelectedMonth(?string $requestedMonth, array $availableMonths): ?string

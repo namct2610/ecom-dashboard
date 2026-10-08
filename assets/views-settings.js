@@ -1,26 +1,31 @@
 /* ============================================================
-   View: Settings (Cài đặt)
-   Sections:
-     - Account: change password (+ profile full name)
+   View: Settings (Cài đặt) — 3.7 redesign
+   Five cards on one page became three sections with a side nav
+   (a row of pills on phones):
+     - Account: profile + change password
      - Brand SKU rules: 3-char SKU prefix → brand name (admin only)
-   Reuses v1 backends: /api/auth.php (GET status), /api/account.php,
-                       /api/brand-settings.php
+     - System: update, database backup, server cleanup (admin only)
+   Reuses /api/auth.php, /api/account.php, /api/brand-settings.php,
+          /api/v2-update.php, /api/export-db.php, /api/security-scan.php
    ============================================================ */
 (function () {
   const UI = window.UI;
+  const esc = UI.esc;
+  const _tf = (k, v) => (window.tf ? window.tf(k, v) : k);
 
   const local = {
     loading: true,
     error: null,
-    user: null,      // { username, full_name, role, ... }
+    user: null,      // { username, full_name, role, last_login_at, ... }
     csrf: "",
     rules: [],       // [{prefix, brand_name}, ...]
     isAdmin: false,
+    sec: "account",
     saving: false,
     msg: null,       // { kind:"ok"|"err", text }
-    update: null,    // { loading, current, latest, has_update, changelog, download_url, last_checked, fetch_error, installing }
+    update: null,    // { loading, current, latest, has_update, changelog, download_url, last_checked, fetch_error, installing, success }
     dbExport: null,  // { loading, stats, error, downloading }
-    scan: null,      // { loading, error, findings, selected:Set, deleting }
+    scan: null,      // { loading, error, findings, bytes, selected:Set, deleting }
   };
 
   async function fetchInitial() {
@@ -31,7 +36,6 @@
       local.user = auth.user || { username: auth.username, role: auth.role };
       local.csrf = auth.csrf || "";
       local.isAdmin = (local.user.role || "") === "admin";
-
       if (local.isAdmin) {
         const r = await fetch("api/brand-settings.php", { credentials: "same-origin" });
         if (r.ok) {
@@ -46,200 +50,296 @@
     }
   }
 
-  /* ── HTML fragments ─────────────────────────────────────────── */
+  function fmtBytes(b) {
+    b = +b || 0;
+    if (b < 1024) return b + " B";
+    if (b < 1048576) return window.F.viDec(b / 1024, 0) + " KB";
+    if (b < 1073741824) return window.F.viDec(b / 1048576, 1) + " MB";
+    return window.F.viDec(b / 1073741824, 2) + " GB";
+  }
+  // "08:41 hôm nay" / "08:41 07/10/2026"
+  function whenText(s) {
+    if (!s) return "";
+    const d = new Date(String(s).replace(" ", "T"));
+    if (isNaN(d)) return String(s);
+    const hm = d.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
+    const today = new Date().toDateString() === d.toDateString();
+    return today ? _tf("settings.when_today", { t: hm }) : hm + " " + d.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" });
+  }
+  const initials = (u) => String(u || "?").replace(/[^a-z0-9]/gi, "").slice(0, 2).toUpperCase() || "?";
 
-  const flashMsg = () => window.UI.flashMsg(local.msg);
-
-  function accountCard() {
-    const u = local.user || {};
-    return `
-      <div class="card">
-        <div class="card-head">
-          <div>
-            <div class="card-title">${t("settings.account.title")}</div>
-            
-          </div>
-        </div>
-        <div class="card-pad">
-          <div class="field-row">
-            <label class="field-label">${t("settings.account.full_name")}</label>
-            <input id="accFullName" class="v2-input" type="text" value="${escapeHtml(u.full_name || "")}" placeholder="${t("settings.account.placeholder.full_name")}" maxlength="120" />
-          </div>
-          <div style="display:flex;justify-content:flex-end;margin-bottom:24px">
-            <button class="ctrl-btn on" id="btnSaveProfile" style="background:var(--brand);border-color:var(--brand);color:#fff">${t("settings.account.save_profile")}</button>
-          </div>
-
-          <div style="border-top:1px solid var(--border);padding-top:18px">
-            <div style="font-weight:800;font-size:14px;margin-bottom:14px">${t("settings.account.change_pwd")}</div>
-            <div class="field-row">
-              <label class="field-label">${t("settings.account.cur_pwd")}</label>
-              <input id="accCurPwd" class="v2-input" type="password" autocomplete="current-password" />
-            </div>
-            <div class="field-row">
-              <label class="field-label">${t("settings.account.new_pwd")}</label>
-              <input id="accNewPwd" class="v2-input" type="password" autocomplete="new-password" />
-              <div class="field-hint">${t("settings.account.new_pwd_hint")}</div>
-            </div>
-            <div class="field-row">
-              <label class="field-label">${t("settings.account.confirm_pwd")}</label>
-              <input id="accConfirmPwd" class="v2-input" type="password" autocomplete="new-password" />
-            </div>
-            <div style="display:flex;justify-content:flex-end">
-              <button class="ctrl-btn on" id="btnChangePwd" style="background:var(--brand);border-color:var(--brand);color:#fff">${t("settings.account.change_pwd")}</button>
-            </div>
-          </div>
-        </div>
-      </div>`;
+  function showMsg(kind, text) {
+    local.msg = { kind, text };
+    rerender();
+    setTimeout(() => { local.msg = null; rerender(); }, 4000);
   }
 
-  function brandRuleRow(rule, idx) {
-    const prefix = (rule.prefix || "").replace(/"/g, "&quot;");
-    const brand = (rule.brand_name || "").replace(/"/g, "&quot;");
-    return `
-      <div class="brand-rule-row" data-idx="${idx}" style="display:grid;grid-template-columns:120px 1fr 40px;gap:10px;align-items:center;margin-bottom:8px">
-        <input class="v2-input mono" data-field="prefix" type="text" value="${prefix}" maxlength="3" placeholder="${t("settings.brand.placeholder.prefix")}" style="text-transform:uppercase;text-align:center;font-weight:800" />
-        <input class="v2-input" data-field="brand_name" type="text" value="${brand}" placeholder="${t("settings.brand.placeholder.name")}" maxlength="120" />
-        <button class="iconbtn-sq" data-action="del-rule" aria-label="${t("common.delete")}" style="color:var(--neg)">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>
-        </button>
-      </div>`;
-  }
+  /* ── nav ──────────────────────────────────────────────────── */
 
-  function brandCard() {
-    if (!local.isAdmin) {
-      return `<div class="card card-pad" style="color:var(--ink-3);font-size:13px;font-weight:600">
-        ${tf("settings.brand.admin_only", { r: (local.user||{}).role || "—" })}
-      </div>`;
+  function sections() {
+    const u = local.update || {};
+    const list = [["account", "settings.sec.account", "settings.sec.account_desc"]];
+    if (local.isAdmin) {
+      list.push(["brand", "settings.sec.brand", "settings.sec.brand_desc"]);
+      list.push(["system", "settings.sec.system", "settings.sec.system_desc", u.has_update && !u.success ? "1" : ""]);
     }
+    return list;
+  }
 
-    const list = local.rules.length
-      ? local.rules.map(brandRuleRow).join("")
-      : `<div style="color:var(--ink-3);font-size:13px;font-weight:600;padding:14px 0">${t("settings.brand.empty")}</div>`;
+  function nav() {
+    return `<nav class="set-nav" aria-label="${esc(t("page.settings.title"))}">${sections().map(([k, lk, dk, badge]) =>
+      `<button type="button" class="set-tab${local.sec === k ? " on" : ""}" data-sec="${k}" aria-current="${local.sec === k}">
+        <span class="set-tab-l">${t(lk)}${badge ? `<span class="set-badge">${badge}</span>` : ""}</span>
+        <span class="set-tab-d">${t(dk)}</span>
+      </button>`).join("")}</nav>`;
+  }
 
-    return `
-      <div class="card">
-        <div class="card-head">
-          <div>
-            <div class="card-title">${t("settings.brand.title")}</div>
-            
+  /* ── account ──────────────────────────────────────────────── */
+
+  function accountSec() {
+    const u = local.user || {};
+    const admin = (u.role || "") === "admin";
+    return `<div class="card">
+        <div class="acc-head">
+          <span class="uav xl ${admin ? "is-admin" : "is-staff"}">${esc(initials(u.username))}</span>
+          <div style="flex:1;min-width:0">
+            <div class="nm" style="font-size:16px;font-weight:800">${esc(u.username || "—")}</div>
+            <div class="sub3" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12.5px"><span class="sys-pill ${admin ? "is-brand" : "is-mute"}">${t(admin ? "role.admin" : "role.staff")}</span>${u.last_login_at ? esc(_tf("settings.account.signed_in", { t: whenText(u.last_login_at) })) : ""}</div>
           </div>
-          <button class="ctrl-btn" id="btnAddRule">${t("settings.brand.add_row")}</button>
         </div>
-        <div class="card-pad">
-          <div id="brandRulesList">${list}</div>
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
-            <span class="field-hint">${t("settings.brand.hint")}</span>
-            <button class="ctrl-btn on" id="btnSaveRules" style="background:var(--brand);border-color:var(--brand);color:#fff">${t("settings.brand.save_rules")}</button>
+        <div class="set-pad set-f2">
+          <label class="fld">${t("settings.account.full_name")}<input id="accFullName" class="v2-input" type="text" value="${esc(u.full_name || "")}" placeholder="${esc(t("settings.account.placeholder.full_name"))}" maxlength="120"></label>
+          <button type="button" class="ctrl-btn sys-btn set-btn" id="btnSaveProfile">${t("settings.account.save_profile")}</button>
+        </div>
+      </div>
+      <div class="card">
+        ${UI.head(t("settings.account.change_pwd_title"), "")}
+        <div class="set-pad" style="display:flex;flex-direction:column;gap:14px">
+          <label class="fld set-half">${t("settings.account.cur_pwd")}<input id="accCurPwd" class="v2-input" type="password" autocomplete="current-password"></label>
+          <div class="set-2eq">
+            <label class="fld">${t("settings.account.new_pwd")}<input id="accNewPwd" class="v2-input" type="password" autocomplete="new-password"></label>
+            <label class="fld">${t("settings.account.confirm_pwd")}<input id="accConfirmPwd" class="v2-input" type="password" autocomplete="new-password"></label>
+          </div>
+          <div class="set-foot0">
+            <span class="sub3">${t("settings.account.new_pwd_hint")}</span>
+            <button type="button" class="ctrl-btn on sys-btn set-btn" id="btnChangePwd">${t("settings.account.change_pwd")}</button>
           </div>
         </div>
       </div>`;
+  }
+
+  /* ── brand rules ──────────────────────────────────────────── */
+
+  function brandSec() {
+    const rows = local.rules.map((r, i) => `<div class="rule-row" data-idx="${i}">
+        <input class="v2-input rule-p" data-field="prefix" type="text" value="${esc(r.prefix || "")}" maxlength="3" placeholder="${esc(t("settings.brand.placeholder.prefix"))}" aria-label="${esc(t("settings.brand.col.code"))}">
+        <input class="v2-input" data-field="brand_name" type="text" value="${esc(r.brand_name || "")}" maxlength="120" placeholder="${esc(t("settings.brand.placeholder.name"))}" aria-label="${esc(t("settings.brand.col.name"))}">
+        <button type="button" class="sys-x" data-del-rule aria-label="${esc(t("settings.brand.del_row"))}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>
+      </div>`).join("");
+    return `<div class="card">
+      <div class="card-head"><div><div class="card-title">${t("settings.brand.title")}</div><div class="sub3" style="font-size:12.5px;margin-top:2px;text-wrap:pretty">${t("settings.brand.sub")}</div></div></div>
+      <div style="padding:14px 20px 4px;display:flex;flex-direction:column;gap:8px">
+        ${local.rules.length ? `<div class="rule-row lab3"><span>${t("settings.brand.col.code")}</span><span>${t("settings.brand.col.name")}</span><span></span></div>` : `<div class="sub3" style="padding:6px 0">${t("settings.brand.empty")}</div>`}
+        <div id="brandRulesList" style="display:flex;flex-direction:column;gap:8px">${rows}</div>
+        <button type="button" class="add-row" id="btnAddRule"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>${t("settings.brand.add_row_btn")}</button>
+      </div>
+      <div class="rule-ex" id="ruleExample">${exampleHtml()}</div>
+      <div class="set-foot0" style="padding:16px 20px 18px">
+        <span class="sub3">${t("settings.brand.hint")}</span>
+        <button type="button" class="ctrl-btn on sys-btn set-btn" id="btnSaveRules">${t("settings.brand.save_rules")}</button>
+      </div>
+    </div>`;
+  }
+
+  // Live example built from the first complete rule, so the convention is
+  // obvious while typing.
+  function exampleHtml() {
+    const r = local.rules.find((x) => (x.prefix || "").length === 3 && x.brand_name) || null;
+    if (!r) return `${t("settings.brand.example")} <code>mon-150-6</code> → <code><b>MON</b></code> → <b>${t("settings.brand.no_rule")}</b>`;
+    const p = r.prefix.toUpperCase();
+    return `${t("settings.brand.example")} <code>${esc(p.toLowerCase())}-150-6</code> → <code><b>${esc(p)}</b></code> → <b>${esc(r.brand_name)}</b>`;
+  }
+
+  // Inputs → local.rules, so add/delete row keeps what was typed.
+  function captureRules() {
+    const rows = document.querySelectorAll("#brandRulesList .rule-row");
+    if (!rows.length && !local.rules.length) return;
+    if (!document.getElementById("brandRulesList")) return;
+    local.rules = [...rows].map((row) => ({
+      prefix: (row.querySelector('[data-field="prefix"]').value || "").toUpperCase().trim(),
+      brand_name: (row.querySelector('[data-field="brand_name"]').value || "").trim(),
+    }));
+  }
+
+  /* ── system ───────────────────────────────────────────────── */
+
+  function changelogItems(text) {
+    return String(text || "").split(/\n+/).map((s) => s.replace(/^\s*[-•*]\s*/, "").trim()).filter(Boolean);
   }
 
   function updateCard() {
-    if (!local.isAdmin) return "";
     const u = local.update || {};
-    let body;
+    const cur = u.current ? "v" + u.current : "—";
+    let badge = "", actions = "", body = "";
+    const checkBtn = `<button type="button" class="ctrl-btn sys-btn" id="btnV2UpCheck" ${u.loading || u.installing ? "disabled" : ""}>${u.loading ? t("common.loading") : t("settings.sys.check_again")}</button>`;
     if (u.installing) {
-      body = `<div style="text-align:center;color:var(--ink-2);font-weight:700">${t("v2up.installing")} v${u.installing}…</div>`;
+      actions = `<span class="sub3" style="font-weight:700">${t("v2up.installing")} v${esc(u.installing)}…</span>`;
     } else if (u.success) {
-      body = `<div style="text-align:center">
-        <div style="color:var(--pos);font-weight:700;margin-bottom:8px">${t("v2up.success")}</div>
-        <button class="ctrl-btn on" id="btnV2UpReload" style="background:var(--brand);border-color:var(--brand);color:#fff">${t("v2up.reload")}</button>
-      </div>`;
-    } else if (u.fetch_error && !u.latest) {
-      body = `<div style="padding:10px 14px;border-radius:var(--r-ctrl);background:color-mix(in oklch, #f0a945 18%, transparent);color:#92400e;font-weight:600;font-size:13px">${u.fetch_error}</div>`;
+      badge = `<span class="sys-pill is-pos">${t("settings.sys.updated")}</span>`;
+      actions = `<button type="button" class="ctrl-btn on sys-btn" id="btnV2UpReload">${t("v2up.reload")}</button>`;
     } else if (u.has_update) {
-      body = `
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px">
-          <div>
-            <div style="color:var(--brand);font-weight:800;font-size:15px">${t("v2up.has_update")}: v${u.latest}</div>
-            <div style="font-size:12.5px;color:var(--ink-3);font-weight:600;margin-top:3px">
-              ${t("v2up.current")} v${u.current}
-              ${u.last_checked ? ` · ${t("v2up.checked_at")} ${u.last_checked}` : ""}
-            </div>
-          </div>
-          <button class="ctrl-btn on" id="btnV2UpApply" style="background:var(--brand);border-color:var(--brand);color:#fff">${t("v2up.apply")}</button>
-        </div>
-        ${u.changelog ? `<div style="margin-top:12px;padding:10px 14px;background:var(--surface-2);border-radius:var(--r-ctrl);font-size:12.5px;white-space:pre-wrap;line-height:1.7;color:var(--ink-2)">${escapeHtml(u.changelog)}</div>` : ""}`;
+      badge = `<span class="sys-pill is-brand">${_tf("settings.sys.has", { v: "v" + esc(u.latest) })}</span>`;
+      actions = checkBtn + `<button type="button" class="ctrl-btn on sys-btn" id="btnV2UpApply">${_tf("settings.sys.apply", { v: "v" + esc(u.latest) })}</button>`;
     } else {
-      body = `
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
-          <div>
-            <div style="font-weight:700;color:var(--pos)">✓ ${t("v2up.up_to_date")} (v${u.current || "—"})</div>
-            <div style="font-size:12.5px;color:var(--ink-3);font-weight:600;margin-top:3px">${u.last_checked ? `${t("v2up.checked_at")} ${u.last_checked}` : ""}</div>
-          </div>
-        </div>`;
+      if (u.current && !u.fetch_error) badge = `<span class="sys-pill is-pos">${t("settings.sys.latest")}</span>`;
+      actions = checkBtn;
     }
-
-    return `
-      <div class="card section-gap">
-        <div class="card-head">
-          <div>
-            <div class="card-title">${t("v2up.card.title")}</div>
-            
-          </div>
-          <button class="ctrl-btn" id="btnV2UpCheck">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 0 1-15.5 6.2"/><path d="M3 12A9 9 0 0 1 18.5 5.8"/><path d="M18 2v5h-5"/><path d="M6 22v-5h5"/></svg>
-            ${t("v2up.check_now")}
-          </button>
+    if (u.fetch_error && !u.latest) body = `<div class="gap-box" style="margin:0 20px 18px"><div class="gap-t" style="font-weight:700;font-size:12.5px">${esc(u.fetch_error)}</div></div>`;
+    else if (u.has_update && !u.success && u.changelog) {
+      body = `<div class="chg">${changelogItems(u.changelog).map((c) => `<div><i></i><span>${esc(c)}</span></div>`).join("")}</div>`;
+    }
+    return `<div class="card">
+      <div class="set-pad ver-row">
+        <div style="flex:1 1 240px;min-width:0">
+          <div class="lab3" style="font-size:12.5px">${t("settings.sys.version")}</div>
+          <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap"><span class="ver">${esc(cur)}</span>${badge}</div>
+          <div class="sub3">${u.last_checked ? esc(_tf("settings.sys.checked", { t: whenText(u.last_checked) })) : ""}</div>
         </div>
-        <div class="card-pad">
-          ${u.loading ? `<div style="text-align:center;color:var(--ink-3);font-weight:600">${t("common.loading")}</div>` : body}
-        </div>
-      </div>`;
+        <div class="ver-acts">${actions}</div>
+      </div>
+      ${body}
+    </div>`;
   }
 
-  const escapeHtml = UI.esc;
-
-  /* ── DB export card ─────────────────────────────────────────── */
-
-  function dbExportCard() {
-    if (!local.isAdmin) return "";
+  function backupCard() {
     const x = local.dbExport || {};
     const stats = x.stats || null;
-
     let body;
-    if (x.loading) {
-      body = `<div style="color:var(--ink-3);font-weight:600">${t("common.loading")}</div>`;
-    } else if (x.error) {
-      body = `<div style="color:var(--neg);font-weight:700;margin-bottom:8px">${t("common.error")}: ${escapeHtml(x.error)}</div>`;
-    } else if (stats) {
-      const rows = Object.entries(stats).map(([tbl, cnt]) =>
-        `<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);font-size:13px">
-          <span style="font-family:monospace;color:var(--ink-2)">${escapeHtml(tbl)}</span>
-          <span class="tnum" style="color:var(--ink-3);font-weight:700">${cnt.toLocaleString("vi-VN")}</span>
-        </div>`
-      ).join("");
-      body = `<div style="margin-bottom:14px">${rows}</div>`;
-    } else {
-      body = `<div style="color:var(--ink-3);font-size:13px;margin-bottom:12px">${t("settings.export.desc")}</div>`;
+    if (x.loading) body = `<div class="sub3">${t("common.loading")}</div>`;
+    else if (x.error) body = `<div style="color:var(--neg);font-weight:700;font-size:13px">${t("common.error")}: ${esc(x.error)}</div>`;
+    else if (stats) body = `<div class="db-grid">${Object.entries(stats).map(([tbl, cnt]) => `<div><span>${esc(tbl)}</span><b class="tnum">${window.F.viInt(+cnt || 0)}</b></div>`).join("")}</div>`;
+    else body = "";
+    const btn = `<button type="button" class="ctrl-btn sys-btn is-dark" id="btnDbExport" ${x.loading || x.downloading ? "disabled" : ""}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>${x.downloading ? t("settings.export.downloading") : t("settings.export.btn_sql")}</button>`;
+    return `<div class="card">
+      ${UI.head(t("settings.export.title"), t("settings.export.tip"), btn)}
+      <div style="padding:12px 20px 18px">${body}</div>
+    </div>`;
+  }
+
+  const RISK = { high: ["is-neg", "settings.scan.risk_high"], medium: ["is-warn", "settings.scan.risk_medium"], low: ["is-mute", "settings.scan.risk_low"] };
+
+  function scanCard() {
+    const x = local.scan || {};
+    const sel = x.selected || new Set();
+    const busy = x.loading || x.deleting;
+    let body;
+    if (x.loading) body = `<div class="empty-chart">${t("settings.scan.scanning")}</div>`;
+    else if (x.error) body = `<div class="empty-chart" style="color:var(--neg)">${t("common.error")}: ${esc(x.error)}</div>`;
+    else if (!x.findings) body = `<div class="empty-chart">${t("settings.scan.desc")}</div>`;
+    else if (!x.findings.length) body = `<div class="empty-chart" style="color:var(--pos)">${t("settings.scan.clean")}</div>`;
+    else {
+      body = `<div class="scan-list">${x.findings.map((f) => {
+        const on = sel.has(f.path), r = RISK[f.risk] || RISK.low;
+        return `<button type="button" class="scan-row${on ? " on" : ""}" data-scan-path="${esc(f.path)}" role="checkbox" aria-checked="${on}">
+          <span class="ck${on ? " on" : ""}"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
+          <span style="min-width:0;display:flex;flex-direction:column;gap:3px">
+            <span style="display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px"><b class="mono" style="font-size:12.5px;word-break:break-all">${esc(f.path)}${f.is_dir ? "/" : ""}</b><span class="sys-pill risk ${r[0]}">${t(r[1])}</span><span class="lab3">${fmtBytes(f.size)}</span></span>
+            <span class="sub3" style="text-wrap:pretty">${esc(f.reason)}</span>
+          </span>
+        </button>`;
+      }).join("")}</div>
+      ${x.findings.length > 1 ? `<div style="display:flex;gap:14px;padding:0 20px 14px"><button type="button" class="link-btn" id="btnScanAll">${t("settings.scan.select_all")}</button><button type="button" class="link-btn" id="btnScanNone">${t("settings.scan.select_none")}</button></div>` : ""}`;
     }
+    const sum = x.findings && x.findings.length ? `<span class="lab3" style="font-size:12.5px">${_tf("settings.scan.summary", { n: x.findings.length, size: fmtBytes(x.bytes || 0) })}</span>` : "";
+    const delBtn = `<button type="button" class="ctrl-btn sys-btn ${sel.size ? "is-del" : "is-off"}" id="btnScanDelete" ${!sel.size || busy ? "disabled" : ""}>${x.deleting ? t("settings.scan.deleting") : sel.size ? _tf("settings.scan.delete_n", { n: sel.size }) : t("settings.scan.pick")}</button>`;
+    const tools = `<button type="button" class="ctrl-btn sys-btn" id="btnScanRun" ${busy ? "disabled" : ""}>${x.findings ? t("settings.scan.rescan") : t("settings.scan.btn")}</button>${delBtn}`;
+    return `<div class="card">
+      <div class="card-head ch"><div class="ch-title"><div class="card-title">${t("settings.scan.title")}</div>${sum}${UI.tip(t("settings.scan.tip"), { w: "280px" })}</div><div class="ch-tools">${tools}</div></div>
+      ${body}
+    </div>`;
+  }
 
-    const btnLabel = x.downloading ? t("settings.export.downloading") :
-                     x.loading     ? t("common.loading") :
-                                     t("settings.export.btn");
-    const btnDisabled = x.loading || x.downloading ? "disabled" : "";
+  /* ── render ───────────────────────────────────────────────── */
 
-    return `
-      <div class="card section-gap">
-        <div class="card-head">
-          <div>
-            <div class="card-title">${t("settings.export.title")}</div>
-            
-          </div>
-          <button class="ctrl-btn on" id="btnDbExport" ${btnDisabled}
-                  style="background:var(--brand);border-color:var(--brand);color:#fff">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-            ${btnLabel}
-          </button>
-        </div>
-        <div class="card-pad">${body}</div>
-      </div>`;
+  function render() {
+    if (local.loading) return `<div class="card card-pad" style="text-align:center;color:var(--ink-3);font-weight:600">${t("common.loading")}</div>`;
+    if (local.error) return `<div class="card card-pad" style="text-align:center;color:var(--neg);font-weight:700">${t("common.error")}: ${esc(local.error)}</div>`;
+    if (!sections().some(([k]) => k === local.sec)) local.sec = "account";
+    const body = local.sec === "brand" ? brandSec()
+      : local.sec === "system" ? updateCard() + backupCard() + scanCard()
+      : accountSec();
+    return `<div class="pg">
+      ${UI.flashMsg(local.msg)}
+      <div class="set-lay">${nav()}<div class="set-main">${body}</div></div>
+    </div>`;
+  }
+  function rerender() { captureRules(); window.App.rerender(); }
+
+  /* ── system actions ───────────────────────────────────────── */
+
+  function setUpdate(j) {
+    local.update = {
+      loading: false, current: j.current, latest: j.latest, has_update: !!j.has_update,
+      changelog: j.changelog, download_url: j.download_url, last_checked: j.last_checked, fetch_error: j.fetch_error,
+    };
+  }
+
+  async function fetchUpdateStatus() {
+    local.update = Object.assign(local.update || {}, { loading: true });
+    try {
+      const r = await fetch("api/v2-update.php", { credentials: "same-origin" });
+      setUpdate(await r.json());
+    } catch (e) {
+      local.update = { loading: false, fetch_error: e.message || String(e) };
+    }
+    rerender();
+  }
+
+  async function checkUpdateNow() {
+    local.update = Object.assign(local.update || {}, { loading: true });
+    rerender();
+    try {
+      const r = await fetch("api/v2-update.php", {
+        method: "POST", credentials: "same-origin",
+        headers: { "Content-Type": "application/json", "X-CSRF-Token": local.csrf },
+        body: JSON.stringify({ action: "check_now" }),
+      });
+      const j = await r.json();
+      // The backend returns the fresh manifest inline (its cache-buster skips
+      // both the server cache and the GitHub raw CDN); a second GET could hit
+      // the stale CDN again.
+      if (j && (j.latest || j.current)) { setUpdate(j); rerender(); }
+      else await fetchUpdateStatus();
+    } catch (e) {
+      local.update = { loading: false, fetch_error: e.message || String(e) };
+      rerender();
+    }
+  }
+
+  async function applyUpdate() {
+    const u = local.update;
+    if (!u || !u.download_url || !u.latest) return;
+    if (!confirm(_tf("settings.sys.apply_confirm", { v: "v" + u.latest }))) return;
+    u.installing = u.latest;
+    rerender();
+    try {
+      const r = await fetch("api/v2-update.php", {
+        method: "POST", credentials: "same-origin",
+        headers: { "Content-Type": "application/json", "X-CSRF-Token": local.csrf },
+        body: JSON.stringify({ action: "apply", version: u.latest, download_url: u.download_url }),
+      });
+      const j = await r.json();
+      if (!j.success) throw new Error(j.error || "HTTP " + r.status);
+      u.installing = null; u.success = true;
+      rerender();
+    } catch (e) {
+      u.installing = null;
+      showMsg("err", t("common.error") + ": " + (e.message || e));
+    }
   }
 
   async function fetchDbExportStats() {
     local.dbExport = { loading: true };
-    window.App.rerender();
     try {
       const r = await fetch("api/export-db.php?action=stats", { credentials: "same-origin" });
       if (!r.ok) throw new Error("HTTP " + r.status);
@@ -248,124 +348,37 @@
     } catch (e) {
       local.dbExport = { loading: false, error: e.message || String(e) };
     }
-    window.App.rerender();
+    rerender();
   }
 
   async function downloadDbExport() {
-    if (!local.dbExport) local.dbExport = {};
-    local.dbExport.downloading = true;
-    local.dbExport.error = null;
-    window.App.rerender();
+    const x = local.dbExport || (local.dbExport = {});
+    x.downloading = true; x.error = null;
+    rerender();
     try {
-      const r = await fetch("api/export-db.php", {
-        method: "POST",
-        credentials: "same-origin",
-        headers: { "X-CSRF-Token": local.csrf },
-      });
+      const r = await fetch("api/export-db.php", { method: "POST", credentials: "same-origin", headers: { "X-CSRF-Token": local.csrf } });
       if (!r.ok) {
         const j = await r.json().catch(() => ({}));
         throw new Error(j.error || "HTTP " + r.status);
       }
       const blob = await r.blob();
-      const disp = r.headers.get("Content-Disposition") || "";
-      const match = disp.match(/filename="([^"]+)"/);
-      const filename = match ? match[1] : ("dashboard-db-" + new Date().toISOString().slice(0, 10) + ".sql");
-      const url = URL.createObjectURL(blob);
+      const m = (r.headers.get("Content-Disposition") || "").match(/filename="([^"]+)"/);
       const a = document.createElement("a");
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
+      a.href = URL.createObjectURL(blob);
+      a.download = m ? m[1] : "dashboard-db-" + new Date().toISOString().slice(0, 10) + ".sql";
+      document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(a.href);
     } catch (e) {
-      local.dbExport.error = e.message || String(e);
+      x.error = e.message || String(e);
     } finally {
-      local.dbExport.downloading = false;
-      window.App.rerender();
+      x.downloading = false;
+      rerender();
     }
-  }
-
-  /* ── server housekeeping scan ───────────────────────────────── */
-
-  const RISK_META = {
-    high:   { color: "var(--neg)",    key: "settings.scan.risk_high" },
-    medium: { color: "var(--warn)",   key: "settings.scan.risk_medium" },
-    low:    { color: "var(--ink-3)",  key: "settings.scan.risk_low" },
-  };
-
-  function fmtBytes(b) {
-    b = +b || 0;
-    if (b < 1024) return b + " B";
-    if (b < 1048576) return (b / 1024).toFixed(1) + " KB";
-    if (b < 1073741824) return (b / 1048576).toFixed(1) + " MB";
-    return (b / 1073741824).toFixed(2) + " GB";
-  }
-
-  function securityScanCard() {
-    if (!local.isAdmin) return "";
-    const x = local.scan || {};
-    const sel = x.selected || new Set();
-
-    let body;
-    if (x.loading) {
-      body = `<div style="color:var(--ink-3);font-weight:600">${t("common.loading")}</div>`;
-    } else if (x.error) {
-      body = `<div style="color:var(--neg);font-weight:700">${t("common.error")}: ${escapeHtml(x.error)}</div>`;
-    } else if (!x.findings) {
-      body = `<div style="color:var(--ink-3);font-size:13px">${t("settings.scan.desc")}</div>`;
-    } else if (!x.findings.length) {
-      body = `<div style="color:var(--pos);font-weight:700;font-size:13.5px">${t("settings.scan.clean")}</div>`;
-    } else {
-      const rows = x.findings.map((f) => {
-        const m = RISK_META[f.risk] || RISK_META.low;
-        const checked = sel.has(f.path) ? "checked" : "";
-        return `<label style="display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--border);cursor:pointer">
-          <input type="checkbox" data-scan-path="${escapeHtml(f.path)}" ${checked} style="margin-top:3px;flex:none" />
-          <span style="min-width:0;flex:1">
-            <span style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-              <b style="font-family:monospace;font-size:12.5px;word-break:break-all">${escapeHtml(f.path)}${f.is_dir ? "/" : ""}</b>
-              <span class="tag" style="color:${m.color};font-weight:800;font-size:11px">${t(m.key)}</span>
-              <span style="color:var(--ink-3);font-size:11.5px;font-weight:700">${fmtBytes(f.size)}</span>
-            </span>
-            <span style="display:block;color:var(--ink-3);font-size:12px;margin-top:2px">${escapeHtml(f.reason)}</span>
-          </span>
-        </label>`;
-      }).join("");
-      body = `
-        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
-          <button class="ctrl-btn" id="btnScanAll" style="padding:5px 10px;font-size:12.5px">${t("settings.scan.select_all")}</button>
-          <button class="ctrl-btn" id="btnScanNone" style="padding:5px 10px;font-size:12.5px">${t("settings.scan.select_none")}</button>
-          <span style="color:var(--ink-3);font-size:12.5px;font-weight:700;margin-left:auto">${tf("settings.scan.summary", { n: x.findings.length, size: fmtBytes(x.bytes || 0) })}</span>
-        </div>
-        <div style="max-height:340px;overflow-y:auto">${rows}</div>
-        <div class="note" style="margin-top:14px">${UI.ICON.info} ${t("settings.scan.note")}</div>`;
-    }
-
-    const scanning = x.loading || x.deleting;
-    const delCount = sel.size;
-
-    return `
-      <div class="card section-gap">
-        <div class="card-head">
-          <div>
-            <div class="card-title">${t("settings.scan.title")}</div>
-            
-          </div>
-          <div style="display:flex;gap:8px;align-items:center">
-            ${delCount ? `<button class="ctrl-btn" id="btnScanDelete" ${scanning ? "disabled" : ""}
-                style="background:var(--neg);border-color:var(--neg);color:#fff">
-                ${x.deleting ? t("settings.scan.deleting") : tf("settings.scan.delete_n", { n: delCount })}</button>` : ""}
-            <button class="ctrl-btn on" id="btnScanRun" ${scanning ? "disabled" : ""}>${x.loading ? t("common.loading") : t("settings.scan.btn")}</button>
-          </div>
-        </div>
-        <div class="card-pad">${body}</div>
-      </div>`;
   }
 
   async function runScan() {
     local.scan = { loading: true, selected: new Set() };
-    window.App.rerender();
+    rerender();
     try {
       const r = await fetch("api/security-scan.php", { credentials: "same-origin" });
       const j = await r.json();
@@ -374,17 +387,16 @@
     } catch (e) {
       local.scan = { error: e.message || String(e), selected: new Set() };
     }
-    window.App.rerender();
+    rerender();
   }
 
   async function deleteScanned() {
     const x = local.scan || {};
     const paths = [...(x.selected || [])];
     if (!paths.length || x.deleting) return;
-    if (!window.confirm(tf("settings.scan.confirm", { n: paths.length }))) return;
-
-    local.scan = { ...x, deleting: true };
-    window.App.rerender();
+    if (!window.confirm(_tf("settings.scan.confirm", { n: paths.length }))) return;
+    x.deleting = true;
+    rerender();
     try {
       const r = await fetch("api/security-scan.php", {
         method: "POST", credentials: "same-origin",
@@ -394,203 +406,69 @@
       const j = await r.json();
       if (!r.ok || !j.success) throw new Error(j.error || "HTTP " + r.status);
       const okN = (j.deleted || []).length, badN = (j.refused || []).length;
-      showMsg(badN ? "err" : "ok", tf("settings.scan.result", { n: okN, size: fmtBytes(j.bytes || 0) }) + (badN ? " · " + tf("settings.scan.refused", { n: badN }) : ""));
       await runScan();
+      showMsg(badN ? "err" : "ok", _tf("settings.scan.result", { n: okN, size: fmtBytes(j.bytes || 0) }) + (badN ? " · " + _tf("settings.scan.refused", { n: badN }) : ""));
     } catch (e) {
-      local.scan = { ...x, deleting: false };
-      showMsg("err", t("common.error") + ": " + (e.message || e));
-      window.App.rerender();
-    }
-  }
-
-  /* ── render / mount ──────────────────────────────────────────── */
-
-  function render() {
-    if (local.loading) {
-      return `<div class="card card-pad" style="text-align:center;color:var(--ink-3);font-weight:600">${t("common.loading")}</div>`;
-    }
-    if (local.error) {
-      return `<div class="card card-pad" style="text-align:center;color:var(--neg);font-weight:700">${t("common.error")}: ${local.error}</div>`;
-    }
-    return `
-      ${flashMsg()}
-      <div class="g12" style="grid-template-columns:repeat(12,1fr);gap:16px">
-        <div style="grid-column:span 6" data-collapse>${accountCard()}</div>
-        <div style="grid-column:span 6" data-collapse>${brandCard()}</div>
-      </div>
-      ${updateCard()}
-      ${dbExportCard()}
-      ${securityScanCard()}`;
-  }
-
-  /* ── v2 self-update ───────────────────────────────────────── */
-
-  async function fetchUpdateStatus() {
-    local.update = local.update || {};
-    local.update.loading = true;
-    window.App.rerender();
-    try {
-      const r = await fetch("api/v2-update.php", { credentials: "same-origin" });
-      const j = await r.json();
-      local.update = {
-        loading: false,
-        current: j.current,
-        latest: j.latest,
-        has_update: j.has_update,
-        changelog: j.changelog,
-        download_url: j.download_url,
-        last_checked: j.last_checked,
-        fetch_error: j.fetch_error,
-      };
-    } catch (e) {
-      local.update = { loading: false, fetch_error: e.message || String(e) };
-    }
-    window.App.rerender();
-  }
-
-  async function checkUpdateNow() {
-    local.update = local.update || {};
-    local.update.loading = true;
-    window.App.rerender();
-    try {
-      const r = await fetch("api/v2-update.php", {
-        method: "POST", credentials: "same-origin",
-        headers: { "Content-Type": "application/json", "X-CSRF-Token": local.csrf },
-        body: JSON.stringify({ action: "check_now" }),
-      });
-      const j = await r.json();
-      // Backend now returns the fresh manifest inline (cache-buster bypasses
-      // both server cache and GitHub raw CDN). Apply directly — no second
-      // round-trip that could re-hit the stale CDN.
-      if (j && (j.latest || j.current)) {
-        local.update = {
-          loading: false,
-          current: j.current,
-          latest: j.latest,
-          has_update: !!j.has_update,
-          changelog: j.changelog,
-          download_url: j.download_url,
-          last_checked: j.last_checked,
-          fetch_error: j.fetch_error,
-        };
-        window.App.rerender();
-      } else {
-        await fetchUpdateStatus();
-      }
-    } catch (e) {
-      local.update = { loading: false, fetch_error: e.message || String(e) };
-      window.App.rerender();
-    }
-  }
-
-  async function applyV2Update() {
-    if (!local.update || !local.update.download_url || !local.update.latest) return;
-    if (!confirm(t("v2up.has_update") + ": v" + local.update.latest + "?")) return;
-    local.update.installing = local.update.latest;
-    window.App.rerender();
-    try {
-      const r = await fetch("api/v2-update.php", {
-        method: "POST", credentials: "same-origin",
-        headers: { "Content-Type": "application/json", "X-CSRF-Token": local.csrf },
-        body: JSON.stringify({ action: "apply", version: local.update.latest, download_url: local.update.download_url }),
-      });
-      const j = await r.json();
-      if (!j.success) throw new Error(j.error || "HTTP " + r.status);
-      local.update.installing = null;
-      local.update.success = true;
-      window.App.rerender();
-    } catch (e) {
-      local.update.installing = null;
+      x.deleting = false;
       showMsg("err", t("common.error") + ": " + (e.message || e));
     }
   }
 
-  /* ── interactions ───────────────────────────────────────────── */
+  /* ── account / brand actions ──────────────────────────────── */
 
-  function showMsg(kind, text) {
-    local.msg = { kind, text };
-    window.App.rerender();
-    setTimeout(() => { local.msg = null; window.App.rerender(); }, 4000);
-  }
-
-  async function saveProfile() {
+  async function saveProfile(btn) {
     const fullName = document.getElementById("accFullName").value.trim();
-    const btn = document.getElementById("btnSaveProfile");
-    if (!btn || local.saving) return;
-    local.saving = true; btn.textContent = t("settings.account.saving");
+    if (local.saving) return;
+    local.saving = true; btn.disabled = true; btn.textContent = t("settings.account.saving");
     try {
       const fd = new FormData();
       fd.append("action", "update_profile");
       fd.append("full_name", fullName);
-      const r = await fetch("api/account.php", {
-        method: "POST", credentials: "same-origin",
-        headers: { "X-CSRF-Token": local.csrf },
-        body: fd,
-      });
+      const r = await fetch("api/account.php", { method: "POST", credentials: "same-origin", headers: { "X-CSRF-Token": local.csrf }, body: fd });
       const j = await r.json();
       if (!r.ok || !j.success) throw new Error(j.error || "HTTP " + r.status);
-      local.user = j.user;
+      local.user = Object.assign({}, local.user, j.user || {});
       showMsg("ok", t("settings.account.saved"));
     } catch (e) {
-      btn.textContent = t("settings.account.save_profile");
       showMsg("err", t("settings.account.save_failed") + ": " + (e.message || e));
     } finally {
       local.saving = false;
     }
   }
 
-  async function changePassword() {
-    const cur = document.getElementById("accCurPwd").value;
-    const nw  = document.getElementById("accNewPwd").value;
-    const cf  = document.getElementById("accConfirmPwd").value;
-    const btn = document.getElementById("btnChangePwd");
-    if (!btn || local.saving) return;
+  async function changePassword(btn) {
+    const v = (id) => document.getElementById(id).value;
+    const cur = v("accCurPwd"), nw = v("accNewPwd"), cf = v("accConfirmPwd");
+    if (local.saving) return;
     if (!cur || !nw || !cf) { showMsg("err", t("settings.account.pwd_missing")); return; }
     if (nw !== cf) { showMsg("err", t("settings.account.pwd_mismatch")); return; }
-    local.saving = true; btn.textContent = t("settings.account.changing");
+    local.saving = true; btn.disabled = true; btn.textContent = t("settings.account.changing");
     try {
       const r = await fetch("api/account.php", {
         method: "POST", credentials: "same-origin",
         headers: { "Content-Type": "application/json", "X-CSRF-Token": local.csrf },
-        body: JSON.stringify({ action: "change_password",
-          current_password: cur, new_password: nw, confirm_password: cf }),
+        body: JSON.stringify({ action: "change_password", current_password: cur, new_password: nw, confirm_password: cf }),
       });
       const j = await r.json();
       if (!r.ok || !j.success) throw new Error(j.error || "HTTP " + r.status);
-      document.getElementById("accCurPwd").value = "";
-      document.getElementById("accNewPwd").value = "";
-      document.getElementById("accConfirmPwd").value = "";
       showMsg("ok", t("settings.account.pwd_changed"));
     } catch (e) {
-      btn.textContent = t("settings.account.change_pwd");
+      // showMsg re-renders, which also clears the password fields.
       showMsg("err", t("settings.account.change_failed") + ": " + (e.message || e));
     } finally {
       local.saving = false;
     }
   }
 
-  function collectRulesFromDOM() {
-    const rows = document.querySelectorAll(".brand-rule-row");
-    const out = [];
-    rows.forEach((row) => {
-      const prefix = (row.querySelector('[data-field="prefix"]').value || "").toUpperCase().trim();
-      const brand_name = (row.querySelector('[data-field="brand_name"]').value || "").trim();
-      if (prefix === "" && brand_name === "") return;
-      out.push({ prefix, brand_name });
-    });
-    return out;
-  }
-
-  async function saveRules() {
-    const btn = document.getElementById("btnSaveRules");
-    if (!btn || local.saving) return;
-    const rules = collectRulesFromDOM();
-    // Validate client-side first
+  async function saveRules(btn) {
+    if (local.saving) return;
+    captureRules();
+    const rules = local.rules.filter((r) => r.prefix !== "" || r.brand_name !== "");
     for (const r of rules) {
-      if (r.prefix.length !== 3) { showMsg("err", tf("settings.brand.prefix_invalid", { p: r.prefix || "—" })); return; }
-      if (!r.brand_name) { showMsg("err", tf("settings.brand.name_missing", { p: r.prefix })); return; }
+      if (r.prefix.length !== 3) { showMsg("err", _tf("settings.brand.prefix_invalid", { p: r.prefix || "—" })); return; }
+      if (!r.brand_name) { showMsg("err", _tf("settings.brand.name_missing", { p: r.prefix })); return; }
     }
-    local.saving = true; btn.textContent = t("settings.account.saving");
+    local.saving = true; btn.disabled = true; btn.textContent = t("settings.account.saving");
     try {
       const r = await fetch("api/brand-settings.php", {
         method: "POST", credentials: "same-origin",
@@ -600,79 +478,87 @@
       const j = await r.json();
       if (!r.ok || !j.success) throw new Error(j.error || "HTTP " + r.status);
       local.rules = j.rules || [];
-      showMsg("ok", j.message || t("settings.brand.saved"));
-      window.App.rerender();
-    } catch (e) {
-      btn.textContent = t("settings.brand.save_rules");
-      showMsg("err", t("settings.brand.save_failed") + ": " + (e.message || e));
-    } finally {
       local.saving = false;
+      // Re-render from the saved list (duplicates merged by the server).
+      local.msg = { kind: "ok", text: j.message || t("settings.brand.saved") };
+      window.App.rerender();
+      setTimeout(() => { local.msg = null; rerender(); }, 4000);
+    } catch (e) {
+      local.saving = false;
+      showMsg("err", t("settings.brand.save_failed") + ": " + (e.message || e));
     }
   }
 
-  function addRule() {
-    local.rules.push({ prefix: "", brand_name: "" });
-    window.App.rerender();
-  }
+  /* ── mount ────────────────────────────────────────────────── */
 
-  function delRule(idx) {
-    local.rules.splice(idx, 1);
-    window.App.rerender();
-  }
-
-  function bind(root) {
-    document.getElementById("btnScanRun")?.addEventListener("click", runScan);
-    document.getElementById("btnScanDelete")?.addEventListener("click", deleteScanned);
-    document.getElementById("btnScanAll")?.addEventListener("click", () => {
-      local.scan.selected = new Set((local.scan.findings || []).map((f) => f.path));
-      window.App.rerender();
-    });
-    document.getElementById("btnScanNone")?.addEventListener("click", () => {
-      local.scan.selected = new Set();
-      window.App.rerender();
-    });
-    root?.querySelectorAll("[data-scan-path]").forEach((cb) => {
-      cb.addEventListener("change", () => {
-        const set = local.scan.selected || (local.scan.selected = new Set());
-        if (cb.checked) set.add(cb.dataset.scanPath); else set.delete(cb.dataset.scanPath);
-        window.App.rerender();
-      });
-    });
-    document.getElementById("btnSaveProfile")?.addEventListener("click", saveProfile);
-    document.getElementById("btnChangePwd")?.addEventListener("click", changePassword);
-    document.getElementById("btnSaveRules")?.addEventListener("click", saveRules);
-    document.getElementById("btnAddRule")?.addEventListener("click", addRule);
-    document.querySelectorAll('[data-action="del-rule"]').forEach((b) => {
-      b.addEventListener("click", () => {
-        const row = b.closest(".brand-rule-row");
-        if (row) delRule(+row.dataset.idx);
-      });
-    });
-    // keep DOM in sync with local.rules: prefix uppercase
-    document.querySelectorAll('.brand-rule-row [data-field="prefix"]').forEach((inp) => {
-      inp.addEventListener("input", () => { inp.value = inp.value.toUpperCase().slice(0, 3); });
-    });
-    // v2 update card
-    document.getElementById("btnV2UpCheck")?.addEventListener("click", checkUpdateNow);
-    document.getElementById("btnV2UpApply")?.addEventListener("click", applyV2Update);
-    document.getElementById("btnV2UpReload")?.addEventListener("click", () => location.reload());
-    // db export
-    document.getElementById("btnDbExport")?.addEventListener("click", downloadDbExport);
+  function openSystem() {
+    if (!local.update) fetchUpdateStatus();
+    if (!local.dbExport) fetchDbExportStats();
+    if (!local.scan) runScan();
   }
 
   function mount(root) {
     if (local.loading) {
       fetchInitial().then(() => {
         window.App.rerender();
-        // lazy-load the update status only for admins, after the page renders
+        // The update check also drives the badge on the System tab.
         if (local.isAdmin && !local.update) fetchUpdateStatus();
       });
       return;
     }
-    bind(root);
-    // lazy-load update + db stats on the first mount if not yet fetched
+    root.querySelector(".set-nav")?.addEventListener("click", (e) => {
+      const b = e.target.closest("[data-sec]");
+      if (!b || b.dataset.sec === local.sec) return;
+      captureRules();
+      local.sec = b.dataset.sec;
+      window.App.rerender();
+    });
+    if (local.isAdmin && local.sec === "system") openSystem();
     if (local.isAdmin && !local.update) fetchUpdateStatus();
-    if (local.isAdmin && !local.dbExport) fetchDbExportStats();
+
+    root.querySelector("#btnSaveProfile")?.addEventListener("click", (e) => saveProfile(e.currentTarget));
+    root.querySelector("#btnChangePwd")?.addEventListener("click", (e) => changePassword(e.currentTarget));
+
+    const list = root.querySelector("#brandRulesList");
+    if (list) {
+      list.addEventListener("input", (e) => {
+        if (e.target.matches('[data-field="prefix"]')) e.target.value = e.target.value.toUpperCase().slice(0, 3);
+        captureRules();
+        const ex = root.querySelector("#ruleExample");
+        if (ex) ex.innerHTML = exampleHtml();
+      });
+      list.addEventListener("click", (e) => {
+        const b = e.target.closest("[data-del-rule]");
+        if (!b) return;
+        captureRules();
+        local.rules.splice(+b.closest(".rule-row").dataset.idx, 1);
+        window.App.rerender();
+      });
+    }
+    root.querySelector("#btnAddRule")?.addEventListener("click", () => {
+      captureRules();
+      local.rules.push({ prefix: "", brand_name: "" });
+      window.App.rerender();
+      const rows = document.querySelectorAll("#brandRulesList .rule-p");
+      rows[rows.length - 1]?.focus();
+    });
+    root.querySelector("#btnSaveRules")?.addEventListener("click", (e) => saveRules(e.currentTarget));
+
+    root.querySelector("#btnV2UpCheck")?.addEventListener("click", checkUpdateNow);
+    root.querySelector("#btnV2UpApply")?.addEventListener("click", applyUpdate);
+    root.querySelector("#btnV2UpReload")?.addEventListener("click", () => location.reload());
+    root.querySelector("#btnDbExport")?.addEventListener("click", downloadDbExport);
+    root.querySelector("#btnScanRun")?.addEventListener("click", runScan);
+    root.querySelector("#btnScanDelete")?.addEventListener("click", deleteScanned);
+    root.querySelector("#btnScanAll")?.addEventListener("click", () => { local.scan.selected = new Set(local.scan.findings.map((f) => f.path)); rerender(); });
+    root.querySelector("#btnScanNone")?.addEventListener("click", () => { local.scan.selected = new Set(); rerender(); });
+    root.querySelector(".scan-list")?.addEventListener("click", (e) => {
+      const b = e.target.closest("[data-scan-path]");
+      if (!b) return;
+      const set = local.scan.selected;
+      if (set.has(b.dataset.scanPath)) set.delete(b.dataset.scanPath); else set.add(b.dataset.scanPath);
+      rerender();
+    });
   }
 
   window.Views.settings = {

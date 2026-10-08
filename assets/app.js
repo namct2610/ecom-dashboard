@@ -396,6 +396,8 @@
       return;
     }
     root.scrollTop = 0;
+    // A view that opens a bottom sheet (users) sets this again in its mount.
+    document.body.classList.remove("sheet-open");
     root.innerHTML = view.render();
     view.mount && view.mount(root);
 
