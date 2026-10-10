@@ -21,6 +21,12 @@ Options -MultiViews
 #     RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 # </IfModule>
 
+# Compress text responses. API JSON is gzipped by PHP itself (json_response);
+# this covers HTML, CSS, JS and SVG where the host has mod_deflate.
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/css text/plain text/javascript application/javascript application/json image/svg+xml
+</IfModule>
+
 # Block direct access to vendor, includes, uploads
 RedirectMatch 403 ^/vendor/.*$
 RedirectMatch 403 ^/includes/.*$

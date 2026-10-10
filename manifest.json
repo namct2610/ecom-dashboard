@@ -1,7 +1,7 @@
 {
-  "version": "3.7.0",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.7.0/release/dashboard-v3-3.7.0.zip",
-  "changelog": "Giao diện mới cho 5 trang hệ thống, theo bản thiết kế lại.\n- Đối soát GBS: một thẻ Tỷ lệ khớp (thanh phân bố + bảng theo sàn) thay 6 ô số và 3 thẻ sàn. Dải tháng thay menu chọn tháng, hiện tỷ lệ khớp từng tháng và dấu tháng đã chốt; nút Chốt đối soát nằm ngay cạnh. Đơn cần xử lý lọc theo Lệch / Thiếu GBS / Thiếu sàn, chênh lệch tô đỏ, có cả đơn chỉ có trong GBS. Ghi chú tháng tự rút ra từ số liệu (đơn giao cuối tháng, lệch NMV do voucher…).\n- Tải dữ liệu: độ phủ dữ liệu là khối chính, kèm danh sách mục cần bổ sung trong 12 tháng gần nhất; bỏ cột Quảng cáo (chưa nhập được). Có thanh tiến độ khi gửi file. Xuất lại dữ liệu gốc thành danh sách chọn một chạm.\n- Kết nối sàn: bỏ 3 tab — 3 thẻ sàn cạnh nhau với trạng thái và hành động chính, thông tin ứng dụng mở khi cần. Mọi shop của cả 3 sàn trong một bảng; token còn ≤ 7 ngày đánh dấu vàng, đã hết hạn đánh dấu đỏ. Đồng bộ tất cả chạy cho cả 3 sàn.\n- Người dùng: 4 ô thống kê gộp thành một dòng; lọc theo vai trò và tìm kiếm; sửa tài khoản trong bảng bên cạnh (điện thoại: sheet từ dưới lên) thay cho hộp thoại.\n- Cài đặt: 3 mục Tài khoản · Thương hiệu SKU · Hệ thống (cập nhật, sao lưu, dọn dẹp máy chủ). Mục Hệ thống báo số khi có bản mới.\n- Mục Tài liệu trên menu có biểu tượng mở tab mới.",
+  "version": "3.7.1",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.7.1/release/dashboard-v3-3.7.1.zip",
+  "changelog": "Tăng tốc độ mở dashboard.\n- Dữ liệu tải lúc mở trang gọn lại: bỏ phần sản phẩm/khu vực/khung giờ của 12 tháng (trang nào cũng tự lấy riêng cho kỳ đang chọn) và các cột lưu lượng không dùng. Server xử lý nhanh hơn khoảng 4 lần, dữ liệu truyền đi giảm từ 405KB xuống khoảng 23KB.\n- Phản hồi JSON được nén gzip ngay trong PHP, nên vẫn nén được trên hosting không bật nén.\n- Các file JS tải song song cùng lúc với dữ liệu, thay vì tải lần lượt từng file sau khi dữ liệu về.\n- Chart.js chỉ tải khi mở trang Chi phí sàn hoặc Kế hoạch.\n- File tĩnh (JS, CSS) được trình duyệt giữ lại giữa các lần mở; bản cập nhật mới tự đổi đường dẫn nên không bị dùng file cũ.",
   "min_php": "8.1",
-  "released_at": "2026-10-08"
+  "released_at": "2026-10-10"
 }

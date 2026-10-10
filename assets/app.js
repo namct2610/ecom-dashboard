@@ -361,6 +361,20 @@
     document.querySelectorAll(".js-compare").forEach((el) => el.addEventListener("click", (e) => { e.stopPropagation(); popover(e.currentTarget, COMPARES, st.compare, (k) => { st.compare = k; commit(); }, T("period.compare.title")); }));
   }
 
+  // Chart.js (~200KB from a CDN) is only needed by the pages that still draw
+  // canvas charts (views flagged `charts: true`), so it loads on first visit to
+  // one of them instead of delaying every start.
+  let chartsLoading = null;
+  function loadCharts() {
+    if (!chartsLoading) {
+      chartsLoading = window.loadScripts([
+        "https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js",
+        "assets/charts.js?v=" + window.ASSET_V,
+      ]).catch((err) => { chartsLoading = null; throw err; });
+    }
+    return chartsLoading;
+  }
+
   /* ---- render page ---- */
   function renderPage() {
     // Rebuild localized lists in case language changed
@@ -369,7 +383,7 @@
 
     const root = document.getElementById("pageRoot");
     const view = window.Views[st.page];
-    window.Charts.destroyAll();
+    if (window.Charts) window.Charts.destroyAll();
 
     const v = view || {};
     // Views may export titleKey/eyebrowKey to opt into i18n. Else use the
@@ -398,6 +412,14 @@
     root.scrollTop = 0;
     // A view that opens a bottom sheet (users) sets this again in its mount.
     document.body.classList.remove("sheet-open");
+    if (view.charts && !window.Charts) {
+      const page = st.page;
+      root.innerHTML = `<div style="padding:48px 24px;color:var(--ink-3);font-weight:600;text-align:center">${T("common.loading")}</div>`;
+      loadCharts()
+        .then(() => { if (st.page === page) renderPage(); })
+        .catch((err) => { root.innerHTML = `<div style="padding:48px 24px;color:var(--neg);font-weight:700;text-align:center">${escHtml(T("boot.load_failed"))}: ${escHtml(err.message)}</div>`; });
+      return;
+    }
     root.innerHTML = view.render();
     view.mount && view.mount(root);
 

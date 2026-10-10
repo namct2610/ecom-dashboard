@@ -4,26 +4,50 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Zott Monte · Marketplace Analytics</title>
+<script>
+  // Start the data request first thing and download every module in parallel
+  // with it. Before, the modules were fetched one after another and only once
+  // the data had arrived, so each one cost a full round trip on the critical
+  // path. The bootstrap at the end of <body> runs them in order from the cache.
+  // A 401 means there is no session (or it expired): go to the login page.
+  (function () {
+    var V = 44; // cache-bust for assets
+    window.ASSET_V = V;
+    window.APP_MODULES = [
+      'assets/store.js', 'assets/ui.js', 'assets/views-overview.js', 'assets/views-platforms.js',
+      'assets/views-pages.js', 'assets/views-plan.js', 'assets/views-settings.js', 'assets/views-users.js',
+      'assets/views-upload.js', 'assets/views-costs.js', 'assets/views-reconcile.js', 'assets/views-connect.js',
+      'assets/app.js'
+    ].map(function (m) { return m + '?v=' + V; });
+    window.APP_MODULES.forEach(function (src) {
+      var l = document.createElement('link');
+      l.rel = 'preload'; l.as = 'script'; l.href = src;
+      document.head.appendChild(l);
+    });
+    // Ordered loader shared with app.js (Chart.js is loaded on demand).
+    window.loadScripts = function (srcs) {
+      return Promise.all(srcs.map(function (src) {
+        return new Promise(function (resolve, reject) {
+          var s = document.createElement('script');
+          s.src = src; s.async = false; // download in parallel, run in order
+          s.onload = resolve;
+          s.onerror = function () { reject(new Error('Lỗi tải script: ' + src)); };
+          document.head.appendChild(s);
+        });
+      }));
+    };
+    window.DASH_P = fetch('api/v2-data.php', { credentials: 'same-origin' }).then(function (r) {
+      if (r.status === 401) { window.location.replace('login.html'); return new Promise(function () {}); }
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    });
+  })();
+</script>
 <link rel="icon" type="image/svg+xml" href="assets/logo.svg?v=44">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/theme.css?v=44">
-<script>
-  // Redirect to login page when auth is enabled and session is not active.
-  // Runs before any app JS loads to prevent flash of unauthenticated content.
-  (async function() {
-    try {
-      const res = await fetch('api/auth.php', { credentials: 'same-origin' });
-      const data = await res.json();
-      if (data.auth_enabled && !data.logged_in) {
-        window.location.replace('login.html');
-      }
-    } catch (e) {
-      // Network error — allow app to load, it'll show its own error state.
-    }
-  })();
-</script>
 </head>
 <body>
 <div id="app">
@@ -150,55 +174,16 @@
   if (window.I18n) window.I18n.applyDom();
 </script>
 <script>
-  // Bootstrap: fetch data first, then load the JS modules.
-  // The modules (store.js / charts.js / views-*.js / app.js) read window.DASH
-  // at IIFE time, so they must run AFTER the fetch resolves — otherwise their
-  // top-level code throws and window.Store/App never get exported.
+  // Bootstrap: the modules (store.js / views-*.js / app.js) read window.DASH at
+  // IIFE time, so they run only after the data request (started in <head>) has
+  // resolved — they were already downloading in parallel with it.
   (function () {
     var root = document.getElementById('pageRoot');
     root.innerHTML = '<div style="padding:48px 24px;color:var(--ink-3);font-weight:600;text-align:center">' + (window.t ? window.t('boot.loading_data') : 'Đang tải dữ liệu…') + '</div>';
-
-    var V = 44; // cache-bust for assets
-    var MODULES = [
-      'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js',
-      'assets/store.js?v=' + V,
-      'assets/charts.js?v=' + V,
-      'assets/ui.js?v=' + V,
-      'assets/views-overview.js?v=' + V,
-      'assets/views-platforms.js?v=' + V,
-      'assets/views-pages.js?v=' + V,
-      'assets/views-plan.js?v=' + V,
-      'assets/views-settings.js?v=' + V,
-      'assets/views-users.js?v=' + V,
-      'assets/views-upload.js?v=' + V,
-      'assets/views-costs.js?v=' + V,
-      'assets/views-reconcile.js?v=' + V,
-      'assets/views-connect.js?v=' + V,
-      'assets/app.js?v=' + V
-    ];
-
-    function loadSequential(srcs) {
-      return srcs.reduce(function (p, src) {
-        return p.then(function () {
-          return new Promise(function (resolve, reject) {
-            var s = document.createElement('script');
-            s.src = src;
-            s.onload = resolve;
-            s.onerror = function () { reject(new Error('Lỗi tải script: ' + src)); };
-            document.head.appendChild(s);
-          });
-        });
-      }, Promise.resolve());
-    }
-
-    fetch('api/v2-data.php', { credentials: 'same-origin' })
-      .then(function (r) {
-        if (!r.ok) throw new Error('HTTP ' + r.status);
-        return r.json();
-      })
+    window.DASH_P
       .then(function (data) {
         window.DASH = data;
-        return loadSequential(MODULES);
+        return window.loadScripts(window.APP_MODULES);
       })
       .then(function () {
         if (!window.App || typeof window.App.init !== 'function') {

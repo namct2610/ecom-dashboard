@@ -3,7 +3,7 @@
    Reads/writes /api/plan.php (same backend as v1)
    ============================================================ */
 (function () {
-  const F = window.F, UI = window.UI, C = window.Charts, S = window.Store;
+  const F = window.F, UI = window.UI, S = window.Store;
   const _t = (k, f) => (window.t ? window.t(k, f) : (f || k));
   const _tf = (k, v) => (window.tf ? window.tf(k, v) : k);
 
@@ -326,6 +326,7 @@
 
   /* ---------- mount: render charts after DOM is in place ---------- */
   function mount(root) {
+    const C = window.Charts; // loaded on demand by app.js (charts: true)
     renderInToolbar();
     if (local.loading || local.error || !local.data) {
       // first time entering the page: trigger fetch + re-render
@@ -389,6 +390,7 @@
     titleKey: "page.plan.title",
     eyebrowKey: "page.plan.eyebrow",
     customToolbar: true,
+    charts: true,
     render,
     mount,
   };

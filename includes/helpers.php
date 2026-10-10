@@ -323,7 +323,18 @@ function json_response(array $payload, int $status = 200): void
     header('Content-Type: application/json; charset=utf-8');
     header('Cache-Control: no-store, no-cache, must-revalidate');
     header('Pragma: no-cache');
-    echo json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    $json = (string) json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    // Gzip large responses here: many shared hosts do not compress PHP output,
+    // and dashboard JSON is repetitive text that shrinks ~8-10x. Skipped when
+    // anything is already buffered (a PHP warning) so the body cannot be mixed.
+    if (strlen($json) > 2048 && function_exists('gzencode') && !headers_sent()
+        && !ini_get('zlib.output_compression') && !ob_get_length()
+        && str_contains((string) ($_SERVER['HTTP_ACCEPT_ENCODING'] ?? ''), 'gzip')) {
+        header('Content-Encoding: gzip');
+        header('Vary: Accept-Encoding');
+        $json = (string) gzencode($json, 5);
+    }
+    echo $json;
     exit;
 }
 

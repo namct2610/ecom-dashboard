@@ -107,7 +107,9 @@
   const monthlyMap = {}; DASH.monthly.forEach((m) => (monthlyMap[m.ym] = m));
   const dailyMap = {};
   DASH.daily.forEach((d) => { dailyMap[d.date] = d; });
-  const allDates = () => (DASH.daily || []).map((d) => d.date).sort();
+  // DASH never changes after boot; sorting it on every aggregate call added up.
+  const ALL_DATES = (DASH.daily || []).map((d) => d.date).sort();
+  const allDates = () => ALL_DATES;
   const rangeDetailCache = {};
   const rangeDetailInflight = {};
 
@@ -199,19 +201,6 @@
       return normalizeRange(parts[0] || latestDate, parts[1] || parts[0] || latestDate, "custom");
     }
     return normalizeRange(latestDate, latestDate, "day");
-  }
-  function monthsInRange(range) {
-    const out = [];
-    let ym = range.start.slice(0, 7);
-    const endYm = range.end.slice(0, 7);
-    while (ym <= endYm) {
-      if (monthlyMap[ym]) out.push(ym);
-      ym = addMonth(ym, 1);
-    }
-    return out;
-  }
-  function curMonths(key) {
-    return monthsInRange(rangeFromKey(key));
   }
   function compareRange(key, mode) {
     // All-time has nothing meaningful to compare against — there is no earlier
@@ -417,8 +406,6 @@
     return _t(CAT[cat] && CAT[cat].i18n, CAT[cat] ? CAT[cat].label : cat);
   }
 
-  function detailMonths(key) { return curMonths(key).filter((ym) => DASH.monthDetail[ym]); }
-
   function rangeDetailKey(key, platform) {
     return String(key) + "|" + String(platform || state.platform || "all");
   }
@@ -457,8 +444,9 @@
     const activePlatform = platform || state.platform;
     const field = (metric === "qty" ? "topQty" : "topRev") + (grouping === "combo" ? "Combo" : "");
     const cached = getRangeDetail(key, activePlatform);
-    const hasCachedRows = cached && Array.isArray(cached[field]);
-    const rows = hasCachedRows ? cached[field] : [];
+    // Rows come only from the period's range detail; until it arrives the list
+    // is empty and the views show a loading line.
+    const rows = cached && Array.isArray(cached[field]) ? cached[field] : [];
     const mergePlatforms = activePlatform === "all" && !splitPlatforms;
     const merged = {};
     const addRows = (list) => list.forEach((p) => {
@@ -475,8 +463,7 @@
       e.revenue += Number(p.revenue) || 0;
     });
 
-    if (hasCachedRows) addRows(rows);
-    else detailMonths(key).forEach((ym) => addRows(DASH.monthDetail[ym][field] || []));
+    addRows(rows);
 
     const arr = Object.values(merged).map((p) => ({ ...p, cat: categoryOf(p.sku, p.name), cleanName: cleanName(p.name) }));
     arr.sort((a, b) => (metric === "qty" ? b.qty - a.qty : b.revenue - a.revenue));
@@ -496,15 +483,8 @@
   function heatMatrix(key, platform) {
     const activePlatform = platform || state.platform;
     const cached = getRangeDetail(key, activePlatform);
-    if (cached && Array.isArray(cached.heat)) {
-      const m = Array.from({ length: 7 }, () => Array(24).fill(0)); let max = 0;
-      cached.heat.forEach((h) => { m[h.weekday][h.hour] += h.orders; if (m[h.weekday][h.hour] > max) max = m[h.weekday][h.hour]; });
-      return { m, max };
-    }
-    const months = detailMonths(key);
     const m = Array.from({ length: 7 }, () => Array(24).fill(0)); let max = 0;
-    months.forEach((ym) => DASH.monthDetail[ym].heat.forEach((h) => { m[h.weekday][h.hour] += h.orders; }));
-    for (let d = 0; d < 7; d++) for (let h = 0; h < 24; h++) if (m[d][h] > max) max = m[d][h];
+    ((cached && cached.heat) || []).forEach((h) => { m[h.weekday][h.hour] += h.orders; if (m[h.weekday][h.hour] > max) max = m[h.weekday][h.hour]; });
     return { m, max };
   }
 
@@ -571,10 +551,13 @@
   }
 
   /* ---- traffic ---- */
+  // trafficDaily rows: { date, s|l|t: [pv, visits, nf, nv] }, like `daily`.
+  const SHORT = { shopee: "s", lazada: "l", tiktok: "t" };
   function trafficSeriesRange(range, platform) {
+    const keys = platform === "all" ? ["s", "l", "t"] : [SHORT[platform]];
     return (DASH.trafficDaily || []).filter((d) => d.date >= range.start && d.date <= range.end).map((d) => {
-      const get = (k) => (platform === "all" ? PKEYS.reduce((t, p) => t + ((d[p] && d[p][k]) || 0), 0) : (d[platform] ? d[platform][k] : 0));
-      return { date: d.date, pv: get("pv"), visits: get("visits"), nf: get("nf"), nv: get("nv") };
+      const get = (i) => keys.reduce((t, k) => t + ((d[k] && d[k][i]) || 0), 0);
+      return { date: d.date, pv: get(0), visits: get(1), nf: get(2), nv: get(3) };
     });
   }
   function trafficAggRange(range, platform) {
@@ -602,7 +585,7 @@
     _customerCache: customerCache,
     DASH, PLAT, PKEYS, CAT, state, save, F,
     MONTH_VI, MONTH_VI_LONG, addMonth, parseDate, fmtDate, fmtDateShort, catLabel,
-    curMonths, periodLabel, compareLabel, periodMode, rangeFromKey, compareRange, aggRange,
+    periodLabel, compareLabel, periodMode, rangeFromKey, compareRange, aggRange,
     periodSeries, grainOptions, defaultGrain, last12Months, MOVED,
     products, categoryBreakdown, heatMatrix, categoryOf, ensureRangeDetail, getRangeDetail,
     trafficSeriesRange, trafficAggRange,

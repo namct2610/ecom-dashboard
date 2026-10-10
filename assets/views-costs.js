@@ -4,7 +4,7 @@
      POST /api/costs.php  {rates:{...}}     → save fee rates (admin)
    ============================================================ */
 (function () {
-  const S = window.Store, F = window.F, UI = window.UI, C = window.Charts;
+  const S = window.Store, F = window.F, UI = window.UI;
   const _t = (k, f) => (window.t ? window.t(k, f) : (f || k));
   const _tf = (k, v) => (window.tf ? window.tf(k, v) : k);
 
@@ -283,6 +283,7 @@
   }
 
   function mount(root) {
+    const C = window.Charts; // loaded on demand by app.js (charts: true)
     if (local.key !== periodKey()) { load(); return; }
     if (!local.data || !local.data.summary.orders) return;
 
@@ -339,5 +340,5 @@
     }
   }
 
-  window.Views.costs = { titleKey: "page.costs.title", eyebrowKey: "page.costs.eyebrow", render, mount };
+  window.Views.costs = { titleKey: "page.costs.title", eyebrowKey: "page.costs.eyebrow", charts: true, render, mount };
 })();

@@ -188,9 +188,13 @@
           <div class="cell-bar" style="margin-top:8px">${UI.track(p.revenue / tMax, tColor(p), 6)}<b>${F.money(p.revenue)}</b></div>
         </div>
       </div>`).join("");
+    // Products and categories come from the period's range detail (fetched in
+    // mount); say "loading" until it lands rather than "no data".
+    const detailReady = !!S.getRangeDetail(st.period, plat);
+    const waitOrEmpty = `<div class="empty-chart">${_t(detailReady ? "common.empty_data" : "common.loading")}</div>`;
     const topBody = top.length ? `<div class="gt only-wide" style="--cols:28px minmax(0,2fr) 80px minmax(0,1.3fr)">
         <div class="gt-head"><span>#</span><span>${_t("th.product")}</span><span class="r">${_t("th.qty_sold")}</span><span>${_t("th.revenue")}</span></div>${topWide}</div>
-      <div class="mlist only-narrow">${topNarrow}</div>` : `<div class="empty-chart">${_t("common.empty_data")}</div>`;
+      <div class="mlist only-narrow">${topNarrow}</div>` : waitOrEmpty;
 
     // ---- categories (horizontal bars instead of a donut) ----
     const cats = S.categoryBreakdown(st.period, plat).filter((c) => c.revenue > 0);
@@ -201,7 +205,7 @@
           <b class="tnum" style="font-weight:800">${F.money(c.revenue)}</b>
           <span class="tnum" style="color:var(--ink-3);font-weight:600;width:46px;text-align:right">${F.pct(cTot ? c.revenue / cTot * 100 : 0)}</span>
         </div>${UI.track(c.revenue / cMax, "var(--ink-2)")}
-      </div>`).join("") || `<div class="empty-chart">${_t("common.empty_data")}</div>`;
+      </div>`).join("") || waitOrEmpty;
 
     return `<div class="pg">
       <div class="kpis">${kpis}</div>

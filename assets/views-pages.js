@@ -181,6 +181,7 @@
       <span class="tnum" style="font-size:13px;font-weight:800;color:var(--brand)">${F.viInt(v)} ${_t("common.orders_unit")}</span>`;
   }
   function heatCard(key, platform) {
+    if (!S.getRangeDetail(key, platform)) return `<div class="card">${UI.head(_t("ovw.heat.title"), _t("orders.heat.tip"))}<div class="cbody">${msgHTML(_t("common.loading"))}</div></div>`;
     const { m } = S.heatMatrix(key, platform);
     const blocks = [heatBlock(m, 1), heatBlock(m, 3)];
     const scale = `<div style="display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:var(--ink-3)">${_t("orders.heat.less")}${["var(--track)", 30, 57, 84].map((p) =>
@@ -208,6 +209,8 @@
   }
 
   function recentInner(list) {
+    const waiting = !list;
+    list = list || [];
     const filters = [["all", _t("common.all")], ["done", _t("orders.short.done")], ["cancelled", _t("orders.short.cancel")], ["pending", _t("status.processing")]];
     const rows = list.filter((o) => recentFilter === "all" || kindOf(o.status) === recentFilter);
     const pill = (o) => { const [lab, cls] = statusInfo(o.status); return `<span class="status-pill ${cls}">${lab}</span>`; };
@@ -228,7 +231,7 @@
         <div style="display:flex;align-items:baseline;gap:8px" class="sub3"><span>${escHtml(o.city || "—")}</span><span>·</span><span class="tnum">${dtShort(o.created)}</span>
           <b class="tnum" style="margin-left:auto;font-size:14px;color:var(--ink);font-weight:800">${F.moneyFull(o.amount)}</b></div>
       </div>`).join("");
-    const empty = `<div class="empty-chart">${_t("common.no_results")}</div>`;
+    const empty = `<div class="empty-chart">${_t(waiting ? "common.loading" : "common.no_results")}</div>`;
     return `${UI.head(_t("ovw.recent_orders.title"), _t("orders.recent.tip"), UI.seg("recentSeg", filters, recentFilter))}
       <div class="gt only-wide" style="--cols:170px 100px minmax(0,2fr) minmax(0,1fr) 120px 130px 90px">
         <div class="gt-head"><span>${_t("th.order_id")}</span><span>${_t("th.platform")}</span><span>${_t("th.product")}</span><span>${_t("th.region")}</span><span class="r">${_t("orders.recent.value")}</span><span>${_t("th.status")}</span><span class="r">${_t("orders.recent.time")}</span></div>
@@ -238,8 +241,8 @@
   }
   function recentList() {
     const st = S.state, rd = S.getRangeDetail(st.period, st.platform);
-    const src = Array.isArray(rd && rd.recentOrders) ? rd.recentOrders : (S.DASH.recentOrders || []);
-    return src.filter((o) => st.platform === "all" || o.platform === st.platform).slice(0, 40);
+    if (!rd) return null;
+    return (rd.recentOrders || []).filter((o) => st.platform === "all" || o.platform === st.platform).slice(0, 40);
   }
   function mountRecent(card) {
     if (!card) return;
@@ -318,7 +321,7 @@
       const catCard = `<div class="card" style="flex:1 1 300px">${UI.head(_t("ovw.category.title"), _t("products.cat.tip"), "", { right: true })}
         <div class="clist">${cats.map((c) => `<div style="display:flex;flex-direction:column;gap:6px;padding:8px 0">
           <div style="display:flex;align-items:baseline;gap:8px;font-size:13px"><span class="nm" style="flex:1;font-size:13px">${S.catLabel(c.cat)}</span><b class="tnum">${F.money(c.revenue)}</b><span class="tnum" style="color:var(--ink-3);font-weight:600;width:46px;text-align:right">${F.pct(cTot ? c.revenue / cTot * 100 : 0)}</span></div>
-          ${UI.track(c.revenue / cMax, "var(--ink-2)")}</div>`).join("") || msgHTML(_t("common.empty_data"))}</div></div>`;
+          ${UI.track(c.revenue / cMax, "var(--ink-2)")}</div>`).join("") || msgHTML(_t(S.getRangeDetail(st.period, st.platform) ? "common.empty_data" : "common.loading"))}</div></div>`;
 
       if (!data) {
         const m = loadingOr(failed, "products.sku_profit.loading");

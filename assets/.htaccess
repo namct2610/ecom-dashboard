@@ -1,0 +1,5 @@
+# Everything in assets/ is requested with ?v=<release> (index.html, login.html),
+# so a new release changes the URL — browsers can keep these files a year.
+<IfModule mod_headers.c>
+    Header set Cache-Control "public, max-age=31536000, immutable"
+</IfModule>
