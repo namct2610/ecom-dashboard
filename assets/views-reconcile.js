@@ -372,7 +372,7 @@
   }
 
   function render() {
-    if (local.loading && !local.data) return `<div class="card card-pad" style="text-align:center;color:var(--ink-3);font-weight:600">${_t("common.loading")}</div>`;
+    if (local.loading && !local.data) return `${UI.skelPage()}`;
     if (local.error && !local.data) return `<div class="card card-pad" style="text-align:center;color:var(--neg);font-weight:700">${_t("common.error")}: ${esc(local.error)}</div>`;
     const noMonth = !local.selectedMonth;
     return `<div class="pg${local.busy ? " is-busy" : ""}">

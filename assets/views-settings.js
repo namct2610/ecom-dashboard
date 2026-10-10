@@ -215,7 +215,7 @@
     const x = local.dbExport || {};
     const stats = x.stats || null;
     let body;
-    if (x.loading) body = `<div class="sub3">${t("common.loading")}</div>`;
+    if (x.loading) body = UI.skel(3);
     else if (x.error) body = `<div style="color:var(--neg);font-weight:700;font-size:13px">${t("common.error")}: ${esc(x.error)}</div>`;
     else if (stats) body = `<div class="db-grid">${Object.entries(stats).map(([tbl, cnt]) => `<div><span>${esc(tbl)}</span><b class="tnum">${window.F.viInt(+cnt || 0)}</b></div>`).join("")}</div>`;
     else body = "";
@@ -262,7 +262,7 @@
   /* ── render ───────────────────────────────────────────────── */
 
   function render() {
-    if (local.loading) return `<div class="card card-pad" style="text-align:center;color:var(--ink-3);font-weight:600">${t("common.loading")}</div>`;
+    if (local.loading) return `${UI.skelPage()}`;
     if (local.error) return `<div class="card card-pad" style="text-align:center;color:var(--neg);font-weight:700">${t("common.error")}: ${esc(local.error)}</div>`;
     if (!sections().some(([k]) => k === local.sec)) local.sec = "account";
     const body = local.sec === "brand" ? brandSec()

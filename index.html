@@ -11,6 +11,11 @@
   // path. The bootstrap at the end of <body> runs them in order from the cache.
   // A 401 means there is no session (or it expired): go to the login page.
   (function () {
+    // Paint the boot screen in the saved theme, not a light flash for dark users.
+    try {
+      var saved = JSON.parse(localStorage.getItem('zm_state_v3') || '{}');
+      if (saved.theme === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+    } catch (e) { /* storage blocked: keep light */ }
     var V = 44; // cache-bust for assets
     window.ASSET_V = V;
     window.APP_MODULES = [
@@ -160,7 +165,21 @@
 
     <main id="content">
       <div class="mctl" id="mobileControls"></div>
-      <div id="pageRoot"></div>
+      <div id="pageRoot">
+        <!-- Boot screen, painted before any script runs; App.init replaces it. -->
+        <div class="boot" aria-busy="true">
+          <div class="boot-bar"></div>
+          <div class="boot-status" role="status" aria-live="polite">
+            <div class="boot-pill"><span class="boot-logo"><img src="assets/logo.svg?v=44" alt=""></span><span data-i18n="boot.loading">Đang tải dữ liệu</span><span class="bdots" aria-hidden="true"><i></i><i></i><i></i></span></div>
+            <div class="boot-tip" id="bootTip"></div>
+          </div>
+          <div class="kpis"><div class="card kpi"><div class="sk-block" style="gap:10px"><div class="sk sk-line" style="width:45%"></div><div class="sk sk-line big"></div><div class="sk sk-line" style="width:62%"></div></div><div class="sk-spark"><i style="--h:40%;--i:0"></i><i style="--h:62%;--i:1"></i><i style="--h:48%;--i:2"></i><i style="--h:75%;--i:3"></i><i style="--h:55%;--i:4"></i><i style="--h:88%;--i:5"></i><i style="--h:60%;--i:6"></i><i style="--h:70%;--i:7"></i><i style="--h:45%;--i:8"></i><i style="--h:80%;--i:9"></i><i style="--h:58%;--i:10"></i><i style="--h:92%;--i:11"></i></div></div><div class="card kpi"><div class="sk-block" style="gap:10px"><div class="sk sk-line" style="width:45%"></div><div class="sk sk-line big"></div><div class="sk sk-line" style="width:62%"></div></div><div class="sk-spark"><i style="--h:40%;--i:0"></i><i style="--h:62%;--i:1"></i><i style="--h:48%;--i:2"></i><i style="--h:75%;--i:3"></i><i style="--h:55%;--i:4"></i><i style="--h:88%;--i:5"></i><i style="--h:60%;--i:6"></i><i style="--h:70%;--i:7"></i><i style="--h:45%;--i:8"></i><i style="--h:80%;--i:9"></i><i style="--h:58%;--i:10"></i><i style="--h:92%;--i:11"></i></div></div><div class="card kpi"><div class="sk-block" style="gap:10px"><div class="sk sk-line" style="width:45%"></div><div class="sk sk-line big"></div><div class="sk sk-line" style="width:62%"></div></div><div class="sk-spark"><i style="--h:40%;--i:0"></i><i style="--h:62%;--i:1"></i><i style="--h:48%;--i:2"></i><i style="--h:75%;--i:3"></i><i style="--h:55%;--i:4"></i><i style="--h:88%;--i:5"></i><i style="--h:60%;--i:6"></i><i style="--h:70%;--i:7"></i><i style="--h:45%;--i:8"></i><i style="--h:80%;--i:9"></i><i style="--h:58%;--i:10"></i><i style="--h:92%;--i:11"></i></div></div><div class="card kpi"><div class="sk-block" style="gap:10px"><div class="sk sk-line" style="width:45%"></div><div class="sk sk-line big"></div><div class="sk sk-line" style="width:62%"></div></div><div class="sk-spark"><i style="--h:40%;--i:0"></i><i style="--h:62%;--i:1"></i><i style="--h:48%;--i:2"></i><i style="--h:75%;--i:3"></i><i style="--h:55%;--i:4"></i><i style="--h:88%;--i:5"></i><i style="--h:60%;--i:6"></i><i style="--h:70%;--i:7"></i><i style="--h:45%;--i:8"></i><i style="--h:80%;--i:9"></i><i style="--h:58%;--i:10"></i><i style="--h:92%;--i:11"></i></div></div></div>
+          <div class="frow">
+            <div class="card" style="flex:2 1 560px;padding:18px 20px"><div class="sk sk-line" style="width:32%;margin-bottom:14px"></div><div class="sk-bars"><i style="--h:42%;--i:0"></i><i style="--h:58%;--i:1"></i><i style="--h:50%;--i:2"></i><i style="--h:72%;--i:3"></i><i style="--h:64%;--i:4"></i><i style="--h:86%;--i:5"></i><i style="--h:55%;--i:6"></i><i style="--h:68%;--i:7"></i><i style="--h:92%;--i:8"></i><i style="--h:60%;--i:9"></i><i style="--h:74%;--i:10"></i><i style="--h:52%;--i:11"></i><i style="--h:80%;--i:12"></i><i style="--h:66%;--i:13"></i><i style="--h:96%;--i:14"></i><i style="--h:70%;--i:15"></i></div></div>
+            <div class="card" style="flex:1 1 300px;padding:18px 20px"><div class="sk-block"><div class="sk sk-line" style="width:40%"></div><div class="sk sk-line" style="width:92%"></div><div class="sk sk-line" style="width:85%"></div><div class="sk sk-line" style="width:70%"></div><div class="sk sk-line" style="width:88%"></div><div class="sk sk-line" style="width:64%"></div><div class="sk sk-line" style="width:78%"></div></div></div>
+          </div>
+        </div>
+      </div>
       <div style="height:8px"></div>
     </main>
   </div>
@@ -179,7 +198,19 @@
   // resolved — they were already downloading in parallel with it.
   (function () {
     var root = document.getElementById('pageRoot');
-    root.innerHTML = '<div style="padding:48px 24px;color:var(--ink-3);font-weight:600;text-align:center">' + (window.t ? window.t('boot.loading_data') : 'Đang tải dữ liệu…') + '</div>';
+    // The boot screen is already painted (static markup in #pageRoot). If the
+    // wait drags on, show a usage tip under it and rotate it until App.init
+    // replaces the screen.
+    var tipEl = document.getElementById('bootTip'), tipN = 0, TIPS = 5;
+    function nextTip() {
+      if (!document.body.contains(tipEl)) return clearInterval(tipTimer);
+      tipEl.classList.remove('on');
+      setTimeout(function () {
+        tipEl.textContent = window.t ? window.t('boot.tip.' + (tipN++ % TIPS + 1)) : '';
+        tipEl.classList.add('on');
+      }, 400);
+    }
+    var tipTimer = setTimeout(function () { nextTip(); tipTimer = setInterval(nextTip, 4000); }, 1200);
     window.DASH_P
       .then(function (data) {
         window.DASH = data;

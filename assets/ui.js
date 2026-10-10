@@ -174,7 +174,22 @@
     el.addEventListener("mouseleave", () => pick(null));
   }
 
-  window.UI = { ICON, deltaChip, pdot, pchip, cssColor, esc, flashMsg, fsBtn,
+  // Loading placeholders: shimmering lines (theme.css .sk) instead of a bare
+  // "Đang tải…". The words stay for screen readers.
+  const SK_W = [92, 76, 86, 64, 82, 70, 88];
+  function skel(lines) {
+    return `<div class="sk-block" role="status" aria-live="polite"><span class="sr-only">${esc(_t("common.loading"))}</span>${
+      Array.from({ length: lines || 4 }, (_, i) => `<div class="sk sk-line" style="width:${SK_W[i % SK_W.length]}%"></div>`).join("")}</div>`;
+  }
+  // A whole page still loading: a wave of bars and a list, like the boot screen.
+  function skelPage() {
+    const bars = [42, 58, 50, 72, 64, 86, 55, 68, 92, 60, 74, 52, 80, 66].map((h, i) => `<i style="--h:${h}%;--i:${i}"></i>`).join("");
+    return `<div class="pg" aria-busy="true"><div class="frow">
+      <div class="card" style="flex:2 1 560px;padding:18px 20px"><div class="sk sk-line" style="width:30%;margin-bottom:14px"></div><div class="sk-bars">${bars}</div></div>
+      <div class="card" style="flex:1 1 300px;padding:18px 20px">${skel(7)}</div></div></div>`;
+  }
+
+  window.UI = { ICON, deltaChip, pdot, pchip, cssColor, esc, flashMsg, fsBtn, skel, skelPage,
     tip, head, seg, track, stack, legend, spark, deltaTxt, bars, wireBars };
 
   /* ---- floating bubble for every [data-tip] ---- */

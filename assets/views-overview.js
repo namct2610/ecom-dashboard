@@ -191,7 +191,7 @@
     // Products and categories come from the period's range detail (fetched in
     // mount); say "loading" until it lands rather than "no data".
     const detailReady = !!S.getRangeDetail(st.period, plat);
-    const waitOrEmpty = `<div class="empty-chart">${_t(detailReady ? "common.empty_data" : "common.loading")}</div>`;
+    const waitOrEmpty = detailReady ? `<div class="empty-chart">${_t("common.empty_data")}</div>` : `<div class="cbody">${UI.skel(5)}</div>`;
     const topBody = top.length ? `<div class="gt only-wide" style="--cols:28px minmax(0,2fr) 80px minmax(0,1.3fr)">
         <div class="gt-head"><span>#</span><span>${_t("th.product")}</span><span class="r">${_t("th.qty_sold")}</span><span>${_t("th.revenue")}</span></div>${topWide}</div>
       <div class="mlist only-narrow">${topNarrow}</div>` : waitOrEmpty;

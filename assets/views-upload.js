@@ -136,7 +136,7 @@
   function exportCard() {
     const cat = local.catalog;
     const head = UI.head(t("export.title"), t("export.tip"), "", { w: "280px" });
-    if (cat === null) return `<div class="card">${head}<div class="cbody sub3">${t("common.loading")}</div></div>`;
+    if (cat === null) return `<div class="card">${head}<div class="cbody">${UI.skel(3)}</div></div>`;
     if (!cat.length) return `<div class="card">${head}<div class="cbody"><div class="note">${UI.ICON.info}${t("export.empty")}</div></div></div>`;
 
     const p = local.exportPick;
@@ -208,7 +208,7 @@
     const c = local.coverage || {};
     const legend = `<div class="cov-lgd"><span><i class="cv-full"></i>${t("upload.cov.legend_full")}</span><span><i class="cv-partial"></i>${t("upload.cov.legend_partial")}</span><span><i class="cv-none"></i>${t("upload.cov.legend_none")}</span></div>`;
     const head = UI.head(t("upload.cov.title"), t("upload.cov.tip"), legend, { w: "280px" });
-    if (c.loading || !c.months && !c.error) return `<div class="card">${head}<div class="empty-chart">${t("common.loading")}</div></div>`;
+    if (c.loading || !c.months && !c.error) return `<div class="card">${head}<div class="cbody">${UI.skel(5)}</div></div>`;
     if (c.error) return `<div class="card">${head}<div class="empty-chart" style="color:var(--neg)">${t("common.error")}: ${esc(c.error)}</div></div>`;
     if (!c.months.length) return `<div class="card">${head}<div class="empty-chart">${t("upload.cov.empty")}</div></div>`;
 

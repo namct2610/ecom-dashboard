@@ -140,7 +140,7 @@
   }
 
   function render() {
-    if (local.loading) return `<div class="card card-pad" style="text-align:center;color:var(--ink-3);font-weight:600">${t("common.loading")}</div>`;
+    if (local.loading) return `${UI.skelPage()}`;
     if (!local.isAdmin) return `<div class="card card-pad" style="color:var(--neg);font-weight:700">${t("users.admin_only")}</div>`;
     if (local.error) return `<div class="card card-pad" style="color:var(--neg);font-weight:700">${t("common.error")}: ${esc(local.error)}</div>`;
     return `<div class="pg">

@@ -256,7 +256,7 @@
   }
 
   function render() {
-    if (!local.loaded) return `<div class="card card-pad" style="text-align:center;color:var(--ink-3);font-weight:600">${t("common.loading")}</div>`;
+    if (!local.loaded) return `${UI.skelPage()}`;
     return `<div class="pg">
       ${UI.flashMsg(local.msg)}
       <div class="plat3">${PKEYS.map(platCard).join("")}</div>

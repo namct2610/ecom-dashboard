@@ -43,7 +43,7 @@
   const skuSingleState = { loading: null, failed: null };
 
   const msgHTML = (text, err) => `<div style="color:var(${err ? "--neg" : "--ink-3"});font-size:13px;font-weight:${err ? 700 : 600};padding:6px 0">${text}</div>`;
-  const loadingOr = (failed, key) => msgHTML(failed ? _t("common.error") : _t(key), failed);
+  const loadingOr = (failed) => (failed ? msgHTML(_t("common.error"), true) : UI.skel());
 
   // Orders recognise three kinds; delivered counts as done.
   const kindOf = (s) => (s === "cancelled" ? "cancelled" : s === "completed" || s === "delivered" ? "done" : "pending");
@@ -117,7 +117,7 @@
     const card = (title, tip, body, right) => `<div class="card" style="flex:1 1 420px">${UI.head(title, tip, right)}<div class="cbody">${body}</div></div>`;
     const reasonsTitle = _t("orders.cancel.reasons_title"), payTitle = _t("orders.cancel.payment_title");
     if (!data) {
-      const m = loadingOr(failed, "orders.cancel.loading");
+      const m = loadingOr(failed);
       return `<div class="frow">${card(reasonsTitle, _t("orders.cancel.reasons_tip"), m)}${card(payTitle, _t("orders.cancel.payment_tip"), m)}</div>`;
     }
 
@@ -181,7 +181,7 @@
       <span class="tnum" style="font-size:13px;font-weight:800;color:var(--brand)">${F.viInt(v)} ${_t("common.orders_unit")}</span>`;
   }
   function heatCard(key, platform) {
-    if (!S.getRangeDetail(key, platform)) return `<div class="card">${UI.head(_t("ovw.heat.title"), _t("orders.heat.tip"))}<div class="cbody">${msgHTML(_t("common.loading"))}</div></div>`;
+    if (!S.getRangeDetail(key, platform)) return `<div class="card">${UI.head(_t("ovw.heat.title"), _t("orders.heat.tip"))}<div class="cbody">${UI.skel(5)}</div></div>`;
     const { m } = S.heatMatrix(key, platform);
     const blocks = [heatBlock(m, 1), heatBlock(m, 3)];
     const scale = `<div style="display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:var(--ink-3)">${_t("orders.heat.less")}${["var(--track)", 30, 57, 84].map((p) =>
@@ -231,7 +231,7 @@
         <div style="display:flex;align-items:baseline;gap:8px" class="sub3"><span>${escHtml(o.city || "—")}</span><span>·</span><span class="tnum">${dtShort(o.created)}</span>
           <b class="tnum" style="margin-left:auto;font-size:14px;color:var(--ink);font-weight:800">${F.moneyFull(o.amount)}</b></div>
       </div>`).join("");
-    const empty = `<div class="empty-chart">${_t(waiting ? "common.loading" : "common.no_results")}</div>`;
+    const empty = waiting ? `<div class="cbody">${UI.skel(6)}</div>` : `<div class="empty-chart">${_t("common.no_results")}</div>`;
     return `${UI.head(_t("ovw.recent_orders.title"), _t("orders.recent.tip"), UI.seg("recentSeg", filters, recentFilter))}
       <div class="gt only-wide" style="--cols:170px 100px minmax(0,2fr) minmax(0,1fr) 120px 130px 90px">
         <div class="gt-head"><span>${_t("th.order_id")}</span><span>${_t("th.platform")}</span><span>${_t("th.product")}</span><span>${_t("th.region")}</span><span class="r">${_t("orders.recent.value")}</span><span>${_t("th.status")}</span><span class="r">${_t("orders.recent.time")}</span></div>
@@ -321,10 +321,10 @@
       const catCard = `<div class="card" style="flex:1 1 300px">${UI.head(_t("ovw.category.title"), _t("products.cat.tip"), "", { right: true })}
         <div class="clist">${cats.map((c) => `<div style="display:flex;flex-direction:column;gap:6px;padding:8px 0">
           <div style="display:flex;align-items:baseline;gap:8px;font-size:13px"><span class="nm" style="flex:1;font-size:13px">${S.catLabel(c.cat)}</span><b class="tnum">${F.money(c.revenue)}</b><span class="tnum" style="color:var(--ink-3);font-weight:600;width:46px;text-align:right">${F.pct(cTot ? c.revenue / cTot * 100 : 0)}</span></div>
-          ${UI.track(c.revenue / cMax, "var(--ink-2)")}</div>`).join("") || msgHTML(_t(S.getRangeDetail(st.period, st.platform) ? "common.empty_data" : "common.loading"))}</div></div>`;
+          ${UI.track(c.revenue / cMax, "var(--ink-2)")}</div>`).join("") || (S.getRangeDetail(st.period, st.platform) ? msgHTML(_t("common.empty_data")) : UI.skel(4))}</div></div>`;
 
       if (!data) {
-        const m = loadingOr(failed, "products.sku_profit.loading");
+        const m = loadingOr(failed);
         return `<div class="pg"><div class="frow">
           <div class="card" style="flex:1 1 300px">${UI.head(_t("products.profit.title"), _t("products.profit.tip_loading"))}<div class="cbody">${m}</div></div>
           <div class="card" style="flex:1 1 300px">${UI.head(_t("products.abc.title"), _t("products.abc.tip"))}<div class="cbody">${m}</div></div>
@@ -458,7 +458,12 @@
       const ret = plat === "lazada" ? null : S.getRetention(st.period, plat);
       const retFailed = retentionState.failed === cacheKey;
       const dash = `<span style="color:var(--ink-3)">—</span>`;
-      const retWait = plat === "lazada" ? _t("cust.kpi.lazada_na") : retFailed ? _t("common.error") : _t("common.loading");
+      // Still loading: shimmer where the number and its foot line will be.
+      const skVal = `<div class="sk sk-line big" style="width:58%;height:24px;margin:3px 0"></div>`;
+      const skFoot = `<span class="sk sk-line" style="display:block;width:72%;height:9px;margin-top:5px"></span>`;
+      const retLoading = plat !== "lazada" && !ret && !retFailed;
+      const retDash = retLoading ? skVal : dash;
+      const retWait = plat === "lazada" ? _t("cust.kpi.lazada_na") : retFailed ? _t("common.error") : skFoot;
 
       // ---- KPIs ----
       const summary = (data && data.summary) || {}, seg = (data && data.customer_segments) || {};
@@ -469,7 +474,7 @@
         ? kpiShell(_t("cust.kpi.buyers"), _t("cust.kpi.buyers_tip_plain") + " " + _t("customers.segment.potential_note"), F.viInt(summary.unique_buyers || 0),
             _tf("cust.kpi.potential", { n: F.viInt(seg.potential_buyers || 0) }),
             UI.stack([{ v: nNew, c: "var(--brand)" }, { v: nRet, c: "var(--lazada)" }]) + UI.legend([{ c: "var(--brand)", text: _tf("cust.kpi.new_n", { n: F.viInt(nNew) }) }, { c: "var(--lazada)", text: _tf("cust.kpi.ret_n", { n: F.viInt(nRet) }) }]))
-        : kpiShell(_t("cust.kpi.buyers"), _t("cust.kpi.buyers_tip_plain"), dash, _t("common.loading"), "");
+        : kpiShell(_t("cust.kpi.buyers"), _t("cust.kpi.buyers_tip_plain"), skVal, skFoot, "");
       const iv = (ret && ret.interval) || {};
       const w30 = iv.within_30 || 0, w60 = iv.within_60 || 0, w90 = iv.within_90 || 0;
       const gapBuckets = [w30, w60 - w30, w90 - w60, 100 - w90].map((v) => Math.max(0, v));
@@ -479,16 +484,16 @@
       const kpis = [
         buyersCard,
         kpiShell(_t("cust.kpi.repeat"), _tf("cust.kpi.repeat_tip", { date: cutTxt || "—" }),
-          ret && ret.buyers ? `${F.viDec(ret.repeat_rate, 1)}<span class="unit">%</span>` : dash,
+          ret && ret.buyers ? `${F.viDec(ret.repeat_rate, 1)}<span class="unit">%</span>` : retDash,
           ret && ret.buyers ? _tf("customers.retention.repeat_sub", { n: F.viInt(ret.repeat_buyers), m: F.viInt(ret.buyers) }) : retWait,
           ret && ret.buyers ? UI.track(ret.repeat_rate / 100, "var(--lazada)") : "", true),
         kpiShell(_t("cust.kpi.cycle"), _t("cust.kpi.cycle_tip"),
-          iv.median_days != null ? `${F.viInt(iv.median_days)}<span class="unit" style="margin-left:4px">${_t("customers.retention.days_unit")}</span>` : dash,
+          iv.median_days != null ? `${F.viInt(iv.median_days)}<span class="unit" style="margin-left:4px">${_t("customers.retention.days_unit")}</span>` : retDash,
           iv.median_days != null ? _t("cust.kpi.median") : retWait,
           iv.pairs ? `<div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;align-items:end;height:26px">${gapBuckets.map((v, i) => `<div style="height:${Math.max(v / gMax * 100, 4).toFixed(1)}%;background:${i === 0 ? "var(--pos)" : "var(--ink-3)"};border-radius:3px 3px 0 0"></div>`).join("")}</div>
             <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;font-size:10px;font-weight:700;color:var(--ink-3);text-align:center;margin-top:-4px">${["≤30", "60", "90", ">90"].map((l) => `<span>${l}</span>`).join("")}</div>` : ""),
         kpiShell(_t("cust.kpi.back90"), _t("cust.kpi.back90_tip"),
-          iv.pairs ? `${F.viDec(w90, 0)}<span class="unit">%</span>` : dash,
+          iv.pairs ? `${F.viDec(w90, 0)}<span class="unit">%</span>` : retDash,
           iv.pairs ? _tf("cust.kpi.in30", { p: F.pct(w30, 0) }) : retWait,
           iv.pairs ? `<div class="trk" style="display:flex"><i style="width:${w30.toFixed(1)}%;background:var(--pos);border-radius:0"></i><i style="width:${Math.max(0, w90 - w30).toFixed(1)}%;background:color-mix(in oklch, var(--pos) 45%, var(--surface));border-radius:0"></i></div>` : "", true),
       ].join("");
@@ -496,7 +501,7 @@
       // ---- cohorts: newest 6 first-purchase months ----
       let cohort;
       if (plat === "lazada") cohort = msgHTML(_t("customers.retention.lazada_only"));
-      else if (!ret) cohort = loadingOr(retFailed, "customers.retention.loading");
+      else if (!ret) cohort = loadingOr(retFailed);
       else if (!ret.buyers) cohort = msgHTML(_t("customers.retention.empty"));
       else {
         const rows = (ret.cohorts || []).slice(-6);
@@ -523,7 +528,7 @@
       // ---- top buyers ----
       const buyers = ((data && data.buyer_stats) || []).slice(0, 10);
       const bMax = buyers.length ? buyers[0].revenue || 1 : 1;
-      const buyerRows = !data ? msgHTML(_t("common.loading")) : buyers.length ? buyers.map((b, i) => `<div class="buyer-row" data-buyer="${escHtml(b.buyer_username)}" style="display:grid;grid-template-columns:var(--bc);align-items:center;gap:12px;padding:10px 0;border-bottom:${i === buyers.length - 1 ? "none" : "1px solid var(--border)"};cursor:pointer">
+      const buyerRows = !data ? UI.skel(6) : buyers.length ? buyers.map((b, i) => `<div class="buyer-row" data-buyer="${escHtml(b.buyer_username)}" style="display:grid;grid-template-columns:var(--bc);align-items:center;gap:12px;padding:10px 0;border-bottom:${i === buyers.length - 1 ? "none" : "1px solid var(--border)"};cursor:pointer">
           <span class="rk${i === 0 ? " first" : ""}">${i + 1}</span>
           <div style="min-width:0"><div class="nm" style="font-weight:700">${escHtml(b.buyer_name || b.buyer_username || "—")}</div>
             <div class="sub3" style="font-size:11.5px;white-space:nowrap">${_tf("cust.top.sub", { n: F.viInt(b.order_count), d: b.last_order_at ? dtShort(b.last_order_at).slice(0, 5) : "—" })}</div></div>
@@ -536,7 +541,7 @@
         ? ((data && data.city_distribution) || []).map((g) => ({ name: g.city, orders: g.orders, revenue: g.revenue || 0, pct: g.percentage ?? 0, other: g.city === "Khác" }))
         : ((data && data.warehouse_distribution) || []).map((w) => ({ name: w.warehouse, orders: w.orders, revenue: w.revenue || 0, pct: w.percentage ?? 0 }));
       const dMax = Math.max(...src.map((g) => g.orders), 1);
-      const distRows = !data ? msgHTML(_t("common.loading")) : src.length ? src.map((g) => `<div class="brow" style="--bcols:var(--gc);padding:9px 0">
+      const distRows = !data ? UI.skel(5) : src.length ? src.map((g) => `<div class="brow" style="--bcols:var(--gc);padding:9px 0">
           <span class="bl" style="font-size:13.5px">${escHtml(g.name)}</span>
           ${UI.track(g.orders / dMax, g.other ? "var(--ink-3)" : distTab === "geo" ? "var(--brand)" : "var(--lazada)", 10)}
           <div class="r" style="white-space:nowrap"><b class="tnum" style="font-size:13.5px">${F.viInt(g.orders)}</b><span class="tnum" style="color:var(--ink-3);font-weight:600;margin-left:5px;font-size:13px">(${F.pct(g.pct, 0)})</span>
@@ -579,7 +584,7 @@
   function showCustomerDetail(buyerUsername) {
     const panel = document.getElementById("customerDetailPanel");
     if (!panel) return;
-    panel.innerHTML = `<div class="card"><div class="card-pad" style="text-align:center;color:var(--ink-3);font-weight:600">${_t("common.loading")}</div></div>`;
+    panel.innerHTML = `<div class="card"><div class="cbody">${UI.skel(5)}</div></div>`;
     panel.scrollIntoView({ behavior: "smooth", block: "nearest" });
 
     S.fetchCustomerDetail(buyerUsername).then((data) => {

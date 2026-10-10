@@ -1,7 +1,7 @@
 {
-  "version": "3.7.1",
-  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.7.1/release/dashboard-v3-3.7.1.zip",
-  "changelog": "Tăng tốc độ mở dashboard.\n- Dữ liệu tải lúc mở trang gọn lại: bỏ phần sản phẩm/khu vực/khung giờ của 12 tháng (trang nào cũng tự lấy riêng cho kỳ đang chọn) và các cột lưu lượng không dùng. Server xử lý nhanh hơn khoảng 4 lần, dữ liệu truyền đi giảm từ 405KB xuống khoảng 23KB.\n- Phản hồi JSON được nén gzip ngay trong PHP, nên vẫn nén được trên hosting không bật nén.\n- Các file JS tải song song cùng lúc với dữ liệu, thay vì tải lần lượt từng file sau khi dữ liệu về.\n- Chart.js chỉ tải khi mở trang Chi phí sàn hoặc Kế hoạch.\n- File tĩnh (JS, CSS) được trình duyệt giữ lại giữa các lần mở; bản cập nhật mới tự đổi đường dẫn nên không bị dùng file cũ.",
+  "version": "3.7.2",
+  "download_url": "https://raw.githubusercontent.com/namct2610/ecom-dashboard/v3.7.2/release/dashboard-v3-3.7.2.zip",
+  "changelog": "Màn hình chờ có chuyển động.\n- Lúc mở dashboard: hiện ngay khung trang dạng skeleton có hiệu ứng ánh sáng lướt qua, cột biểu đồ nhấp nhô, thanh tiến trình chạy trên cùng và logo Zott nhịp nhẹ. Nếu chờ lâu hơn khoảng 1 giây, bên dưới hiện mẹo sử dụng, đổi sau mỗi 4 giây.\n- Trong từng trang: các thẻ đang tải dữ liệu hiện các dòng skeleton thay cho chữ \"Đang tải…\".\n- Màn hình chờ hiện đúng giao diện sáng/tối đã chọn, không còn chớp nền sáng với người dùng giao diện tối.\n- Máy đã bật chế độ giảm chuyển động trong hệ điều hành sẽ thấy bản tĩnh.",
   "min_php": "8.1",
   "released_at": "2026-10-10"
 }

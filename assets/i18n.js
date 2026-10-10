@@ -353,6 +353,12 @@
     "boot.loading_data": "Đang tải dữ liệu…",
     "boot.load_failed": "Không tải được dữ liệu",
     "boot.app_missing": "window.App.init không có sẵn — kiểm tra assets/app.js đã tải",
+    "boot.loading": "Đang tải dữ liệu",
+    "boot.tip.1": "Mẹo: rê chuột hoặc chạm vào biểu tượng (i) để xem cách tính từng chỉ số.",
+    "boot.tip.2": "Mẹo: chạm vào một cột biểu đồ để xem số của từng sàn trong khoảng thời gian đó.",
+    "boot.tip.3": "Mẹo: bấm vào tên sàn ở chú thích biểu đồ để ẩn hoặc hiện sàn đó.",
+    "boot.tip.4": "Mẹo: ở trang Sản phẩm, chạm vào hạng A, B hoặc C để lọc bảng.",
+    "boot.tip.5": "Mẹo: trang Sàn & lưu lượng có nút “Ẩn Shopee” để so hai sàn nhỏ với nhau.",
 
     /* Page titles + eyebrows */
     "page.overview.title": "Tổng quan",
@@ -1327,6 +1333,12 @@
     "boot.loading_data": "Loading data…",
     "boot.load_failed": "Failed to load data",
     "boot.app_missing": "window.App.init is missing — check that assets/app.js loaded",
+    "boot.loading": "Loading data",
+    "boot.tip.1": "Tip: hover or tap the (i) icon to see how each metric is calculated.",
+    "boot.tip.2": "Tip: tap a chart bar to see each platform's figure for that period.",
+    "boot.tip.3": "Tip: click a platform in the chart legend to hide or show it.",
+    "boot.tip.4": "Tip: on Products, tap class A, B or C to filter the table.",
+    "boot.tip.5": "Tip: Platforms & traffic has a “Hide Shopee” button to compare the two smaller platforms.",
 
     /* Page titles */
     "page.overview.title": "Overview",

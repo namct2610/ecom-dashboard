@@ -150,10 +150,10 @@
   function loadingCard(msg) {
     return `
       <div class="g12" style="grid-template-columns:repeat(12,1fr);gap:16px">
-        <div style="grid-column:span 6" data-collapse><div class="card"><div class="card-head"><div><div class="card-title">${_t("plan.title.revenue")}</div></div></div><div class="card-pad" style="height:260px"></div></div></div>
-        <div style="grid-column:span 6" data-collapse><div class="card"><div class="card-head"><div><div class="card-title">${_t("plan.title.visits")}</div></div></div><div class="card-pad" style="height:260px"></div></div></div>
-        <div style="grid-column:span 6" data-collapse><div class="card"><div class="card-head"><div><div class="card-title">${_t("plan.chart.revenue_title")}</div></div></div><div class="card-pad" style="height:240px"></div></div></div>
-        <div style="grid-column:span 6" data-collapse><div class="card"><div class="card-head"><div><div class="card-title">${_t("plan.chart.visits_title")}</div></div></div><div class="card-pad" style="height:240px"></div></div></div>
+        <div style="grid-column:span 6" data-collapse><div class="card"><div class="card-head"><div><div class="card-title">${_t("plan.title.revenue")}</div></div></div><div class="card-pad" style="height:260px">${UI.skel(5)}</div></div></div>
+        <div style="grid-column:span 6" data-collapse><div class="card"><div class="card-head"><div><div class="card-title">${_t("plan.title.visits")}</div></div></div><div class="card-pad" style="height:260px">${UI.skel(5)}</div></div></div>
+        <div style="grid-column:span 6" data-collapse><div class="card"><div class="card-head"><div><div class="card-title">${_t("plan.chart.revenue_title")}</div></div></div><div class="card-pad" style="height:240px">${UI.skel(5)}</div></div></div>
+        <div style="grid-column:span 6" data-collapse><div class="card"><div class="card-head"><div><div class="card-title">${_t("plan.chart.visits_title")}</div></div></div><div class="card-pad" style="height:240px">${UI.skel(5)}</div></div></div>
       </div>`;
   }
 

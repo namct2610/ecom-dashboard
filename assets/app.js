@@ -414,7 +414,7 @@
     document.body.classList.remove("sheet-open");
     if (view.charts && !window.Charts) {
       const page = st.page;
-      root.innerHTML = `<div style="padding:48px 24px;color:var(--ink-3);font-weight:600;text-align:center">${T("common.loading")}</div>`;
+      root.innerHTML = window.UI.skelPage();
       loadCharts()
         .then(() => { if (st.page === page) renderPage(); })
         .catch((err) => { root.innerHTML = `<div style="padding:48px 24px;color:var(--neg);font-weight:700;text-align:center">${escHtml(T("boot.load_failed"))}: ${escHtml(err.message)}</div>`; });

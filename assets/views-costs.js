@@ -270,7 +270,7 @@
 
   function render() {
     if (local.error) return `<div class="card card-pad" style="text-align:center;color:var(--neg);font-weight:700">${_t("common.error")}: ${UI.esc(local.error)}</div>`;
-    if (!local.data) return `<div class="card card-pad" style="text-align:center;color:var(--ink-3);font-weight:600">${_t("common.loading")}</div>`;
+    if (!local.data) return `${UI.skelPage()}`;
 
     const d = local.data;
     if (!d.summary.orders) {
